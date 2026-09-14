@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.Looper;
+import android.view.View;
 import android.widget.CheckBox;
 
 import androidx.fragment.app.FragmentActivity;
@@ -143,7 +144,17 @@ public class CategoryItemFragmentTest {
                 .add(android.R.id.content, fragment, TAG_FRAGMENT)
                 .commitNow();
         fragment.showItemId(categoryId);
-        shadowOf(Looper.getMainLooper()).idle();
+        // the query runs on a background thread, and the wheel goes away only once its result lands
+        View wheel = fragment.getView().findViewById(R.id.secondary_panel_progress_wheel);
+        for (int i = 0; i < 200 && wheel.getVisibility() != View.GONE; i++) {
+            shadowOf(Looper.getMainLooper()).idle();
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+        assertEquals("the category never loaded", View.GONE, wheel.getVisibility());
         return fragment.getView().findViewById(R.id.show_report_check_box);
     }
 
