@@ -38,6 +38,10 @@ import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.model.Category;
+import com.oriondev.moneywallet.model.Wallet;
+import com.oriondev.moneywallet.picker.CategoryPicker;
+import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
@@ -57,7 +61,7 @@ import java.util.List;
  * The search screen. A result opens in the same transaction panel the transaction list and the
  * calendar open, so a result can be duplicated and deleted and not only edited.
  */
-public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment implements TransactionCursorAdapter.ActionListener {
+public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment implements TransactionCursorAdapter.ActionListener, WalletPicker.SingleWalletController, CategoryPicker.Controller {
 
     private static final String SS_SEARCH_FLAGS = "SearchMultiPanelFragment::SavedState::SearchFlags";
 
@@ -268,6 +272,16 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     @Override
     public void onSelectionChanged(int count) {
         mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
+    public void onWalletChanged(String tag, Wallet wallet) {
+        mSelectionMode.onWalletPicked(wallet);
+    }
+
+    @Override
+    public void onCategoryChanged(String tag, Category category) {
+        mSelectionMode.onCategoryPicked(category);
     }
 
     @Override

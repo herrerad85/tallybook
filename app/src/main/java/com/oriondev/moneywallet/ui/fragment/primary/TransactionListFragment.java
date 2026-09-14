@@ -37,7 +37,11 @@ import android.view.View;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.broadcast.LocalAction;
 import com.oriondev.moneywallet.broadcast.Message;
+import com.oriondev.moneywallet.model.Category;
 import com.oriondev.moneywallet.model.Group;
+import com.oriondev.moneywallet.model.Wallet;
+import com.oriondev.moneywallet.picker.CategoryPicker;
+import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
@@ -56,7 +60,7 @@ import java.util.Date;
 /**
  * Created by andrea on 03/03/18.
  */
-public class TransactionListFragment extends CursorListFragment implements TransactionCursorAdapter.ActionListener {
+public class TransactionListFragment extends CursorListFragment implements TransactionCursorAdapter.ActionListener, WalletPicker.SingleWalletController, CategoryPicker.Controller {
 
     private static final int HIDDEN_TRANSACTIONS_LOADER_ID = 60004;
 
@@ -227,6 +231,16 @@ public class TransactionListFragment extends CursorListFragment implements Trans
     @Override
     public void onSelectionChanged(int count) {
         mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
+    public void onWalletChanged(String tag, Wallet wallet) {
+        mSelectionMode.onWalletPicked(wallet);
+    }
+
+    @Override
+    public void onCategoryChanged(String tag, Category category) {
+        mSelectionMode.onCategoryPicked(category);
     }
 
     @Override

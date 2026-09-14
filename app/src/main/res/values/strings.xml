@@ -445,8 +445,27 @@
         <item quantity="one">"%d selected transaction will be deleted."</item>
         <item quantity="other">"%d selected transactions will be deleted."</item>
     </plurals>
+    <string name="menu_action_move_to_wallet">"Move to wallet"</string>
+    <string name="menu_action_change_category">"Change category"</string>
+    <plurals name="message_move_selected_transactions">
+        <item quantity="one">"Move %1$d transaction to %2$s?"</item>
+        <item quantity="other">"Move %1$d transactions to %2$s?"</item>
+    </plurals>
+    <plurals name="message_move_selected_transactions_other_currency">
+        <item quantity="one">"%d of them is in another currency. Its amount will be kept as shown, not converted."</item>
+        <item quantity="other">"%d of them are in another currency. Their amounts will be kept as shown, not converted."</item>
+    </plurals>
+    <plurals name="message_change_category_selected_transactions">
+        <item quantity="one">"Change the category of %1$d transaction to %2$s?"</item>
+        <item quantity="other">"Change the category of %1$d transactions to %2$s?"</item>
+    </plurals>
+    <plurals name="message_error_change_selected_transactions">
+        <item quantity="one">"%d transaction could not be changed. Transfers, debts and savings are changed from their own screens."</item>
+        <item quantity="other">"%d transactions could not be changed. Transfers, debts and savings are changed from their own screens."</item>
+    </plurals>
     <string name="title_transactions_selected">"%d selected"</string>
     <string name="description_close_selection">"Close selection"</string>
+    <string name="message_selection_changed_nothing_changed">"The selection changed, so nothing was changed."</string>
     <string name="message_delete_transfer">"Are you sure you want to delete this transfer?"</string>
     <string name="message_error_delete_transaction_of_transfer">"This transaction cannot be deleted because is part of a transfer. Please remove the related transfer to delete this transaction."</string>
     <string name="message_delete_debt">"Are you sure you want to delete this debt? All the related data will be removed."</string>

@@ -36,7 +36,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import android.view.View;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.model.Category;
 import com.oriondev.moneywallet.model.Group;
+import com.oriondev.moneywallet.model.Wallet;
+import com.oriondev.moneywallet.picker.CategoryPicker;
+import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.CurrentWalletController;
@@ -56,7 +60,7 @@ import java.util.Date;
 /**
  * Created by andrea on 08/04/18.
  */
-public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragment implements TransactionCursorAdapter.ActionListener, CurrentWalletController {
+public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragment implements TransactionCursorAdapter.ActionListener, CurrentWalletController, WalletPicker.SingleWalletController, CategoryPicker.Controller {
 
     private static final String FILTER_TYPE = "TransactionMultiPanelFragment::Arguments::FilterType";
     private static final String FILTER_ID = "TransactionMultiPanelFragment::Arguments::FilterId";
@@ -361,6 +365,16 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
     @Override
     public void onSelectionChanged(int count) {
         mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
+    public void onWalletChanged(String tag, Wallet wallet) {
+        mSelectionMode.onWalletPicked(wallet);
+    }
+
+    @Override
+    public void onCategoryChanged(String tag, Category category) {
+        mSelectionMode.onCategoryPicked(category);
     }
 
     @Override

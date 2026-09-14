@@ -37,6 +37,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.model.Category;
+import com.oriondev.moneywallet.model.Wallet;
+import com.oriondev.moneywallet.picker.CategoryPicker;
+import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.CurrentWalletController;
@@ -62,7 +66,7 @@ import java.util.Set;
 /**
  * Created by andrea on 06/04/18.
  */
-public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment implements MonthView.OnMonthSelectedListener, OnDateSelectedListener, TimelineView.OnMonthScrolledListener, SwipeRefreshLayout.OnRefreshListener, TransactionCursorAdapter.ActionListener, LoaderManager.LoaderCallbacks<Cursor>, CurrentWalletController {
+public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment implements MonthView.OnMonthSelectedListener, OnDateSelectedListener, TimelineView.OnMonthScrolledListener, SwipeRefreshLayout.OnRefreshListener, TransactionCursorAdapter.ActionListener, LoaderManager.LoaderCallbacks<Cursor>, CurrentWalletController, WalletPicker.SingleWalletController, CategoryPicker.Controller {
 
     private static final String SECONDARY_PANEL_FRAGMENT_TAG = "CalendarMultiPanelFragment::Tag::TransactionItemFragment";
 
@@ -238,6 +242,16 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
     @Override
     public void onSelectionChanged(int count) {
         mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
+    public void onWalletChanged(String tag, Wallet wallet) {
+        mSelectionMode.onWalletPicked(wallet);
+    }
+
+    @Override
+    public void onCategoryChanged(String tag, Category category) {
+        mSelectionMode.onCategoryPicked(category);
     }
 
     @NonNull

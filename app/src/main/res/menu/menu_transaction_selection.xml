@@ -29,6 +29,16 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_move_selected_items"
+        android:title="@string/menu_action_move_to_wallet"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_change_category_selected_items"
+        android:title="@string/menu_action_change_category"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_select_all_items"
         android:title="@android:string/selectAll"
         app:showAsAction="never" />

@@ -81,6 +81,8 @@ public class WalletPicker extends Fragment implements WalletPickerDialog.Callbac
         super.onAttach(context);
         if (context instanceof SingleWalletController) {
             mSingleWalletController = (SingleWalletController) context;
+        } else if (getParentFragment() instanceof SingleWalletController) {
+            mSingleWalletController = (SingleWalletController) getParentFragment();
         }
         if (context instanceof MultiWalletController) {
             mMultiWalletController = (MultiWalletController) context;
