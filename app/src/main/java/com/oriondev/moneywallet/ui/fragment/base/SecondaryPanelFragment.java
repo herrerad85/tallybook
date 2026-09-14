@@ -181,7 +181,7 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
 
     protected void navigateBackSafely() {
         if (getParentFragment() instanceof MultiPanelController) {
-            ((MultiPanelController) getParentFragment()).navigateBack();
+            ((MultiPanelController) getParentFragment()).closeSecondaryPanel();
         }
     }
 

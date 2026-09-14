@@ -32,6 +32,7 @@ import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import android.view.View;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.broadcast.LocalAction;
@@ -45,6 +46,8 @@ import com.oriondev.moneywallet.ui.activity.PeriodDetailActivity;
 import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
 import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.CursorListFragment;
+import com.oriondev.moneywallet.ui.fragment.base.MultiPanelFragment;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.utils.DateUtils;
 
@@ -60,6 +63,7 @@ public class TransactionListFragment extends CursorListFragment implements Trans
     private static final String[] HIDDEN_PROJECTION = new String[] {Contract.Transaction.DATE};
 
     private TransactionCursorAdapter mAdapter;
+    private TransactionSelectionMode mSelectionMode;
 
     @Override
     protected void onPrepareRecyclerView(AdvancedRecyclerView recyclerView) {
@@ -71,7 +75,23 @@ public class TransactionListFragment extends CursorListFragment implements Trans
     protected AbstractCursorAdapter onCreateAdapter() {
         // the only one of the four that opens the report from a header click
         mAdapter = new TransactionCursorAdapter(this, true);
+        // a page of the transactions pager, whose toolbar belongs to the pager fragment
+        mSelectionMode = new TransactionSelectionMode(this, (MultiPanelFragment) getParentFragment(), mAdapter);
         return mAdapter;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mSelectionMode.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mSelectionMode != null) {
+            mSelectionMode.onSaveInstanceState(outState);
+        }
     }
 
     /**
@@ -202,6 +222,17 @@ public class TransactionListFragment extends CursorListFragment implements Trans
             intent.putExtra(Message.ITEM_TYPE, Message.TYPE_TRANSACTION);
             LocalBroadcastManager.getInstance(activity).sendBroadcast(intent);
         }
+    }
+
+    @Override
+    public void onSelectionChanged(int count) {
+        mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
+    public void onCurrentWalletChanged(long walletId) {
+        mAdapter.clearSelection();
+        super.onCurrentWalletChanged(walletId);
     }
 
     @Override

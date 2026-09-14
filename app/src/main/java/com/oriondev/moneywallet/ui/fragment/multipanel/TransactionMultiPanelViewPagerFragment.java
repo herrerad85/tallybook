@@ -88,6 +88,12 @@ public class TransactionMultiPanelViewPagerFragment extends MultiPanelViewPagerM
     }
 
     @Override
+    public void onPageSelected(int position) {
+        // the transactions page draws its selection on this toolbar, which the transfers page shares
+        finishSelectionMode();
+    }
+
+    @Override
     protected SecondaryPanelFragment onCreateSecondaryPanel(int type) {
         switch (type) {
             case TYPE_TRANSACTION:

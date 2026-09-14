@@ -44,6 +44,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
 import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelCursorListItemFragment;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
@@ -71,6 +72,9 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
      */
     private String mQuery = "";
 
+    private EditText mSearchEditText;
+    private TransactionSelectionMode mSelectionMode;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +101,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         toolbar.setTitle(null);
         View view = getLayoutInflater().inflate(R.layout.layout_toolbar_search_view, toolbar, true);
         EditText searchEditText = view.findViewById(R.id.search_edit_text);
+        mSearchEditText = searchEditText;
         searchEditText.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -126,7 +131,20 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
 
     @Override
     protected AbstractCursorAdapter onCreateAdapter() {
-        return new TransactionCursorAdapter(this);
+        TransactionCursorAdapter adapter = new TransactionCursorAdapter(this);
+        mSelectionMode = new TransactionSelectionMode(this, this, adapter);
+        return adapter;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mSelectionMode.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    protected void onSelectionModeChanged(boolean active) {
+        mSearchEditText.setVisibility(active ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -248,8 +266,16 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     }
 
     @Override
+    public void onSelectionChanged(int count) {
+        mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBooleanArray(SS_SEARCH_FLAGS, mSearchFlags);
+        if (mSelectionMode != null) {
+            mSelectionMode.onSaveInstanceState(outState);
+        }
     }
 }

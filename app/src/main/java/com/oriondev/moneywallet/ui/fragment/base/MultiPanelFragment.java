@@ -75,6 +75,8 @@ public abstract class MultiPanelFragment extends Fragment implements MultiPanelC
 
     private BroadcastReceiver mCurrentWalletObserver;
 
+    private TransactionSelectionMode mSelectionMode;
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -367,6 +369,18 @@ public abstract class MultiPanelFragment extends Fragment implements MultiPanelC
 
     @Override
     public boolean navigateBack() {
+        if (closeSecondaryPanel()) {
+            return true;
+        }
+        if (mSelectionMode != null) {
+            mSelectionMode.finish();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean closeSecondaryPanel() {
         if (mSecondaryPanel == null) {
             // The view has not been built yet, so there is no panel to close and
             // nothing for this fragment to do with the back press.
@@ -378,5 +392,20 @@ public abstract class MultiPanelFragment extends Fragment implements MultiPanelC
             return visible;
         }
         return false;
+    }
+
+    /*package-local*/ void setSelectionMode(@Nullable TransactionSelectionMode selectionMode) {
+        mSelectionMode = selectionMode;
+        onSelectionModeChanged(selectionMode != null);
+    }
+
+    protected void onSelectionModeChanged(boolean active) {
+        // override to hide what the selection title must not share the toolbar with
+    }
+
+    protected void finishSelectionMode() {
+        if (mSelectionMode != null) {
+            mSelectionMode.finish();
+        }
     }
 }

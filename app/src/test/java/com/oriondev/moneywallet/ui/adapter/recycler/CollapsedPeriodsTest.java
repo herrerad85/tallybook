@@ -394,6 +394,11 @@ public class CollapsedPeriodsTest {
         public void onTransactionClick(long id) {
             // never called here
         }
+
+        @Override
+        public void onSelectionChanged(int count) {
+            // never called here
+        }
     }
 
     /** Keeps what the last click handed it, so a case can say which row the click resolved to. */
@@ -412,6 +417,11 @@ public class CollapsedPeriodsTest {
         @Override
         public void onTransactionClick(long id) {
             mTransactionId = id;
+        }
+
+        @Override
+        public void onSelectionChanged(int count) {
+            // selection is TransactionSelectionTest's
         }
     }
 }

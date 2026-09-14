@@ -20,6 +20,10 @@
 package com.oriondev.moneywallet.ui.adapter.recycler;
 
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -36,6 +40,7 @@ import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.storage.wrapper.AbstractHeaderCursor;
 import com.oriondev.moneywallet.storage.wrapper.TransactionHeaderCursor;
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
@@ -66,6 +71,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private int mIndexCategoryName;
     private int mIndexCategoryIcon;
     private int mIndexTransactionId;
+    private int mIndexTransactionType;
     private int mIndexTransactionDirection;
     private int mIndexTransactionDescription;
     private int mIndexTransactionDate;
@@ -89,6 +95,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
      * trusted its own copy would write the others' hiding away.
      */
     private final Set<String> mCollapsedPeriods = new HashSet<>();
+
+    private final Set<Long> mSelectedIds = new HashSet<>();
 
     public TransactionCursorAdapter(ActionListener actionListener) {
         this(actionListener, false);
@@ -118,6 +126,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mIndexCategoryName = cursor.getColumnIndex(Contract.Transaction.CATEGORY_NAME);
         mIndexCategoryIcon = cursor.getColumnIndex(Contract.Transaction.CATEGORY_ICON);
         mIndexTransactionId = cursor.getColumnIndex(Contract.Transaction.ID);
+        mIndexTransactionType = cursor.getColumnIndex(Contract.Transaction.TYPE);
         mIndexTransactionDirection = cursor.getColumnIndex(Contract.Transaction.DIRECTION);
         mIndexTransactionDescription = cursor.getColumnIndex(Contract.Transaction.DESCRIPTION);
         mIndexTransactionDate = cursor.getColumnIndex(Contract.Transaction.DATE);
@@ -129,6 +138,86 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         // built with no cursor and the fields the walk below needs do not exist until super
         // returns.
         rebuildVisibleRows();
+        dropSelectedIdsNotOnScreen();
+    }
+
+    // ponytail: pages every row on screen on the main thread, but only while something is selected
+    private void dropSelectedIdsNotOnScreen() {
+        // no data yet means a restored selection still waits for its first load
+        if (mSelectedIds.isEmpty() || !isDataValid()) {
+            return;
+        }
+        Set<Long> onScreen = new HashSet<>();
+        for (int position = 0; position < getItemCount(); position++) {
+            int cursorPosition = cursorPosition(position);
+            if (!isItemAt(cursorPosition)) {
+                continue;
+            }
+            Cursor cursor = getSafeCursor(cursorPosition);
+            if (cursor != null) {
+                onScreen.add(cursor.getLong(mIndexTransactionId));
+            }
+        }
+        if (mSelectedIds.retainAll(onScreen) && mActionListener != null) {
+            mActionListener.onSelectionChanged(mSelectedIds.size());
+        }
+    }
+
+    private boolean isItemAt(int cursorPosition) {
+        return mIndexType == -1 || !((AbstractHeaderCursor<?>) getCursor()).isHeaderAt(cursorPosition);
+    }
+
+    private boolean isSelectable(Cursor cursor) {
+        // a transfer leg is refused by the database, so it is refused here before it can be picked
+        return cursor.getInt(mIndexTransactionType) != Contract.TransactionType.TRANSFER;
+    }
+
+    public long[] getSelectedIds() {
+        long[] ids = new long[mSelectedIds.size()];
+        int index = 0;
+        for (long id : mSelectedIds) {
+            ids[index++] = id;
+        }
+        return ids;
+    }
+
+    public void setSelectedIds(long[] ids) {
+        mSelectedIds.clear();
+        for (long id : ids) {
+            mSelectedIds.add(id);
+        }
+        if (getCursor() != null) {
+            dropSelectedIdsNotOnScreen();
+        }
+        notifySelectionChanged();
+    }
+
+    public void clearSelection() {
+        if (!mSelectedIds.isEmpty()) {
+            mSelectedIds.clear();
+            notifySelectionChanged();
+        }
+    }
+
+    public void selectAll() {
+        for (int position = 0; position < getItemCount(); position++) {
+            int cursorPosition = cursorPosition(position);
+            if (!isItemAt(cursorPosition)) {
+                continue;
+            }
+            Cursor cursor = getSafeCursor(cursorPosition);
+            if (cursor != null && isSelectable(cursor)) {
+                mSelectedIds.add(cursor.getLong(mIndexTransactionId));
+            }
+        }
+        notifySelectionChanged();
+    }
+
+    private void notifySelectionChanged() {
+        notifyDataSetChanged();
+        if (mActionListener != null) {
+            mActionListener.onSelectionChanged(mSelectedIds.size());
+        }
     }
 
     private void rebuildVisibleRows() {
@@ -182,6 +271,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             return;
         }
         rebuildVisibleRows();
+        dropSelectedIdsNotOnScreen();
         notifyDataSetChanged();
     }
 
@@ -194,6 +284,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         }
         PreferenceManager.setCollapsedPeriods(stored);
         rebuildVisibleRows();
+        dropSelectedIdsNotOnScreen();
         notifyDataSetChanged();
     }
 
@@ -255,6 +346,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         }
         Date date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(mIndexTransactionDate));
         DateFormatter.applyDate(holder.mDateTextView, date);
+        holder.itemView.setActivated(mSelectedIds.contains(cursor.getLong(mIndexTransactionId)));
     }
 
     private void onBindHeaderViewHolder(HeaderViewHolder holder, Cursor cursor) {
@@ -386,7 +478,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         }
     }
 
-    /*package-local*/ class TransactionViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    /*package-local*/ class TransactionViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         private ImageView mAvatarImageView;
         private TextView mPrimaryTextView;
@@ -401,17 +493,45 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mSecondaryTextView = itemView.findViewById(R.id.secondary_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);
+            // the ripple color, because it is translucent and so reads on every light and dark
+            // background, while an xml attribute would resolve against the light theme only
+            StateListDrawable selected = new StateListDrawable();
+            selected.addState(new int[] {android.R.attr.state_activated},
+                    new ColorDrawable(ThemeEngine.getTheme().getColorRipple()));
+            itemView.setBackground(new LayerDrawable(new Drawable[] {selected, itemView.getBackground()}));
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
             if (mActionListener != null) {
                 Cursor cursor = getSafeCursor(cursorPosition(getAdapterPosition()));
-                if (cursor != null) {
+                if (cursor == null) {
+                    return;
+                }
+                if (mSelectedIds.isEmpty()) {
                     mActionListener.onTransactionClick(cursor.getLong(mIndexTransactionId));
+                } else if (isSelectable(cursor)) {
+                    long id = cursor.getLong(mIndexTransactionId);
+                    if (!mSelectedIds.remove(id)) {
+                        mSelectedIds.add(id);
+                    }
+                    notifySelectionChanged();
                 }
             }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            Cursor cursor = getSafeCursor(cursorPosition(getAdapterPosition()));
+            if (cursor == null || !isSelectable(cursor)) {
+                return false;
+            }
+            if (mSelectedIds.add(cursor.getLong(mIndexTransactionId))) {
+                notifySelectionChanged();
+            }
+            return true;
         }
     }
 
@@ -420,5 +540,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         void onHeaderClick(Date startDate, Date endDate);
 
         void onTransactionClick(long id);
+
+        void onSelectionChanged(int count);
     }
 }

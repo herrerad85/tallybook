@@ -33,6 +33,7 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import android.view.View;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Group;
@@ -45,6 +46,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
 import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelCursorListItemFragment;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.utils.DateUtils;
@@ -93,6 +95,7 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
     }
 
     private BroadcastReceiver mBroadcastReceiver;
+    private TransactionSelectionMode mSelectionMode;
 
     @Override
     public void onAttach(Context context) {
@@ -124,7 +127,23 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
 
     @Override
     protected AbstractCursorAdapter onCreateAdapter() {
-        return new TransactionCursorAdapter(this);
+        TransactionCursorAdapter adapter = new TransactionCursorAdapter(this);
+        mSelectionMode = new TransactionSelectionMode(this, this, adapter);
+        return adapter;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mSelectionMode.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mSelectionMode != null) {
+            mSelectionMode.onSaveInstanceState(outState);
+        }
     }
 
     @NonNull
@@ -340,7 +359,13 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
     }
 
     @Override
+    public void onSelectionChanged(int count) {
+        mSelectionMode.onSelectionChanged(count);
+    }
+
+    @Override
     public void onCurrentWalletChanged(long walletId) {
+        mSelectionMode.finish();
         recreateLoader();
     }
 

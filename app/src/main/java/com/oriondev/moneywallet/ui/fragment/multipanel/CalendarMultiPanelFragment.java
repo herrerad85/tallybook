@@ -45,6 +45,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
 import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelAppBarItemFragment;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.ui.view.calendar.MonthView;
@@ -95,6 +96,7 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
     private TimelineView mTimelineView;
     private AdvancedRecyclerView mAdvancedRecyclerView;
     private AbstractCursorAdapter mAbstractCursorAdapter;
+    private TransactionSelectionMode mSelectionMode;
 
     @Override
     protected View onInflateRootLayout(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -116,7 +118,9 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
         mAdvancedRecyclerView = view.findViewById(R.id.advanced_recycler_view);
         mTimelineView.setFirstDate(1900, Calendar.JANUARY, 1);
         mTimelineView.setLastDate(2100, Calendar.DECEMBER, 31);
-        mAbstractCursorAdapter = new TransactionCursorAdapter(this);
+        TransactionCursorAdapter adapter = new TransactionCursorAdapter(this);
+        mSelectionMode = new TransactionSelectionMode(this, this, adapter);
+        mAbstractCursorAdapter = adapter;
         mAdvancedRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mAdvancedRecyclerView.setEmptyText(R.string.message_no_transaction_found);
         mAdvancedRecyclerView.setAdapter(mAbstractCursorAdapter);
@@ -151,6 +155,15 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
             outState.putInt(STATE_SELECTED_MONTH, mTimelineView.getSelectedMonth());
             outState.putInt(STATE_SELECTED_DAY, mTimelineView.getSelectedDay());
         }
+        if (mSelectionMode != null) {
+            mSelectionMode.onSaveInstanceState(outState);
+        }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mSelectionMode.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override
@@ -220,6 +233,11 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
     public void onTransactionClick(long id) {
         showItemId(id);
         showSecondaryPanel();
+    }
+
+    @Override
+    public void onSelectionChanged(int count) {
+        mSelectionMode.onSelectionChanged(count);
     }
 
     @NonNull
@@ -373,6 +391,7 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
         if (mTimelineView == null) {
             return;
         }
+        mSelectionMode.finish();
         // this screen names the wallet in its toolbar, so the day list has to follow it
         loadTransactions(
                 mTimelineView.getSelectedYear(),
