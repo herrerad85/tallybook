@@ -114,6 +114,8 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
 
     public static final int DEBT_PAY = TransactionEditorRules.DEBT_PAY;
     public static final int DEBT_RECEIVE = TransactionEditorRules.DEBT_RECEIVE;
+    public static final int DEBT_PAY_IN_FULL = TransactionEditorRules.DEBT_PAY_IN_FULL;
+    public static final int DEBT_RECEIVE_IN_FULL = TransactionEditorRules.DEBT_RECEIVE_IN_FULL;
 
     public static final int SAVING_DEPOSIT = TransactionEditorRules.SAVING_DEPOSIT;
     public static final int SAVING_WITHDRAW = TransactionEditorRules.SAVING_WITHDRAW;
@@ -613,6 +615,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                     Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_DEBTS, mRules.getDebtId());
                     String[] projection = new String[] {
                             Contract.Debt.TYPE,
+                            Contract.Debt.DESCRIPTION,
+                            Contract.Debt.MONEY,
+                            Contract.Debt.PROGRESS,
                             Contract.Debt.WALLET_ID,
                             Contract.Debt.WALLET_NAME,
                             Contract.Debt.WALLET_ICON,
@@ -628,6 +633,12 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                     if (cursor != null) {
                         if (cursor.moveToFirst()) {
                             debtType = Contract.DebtType.fromValue(cursor.getInt(cursor.getColumnIndex(Contract.Debt.TYPE)));
+                            mDescriptionEditText.setText(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Debt.DESCRIPTION)));
+                            if (TransactionEditorRules.settlesInFull(intent.getIntExtra(DEBT_ACTION, 0))) {
+                                money = TransactionEditorRules.settleDebtPrefill(
+                                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Debt.MONEY)),
+                                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Debt.PROGRESS)));
+                            }
                             wallet = new Wallet(
                                     cursor.getLong(cursor.getColumnIndex(Contract.Debt.WALLET_ID)),
                                     cursor.getString(cursor.getColumnIndex(Contract.Debt.WALLET_NAME)),

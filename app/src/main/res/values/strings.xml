@@ -70,6 +70,8 @@
     <string name="action_new_wallet">"New wallet"</string>
     <string name="action_manage_wallets">"Manage wallets"</string>
     <string name="action_pay_debt">"Pay"</string>
+    <string name="action_pay_debt_in_full">"Pay in full"</string>
+    <string name="action_receive_debt_in_full">"Receive in full"</string>
     <string name="action_receive_debt">"Receive"</string>
     <string name="action_withdraw">"Withdraw"</string>
     <string name="action_deposit">"Deposit"</string>

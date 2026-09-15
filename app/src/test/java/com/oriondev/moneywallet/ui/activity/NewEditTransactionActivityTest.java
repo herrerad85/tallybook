@@ -340,6 +340,31 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
+    public void payingInFullOpensOnWhatIsLeftAndTheDebtsDescription() {
+        long debt = insertPartlyPaidDebt();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(
+                debtIntent(debt, NewEditTransactionActivity.DEBT_PAY_IN_FULL))) {
+            scenario.onActivity(activity -> {
+                assertEquals("10000 owed less the 2500 already paid, the figure the card shows",
+                        7500L, moneyPicker(activity).getCurrentMoney());
+                assertEquals("Rent", descriptionField(activity));
+            });
+        }
+    }
+
+    @Test
+    public void payingOpensOnNothingAndTheDebtsDescription() {
+        long debt = insertPartlyPaidDebt();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(
+                debtIntent(debt, NewEditTransactionActivity.DEBT_PAY))) {
+            scenario.onActivity(activity -> {
+                assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+                assertEquals("Rent", descriptionField(activity));
+            });
+        }
+    }
+
+    @Test
     public void aDebtsOwnRowKeepsTheWalletField() {
         long debt = insertDebt(mEuroWallet);
         try (ActivityScenario<NewEditTransactionActivity> scenario =
@@ -713,6 +738,33 @@ public class NewEditTransactionActivityTest {
         return insertDebt(walletId, personId, null);
     }
 
+    /** A debt of 10000 named Rent with one confirmed payment of 2500 made yesterday. */
+    private long insertPartlyPaidDebt() {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Debt.TYPE, Contract.DebtType.DEBT.getValue());
+        values.put(Contract.Debt.ICON, ICON);
+        values.put(Contract.Debt.DESCRIPTION, "Rent");
+        values.put(Contract.Debt.DATE, DateUtils.getSQLDateString(daysFromNow(-3)));
+        values.put(Contract.Debt.WALLET_ID, mEuroWallet);
+        values.put(Contract.Debt.MONEY, 10000L);
+        values.put(Contract.Debt.ARCHIVED, false);
+        values.put(Contract.Debt.INSERT_MASTER_TRANSACTION, true);
+        long debt = ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_DEBTS, values));
+        ContentValues payment = new ContentValues();
+        payment.put(Contract.Transaction.MONEY, 2500L);
+        payment.put(Contract.Transaction.DATE, DateUtils.getSQLDateTimeString(daysFromNow(-1)));
+        payment.put(Contract.Transaction.DESCRIPTION, "Rent");
+        payment.put(Contract.Transaction.CATEGORY_ID, systemCategory(Contract.CategoryTag.PAID_DEBT));
+        payment.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+        payment.put(Contract.Transaction.TYPE, NewEditTransactionActivity.TYPE_DEBT);
+        payment.put(Contract.Transaction.WALLET_ID, mEuroWallet);
+        payment.put(Contract.Transaction.DEBT_ID, debt);
+        payment.put(Contract.Transaction.CONFIRMED, true);
+        payment.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, payment);
+        return debt;
+    }
+
     private long insertDebt(long walletId, Long personId, Long placeId) {
         ContentValues values = new ContentValues();
         if (personId != null) {
@@ -773,6 +825,14 @@ public class NewEditTransactionActivityTest {
         return intent;
     }
 
+    private static Intent debtIntent(long debt, int action) {
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ID, debt);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ACTION, action);
+        return intent;
+    }
+
     private static Intent editIntent(long transactionId) {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(),
                 NewEditTransactionActivity.class);
@@ -805,6 +865,10 @@ public class NewEditTransactionActivityTest {
 
     private static String walletField(NewEditTransactionActivity activity) {
         return ((MaterialEditText) activity.findViewById(R.id.wallet_edit_text)).getTextAsString();
+    }
+
+    private static String descriptionField(NewEditTransactionActivity activity) {
+        return ((MaterialEditText) activity.findViewById(R.id.description_edit_text)).getTextAsString();
     }
 
     private static void save(NewEditTransactionActivity activity) {

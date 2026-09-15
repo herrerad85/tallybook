@@ -138,17 +138,24 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         long target = cursor.getLong(mIndexMoney);
         long progress = Math.abs(cursor.getLong(mIndexProgress));
         Contract.DebtType debtType = Contract.DebtType.fromValue(cursor.getInt(mIndexDebtType));
+        // the same test that decides between the figure left to settle and completed below, so
+        // settling in full is offered exactly when the card shows an amount to settle
+        int inFullVisibility = progress < target ? View.VISIBLE : View.GONE;
         if (debtType != null) {
             switch (debtType) {
                 case DEBT:
                     mMoneyFormatter.applyTintedExpense(holder.mMoneyTextView, currency, target);
                     holder.mPayButton.setVisibility(View.VISIBLE);
                     holder.mReceiveButton.setVisibility(View.GONE);
+                    holder.mPayInFullButton.setVisibility(inFullVisibility);
+                    holder.mReceiveInFullButton.setVisibility(View.GONE);
                     break;
                 case CREDIT:
                     mMoneyFormatter.applyTintedIncome(holder.mMoneyTextView, currency, target);
                     holder.mPayButton.setVisibility(View.GONE);
                     holder.mReceiveButton.setVisibility(View.VISIBLE);
+                    holder.mPayInFullButton.setVisibility(View.GONE);
+                    holder.mReceiveInFullButton.setVisibility(inFullVisibility);
                     break;
             }
         }
@@ -235,6 +242,8 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         private ViewGroup mButtonLayout;
         private CardButton mPayButton;
         private CardButton mReceiveButton;
+        private CardButton mPayInFullButton;
+        private CardButton mReceiveInFullButton;
 
         /*package-local*/ DebtViewHolder(View itemView) {
             super(itemView);
@@ -249,9 +258,13 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
             mButtonLayout = itemView.findViewById(R.id.button_bar_layout);
             mPayButton = itemView.findViewById(R.id.pay_button);
             mReceiveButton = itemView.findViewById(R.id.receive_button);
+            mPayInFullButton = itemView.findViewById(R.id.pay_in_full_button);
+            mReceiveInFullButton = itemView.findViewById(R.id.receive_in_full_button);
             itemView.setOnClickListener(this);
             mPayButton.setOnClickListener(this);
             mReceiveButton.setOnClickListener(this);
+            mPayInFullButton.setOnClickListener(this);
+            mReceiveInFullButton.setOnClickListener(this);
         }
 
         @Override
@@ -265,6 +278,10 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
                         mActionListener.onPayClick(id);
                     } else if (view == mReceiveButton) {
                         mActionListener.onReceiveClick(id);
+                    } else if (view == mPayInFullButton) {
+                        mActionListener.onPayInFullClick(id);
+                    } else if (view == mReceiveInFullButton) {
+                        mActionListener.onReceiveInFullClick(id);
                     } else {
                         mActionListener.onDebtClick(id);
                     }
@@ -280,5 +297,9 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         void onPayClick(long id);
 
         void onReceiveClick(long id);
+
+        void onPayInFullClick(long id);
+
+        void onReceiveInFullClick(long id);
     }
 }

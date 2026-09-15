@@ -133,6 +133,44 @@ public class TransactionEditorRulesTest {
     }
 
     @Test
+    public void settlingInFullNamesTheSameKindAsItsPlainAction() {
+        assertEquals(Contract.DebtType.DEBT,
+                TransactionEditorRules.debtTypeFor(TransactionEditorRules.DEBT_PAY_IN_FULL));
+        assertEquals(Contract.DebtType.CREDIT,
+                TransactionEditorRules.debtTypeFor(TransactionEditorRules.DEBT_RECEIVE_IN_FULL));
+    }
+
+    @Test
+    public void onlyTheInFullActionsSettleInFull() {
+        assertTrue(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_PAY_IN_FULL));
+        assertTrue(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_RECEIVE_IN_FULL));
+        assertFalse("pay keeps opening on nothing",
+                TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_PAY));
+        assertFalse(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_RECEIVE));
+        assertFalse(TransactionEditorRules.settlesInFull(0));
+    }
+
+    // ---- what settling a debt in full opens on ---------------------------------------------
+
+    @Test
+    public void settlingInFullOpensOnWhatIsLeftToSettle() {
+        assertEquals(7500L, TransactionEditorRules.settleDebtPrefill(10000L, 2500L));
+    }
+
+    @Test
+    public void settlingInFullReadsADebtsNegativeProgressAsPaid() {
+        assertEquals("a debt's payments are expenses and sum negative, and reading the sign as it "
+                + "comes would offer more than the debt itself",
+                7500L, TransactionEditorRules.settleDebtPrefill(10000L, -2500L));
+    }
+
+    @Test
+    public void settlingInFullADebtPaidPastItsTargetOffersNothing() {
+        assertEquals(0L, TransactionEditorRules.settleDebtPrefill(10000L, -12000L));
+        assertEquals(0L, TransactionEditorRules.settleDebtPrefill(10000L, 10000L));
+    }
+
+    @Test
     public void eachKindOfDebtIsFiledUnderItsOwnPaidCategory() {
         assertEquals(Contract.CategoryTag.PAID_DEBT,
                 TransactionEditorRules.debtCategoryTag(Contract.DebtType.DEBT));

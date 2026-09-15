@@ -172,6 +172,24 @@ public class DebtListFragment extends CursorListFragment implements DebtCursorAd
     }
 
     @Override
+    public void onPayInFullClick(long id) {
+        Intent intent = new Intent(getActivity(), NewEditTransactionActivity.class);
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ID, id);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ACTION, NewEditTransactionActivity.DEBT_PAY_IN_FULL);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onReceiveInFullClick(long id) {
+        Intent intent = new Intent(getActivity(), NewEditTransactionActivity.class);
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ID, id);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ACTION, NewEditTransactionActivity.DEBT_RECEIVE_IN_FULL);
+        startActivity(intent);
+    }
+
+    @Override
     protected boolean shouldRefreshOnCurrentWalletChange() {
         // this fragment content is dependant on the current
         // wallet when the loader is created, so the query

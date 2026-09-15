@@ -177,6 +177,26 @@
             style="?android:attr/buttonBarStyle" >
 
             <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
+                android:id="@+id/pay_in_full_button"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="@dimen/material_component_lists_card_action_button_padding"
+                android:layout_marginStart="@dimen/material_component_lists_card_action_button_padding"
+                android:text="@string/action_pay_debt_in_full"
+                android:background="?attr/selectableItemBackground"
+                style="?android:attr/buttonBarButtonStyle" />
+
+            <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
+                android:id="@+id/receive_in_full_button"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="@dimen/material_component_lists_card_action_button_padding"
+                android:layout_marginStart="@dimen/material_component_lists_card_action_button_padding"
+                android:text="@string/action_receive_debt_in_full"
+                android:background="?attr/selectableItemBackground"
+                style="?android:attr/buttonBarButtonStyle" />
+
+            <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
                 android:id="@+id/pay_button"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"

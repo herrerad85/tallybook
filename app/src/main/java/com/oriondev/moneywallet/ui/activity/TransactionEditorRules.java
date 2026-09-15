@@ -50,6 +50,8 @@ public class TransactionEditorRules implements Serializable {
 
     public static final int DEBT_PAY = 1;
     public static final int DEBT_RECEIVE = 2;
+    public static final int DEBT_PAY_IN_FULL = 3;
+    public static final int DEBT_RECEIVE_IN_FULL = 4;
 
     public static final int SAVING_DEPOSIT = 1;
     public static final int SAVING_WITHDRAW = 2;
@@ -135,12 +137,27 @@ public class TransactionEditorRules implements Serializable {
     public static Contract.DebtType debtTypeFor(int debtAction) {
         switch (debtAction) {
             case DEBT_PAY:
+            case DEBT_PAY_IN_FULL:
                 return Contract.DebtType.DEBT;
             case DEBT_RECEIVE:
+            case DEBT_RECEIVE_IN_FULL:
                 return Contract.DebtType.CREDIT;
             default:
                 return null;
         }
+    }
+
+    /** Only the in full actions open on an amount; pay and receive open on nothing. */
+    public static boolean settlesInFull(int debtAction) {
+        return debtAction == DEBT_PAY_IN_FULL || debtAction == DEBT_RECEIVE_IN_FULL;
+    }
+
+    /**
+     * What settling in full opens on, which is the figure the debt card shows as left to settle.
+     * A debt's payments sum negative, hence the abs, and one paid past its target offers nothing.
+     */
+    public static long settleDebtPrefill(long target, long progress) {
+        return Math.max(target - Math.abs(progress), 0L);
     }
 
     /** The category a new debt row is filed under, or null when the kind is not known. */
