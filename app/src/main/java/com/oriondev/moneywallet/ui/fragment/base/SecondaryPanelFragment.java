@@ -195,6 +195,8 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
             } else {
                 mEmptyLayout.setVisibility(View.VISIBLE);
                 mMainLayout.setVisibility(View.GONE);
+                // a panel with nothing to show must not stay full screen on the one panel layout
+                navigateBackSafely();
             }
         } else {
             mCachedId = itemId;
