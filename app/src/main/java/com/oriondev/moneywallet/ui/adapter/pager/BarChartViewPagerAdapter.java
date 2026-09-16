@@ -35,6 +35,8 @@ import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.PeriodDetailSummaryData;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
+import java.util.Locale;
+
 /**
  * Created by andrea on 16/08/18.
  */
@@ -67,7 +69,7 @@ public class BarChartViewPagerAdapter  extends PagerAdapter {
 
                 @Override
                 public String getFormattedValue(float value) {
-                    return String.valueOf((int) value + 1);
+                    return String.format(Locale.getDefault(), "%d", (int) value + 1);
                 }
 
             });

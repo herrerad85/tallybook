@@ -37,6 +37,8 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.OverviewData;
 
+import java.util.Locale;
+
 /**
  * Created by andrea on 17/08/18.
  */
@@ -80,7 +82,7 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
 
                             @Override
                             public String getFormattedValue(float value) {
-                                return String.valueOf((int) value + 1);
+                                return String.format(Locale.getDefault(), "%d", (int) value + 1);
                             }
 
                         });
@@ -109,7 +111,7 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
 
                             @Override
                             public String getFormattedValue(float value) {
-                                return String.valueOf((int) value + 1);
+                                return String.format(Locale.getDefault(), "%d", (int) value + 1);
                             }
 
                         });
