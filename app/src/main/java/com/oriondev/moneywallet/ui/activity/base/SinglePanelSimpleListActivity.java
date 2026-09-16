@@ -56,6 +56,10 @@ public abstract class SinglePanelSimpleListActivity extends SinglePanelActivity 
 
     @Override
     protected void onViewCreated(Bundle savedInstanceState) {
+        recreateLoader();
+    }
+
+    protected void recreateLoader() {
         getSupportLoaderManager().restartLoader(DEFAULT_LOADER_ID, null, this);
     }
 
@@ -84,7 +88,7 @@ public abstract class SinglePanelSimpleListActivity extends SinglePanelActivity 
 
     @Override
     public void onRefresh() {
-        getSupportLoaderManager().restartLoader(DEFAULT_LOADER_ID, null, this);
+        recreateLoader();
         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.REFRESHING);
     }
 }
