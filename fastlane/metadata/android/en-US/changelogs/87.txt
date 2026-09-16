@@ -1,0 +1,3 @@
+New: long press a transaction to select several, then delete them together or move them to another wallet or category. Pay in full on a debt card. The month row follows the calendar day strip. A theme color shows while it is picked.
+
+Fixes: the calendar strip and the charts write numbers in the digits of the app's language. The Overview updates after an edit made inside it. A budget no longer hides a transfer into a removed wallet. Nine zero decimal currencies now store two.

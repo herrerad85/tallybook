@@ -20,6 +20,21 @@
 
 <changelog>
 
+    <version versionName="1.9.0" versionDate="Sep 15, 2026">
+        <change>[b]New![/b] Long press a transaction to select it, tap others to add them, then delete them together or move them to another wallet or category.</change>
+        <change>[b]New![/b] A debt card offers Pay in full and a credit card Receive in full, opening the editor on what is left, and every debt payment opens with the debt's description filled in.</change>
+        <change>[b]New![/b] The month row above the calendar day strip follows the strip as you scroll it, and tapping the marked month sends the strip to the first of that month.</change>
+        <change>[b]New![/b] A theme color shows on the screen while it is being picked, before OK.</change>
+        <change>The app draws behind the status and navigation bars on every Android version, and scrolling content stays reachable under them.</change>
+        <change>The calendar strip, the chart axes and the pie chart percentages write their numbers in the digits of the app's language.</change>
+        <change>The wallet name under the title on the calendar and on a category's transaction list is no longer cut off.</change>
+        <change>Deleting the open item on the wide two panel layout and then rotating no longer shows an empty panel full screen.</change>
+        <change>Nine currencies that stored no decimals now store two: AMD, CRC, ETB, GYD, MNT, MUR, RSD, TZS and UZS. Amounts already stored keep their value.</change>
+        <change>A settings row no longer loses its title after its color or the theme type changes in a dark theme.</change>
+        <change>A subcategory under a category kept out of the reports now says so, since none of its money reaches a report.</change>
+        <change>The Overview and the period screens update after a transaction is edited or deleted from inside them.</change>
+        <change>A budget no longer hides a transfer into a wallet that was removed from it.</change>
+    </version>
     <version versionName="1.8.0" versionDate="Sep 9, 2026">
         <change>[b]New![/b] Tap into the amount on the keypad to put a cursor there, then type or delete at that spot.</change>
         <change>[b]New![/b] A period's transactions fold under their header on the transactions list, so a long list reads as a column of period totals.</change>

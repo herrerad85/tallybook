@@ -35,8 +35,8 @@ android {
         applicationId "io.github.herrerad85.tallybook"
         minSdk 24
         targetSdk 35
-        versionCode 86
-        versionName "1.8.0"
+        versionCode 87
+        versionName "1.9.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField('String', 'API_KEY_OPEN_EXCHANGE_RATES', ApiKey_OpenExchangeRates)
     }
