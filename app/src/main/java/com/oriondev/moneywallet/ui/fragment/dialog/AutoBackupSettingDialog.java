@@ -24,6 +24,8 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -69,11 +71,13 @@ public class AutoBackupSettingDialog extends DialogFragment {
     private SwitchCompat mServiceEnabledSwitchCompat;
     private CheckBox mOnlyWiFiCheckBox;
     private CheckBox mOnlyDataChangedCheckBox;
+    private CheckBox mExportCsvCheckBox;
     private TextView mOffsetTextView;
     private SeekBar mOffsetSeekBar;
     private TextView mFolderTextView;
     private TextView mFailureTextView;
     private EditText mPasswordEditText;
+    private TextView mCsvPasswordTextView;
 
     private IFile mFolder;
 
@@ -98,11 +102,13 @@ public class AutoBackupSettingDialog extends DialogFragment {
         mServiceEnabledSwitchCompat = view.findViewById(R.id.auto_backup_enable_switch);
         mOnlyWiFiCheckBox = view.findViewById(R.id.auto_backup_wifi_check_box);
         mOnlyDataChangedCheckBox = view.findViewById(R.id.auto_backup_data_change_check_box);
+        mExportCsvCheckBox = view.findViewById(R.id.auto_backup_export_csv_check_box);
         mOffsetTextView = view.findViewById(R.id.auto_backup_offset_text_view);
         mOffsetSeekBar = view.findViewById(R.id.auto_backup_offset_seek_bar);
         mFolderTextView = view.findViewById(R.id.auto_backup_folder_text_view);
         mFailureTextView = view.findViewById(R.id.auto_backup_failure_text_view);
         mPasswordEditText = view.findViewById(R.id.auto_backup_password_edit_text);
+        mCsvPasswordTextView = view.findViewById(R.id.auto_backup_csv_password_text_view);
         // set listeners
         mOffsetSeekBar.setMax((OFFSET_MAX_HOURS - OFFSET_MIN_HOURS) / OFFSET_BETWEEN_HOURS);
         mOffsetSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -131,6 +137,32 @@ public class AutoBackupSettingDialog extends DialogFragment {
             }
 
         });
+        mExportCsvCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                AutoBackupSettingDialog.this.onCsvPasswordChanged();
+            }
+
+        });
+        mPasswordEditText.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // not used
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // not used
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                AutoBackupSettingDialog.this.onCsvPasswordChanged();
+            }
+
+        });
         mFolderTextView.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -149,6 +181,7 @@ public class AutoBackupSettingDialog extends DialogFragment {
             mServiceEnabledSwitchCompat.setChecked(BackendManager.isAutoBackupEnabled(mBackendId));
             mOnlyWiFiCheckBox.setChecked(BackendManager.isAutoBackupOnWiFiOnly(mBackendId));
             mOnlyDataChangedCheckBox.setChecked(BackendManager.isAutoBackupWhenDataIsChangedOnly(mBackendId));
+            mExportCsvCheckBox.setChecked(BackendManager.isAutoBackupExportCsv(mBackendId));
             mOffsetSeekBar.setProgress((BackendManager.getAutoBackupHoursOffset(mBackendId) - OFFSET_MIN_HOURS) / OFFSET_BETWEEN_HOURS);
             mFolder = BackendServiceFactory.getFile(mBackendId, BackendManager.getAutoBackupFolder(mBackendId));
             mPasswordEditText.setText(BackendManager.getAutoBackupPassword(mBackendId));
@@ -156,6 +189,7 @@ public class AutoBackupSettingDialog extends DialogFragment {
         onProgressChanged(mOffsetSeekBar.getProgress());
         onFolderChanged();
         onServiceEnabledChanged();
+        onCsvPasswordChanged();
         return dialog;
     }
 
@@ -210,6 +244,11 @@ public class AutoBackupSettingDialog extends DialogFragment {
         mFailureTextView.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
+    private void onCsvPasswordChanged() {
+        boolean show = mExportCsvCheckBox.isChecked() && mPasswordEditText.getText().length() > 0;
+        mCsvPasswordTextView.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
     /**
      * A folder that is stored but cannot be read comes back from
      * {@link BackendServiceFactory#getFile} as null, and so does one that is not stored when the
@@ -247,6 +286,7 @@ public class AutoBackupSettingDialog extends DialogFragment {
         BackendManager.setAutoBackupEnabled(mBackendId, mServiceEnabledSwitchCompat.isChecked());
         BackendManager.setAutoBackupOnWiFiOnly(mBackendId, mOnlyWiFiCheckBox.isChecked());
         BackendManager.setAutoBackupWhenDataIsChangedOnly(mBackendId, mOnlyDataChangedCheckBox.isChecked());
+        BackendManager.setAutoBackupExportCsv(mBackendId, mExportCsvCheckBox.isChecked());
         BackendManager.setAutoBackupHoursOffset(mBackendId, OFFSET_MIN_HOURS + (mOffsetSeekBar.getProgress() * OFFSET_BETWEEN_HOURS));
         BackendManager.setAutoBackupFolder(mBackendId, mFolder != null ? mFolder.encodeToString() : null);
         BackendManager.setAutoBackupPassword(mBackendId, mPasswordEditText.getText().toString());

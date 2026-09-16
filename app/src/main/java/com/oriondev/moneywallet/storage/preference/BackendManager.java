@@ -36,6 +36,7 @@ public class BackendManager {
     private static final String BACKEND_AUTO_BACKUP_ENABLED = "auto_backup_enabled_";
     private static final String BACKEND_AUTO_BACKUP_WIFI_ONLY = "auto_backup_wifi_only_";
     private static final String BACKEND_AUTO_BACKUP_DATA_CHANGED_ONLY = "auto_backup_data_changed_only_";
+    private static final String BACKEND_AUTO_BACKUP_EXPORT_CSV = "auto_backup_export_csv_";
     private static final String BACKEND_AUTO_BACKUP_OFFSET = "auto_backup_hour_offset_";
     private static final String BACKEND_AUTO_BACKUP_FOLDER = "auto_backup_folder_";
     private static final String BACKEND_AUTO_BACKUP_PASSWORD = "auto_backup_password_";
@@ -116,6 +117,10 @@ public class BackendManager {
         mPreferences.edit().putBoolean(BACKEND_AUTO_BACKUP_WIFI_ONLY + backendId, wifiOnly).apply();
     }
 
+    public static void setAutoBackupExportCsv(String backendId, boolean exportCsv) {
+        mPreferences.edit().putBoolean(BACKEND_AUTO_BACKUP_EXPORT_CSV + backendId, exportCsv).apply();
+    }
+
     public static void setAutoBackupWhenDataIsChangedOnly(String backendId, boolean dataChangedOnly) {
         mPreferences.edit().putBoolean(BACKEND_AUTO_BACKUP_DATA_CHANGED_ONLY + backendId, dataChangedOnly).apply();
     }
@@ -146,6 +151,10 @@ public class BackendManager {
 
     public static boolean isAutoBackupOnWiFiOnly(String backendId) {
         return mPreferences.getBoolean(BACKEND_AUTO_BACKUP_WIFI_ONLY + backendId, false);
+    }
+
+    public static boolean isAutoBackupExportCsv(String backendId) {
+        return mPreferences.getBoolean(BACKEND_AUTO_BACKUP_EXPORT_CSV + backendId, false);
     }
 
     public static boolean isAutoBackupWhenDataIsChangedOnly(String backendId) {
