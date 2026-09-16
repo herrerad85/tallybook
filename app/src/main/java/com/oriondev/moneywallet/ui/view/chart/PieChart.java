@@ -35,6 +35,8 @@ import android.view.View;
 
 import com.oriondev.moneywallet.R;
 
+import java.text.NumberFormat;
+
 /**
  * Created by andrea on 13/08/18.
  */
@@ -85,6 +87,8 @@ public class PieChart extends View {
     private int mHoleColor;
     private int mLineColor;
 
+    private NumberFormat mPercentFormat;
+
     public PieChart(Context context) {
         super(context);
         initialize(context, null, 0, 0);
@@ -112,6 +116,7 @@ public class PieChart extends View {
         mSlicePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLinePaint.setTextAlign(Paint.Align.CENTER);
+        mPercentFormat = NumberFormat.getPercentInstance();
         // obtain attributes
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PieChart, defStyleAttr, defStyleRes);
         try {
@@ -137,6 +142,14 @@ public class PieChart extends View {
                 a.recycle();
             }
         }
+    }
+
+    /**
+     * The label drawn on a wedge, in the digits and the percent sign of the language the app
+     * is in. Package visible so the test can read it.
+     */
+    String percentLabel(float sweepAngle) {
+        return mPercentFormat.format(Math.round(sweepAngle * 100 / 360f) / 100.0);
     }
 
     public void setHoleEnabled(boolean enabled) {
@@ -340,7 +353,7 @@ public class PieChart extends View {
             }
             // draw percentage
             if (mPercentageEnabled) {
-                String label = Math.round(sweepAngle * 100 / 360f) + "%";
+                String label = percentLabel(sweepAngle);
                 mLinePaint.getTextBounds(label, 0, label.length(), mTextBounds);
                 // half the advance, which is what a centered alignment lays the string out around
                 float halfAdvance = mLinePaint.measureText(label) / 2;
