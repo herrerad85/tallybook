@@ -89,6 +89,8 @@
     <dimen name="material_component_dialog_lists_with_avatar_text_start_margin">24dp</dimen>
     <dimen name="material_component_dialog_lists_with_avatar_text_end_margin">24dp</dimen>
 
+    <dimen name="currency_list_fab_clearance">72dp</dimen>
+
     <dimen name="material_component_lists_header_height">48dp</dimen>
     <dimen name="material_component_lists_header_start_margin">16dp</dimen>
     <dimen name="material_component_lists_header_end_margin">16dp</dimen>

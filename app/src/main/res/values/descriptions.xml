@@ -23,6 +23,8 @@
     tools:ignore="MissingTranslation">
     <string name="description_backup_service_icon">"Backup service icon"</string>
     <string name="description_currency_icon">"Currency icon"</string>
+    <string name="description_currency_favorite">"Pin %1$s"</string>
+    <string name="description_currency_unpin">"Unpin %1$s"</string>
     <string name="description_wallet_icon">"Wallet icon"</string>
     <string name="description_navigation_drawer_open">"Open navigation drawer"</string>
     <string name="description_navigation_drawer_close">"Close navigation drawer"</string>

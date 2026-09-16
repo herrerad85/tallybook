@@ -20,8 +20,10 @@
 package com.oriondev.moneywallet.ui.activity;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -35,6 +37,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.CurrencyUnit;
@@ -121,6 +124,19 @@ public class CurrencyListActivity extends SinglePanelSimpleListActivity implemen
         }
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setEmptyText(R.string.message_no_currency_found);
+        if (mActivityMode == CURRENCY_MANAGER) {
+            // The button covers the star of the last row otherwise, and nothing can scroll it out
+            // from under it.
+            recyclerView.getRecyclerView().addItemDecoration(new RecyclerView.ItemDecoration() {
+
+                @Override
+                public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                    boolean lastItem = parent.getChildAdapterPosition(view) == state.getItemCount() - 1;
+                    outRect.bottom = lastItem ? getResources().getDimensionPixelSize(R.dimen.currency_list_fab_clearance) : 0;
+                }
+
+            });
+        }
     }
 
     @Override
@@ -164,7 +180,7 @@ public class CurrencyListActivity extends SinglePanelSimpleListActivity implemen
                     Contract.Currency.ISO + " LIKE '%'||?||'%'";
             selectionArgs = new String[] {mQuery, mQuery};
         }
-        String sortBy = Contract.Currency.NAME;
+        String sortBy = Contract.Currency.FAVOURITE + " DESC, " + Contract.Currency.NAME + " ASC";
         return new CursorLoader(this, uri, projection, selection, selectionArgs, sortBy);
     }
 
@@ -186,9 +202,9 @@ public class CurrencyListActivity extends SinglePanelSimpleListActivity implemen
 
     @Override
     public void onCurrencyFavourite(String iso, boolean newValue) {
-        // TODO handle it properly: if we update the database directly than the uri will be notify
-        // TODO to be changed and the content provider will re-query the database. At the end the
-        // TODO adapter will be refreshed and the new item will be at the top of the list.
-        // TODO we need a wrapper to keep the data static until a refresh occurs.
+        ContentValues values = new ContentValues();
+        values.put(Contract.Currency.FAVOURITE, newValue);
+        Uri uri = Uri.withAppendedPath(DataContentProvider.CONTENT_CURRENCIES, iso);
+        getContentResolver().update(uri, values, null, null);
     }
 }
