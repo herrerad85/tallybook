@@ -83,10 +83,11 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
                         if (barData.getDataSetCount() > 1) {
                             xAxis.setCenterAxisLabels(true);
                             xAxis.setAxisMinimum(0f);
+                            xAxis.setAxisMaximum(mOverviewData.getPeriodCount());
                         } else {
-                            xAxis.setAxisMinimum(-1f);
+                            xAxis.setAxisMinimum(-0.5f);
+                            xAxis.setAxisMaximum(mOverviewData.getPeriodCount() - 0.5f);
                         }
-                        xAxis.setAxisMaximum(mOverviewData.getPeriodCount());
                         xAxis.setValueFormatter(PERIOD_NUMBER_FORMATTER);
                         YAxis leftAxis = barChart.getAxisLeft();
                         leftAxis.setSpaceTop(35f);
@@ -107,8 +108,8 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
                         lineData.setHighlightEnabled(false);
                         XAxis xAxis = lineChart.getXAxis();
                         xAxis.setGranularity(1f);
-                        xAxis.setAxisMinimum(-1f);
-                        xAxis.setAxisMaximum(mOverviewData.getPeriodCount());
+                        xAxis.setAxisMinimum(-0.5f);
+                        xAxis.setAxisMaximum(mOverviewData.getPeriodCount() - 0.5f);
                         xAxis.setValueFormatter(PERIOD_NUMBER_FORMATTER);
                         YAxis leftAxis = lineChart.getAxisLeft();
                         leftAxis.setSpaceTop(35f);
