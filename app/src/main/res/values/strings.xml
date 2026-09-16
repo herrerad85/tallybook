@@ -173,11 +173,13 @@
     <string name="hint_auto_backup_enabled">"Service enabled"</string>
     <string name="hint_auto_backup_wifi_only">"Only on WiFi network"</string>
     <string name="hint_auto_backup_only_if_data_changed">"Only if data is changed"</string>
+    <string name="hint_auto_backup_export_csv">"Also export transactions as CSV"</string>
     <string name="hint_auto_backup_every_n_hours">"Every %d hours"</string>
     <string name="hint_auto_backup_folder">"Folder"</string>
     <string name="hint_auto_backup_folder_not_chosen">"Not chosen"</string>
     <string name="hint_auto_backup_folder_unavailable">"Not available"</string>
     <string name="message_auto_backup_folder_required">"Choose a folder before turning automatic backup on."</string>
+    <string name="message_auto_backup_csv_not_password_protected">"The CSV file is not password protected."</string>
     <string name="message_auto_backup_disabled_after_failure">"Automatic backup was turned off after this backup service failed. Check it before turning automatic backup back on."</string>
     <string name="message_backend_open_a_folder">"Open a folder to choose it."</string>
 
@@ -594,6 +596,7 @@
     <string name="notification_title_backup_restoring">"Backup restoring"</string>
     <string name="notification_title_backup_creation_failed">"Backup creation failed"</string>
     <string name="notification_title_backup_restoring_failed">"Backup restoring failed"</string>
+    <string name="notification_title_csv_export_failed">"Scheduled CSV export failed"</string>
     <string name="notification_content_downloading_data">"Downloading updated data…"</string>
     <string name="notification_content_caching_data">"Storing updated data…"</string>
     <string name="notification_content_error_message">"Error: %s"</string>
@@ -606,6 +609,7 @@
     <string name="notification_content_backup_error_backend">"There was an error with the backend and the auto backup has been disabled. Check if there is any problem."</string>
     <string name="notification_content_backup_error_internal">"There was an internal error during the operation, which is probably a bug. Please report this message to the developer: %s"</string>
     <string name="notification_content_backup_error_location">"The backup location is no longer available, so the automatic backup did not run. Open the backup settings and choose the folder again."</string>
+    <string name="notification_content_csv_export_error">"The backup was saved, but the CSV export failed: %s"</string>
     <string name="notification_content_backup_error_location_unset">"No folder is set for this backup, so the automatic backup did not run. Open the backup settings and choose one."</string>
     <string name="notification_action_retry">"Retry"</string>
     <string name="message_error_network_connection">"network connection"</string>

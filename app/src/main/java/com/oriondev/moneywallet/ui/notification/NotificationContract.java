@@ -41,6 +41,7 @@ public class NotificationContract {
     public static final int NOTIFICATION_ID_EXCHANGE_RATE_PROGRESS = 23456;
     public static final int NOTIFICATION_ID_EXCHANGE_RATE_ERROR = 23457;
     public static final int NOTIFICATION_ID_REMINDER = 23458;
+    public static final int NOTIFICATION_ID_CSV_EXPORT_ERROR = 23459;
 
     public static void initializeNotificationChannels(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -26,6 +26,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+import androidx.annotation.StringRes;
 import androidx.core.app.NotificationCompat;
 
 import com.oriondev.moneywallet.R;
@@ -33,13 +34,20 @@ import com.oriondev.moneywallet.api.BackendException;
 import com.oriondev.moneywallet.api.BackendServiceFactory;
 import com.oriondev.moneywallet.api.IBackendServiceAPI;
 import com.oriondev.moneywallet.broadcast.AutoBackupBroadcastReceiver;
+import com.oriondev.moneywallet.model.DataFormat;
 import com.oriondev.moneywallet.model.IFile;
+import com.oriondev.moneywallet.storage.database.data.AbstractDataExporter;
 import com.oriondev.moneywallet.storage.preference.BackendManager;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.notification.NotificationContract;
+import com.oriondev.moneywallet.utils.ProgressInputStream;
 
+import org.apache.commons.io.FileUtils;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -218,6 +226,7 @@ public class AutoBackupJobService extends JobService {
             notifyMessage(context, context.getString(R.string.notification_content_backup_error_wifi_network));
             return;
         }
+        IBackendServiceAPI backendServiceAPI;
         try {
             // Built inside the block, so a service API that throws a BackendException the app
             // cannot recover from while it is built turns automatic backup off like any other
@@ -228,13 +237,50 @@ public class AutoBackupJobService extends JobService {
             // BackupHandlerIntentService, which the backup screen uses, builds its backend
             // inside the block that disables, so that failure already turned the service off
             // there.
-            IBackendServiceAPI backendServiceAPI = BackendServiceFactory.getServiceAPIById(context, backendId);
+            backendServiceAPI = BackendServiceFactory.getServiceAPIById(context, backendId);
             BackupOperation.createAndUpload(context, backendServiceAPI, folder, BackendManager.getAutoBackupPassword(backendId), null);
         } catch (BackendException e) {
             if (!e.isRecoverable()) {
                 BackendManager.disableAutoBackupAfterFailure(backendId);
             }
             throw e;
+        }
+        // The listener is not null because the upload wraps the file in a ProgressInputStream,
+        // which calls it without a check. A failure does not disable auto backup, since the
+        // backup itself is already uploaded.
+        try {
+            if (BackendManager.isAutoBackupExportCsv(backendId)) {
+                exportCsvAndUpload(context, backendServiceAPI, folder);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Scheduled CSV export failed for '" + backendId + "': " + e.getMessage());
+            notifyMessage(context, context.getString(R.string.notification_content_csv_export_error, e.getMessage()),
+                    R.string.notification_title_csv_export_failed, NotificationContract.NOTIFICATION_ID_CSV_EXPORT_ERROR);
+        }
+    }
+
+    private static void exportCsvAndUpload(Context context, IBackendServiceAPI backendServiceAPI, IFile remoteFolder) throws Exception {
+        File localFolder = new File(context.getCacheDir(), "csv_export/" + UUID.randomUUID());
+        try {
+            File csvFile;
+            synchronized (BackupOperation.LOCK) {
+                FileUtils.forceMkdir(localFolder);
+                String[] optionalColumns = new String[]{AbstractDataExporter.COLUMN_EVENT,
+                        AbstractDataExporter.COLUMN_PEOPLE, AbstractDataExporter.COLUMN_PLACE,
+                        AbstractDataExporter.COLUMN_NOTE};
+                csvFile = ImportExportIntentService.exportTransactions(context, DataFormat.CSV, localFolder,
+                        null, null, null, true, optionalColumns).getOutputFile();
+            }
+            backendServiceAPI.uploadFile(remoteFolder, csvFile, new ProgressInputStream.UploadProgressListener() {
+
+                @Override
+                public void onUploadProgressUpdate(int percentage) {
+                    // not used
+                }
+
+            });
+        } finally {
+            FileUtils.deleteQuietly(localFolder);
         }
     }
 
@@ -265,12 +311,17 @@ public class AutoBackupJobService extends JobService {
     }
 
     private static void notifyMessage(Context context, String message) {
+        notifyMessage(context, message, R.string.notification_title_backup_creation_failed,
+                NotificationContract.NOTIFICATION_ID_BACKUP_ERROR);
+    }
+
+    private static void notifyMessage(Context context, String message, @StringRes int title, int notificationId) {
         TaskReporter reporter = new TaskReporter(context);
         NotificationCompat.Builder builder = reporter.newNotification(NotificationContract.NOTIFICATION_CHANNEL_ERROR)
-                .setContentTitle(context.getString(R.string.notification_title_backup_creation_failed))
+                .setContentTitle(context.getString(title))
                 .setCategory(NotificationCompat.CATEGORY_ERROR)
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message));
-        reporter.showNotification(NotificationContract.NOTIFICATION_ID_BACKUP_ERROR, builder);
+        reporter.showNotification(notificationId, builder);
     }
 }
