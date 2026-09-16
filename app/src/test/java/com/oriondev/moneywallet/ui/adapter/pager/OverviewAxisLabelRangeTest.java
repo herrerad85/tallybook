@@ -26,7 +26,10 @@ import android.widget.FrameLayout;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.RadarChart;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -49,11 +52,15 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
- * The period numbers the overview radar page writes around its spokes. It used to write the raw
- * index and read one behind the bar and line pages.
+ * The period numbers the overview bar and line pages write along their x axis. Both pages used to
+ * leave room for a period that is not there, so twelve periods drew a thirteenth label and five
+ * periods drew a zero and a six, while the radar page wrote the raw index and read one behind the
+ * other two.
  */
 @RunWith(RobolectricTestRunner.class)
 public class OverviewAxisLabelRangeTest {
@@ -100,6 +107,71 @@ public class OverviewAxisLabelRangeTest {
         adapter.setData(new OverviewData(barData(count), lineData(count), radarData(count),
                 periods(count)));
         return (View) adapter.instantiateItem(new FrameLayout(themed()), position);
+    }
+
+    private static List<String> drawnLabels(XAxis axis) {
+        List<String> labels = new ArrayList<>();
+        for (int at = 0; at < axis.mEntryCount; at++) {
+            labels.add(axis.getValueFormatter().getFormattedValue(axis.mEntries[at]));
+        }
+        return labels;
+    }
+
+    private static void assertLabelsWithin(String where, List<String> labels, int count) {
+        assertFalse(where + " drew no labels at all, so there is nothing to check", labels.isEmpty());
+        for (String label : labels) {
+            assertTrue(where + " drew " + labels + ", and " + label + " is not a period number"
+                            + " within 1 and " + count,
+                    label.matches("\\d+") && Integer.parseInt(label) >= 1
+                            && Integer.parseInt(label) <= count);
+        }
+    }
+
+    private static void assertHalfPeriodMargins(String where, XAxis axis, int count) {
+        assertEquals(where + " starts its axis somewhere other than half a period before the first",
+                -0.5f, axis.getAxisMinimum(), 0f);
+        assertEquals(where + " ends its axis somewhere other than half a period after the last",
+                count - 0.5f, axis.getAxisMaximum(), 0f);
+    }
+
+    private void assertBarLabelsWithin(int count) {
+        BarChart chart = overviewPage(0, count).findViewById(R.id.bar_chart_view);
+        assertNotNull("the page carries no bar chart, so there are no axis labels to read", chart);
+        // the adapter moves the axis bounds after the chart took its data, so the chart has to be
+        // told again before it holds the label positions those bounds produce
+        chart.notifyDataSetChanged();
+        String where = "the overview bar chart over " + count + " periods";
+        assertLabelsWithin(where, drawnLabels(chart.getXAxis()), count);
+        assertHalfPeriodMargins(where, chart.getXAxis(), count);
+    }
+
+    private void assertLineLabelsWithin(int count) {
+        LineChart chart = overviewPage(1, count).findViewById(R.id.line_chart_view);
+        assertNotNull("the page carries no line chart, so there are no axis labels to read", chart);
+        chart.notifyDataSetChanged();
+        String where = "the overview line chart over " + count + " periods";
+        assertLabelsWithin(where, drawnLabels(chart.getXAxis()), count);
+        assertHalfPeriodMargins(where, chart.getXAxis(), count);
+    }
+
+    @Test
+    public void theBarAxisStaysWithinTwelvePeriods() {
+        assertBarLabelsWithin(12);
+    }
+
+    @Test
+    public void theBarAxisStaysWithinFivePeriods() {
+        assertBarLabelsWithin(5);
+    }
+
+    @Test
+    public void theLineAxisStaysWithinTwelvePeriods() {
+        assertLineLabelsWithin(12);
+    }
+
+    @Test
+    public void theLineAxisStaysWithinFivePeriods() {
+        assertLineLabelsWithin(5);
     }
 
     @Test
