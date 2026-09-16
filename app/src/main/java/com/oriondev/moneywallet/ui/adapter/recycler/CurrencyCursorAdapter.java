@@ -83,6 +83,15 @@ public class CurrencyCursorAdapter extends AbstractCursorAdapter<CurrencyCursorA
         } else {
             holder.mSymbolView.setText(iso);
         }
+        boolean favorite = cursor.getInt(mIndexFavourite) == 1;
+        if (favorite) {
+            holder.mFavoriteView.setImageResource(R.drawable.ic_star_black_24dp);
+        } else {
+            holder.mFavoriteView.setImageResource(R.drawable.ic_star_border_black_24dp);
+        }
+        holder.mFavoriteView.setContentDescription(holder.itemView.getContext().getString(
+                favorite ? R.string.description_currency_unpin
+                        : R.string.description_currency_favorite, name));
     }
 
     @NonNull
@@ -98,13 +107,30 @@ public class CurrencyCursorAdapter extends AbstractCursorAdapter<CurrencyCursorA
         private ImageView mIconView;
         private TextView mNameView;
         private TextView mSymbolView;
+        private ImageView mFavoriteView;
 
         /*package-local*/ CurrencyViewHolder(View itemView) {
             super(itemView);
             mIconView = itemView.findViewById(R.id.icon_image_view);
             mNameView = itemView.findViewById(R.id.name_text_view);
             mSymbolView = itemView.findViewById(R.id.secondary_text_view);
+            mFavoriteView = itemView.findViewById(R.id.favorite_image_view);
             itemView.setOnClickListener(this);
+            // Its own listener, because a tap on the row still means what it always did:
+            // pick this currency, or open it for editing.
+            mFavoriteView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    Cursor cursor = getSafeCursor(getAdapterPosition());
+                    if (cursor != null && mListener != null) {
+                        String iso = cursor.getString(mIndexIso);
+                        boolean favourite = cursor.getInt(mIndexFavourite) == 1;
+                        mListener.onCurrencyFavourite(iso, !favourite);
+                    }
+                }
+
+            });
         }
 
         @Override
@@ -113,12 +139,7 @@ public class CurrencyCursorAdapter extends AbstractCursorAdapter<CurrencyCursorA
                 Cursor cursor = getSafeCursor(getAdapterPosition());
                 if (cursor != null) {
                     String iso = cursor.getString(mIndexIso);
-                    if (/* view is the star */ false) {
-                        boolean favourite = cursor.getInt(mIndexFavourite) == 1;
-                        mListener.onCurrencyFavourite(iso, !favourite);
-                    } else {
-                        mListener.onCurrencyClick(iso);
-                    }
+                    mListener.onCurrencyClick(iso);
                 }
             }
         }

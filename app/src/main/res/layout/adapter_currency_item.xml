@@ -55,7 +55,7 @@
         android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
         android:textSize="@dimen/material_component_lists_two_line_with_avatar_primary_text_size"
         app:layout_constraintBottom_toTopOf="@+id/text_guideline"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/favorite_image_view"
         app:layout_constraintStart_toStartOf="parent"
         app:theme_textColor="textColorPrimary"
         tools:text="Euro" />
@@ -70,9 +70,24 @@
         android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
         android:textSize="@dimen/material_component_lists_two_line_with_avatar_secondary_text_size"
         app:layout_constraintTop_toBottomOf="@+id/text_guideline"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/favorite_image_view"
         app:layout_constraintStart_toStartOf="parent"
         app:theme_textColor="textColorSecondary"
         tools:text="€" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedImageView
+        android:id="@+id/favorite_image_view"
+        android:layout_width="48dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="@dimen/material_component_lists_one_line_action_icon_end_margin"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/description_currency_favorite"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_star_border_black_24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:theme_backgroundColor="colorWindowForeground" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
