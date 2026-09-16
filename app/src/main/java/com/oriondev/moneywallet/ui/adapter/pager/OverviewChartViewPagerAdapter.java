@@ -50,6 +50,15 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
     private static final int POSITION_LINE_CHART = 1;
     private static final int POSITION_RADAR_CHART = 2;
 
+    private static final ValueFormatter PERIOD_NUMBER_FORMATTER = new ValueFormatter() {
+
+        @Override
+        public String getFormattedValue(float value) {
+            return String.format(Locale.getDefault(), "%d", (int) value + 1);
+        }
+
+    };
+
     private OverviewData mOverviewData;
 
     @NonNull
@@ -78,14 +87,7 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
                             xAxis.setAxisMinimum(-1f);
                         }
                         xAxis.setAxisMaximum(mOverviewData.getPeriodCount());
-                        xAxis.setValueFormatter(new ValueFormatter() {
-
-                            @Override
-                            public String getFormattedValue(float value) {
-                                return String.format(Locale.getDefault(), "%d", (int) value + 1);
-                            }
-
-                        });
+                        xAxis.setValueFormatter(PERIOD_NUMBER_FORMATTER);
                         YAxis leftAxis = barChart.getAxisLeft();
                         leftAxis.setSpaceTop(35f);
                         barChart.getAxisRight().setEnabled(false);
@@ -107,14 +109,7 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
                         xAxis.setGranularity(1f);
                         xAxis.setAxisMinimum(-1f);
                         xAxis.setAxisMaximum(mOverviewData.getPeriodCount());
-                        xAxis.setValueFormatter(new ValueFormatter() {
-
-                            @Override
-                            public String getFormattedValue(float value) {
-                                return String.format(Locale.getDefault(), "%d", (int) value + 1);
-                            }
-
-                        });
+                        xAxis.setValueFormatter(PERIOD_NUMBER_FORMATTER);
                         YAxis leftAxis = lineChart.getAxisLeft();
                         leftAxis.setSpaceTop(35f);
                         lineChart.getAxisRight().setEnabled(false);
@@ -132,6 +127,7 @@ public class OverviewChartViewPagerAdapter extends PagerAdapter {
                     radarChart.setData(radarData);
                     if (radarData != null) {
                         XAxis xAxis = radarChart.getXAxis();
+                        xAxis.setValueFormatter(PERIOD_NUMBER_FORMATTER);
                         radarData.setValueTextColor(xAxis.getTextColor());
                     }
                 }
