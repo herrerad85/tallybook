@@ -93,7 +93,15 @@ public abstract class CursorListFragment extends Fragment implements SwipeRefres
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
         mAbstractCursorAdapter.changeCursor(cursor);
-        if (cursor != null && cursor.getCount() > 0) {
+        showListState();
+    }
+
+    /**
+     * Put the list into READY or EMPTY by what the adapter shows, which can be fewer rows than
+     * the cursor holds.
+     */
+    protected void showListState() {
+        if (mAbstractCursorAdapter.getItemCount() > 0) {
             mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.READY);
         } else {
             mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.EMPTY);

@@ -36,8 +36,10 @@ import com.oriondev.moneywallet.ui.view.CategoryChildIndicator;
 import com.oriondev.moneywallet.utils.IconLoader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -76,6 +78,8 @@ public class CategoryCursorAdapter extends AbstractCursorAdapter<CategoryCursorA
 
     private final CategoryActionListener mListener;
 
+    private String mQuery = "";
+
     public CategoryCursorAdapter(CategoryActionListener listener) {
         super(null, Contract.Category.ID);
         mListener = listener;
@@ -95,6 +99,16 @@ public class CategoryCursorAdapter extends AbstractCursorAdapter<CategoryCursorA
         rebuildVisibleRows();
     }
 
+    public void setQuery(String query) {
+        mQuery = query == null ? "" : query.toLowerCase(Locale.getDefault());
+        rebuildVisibleRows();
+        notifyDataSetChanged();
+    }
+
+    private boolean matches(String name) {
+        return name != null && name.toLowerCase(Locale.getDefault()).contains(mQuery);
+    }
+
     private void rebuildVisibleRows() {
         mVisibleRows.clear();
         mCategoriesWithChildren.clear();
@@ -106,22 +120,46 @@ public class CategoryCursorAdapter extends AbstractCursorAdapter<CategoryCursorA
         if (cursor == null) {
             return;
         }
+        // The filter keeps a category whose own name matches and a category that has a matching
+        // child, and under a matching category it keeps all of its children. A child the user
+        // has hidden is shown again while a filter is on.
+        Set<Long> parentsOfMatchingChildren = new HashSet<>();
+        if (!mQuery.isEmpty()) {
+            for (int position = 0; position < cursor.getCount(); position++) {
+                cursor.moveToPosition(position);
+                if (!cursor.isNull(mIndexCategoryParentId) && matches(cursor.getString(mIndexCategoryName))) {
+                    parentsOfMatchingChildren.add(cursor.getLong(mIndexCategoryParentId));
+                }
+            }
+        }
+        Set<Long> matchingParents = new HashSet<>();
         Set<Long> categoriesAbove = new HashSet<>();
         for (int position = 0; position < cursor.getCount(); position++) {
             cursor.moveToPosition(position);
             if (cursor.isNull(mIndexCategoryParentId)) {
-                categoriesAbove.add(cursor.getLong(mIndexCategoryId));
-                mVisibleRows.add(position);
+                long categoryId = cursor.getLong(mIndexCategoryId);
+                categoriesAbove.add(categoryId);
+                boolean nameMatches = matches(cursor.getString(mIndexCategoryName));
+                if (nameMatches) {
+                    matchingParents.add(categoryId);
+                }
+                if (mQuery.isEmpty() || nameMatches || parentsOfMatchingChildren.contains(categoryId)) {
+                    mVisibleRows.add(position);
+                }
                 continue;
             }
             long parentId = cursor.getLong(mIndexCategoryParentId);
             mCategoriesWithChildren.add(parentId);
-            // A child whose category is not above it in this cursor has no arrow that could
-            // bring it back, so it is shown rather than hidden. Two things leave one: the query
-            // drops a category marked deleted out of its join while keeping the children that
-            // name it, and SyncContentProvider inserts rows straight onto the table, past the
-            // check that refuses a child of a category of another type.
-            if (!mCollapsedCategories.contains(parentId) || !categoriesAbove.contains(parentId)) {
+            if (mQuery.isEmpty()) {
+                // A child whose category is not above it in this cursor has no arrow that could
+                // bring it back, so it is shown rather than hidden. Two things leave one: the
+                // query drops a category marked deleted out of its join while keeping the
+                // children that name it, and SyncContentProvider inserts rows straight onto the
+                // table, past the check that refuses a child of a category of another type.
+                if (!mCollapsedCategories.contains(parentId) || !categoriesAbove.contains(parentId)) {
+                    mVisibleRows.add(position);
+                }
+            } else if (matchingParents.contains(parentId) || matches(cursor.getString(mIndexCategoryName))) {
                 mVisibleRows.add(position);
             }
         }
@@ -189,7 +227,9 @@ public class CategoryCursorAdapter extends AbstractCursorAdapter<CategoryCursorA
     }
 
     private void bindChildrenToggle(CategoryViewHolder holder, long categoryId, String name) {
-        boolean hasChildren = mCategoriesWithChildren.contains(categoryId);
+        // While a filter is on, every child that matches is already shown, so the arrow would
+        // have nothing to do.
+        boolean hasChildren = mCategoriesWithChildren.contains(categoryId) && mQuery.isEmpty();
         holder.mChildrenToggle.setVisibility(hasChildren ? View.VISIBLE : View.GONE);
         if (hasChildren) {
             boolean collapsed = mCollapsedCategories.contains(categoryId);
@@ -204,16 +244,15 @@ public class CategoryCursorAdapter extends AbstractCursorAdapter<CategoryCursorA
 
     /**
      * Whether the child at this cursor row is the last one drawn under its category, which is
-     * what tells the indicator to stop its line half way. The rule is the one that was here
-     * before, and only its bound moved, from the count of rows on screen to the count of rows
-     * in the cursor. Hiding does not disturb the rule: a category's children are hidden or shown
-     * all together, so a shown child is never followed by a hidden sibling.
+     * what tells the indicator to stop its line half way. It reads the next row on screen and
+     * not the next row in the cursor, because a filter can hide a sibling that follows in the
+     * cursor.
      */
     private boolean isLastChild(int cursorPosition) {
         Cursor cursor = getCursor();
-        int nextPosition = cursorPosition + 1;
-        if (nextPosition < cursor.getCount()) {
-            cursor.moveToPosition(nextPosition);
+        int index = Collections.binarySearch(mVisibleRows, cursorPosition);
+        if (index >= 0 && index + 1 < mVisibleRows.size()) {
+            cursor.moveToPosition(mVisibleRows.get(index + 1));
             boolean nextIsChild = !cursor.isNull(mIndexCategoryParentId);
             cursor.moveToPosition(cursorPosition);
             return !nextIsChild;

@@ -70,7 +70,17 @@ public class CategoryListFragment extends CursorListFragment implements Category
     @Override
     protected AbstractCursorAdapter onCreateAdapter() {
         mAdapter = new CategoryCursorAdapter(this);
+        // After a rotation the activity has its query back before this view is built, so the
+        // adapter is asked for it here instead of waiting to be told.
+        mAdapter.setQuery(mController != null ? mController.getCategoryQuery() : "");
         return mAdapter;
+    }
+
+    public void setQuery(String query) {
+        if (mAdapter != null) {
+            mAdapter.setQuery(query);
+            showListState();
+        }
     }
 
     /**
@@ -151,5 +161,7 @@ public class CategoryListFragment extends CursorListFragment implements Category
     public interface Controller {
 
         void onCategoryClick(long id);
+
+        String getCategoryQuery();
     }
 }

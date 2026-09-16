@@ -25,11 +25,17 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.PagerAdapter;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Category;
@@ -48,6 +54,67 @@ public class CategoryPickerActivity extends SinglePanelViewPagerActivity impleme
     public static final String SHOW_SUB_CATEGORIES = "CategoryPickerActivity::Argument::ShowSubCategories";
     public static final String SHOW_SYSTEM_CATEGORIES = "CategoryPickerActivity::Argument::ShowSystemCategories";
     public static final String RESULT_CATEGORY = "CategoryPickerActivity::Result::Category";
+
+    private static final String SS_QUERY = "CategoryPickerActivity::SavedState::Query";
+
+    private String mQuery = "";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // The fragments pull the query when they build their adapters, so a restored query has
+        // to be in the field already by then.
+        if (savedInstanceState != null) {
+            mQuery = savedInstanceState.getString(SS_QUERY, "");
+        }
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(SS_QUERY, mQuery);
+    }
+
+    @Override
+    protected void onToolbarReady(Toolbar toolbar) {
+        toolbar.setTitle(null);
+        View view = getLayoutInflater().inflate(R.layout.layout_toolbar_search_view, toolbar, true);
+        EditText searchEditText = view.findViewById(R.id.search_edit_text);
+        searchEditText.setText(mQuery);
+        searchEditText.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString();
+                // The view state restore after a rotation sets the same text again and would
+                // filter for nothing.
+                if (!query.equals(mQuery)) {
+                    mQuery = query;
+                    for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+                        if (fragment instanceof CategoryListFragment) {
+                            ((CategoryListFragment) fragment).setQuery(mQuery);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+
+        });
+    }
+
+    @Override
+    public String getCategoryQuery() {
+        return mQuery;
+    }
 
     @NonNull
     @Override
