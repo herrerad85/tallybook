@@ -70,6 +70,7 @@ public class PreferenceManager {
     private static final String SERVICE_API_KEY = "user_api_key_";
     private static final String CONVERTER_LAST_CURRENCY_1 = "converter_currency_iso_1";
     private static final String CONVERTER_LAST_CURRENCY_2 = "converter_currency_iso_2";
+    private static final String CSV_IMPORT_MAPPING = "csv_import_mapping_";
 
     private static final String MAP_TILE_SERVER = "map_tile_server";
     private static final String COLLAPSED_CATEGORIES = "collapsed_categories";
@@ -414,6 +415,18 @@ public class PreferenceManager {
 
     public static String getServiceApiKey(int service) {
         return mPreferences.getString(SERVICE_API_KEY + String.valueOf(service), null);
+    }
+
+    /**
+     * @return the column settings last used to import a file whose header has this signature, as
+     *          CsvImportMapping encoded them, or null when no file with that header was imported.
+     */
+    public static String getCsvImportMapping(String headerSignature) {
+        return mPreferences.getString(CSV_IMPORT_MAPPING + headerSignature, null);
+    }
+
+    public static void setCsvImportMapping(String headerSignature, String encodedMapping) {
+        mPreferences.edit().putString(CSV_IMPORT_MAPPING + headerSignature, encodedMapping).apply();
     }
 
     public static String getCurrencyConverterLastCurrency1() {

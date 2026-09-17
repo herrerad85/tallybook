@@ -21,6 +21,7 @@ import com.oriondev.moneywallet.storage.database.data.AbstractDataExporter;
 import com.oriondev.moneywallet.storage.database.data.AbstractDataImporter;
 import com.oriondev.moneywallet.storage.database.data.csv.CSVDataExporter;
 import com.oriondev.moneywallet.storage.database.data.csv.CSVDataImporter;
+import com.oriondev.moneywallet.storage.database.data.csv.CsvImportMapping;
 import com.oriondev.moneywallet.storage.database.data.pdf.PDFDataExporter;
 import com.oriondev.moneywallet.storage.database.data.xls.XLSDataExporter;
 import com.oriondev.moneywallet.utils.DateUtils;
@@ -45,6 +46,7 @@ public class ImportExportIntentService extends IntentService {
     public static final String FILE = "ImportExportIntentService::Arguments::File";
     public static final String UNIQUE_WALLET = "ImportExportIntentService::Arguments::UniqueWallet";
     public static final String OPTIONAL_COLUMNS = "ImportExportIntentService::Arguments::OptionalColumns";
+    public static final String MAPPING = "ImportExportIntentService::Arguments::Mapping";
 
     public static final String RESULT_FILE_URI = "ImportExportIntentService::Results::FileUri";
     public static final String RESULT_FILE_TYPE = "ImportExportIntentService::Results::FileType";
@@ -82,6 +84,7 @@ public class ImportExportIntentService extends IntentService {
             // extract parameters from the intent
             DataFormat dataFormat = (DataFormat) intent.getSerializableExtra(FORMAT);
             File file = (File) intent.getSerializableExtra(FILE);
+            CsvImportMapping mapping = (CsvImportMapping) intent.getSerializableExtra(MAPPING);
             if (dataFormat == null) {
                 throw new IllegalArgumentException("parameter is null [FORMAT]");
             }
@@ -89,7 +92,7 @@ public class ImportExportIntentService extends IntentService {
                 throw new IllegalArgumentException("parameter is null or not a file [FILE]");
             }
             // initialize the correct data importer
-            AbstractDataImporter dataImporter = getDataImporter(dataFormat, file);
+            AbstractDataImporter dataImporter = getDataImporter(dataFormat, file, mapping);
             int roundedAmounts;
             try {
                 dataImporter.importData();
@@ -257,10 +260,10 @@ public class ImportExportIntentService extends IntentService {
         mReporter.broadcast(action, extras);
     }
 
-    private AbstractDataImporter getDataImporter(DataFormat dataFormat, File file) throws IOException {
+    private AbstractDataImporter getDataImporter(DataFormat dataFormat, File file, @Nullable CsvImportMapping mapping) throws IOException {
         switch (dataFormat) {
             case CSV:
-                return new CSVDataImporter(this, file);
+                return new CSVDataImporter(this, file, mapping);
             default:
                 throw new RuntimeException("DataFormat not supported");
         }

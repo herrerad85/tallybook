@@ -138,8 +138,11 @@ dependencies {
     implementation libs.mpandroidchart
     implementation libs.okhttp
     implementation(libs.opencsv) {
-        // Nothing on the CSVReaderHeaderAware or CSVWriter path names either artifact, and
-        // those two classes are all this app uses opencsv for. Taking the two artifacts out
+        // Nothing on the path of the classes this app uses names either artifact. Those are
+        // CSVReaderHeaderAware, CSVReader built through CSVReaderBuilder and
+        // CSVParserBuilder, CSVParser, and CSVWriter, and the unit tests drive each of them
+        // with the two artifacts left out, since the test classpath inherits these
+        // exclusions. Taking the two artifacts out
         // drops about 480 KB from the release APK, which is not minified, so nothing else
         // would.
         exclude group: 'commons-beanutils'

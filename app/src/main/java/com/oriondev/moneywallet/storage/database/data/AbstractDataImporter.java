@@ -59,10 +59,27 @@ public abstract class AbstractDataImporter {
                                      Date datetime, Long money, int direction, String description,
                                      String event, String place, String people, String note) {
         ContentResolver contentResolver = getContext().getContentResolver();
+        // the first step consists in checking if a wallet with the same name and currency already
+        // exists in the database, if not, create it and keep the id as reference
+        long walletId = getOrCreateWallet(contentResolver, wallet, currencyUnit);
+        insertTransaction(contentResolver, walletId, category, datetime, money, direction, description, event, place, people, note);
+    }
+
+    /**
+     * The same, into a wallet that already exists and was picked by id, whose currency the
+     * amount is already in.
+     */
+    protected void insertTransaction(long walletId, String category, Date datetime, Long money,
+                                     int direction, String description, String event, String place,
+                                     String people, String note) {
+        insertTransaction(getContext().getContentResolver(), walletId, category, datetime, money, direction, description, event, place, people, note);
+    }
+
+    private void insertTransaction(ContentResolver contentResolver, long walletId, String category,
+                                   Date datetime, Long money, int direction, String description,
+                                   String event, String place, String people, String note) {
         ContentValues contentValues = new TransactionContentValuesBuilder()
-                // the first step consists in checking if a wallet with the same name and currency already
-                // exists in the database, if not, create it and keep the id as reference
-                .walletId(getOrCreateWallet(contentResolver, wallet, currencyUnit))
+                .walletId(walletId)
                 // the second step consists in checking if a category with the same name and direction
                 // already exists in the database, if not, create it and keep the id as reference
                 .categoryId(getOrCreateCategory(contentResolver, category, direction))

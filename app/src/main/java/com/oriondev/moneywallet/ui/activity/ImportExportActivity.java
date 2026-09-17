@@ -36,6 +36,8 @@ import com.oriondev.moneywallet.picker.ExportColumnsPicker;
 import com.oriondev.moneywallet.picker.ImportExportFormatPicker;
 import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.service.ImportExportIntentService;
+import com.oriondev.moneywallet.storage.database.data.csv.CsvImportMapping;
+import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.activity.base.SinglePanelActivity;
 import com.oriondev.moneywallet.ui.fragment.dialog.GenericProgressDialog;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
@@ -49,12 +51,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
+import java.util.function.IntConsumer;
 
 /**
  * Created by andrea on 19/12/18.
  */
-public class ImportExportActivity extends SinglePanelActivity implements ImportExportFormatPicker.Controller, DateTimePicker.Controller, WalletPicker.MultiWalletController, ExportColumnsPicker.Controller {
+public class ImportExportActivity extends SinglePanelActivity implements ImportExportFormatPicker.Controller, DateTimePicker.Controller, WalletPicker.MultiWalletController, WalletPicker.SingleWalletController, ExportColumnsPicker.Controller {
 
     public static final String MODE = "ImportExportActivity::Argument::Mode";
 
@@ -65,11 +70,13 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
     private static final String TAG_START_DATE_TIME_PICKER = "ImportExportActivity::Tag::StartDateTimePicker";
     private static final String TAG_END_DATE_TIME_PICKER = "ImportExportActivity::Tag::EndDateTimePicker";
     private static final String TAG_WALLET_PICKER = "ImportExportActivity::Tag::WalletPicker";
+    private static final String TAG_IMPORT_WALLET_PICKER = "ImportExportActivity::Tag::ImportWalletPicker";
     private static final String TAG_COLUMNS_PICKER = "ImportExportActivity::Tag::ColumnsPicker";
     private static final String TAG_PROGRESS_DIALOG = "ImportExportActivity::tag::GenericProgressDialog";
 
     private static final String SS_IMPORT_FILE = "ImportExportActivity::SavedState::ImportFile";
     private static final String SS_EXPORT_FOLDER_URI = "ImportExportActivity::SavedState::ExportFolderUri";
+    private static final String SS_IMPORT_MAPPING = "ImportExportActivity::SavedState::ImportMapping";
 
     private MaterialEditText mImportFormatEditText;
     private MaterialEditText mExportFormatEditText;
@@ -81,12 +88,23 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
     private MaterialEditText mExportFolderEditText;
     private MaterialEditText mExportColumnsEditText;
     private CheckBox mUniqueWalletCheckbox;
+    private View mImportMappingLayout;
+    private MaterialEditText mImportWalletEditText;
+    private MaterialEditText mDateColumnEditText;
+    private MaterialEditText mAmountColumnEditText;
+    private MaterialEditText mDescriptionColumnEditText;
+    private MaterialEditText mNoteColumnEditText;
+    private MaterialEditText mCategoryColumnEditText;
+    private MaterialEditText mDateFormatEditText;
+    private MaterialEditText mDecimalSeparatorEditText;
+    private CheckBox mSpendingPositiveCheckbox;
 
     private ImportExportFormatPicker mDataFormatPicker;
     private DateTimePicker mStartDateTimePicker;
     private DateTimePicker mEndDateTimePicker;
     private WalletPicker mWalletPicker;
     private ExportColumnsPicker mExportColumnsPicker;
+    private WalletPicker mImportWalletPicker;
 
     // Scoped-storage file access: the user picks files and folders through the Storage
     // Access Framework instead of a raw filesystem browser. Imports are staged into app
@@ -96,6 +114,11 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
     private ActivityResultLauncher<Uri> mExportFolderLauncher;
     private File mImportFile;
     private Uri mExportFolderUri;
+
+    // The header of the staged import file, and the choices made on the mapping section for a
+    // file this app did not write. The wallet is held by its own picker.
+    private CsvImportMapping.Header mImportHeader;
+    private CsvImportMapping mImportMapping = new CsvImportMapping();
 
     private int mMode;
 
@@ -132,6 +155,14 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
             if (importPath != null) {
                 mImportFile = new File(importPath);
                 mImportFileEditText.setText(mImportFile.getName());
+                try {
+                    mImportHeader = CsvImportMapping.readHeader(mImportFile);
+                    onImportHeaderRead((CsvImportMapping) savedInstanceState.getSerializable(SS_IMPORT_MAPPING));
+                } catch (IOException | RuntimeException e) {
+                    // the staged copy can no longer be read, so ask for the file again
+                    mImportFile = null;
+                    mImportFileEditText.setText(null);
+                }
             }
             String exportFolderUri = savedInstanceState.getString(SS_EXPORT_FOLDER_URI);
             if (exportFolderUri != null) {
@@ -168,6 +199,7 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         if (mExportFolderUri != null) {
             outState.putString(SS_EXPORT_FOLDER_URI, mExportFolderUri.toString());
         }
+        outState.putSerializable(SS_IMPORT_MAPPING, mImportMapping);
     }
 
     @Override
@@ -183,6 +215,16 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         mExportFolderEditText = view.findViewById(R.id.export_folder_edit_text);
         mExportColumnsEditText = view.findViewById(R.id.export_optional_columns_edit_text);
         mUniqueWalletCheckbox = view.findViewById(R.id.export_unique_wallet_checkbox);
+        mImportMappingLayout = view.findViewById(R.id.import_mapping_layout);
+        mImportWalletEditText = view.findViewById(R.id.import_wallet_edit_text);
+        mDateColumnEditText = view.findViewById(R.id.import_date_column_edit_text);
+        mAmountColumnEditText = view.findViewById(R.id.import_amount_column_edit_text);
+        mDescriptionColumnEditText = view.findViewById(R.id.import_description_column_edit_text);
+        mNoteColumnEditText = view.findViewById(R.id.import_note_column_edit_text);
+        mCategoryColumnEditText = view.findViewById(R.id.import_category_column_edit_text);
+        mDateFormatEditText = view.findViewById(R.id.import_date_format_edit_text);
+        mDecimalSeparatorEditText = view.findViewById(R.id.import_decimal_separator_edit_text);
+        mSpendingPositiveCheckbox = view.findViewById(R.id.import_spending_positive_checkbox);
         // check activity mode and update ui
         mMode = getActivityMode();
         mImportFormatEditText.setVisibility(mMode == MODE_IMPORT ? View.VISIBLE : View.GONE);
@@ -287,6 +329,41 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         mImportFileEditText.setTextViewMode(true);
         mExportFolderEditText.setTextViewMode(true);
         mExportColumnsEditText.setTextViewMode(true);
+        mImportWalletEditText.setTextViewMode(true);
+        mDateColumnEditText.setTextViewMode(true);
+        mAmountColumnEditText.setTextViewMode(true);
+        mDescriptionColumnEditText.setTextViewMode(true);
+        mNoteColumnEditText.setTextViewMode(true);
+        mCategoryColumnEditText.setTextViewMode(true);
+        mDateFormatEditText.setTextViewMode(true);
+        mDecimalSeparatorEditText.setTextViewMode(true);
+        mImportWalletEditText.setOnClickListener(v -> mImportWalletPicker.showSingleWalletPicker());
+        mDateColumnEditText.setOnClickListener(v -> showColumnPicker(mDateColumnEditText, false,
+                mImportMapping.date, column -> mImportMapping.date = column));
+        mAmountColumnEditText.setOnClickListener(v -> showColumnPicker(mAmountColumnEditText, false,
+                mImportMapping.amount, column -> mImportMapping.amount = column));
+        mDescriptionColumnEditText.setOnClickListener(v -> showColumnPicker(mDescriptionColumnEditText, true,
+                mImportMapping.description, column -> mImportMapping.description = column));
+        mNoteColumnEditText.setOnClickListener(v -> showColumnPicker(mNoteColumnEditText, true,
+                mImportMapping.note, column -> mImportMapping.note = column));
+        mCategoryColumnEditText.setOnClickListener(v -> showColumnPicker(mCategoryColumnEditText, true,
+                mImportMapping.category, column -> mImportMapping.category = column));
+        mDateFormatEditText.setOnClickListener(v -> showChoicePicker(mDateFormatEditText,
+                CsvImportMapping.DATE_PATTERNS,
+                Arrays.asList(CsvImportMapping.DATE_PATTERNS).indexOf(mImportMapping.datePattern),
+                which -> mImportMapping.datePattern = CsvImportMapping.DATE_PATTERNS[which]));
+        mDecimalSeparatorEditText.setOnClickListener(v -> showChoicePicker(mDecimalSeparatorEditText,
+                new String[] {getString(R.string.csv_import_decimal_dot), getString(R.string.csv_import_decimal_comma)},
+                mImportMapping.decimalComma ? 1 : 0,
+                which -> mImportMapping.decimalComma = which == 1));
+        addRequiredValidator(mImportWalletEditText, R.string.error_input_missing_wallet,
+                () -> mImportWalletPicker.isSelected());
+        addRequiredValidator(mDateColumnEditText, R.string.csv_import_error_missing_date_column,
+                () -> mImportMapping.date != CsvImportMapping.NONE);
+        addRequiredValidator(mAmountColumnEditText, R.string.csv_import_error_missing_amount_column,
+                () -> mImportMapping.amount != CsvImportMapping.NONE);
+        addRequiredValidator(mDateFormatEditText, R.string.csv_import_error_missing_date_format,
+                () -> mImportMapping.datePattern != null);
         // attach validators
         mImportFormatEditText.addValidator(new Validator() {
 
@@ -398,6 +475,7 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         mEndDateTimePicker = DateTimePicker.createPicker(fragmentManager, TAG_END_DATE_TIME_PICKER, null);
         mWalletPicker = WalletPicker.createPicker(fragmentManager, TAG_WALLET_PICKER, (Wallet[]) null);
         mExportColumnsPicker = ExportColumnsPicker.createPicker(fragmentManager, TAG_COLUMNS_PICKER);
+        mImportWalletPicker = WalletPicker.createPicker(fragmentManager, TAG_IMPORT_WALLET_PICKER, (Wallet) null);
         mProgressDialog = (GenericProgressDialog) fragmentManager.findFragmentByTag(TAG_PROGRESS_DIALOG);
     }
 
@@ -444,7 +522,7 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
     public boolean onMenuItemClick(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_import_data) {
-            if (mImportFormatEditText.validate() && mImportFileEditText.validate()) {
+            if (mImportFormatEditText.validate() && mImportFileEditText.validate() && (!isImportMappingShown() || validateImportMapping())) {
                 ThemedDialog.buildMaterialDialog(this)
                         .setTitle(R.string.title_warning)
                         .setMessage(R.string.message_data_import_without_backup)
@@ -472,6 +550,14 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         intent.putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT);
         intent.putExtra(ImportExportIntentService.FORMAT, mDataFormatPicker.getCurrentFormat());
         intent.putExtra(ImportExportIntentService.FILE, mImportFile);
+        if (isImportMappingShown()) {
+            mImportMapping.separator = mImportHeader.separator;
+            mImportMapping.spendingPositive = mSpendingPositiveCheckbox.isChecked();
+            PreferenceManager.setCsvImportMapping(CsvImportMapping.signature(mImportHeader.cells), mImportMapping.encode());
+            Wallet wallet = mImportWalletPicker.getCurrentWallet();
+            mImportMapping.walletId = wallet.getId();
+            intent.putExtra(ImportExportIntentService.MAPPING, mImportMapping);
+        }
         startService(intent);
     }
 
@@ -491,6 +577,8 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
     }
 
     private void onImportFileSelected(Uri uri) {
+        // a wallet picked for the previous file must not carry over to this one
+        mImportWalletPicker.onWalletSelected(null);
         try {
             String displayName = queryDisplayName(uri);
             if (TextUtils.isEmpty(displayName)) {
@@ -507,6 +595,13 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
             }
             mImportFile = staged;
             mImportFileEditText.setText(displayName);
+            try {
+                mImportHeader = CsvImportMapping.readHeader(staged);
+            } catch (RuntimeException e) {
+                // a file with nothing in it, reported the same way as a file that cannot be read
+                throw new IOException(e.getMessage(), e);
+            }
+            onImportHeaderRead(null);
             // try to detect the file type starting from the file extension
             if (!mDataFormatPicker.isSelected()) {
                 int dot = displayName.lastIndexOf('.');
@@ -520,12 +615,123 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         } catch (IOException e) {
             mImportFile = null;
             mImportFileEditText.setText(null);
+            mImportHeader = null;
+            onImportHeaderRead(null);
             ThemedDialog.buildMaterialDialog(this)
                     .setTitle(R.string.title_failed)
                     .setMessage(getString(R.string.message_data_import_failed, e.getMessage()))
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
         }
+    }
+
+    /**
+     * Shows the mapping section when the staged file was not written by this app, and hides it
+     * when it was. A file just picked is filled in from what was last used for a file with the
+     * same header, when that still fits it. The wallet never is, since a remembered wallet id can
+     * name a different wallet once a backup has been restored.
+     *
+     * @param chosen the choices to show, which is what a restored screen passes back, or null to
+     *               look up the remembered ones.
+     */
+    private void onImportHeaderRead(@Nullable CsvImportMapping chosen) {
+        boolean mapped = mImportHeader != null && !mImportHeader.nativeHeader;
+        mImportMappingLayout.setVisibility(mapped ? View.VISIBLE : View.GONE);
+        if (!mapped) {
+            return;
+        }
+        if (chosen == null) {
+            chosen = getRememberedImportMapping();
+            mSpendingPositiveCheckbox.setChecked(chosen.spendingPositive);
+        }
+        mImportMapping = chosen;
+        updateImportMappingFields();
+    }
+
+    private CsvImportMapping getRememberedImportMapping() {
+        String signature = CsvImportMapping.signature(mImportHeader.cells);
+        CsvImportMapping remembered = CsvImportMapping.decode(PreferenceManager.getCsvImportMapping(signature));
+        int columns = mImportHeader.cells.length;
+        if (remembered != null && remembered.date < columns && remembered.amount < columns
+                && remembered.description < columns && remembered.note < columns
+                && remembered.category < columns) {
+            return remembered;
+        }
+        return new CsvImportMapping();
+    }
+
+    private boolean isImportMappingShown() {
+        return mImportMappingLayout.getVisibility() == View.VISIBLE;
+    }
+
+    private boolean validateImportMapping() {
+        return mImportWalletEditText.validate() && mDateColumnEditText.validate()
+                && mAmountColumnEditText.validate() && mDateFormatEditText.validate();
+    }
+
+    private void updateImportMappingFields() {
+        mDateColumnEditText.setText(getColumnName(mImportMapping.date));
+        mAmountColumnEditText.setText(getColumnName(mImportMapping.amount));
+        mDescriptionColumnEditText.setText(getColumnName(mImportMapping.description));
+        mNoteColumnEditText.setText(getColumnName(mImportMapping.note));
+        mCategoryColumnEditText.setText(getColumnName(mImportMapping.category));
+        mDateFormatEditText.setText(mImportMapping.datePattern);
+        mDecimalSeparatorEditText.setText(mImportMapping.decimalComma
+                ? R.string.csv_import_decimal_comma : R.string.csv_import_decimal_dot);
+    }
+
+    /** The header cell of a column, or its position when the cell is blank and would show nothing. */
+    private String getColumnName(int column) {
+        if (column == CsvImportMapping.NONE) {
+            return null;
+        }
+        String name = mImportHeader.cells[column].trim();
+        return name.isEmpty() ? getString(R.string.csv_import_column_unnamed, column + 1) : name;
+    }
+
+    private void showColumnPicker(MaterialEditText field, boolean optional, int current, IntConsumer onPicked) {
+        int offset = optional ? 1 : 0;
+        String[] items = new String[mImportHeader.cells.length + offset];
+        if (optional) {
+            items[0] = getString(R.string.csv_import_column_none);
+        }
+        for (int i = 0; i < mImportHeader.cells.length; i++) {
+            items[i + offset] = getColumnName(i);
+        }
+        showChoicePicker(field, items, current + offset, which -> onPicked.accept(which - offset));
+    }
+
+    private void showChoicePicker(MaterialEditText field, String[] items, int checked, IntConsumer onPicked) {
+        ThemedDialog.buildMaterialDialog(this)
+                .setTitle(field.getHint())
+                .setSingleChoiceItems(items, checked, (dialog, which) -> {
+                    onPicked.accept(which);
+                    updateImportMappingFields();
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    private void addRequiredValidator(MaterialEditText field, int errorRes, BooleanSupplier isValid) {
+        field.addValidator(new Validator() {
+
+            @NonNull
+            @Override
+            public String getErrorMessage() {
+                return getString(errorRes);
+            }
+
+            @Override
+            public boolean isValid(@NonNull CharSequence charSequence) {
+                return isValid.getAsBoolean();
+            }
+
+            @Override
+            public boolean autoValidate() {
+                return false;
+            }
+
+        });
     }
 
     private void onExportFolderSelected(Uri uri) {
@@ -654,6 +860,11 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
                 }
                 break;
         }
+    }
+
+    @Override
+    public void onWalletChanged(String tag, Wallet wallet) {
+        mImportWalletEditText.setText(wallet != null ? wallet.getName() : null);
     }
 
     @Override

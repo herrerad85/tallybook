@@ -11,3 +11,19 @@ The header row carries the raw column keys, and a file written by hand needs the
 ```
 
 A row the importer will not read ends the import before anything from the file is saved, and the message names the line it stopped on. A row the CSV reader itself will not read, such as one with the wrong number of fields, ends it the same way but with the reader's own wording.
+
+## Importing a file from another app or a bank
+
+A file whose header does not name all five required columns, or that this app's own import cannot read, is read through a mapping screen instead. The import screen shows it after the file is picked. The separator is worked out from the header line, and a comma, a semicolon and a tab are all understood.
+
+Pick the wallet every row goes into, and the column that holds the date and the amount. The description, note and category columns are optional. A row whose category cell is empty, or a file with no category column picked, puts the row under a category named "Imported", one for income and one for expenses.
+
+The date format is one of `yyyy-MM-dd`, `dd/MM/yyyy`, `MM/dd/yyyy` and `dd.MM.yyyy`. Each can be followed by a space and a time as `HH:mm` or `HH:mm:ss`. The year has to have four digits, and a date that does not exist, such as February 30, is refused.
+
+The decimal separator is either a dot, as in `1,234.56`, or a comma, as in `1.234,56`. Grouping is only accepted in threes, so `12,50` is refused when a dot is chosen, and `1,234.56` is refused when a comma is chosen. Nothing guesses which one was meant.
+
+An amount below zero is an expense. When a file writes spending as a positive number, tick "Spending is written as a positive number" and every amount has its sign flipped.
+
+The choices are remembered for the next file with the same header, all of them except the wallet. A wallet's id can change when a backup is restored, so it is picked again each time.
+
+Nothing marks which rows have been imported before, so importing the same file twice adds its rows twice.
