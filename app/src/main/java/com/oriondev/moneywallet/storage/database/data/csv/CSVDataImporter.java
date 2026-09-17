@@ -1,9 +1,14 @@
 package com.oriondev.moneywallet.storage.database.data.csv;
 
 import android.content.Context;
+import android.database.Cursor;
 
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVReaderHeaderAware;
+import com.opencsv.exceptions.CsvMalformedLineException;
 import com.opencsv.exceptions.CsvValidationException;
+import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.MoneyScale;
 import com.oriondev.moneywallet.storage.database.Contract;
@@ -35,15 +40,34 @@ public class CSVDataImporter extends AbstractDataImporter {
     /** What a file saved as Unicode text can carry in front of its first character. */
     private static final char BYTE_ORDER_MARK = '\uFEFF';
 
+    private static final int MAPPED_HEADER_LINES = 1;
+
     private final File mFile;
 
-    private final CSVReaderHeaderAware mReader;
+    private final CsvImportMapping mMapping;
+
+    private final CSVReader mReader;
+
+    private final int mHeaderCells;
+
+    private CurrencyUnit mMappedCurrency;
 
     private int mRoundedAmounts;
 
     public CSVDataImporter(Context context, File file) throws IOException {
+        this(context, file, null);
+    }
+
+    /**
+     * @param mapping how to read a file this app did not write, or null for a file it did, which
+     *                is then read exactly as the two argument constructor has always read it.
+     */
+    public CSVDataImporter(Context context, File file, CsvImportMapping mapping) throws IOException {
         super(context, file);
         mFile = file;
+        mMapping = mapping;
+        // read the way the mapping screen read it, so the count is of the columns that were mapped
+        mHeaderCells = mapping == null ? 0 : CsvImportMapping.readHeader(file).cells.length;
         mReader = openReader();
     }
 
@@ -53,10 +77,18 @@ public class CSVDataImporter extends AbstractDataImporter {
      * the file starts with, and this class opens the file twice. Opening it in one place is what
      * keeps the second pass from drifting away from the first.
      */
-    private CSVReaderHeaderAware openReader() throws IOException {
+    private CSVReader openReader() throws IOException {
         Reader reader = openFile(mFile);
         try {
-            return new CSVReaderHeaderAware(reader);
+            if (mMapping == null) {
+                return new CSVReaderHeaderAware(reader);
+            }
+            // read by position, which also copes with a header that repeats a name or leaves one
+            // blank. The header line is skipped, since the mapping already says what it holds
+            return new CSVReaderBuilder(reader)
+                    .withCSVParser(CsvImportMapping.parser(mMapping.separator))
+                    .withSkipLines(MAPPED_HEADER_LINES)
+                    .build();
         } catch (IOException | RuntimeException failed) {
             closeQuietly(reader);
             throw failed;
@@ -126,7 +158,10 @@ public class CSVDataImporter extends AbstractDataImporter {
      */
     @Override
     public void importData() throws IOException {
-        try (CSVReaderHeaderAware check = openReader()) {
+        if (mMapping != null) {
+            mMappedCurrency = requireMappedWallet();
+        }
+        try (CSVReader check = openReader()) {
             readRows(check, false);
         }
         // only the saving pass. The transaction holds the one database connection the whole app
@@ -151,11 +186,40 @@ public class CSVDataImporter extends AbstractDataImporter {
      * opening a write transaction at all. A row the database itself refuses reaches only the
      * second pass, and the transaction that pass runs in takes the rows before it back out.
      */
-    private void readRows(CSVReaderHeaderAware reader, boolean write) throws IOException {
-        Map<String, String> lineMap = readMap(reader);
-        while (lineMap != null) {
+    private void readRows(CSVReader reader, boolean write) throws IOException {
+        while (true) {
+            Map<String, String> lineMap = null;
+            String[] cells = null;
+            if (mMapping == null) {
+                lineMap = readMap((CSVReaderHeaderAware) reader);
+                if (lineMap == null) {
+                    return;
+                }
+            } else {
+                long before = reader.getLinesRead();
+                // the first read also counts the skipped header, and a stray quote can join lines
+                // into a row with as many cells as the header
+                long start = Math.max(before, MAPPED_HEADER_LINES) + 1;
+                try {
+                    cells = readNext(reader);
+                } catch (CsvMalformedLineException quoteNeverClosed) {
+                    // the quote stays open to the end of the file, so there is no row handed back
+                    // for the check below to refuse
+                    throw rowSpansLines(start);
+                }
+                if (cells == null) {
+                    return;
+                }
+                if (reader.getLinesRead() > start) {
+                    throw rowSpansLines(start);
+                }
+            }
             try {
-                readRow(lineMap, write);
+                if (mMapping == null) {
+                    readRow(lineMap, write);
+                } else {
+                    readMappedRow(cells, write);
+                }
             } catch (RuntimeException e) {
                 // Only the checking pass blames a line. The saving pass is where
                 // insertTransaction runs, and "Line 37: Failed to create the new wallet" would
@@ -165,8 +229,12 @@ public class CSVDataImporter extends AbstractDataImporter {
                 }
                 throw new RuntimeException("Line " + reader.getLinesRead() + ": " + e.getMessage(), e);
             }
-            lineMap = readMap(reader);
         }
+    }
+
+    private static RuntimeException rowSpansLines(long start) {
+        return new RuntimeException("Line " + start
+                + ": a quote in this row is not closed on the same line, and every row has to fit on one line");
     }
 
     /**
@@ -177,6 +245,15 @@ public class CSVDataImporter extends AbstractDataImporter {
     private static Map<String, String> readMap(CSVReaderHeaderAware reader) throws IOException {
         try {
             return reader.readMap();
+        } catch (CsvValidationException e) {
+            throw new IOException(e);
+        }
+    }
+
+    /** The same as {@link #readMap}, for a reader that hands rows back by position. */
+    private static String[] readNext(CSVReader reader) throws IOException {
+        try {
+            return reader.readNext();
         } catch (CsvValidationException e) {
             throw new IOException(e);
         }
@@ -196,10 +273,7 @@ public class CSVDataImporter extends AbstractDataImporter {
         String place = getTrimmedString(lineMap.get(Constants.COLUMN_PLACE));
         String note = getTrimmedString(lineMap.get(Constants.COLUMN_NOTE));
         // try to build the internal transaction state starting from strings
-        CurrencyUnit currencyUnit = CurrencyManager.getCurrency(currency);
-        if (currencyUnit == null) {
-            throw new RuntimeException("Unknown currency unit (" + currency + ")");
-        }
+        CurrencyUnit currencyUnit = currencyUnit(currency);
         BigDecimal moneyDecimal;
         try {
             moneyDecimal = new BigDecimal(moneyString.replaceAll(",", "."));
@@ -207,11 +281,98 @@ public class CSVDataImporter extends AbstractDataImporter {
             throw new RuntimeException("Invalid money amount (" + e.getMessage() + ")");
         }
         long money = toMinorUnitsCounting(moneyDecimal, moneyString, currencyUnit.getDecimals(), write);
-        int direction = money < 0 ? Contract.Direction.EXPENSE : Contract.Direction.INCOME;
+        int direction = directionOf(money);
         Date datetime = parseDatetime(datetimeString);
         if (write) {
             insertTransaction(wallet, currencyUnit, category, datetime, Math.abs(money), direction, description, event, place, people, note);
         }
+    }
+
+    /**
+     * A row of a file this app did not write. Every row goes to the one wallet picked for the
+     * import, in that wallet's currency, and a row with no category goes under the fallback one.
+     */
+    private void readMappedRow(String[] cells, boolean write) {
+        if (cells.length != mHeaderCells) {
+            throw new RuntimeException("the row has " + cells.length + (cells.length == 1 ? " cell" : " cells")
+                    + " and the header has " + mHeaderCells + ", and every row needs as many as the header");
+        }
+        String dateString = mappedRequired(cells, mMapping.date, "date");
+        String amountString = mappedRequired(cells, mMapping.amount, "amount");
+        String description = mappedOptional(cells, mMapping.description);
+        String note = mappedOptional(cells, mMapping.note);
+        String category = mappedOptional(cells, mMapping.category);
+        BigDecimal amount = CsvImportMapping.parseAmount(amountString, mMapping.decimalComma);
+        if (mMapping.spendingPositive) {
+            amount = amount.negate();
+        }
+        Date datetime = CsvImportMapping.parseDate(dateString, mMapping.datePattern);
+        long money = toMinorUnitsCounting(amount, amountString, mMappedCurrency.getDecimals(), write);
+        int direction = directionOf(money);
+        if (write) {
+            // read only when saving, so checking a row never reads a string resource
+            if (category == null) {
+                category = getContext().getString(R.string.csv_import_default_category);
+            }
+            insertTransaction(mMapping.walletId, category, datetime, Math.abs(money), direction, description, null, null, null, note);
+        }
+    }
+
+    /** The cell a required field was mapped to, trimmed. */
+    private static String mappedRequired(String[] cells, int column, String field) {
+        String value = mappedOptional(cells, column);
+        if (value == null) {
+            throw new RuntimeException("the " + field + " is empty, and every row needs one");
+        }
+        return value;
+    }
+
+    /** The cell an optional field was mapped to, trimmed, or null when it is absent or empty. */
+    private static String mappedOptional(String[] cells, int column) {
+        if (column < 0 || column >= cells.length || cells[column] == null) {
+            return null;
+        }
+        String value = cells[column].trim();
+        return value.isEmpty() ? null : value;
+    }
+
+    /**
+     * Checked once, before either pass. The wallet was picked on a screen that could have stayed
+     * open while it was deleted, and a row saved under an id that no longer exists would belong to
+     * no wallet at all. Its currency is read here too, since it can be edited after the pick.
+     *
+     * @return the currency the wallet has now, which every amount is converted into.
+     */
+    private CurrencyUnit requireMappedWallet() {
+        Cursor cursor = getContext().getContentResolver().query(DataContentProvider.CONTENT_WALLETS,
+                new String[] {Contract.Wallet.ID, Contract.Wallet.CURRENCY}, Contract.Wallet.ID + " = ?",
+                new String[] {String.valueOf(mMapping.walletId)}, null);
+        String currency = null;
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    currency = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.CURRENCY));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (currency == null) {
+            throw new RuntimeException("the wallet picked for this import no longer exists");
+        }
+        return currencyUnit(currency);
+    }
+
+    private static CurrencyUnit currencyUnit(String currency) {
+        CurrencyUnit currencyUnit = CurrencyManager.getCurrency(currency);
+        if (currencyUnit == null) {
+            throw new RuntimeException("Unknown currency unit (" + currency + ")");
+        }
+        return currencyUnit;
+    }
+
+    private static int directionOf(long money) {
+        return money < 0 ? Contract.Direction.EXPENSE : Contract.Direction.INCOME;
     }
 
     @Override

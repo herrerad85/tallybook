@@ -159,6 +159,23 @@
     <string name="hint_export_optional_columns">"Optional columns"</string>
     <string name="hint_export_unique_wallet">"Join transactions from different wallets"</string>
     <string name="hint_export_csv_no_transfers">"The two sides of a transfer are left out of a CSV file, because nothing in it marks which two rows were one transfer. A transfer fee is still written, and the other formats include transfers in full."</string>
+    <string name="csv_import_mapping_intro">"This file was not written by Tallybook. Pick the column that holds each field."</string>
+    <string name="csv_import_date_column">"Date column"</string>
+    <string name="csv_import_amount_column">"Amount column"</string>
+    <string name="csv_import_description_column">"Description column"</string>
+    <string name="csv_import_note_column">"Note column"</string>
+    <string name="csv_import_category_column">"Category column"</string>
+    <string name="csv_import_date_format">"Date format"</string>
+    <string name="csv_import_decimal_separator">"Decimal separator"</string>
+    <string name="csv_import_decimal_dot">"Dot, 1,234.56"</string>
+    <string name="csv_import_decimal_comma">"Comma, 1.234,56"</string>
+    <string name="csv_import_spending_positive">"Spending is written as a positive number"</string>
+    <string name="csv_import_column_none">"None"</string>
+    <string name="csv_import_column_unnamed">"Column %d"</string>
+    <string name="csv_import_default_category">"Imported"</string>
+    <string name="csv_import_error_missing_date_column">"Select the date column"</string>
+    <string name="csv_import_error_missing_amount_column">"Select the amount column"</string>
+    <string name="csv_import_error_missing_date_format">"Select a date format"</string>
     <string name="hint_data_format_csv" translatable="false">"CSV"</string>
     <string name="hint_data_format_xls" translatable="false">"XLS"</string>
     <string name="hint_data_format_pdf" translatable="false">"PDF"</string>
