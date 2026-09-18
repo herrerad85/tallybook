@@ -47,6 +47,7 @@ public class ImportExportIntentService extends IntentService {
     public static final String UNIQUE_WALLET = "ImportExportIntentService::Arguments::UniqueWallet";
     public static final String OPTIONAL_COLUMNS = "ImportExportIntentService::Arguments::OptionalColumns";
     public static final String MAPPING = "ImportExportIntentService::Arguments::Mapping";
+    public static final String TOKEN = "ImportExportIntentService::Arguments::Token";
 
     public static final String RESULT_FILE_URI = "ImportExportIntentService::Results::FileUri";
     public static final String RESULT_FILE_TYPE = "ImportExportIntentService::Results::FileType";
@@ -58,6 +59,7 @@ public class ImportExportIntentService extends IntentService {
     public static final int MODE_IMPORT = 1;
 
     private TaskReporter mReporter;
+    private String mToken;
 
     public ImportExportIntentService() {
         super("ImportExportIntentService");
@@ -67,6 +69,7 @@ public class ImportExportIntentService extends IntentService {
     protected void onHandleIntent(@Nullable Intent intent) {
         if (intent != null) {
             mReporter = new TaskReporter(this);
+            mToken = intent.getStringExtra(TOKEN);
             int mode = intent.getIntExtra(MODE, MODE_EXPORT);
             switch (mode) {
                 case MODE_EXPORT:
@@ -236,13 +239,16 @@ public class ImportExportIntentService extends IntentService {
     }
 
     private void notifyTaskStarted(String action) {
-        mReporter.broadcast(action);
+        Bundle extras = new Bundle();
+        extras.putString(TOKEN, mToken);
+        mReporter.broadcast(action, extras);
     }
 
     private void notifyTaskFinished(String action, int roundedAmounts, int alreadySavedRows) {
         Bundle extras = new Bundle();
         extras.putInt(ROUNDED_AMOUNTS, roundedAmounts);
         extras.putInt(ALREADY_SAVED_ROWS, alreadySavedRows);
+        extras.putString(TOKEN, mToken);
         mReporter.broadcast(action, extras);
     }
 
@@ -250,12 +256,14 @@ public class ImportExportIntentService extends IntentService {
         Bundle extras = new Bundle();
         extras.putParcelable(RESULT_FILE_URI, resultUri);
         extras.putString(RESULT_FILE_TYPE, resultType);
+        extras.putString(TOKEN, mToken);
         mReporter.broadcast(action, extras);
     }
 
     private void notifyTaskFailed(String action, Exception exception) {
         Bundle extras = new Bundle();
         extras.putSerializable(EXCEPTION, exception);
+        extras.putString(TOKEN, mToken);
         mReporter.broadcast(action, extras);
     }
 

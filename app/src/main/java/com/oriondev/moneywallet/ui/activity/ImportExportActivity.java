@@ -50,9 +50,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntConsumer;
 
@@ -77,6 +79,7 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
     private static final String SS_IMPORT_FILE = "ImportExportActivity::SavedState::ImportFile";
     private static final String SS_EXPORT_FOLDER_URI = "ImportExportActivity::SavedState::ExportFolderUri";
     private static final String SS_IMPORT_MAPPING = "ImportExportActivity::SavedState::ImportMapping";
+    static final String SS_TOKEN = "ImportExportActivity::SavedState::Token";
 
     private MaterialEditText mImportFormatEditText;
     private MaterialEditText mExportFormatEditText;
@@ -122,6 +125,8 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
 
     private int mMode;
 
+    private ArrayList<String> mTokens = new ArrayList<>();
+
     private GenericProgressDialog mProgressDialog;
     private LocalBroadcastManager mLocalBroadcastManager;
 
@@ -151,6 +156,10 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
 
                 });
         if (savedInstanceState != null) {
+            ArrayList<String> tokens = savedInstanceState.getStringArrayList(SS_TOKEN);
+            if (tokens != null) {
+                mTokens = tokens;
+            }
             String importPath = savedInstanceState.getString(SS_IMPORT_FILE);
             if (importPath != null) {
                 mImportFile = new File(importPath);
@@ -200,6 +209,7 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
             outState.putString(SS_EXPORT_FOLDER_URI, mExportFolderUri.toString());
         }
         outState.putSerializable(SS_IMPORT_MAPPING, mImportMapping);
+        outState.putStringArrayList(SS_TOKEN, mTokens);
     }
 
     @Override
@@ -545,7 +555,7 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         return false;
     }
 
-    private void importData() {
+    void importData() {
         Intent intent = new Intent(this, ImportExportIntentService.class);
         intent.putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT);
         intent.putExtra(ImportExportIntentService.FORMAT, mDataFormatPicker.getCurrentFormat());
@@ -558,10 +568,13 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
             mImportMapping.walletId = wallet.getId();
             intent.putExtra(ImportExportIntentService.MAPPING, mImportMapping);
         }
+        String token = UUID.randomUUID().toString();
+        mTokens.add(token);
+        intent.putExtra(ImportExportIntentService.TOKEN, token);
         startService(intent);
     }
 
-    private void exportData() {
+    void exportData() {
         Intent intent = new Intent(this, ImportExportIntentService.class);
         intent.putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_EXPORT);
         intent.putExtra(ImportExportIntentService.FORMAT, mDataFormatPicker.getCurrentFormat());
@@ -573,6 +586,9 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
         intent.putExtra(ImportExportIntentService.FOLDER, getExportCacheDir());
         intent.putExtra(ImportExportIntentService.UNIQUE_WALLET, mUniqueWalletCheckbox.isChecked());
         intent.putExtra(ImportExportIntentService.OPTIONAL_COLUMNS, mExportColumnsPicker.getCurrentServiceColumns());
+        String token = UUID.randomUUID().toString();
+        mTokens.add(token);
+        intent.putExtra(ImportExportIntentService.TOKEN, token);
         startService(intent);
     }
 
@@ -928,6 +944,10 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
 
         @Override
         public void onReceive(Context context, final Intent intent) {
+            // another import or export screen can be alive underneath and must not react to this one's work
+            if (!mTokens.contains(intent.getStringExtra(ImportExportIntentService.TOKEN))) {
+                return;
+            }
             String action = intent.getAction();
             if (action != null) {
                 switch (action) {
