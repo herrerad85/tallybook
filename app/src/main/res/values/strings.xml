@@ -508,6 +508,7 @@
     <string name="message_data_export_failed">"Failure during the export procedure. Message: %s"</string>
     <string name="message_data_import_success">"Data imported correctly."</string>
     <string name="message_data_import_success_rounded">"Data imported correctly. Amounts the currency could not hold exactly were rounded to the nearest unit: %1$d."</string>
+    <string name="message_data_import_already_saved">"Rows already in the wallet were skipped: %1$d."</string>
     <string name="message_data_export_success">"Data exported correctly. Do you want to open the created file?"</string>
 
     <string name="message_async_init">"Initialization …"</string>

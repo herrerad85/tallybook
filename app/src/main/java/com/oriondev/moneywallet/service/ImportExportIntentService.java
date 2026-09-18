@@ -52,6 +52,7 @@ public class ImportExportIntentService extends IntentService {
     public static final String RESULT_FILE_TYPE = "ImportExportIntentService::Results::FileType";
     public static final String EXCEPTION = "ImportExportIntentService::Results::Exception";
     public static final String ROUNDED_AMOUNTS = "ImportExportIntentService::Results::RoundedAmounts";
+    public static final String ALREADY_SAVED_ROWS = "ImportExportIntentService::Results::AlreadySavedRows";
 
     public static final int MODE_EXPORT = 0;
     public static final int MODE_IMPORT = 1;
@@ -94,13 +95,15 @@ public class ImportExportIntentService extends IntentService {
             // initialize the correct data importer
             AbstractDataImporter dataImporter = getDataImporter(dataFormat, file, mapping);
             int roundedAmounts;
+            int alreadySavedRows;
             try {
                 dataImporter.importData();
                 roundedAmounts = dataImporter.getRoundedAmounts();
+                alreadySavedRows = dataImporter.getAlreadySavedRows();
             } finally {
                 dataImporter.close();
             }
-            notifyTaskFinished(LocalAction.ACTION_IMPORT_SERVICE_FINISHED, roundedAmounts);
+            notifyTaskFinished(LocalAction.ACTION_IMPORT_SERVICE_FINISHED, roundedAmounts, alreadySavedRows);
         } catch (Exception e) {
             notifyTaskFailed(LocalAction.ACTION_IMPORT_SERVICE_FAILED, e);
         }
@@ -168,13 +171,8 @@ public class ImportExportIntentService extends IntentService {
             selectionArguments.add(DateUtils.getSQLDateString(startDate));
         }
         if (dataFormat == DataFormat.CSV) {
-            // CSV is the only format that can be imported back, and it carries nothing that
-            // pairs the two legs of a transfer, so importing them recreates each leg as an
-            // ordinary transaction. The fee stays: it is one expense, not half of anything.
-            selectionBuilder.append(" AND (" + Contract.Transaction.TYPE + " != ? OR " +
-                    Contract.Transaction.CATEGORY_TAG + " = ?)");
-            selectionArguments.add(String.valueOf(Contract.TransactionType.TRANSFER));
-            selectionArguments.add(Contract.CategoryTag.TRANSFER_TAX);
+            selectionBuilder.append(" AND " + CSVDataExporter.ROWS_SELECTION);
+            selectionArguments.addAll(CSVDataExporter.ROWS_SELECTION_ARGS);
         }
         String sortOrder = Contract.Transaction.DATE + " DESC";
         // check if we should create a unique wallet or if we can export each wallet
@@ -241,9 +239,10 @@ public class ImportExportIntentService extends IntentService {
         mReporter.broadcast(action);
     }
 
-    private void notifyTaskFinished(String action, int roundedAmounts) {
+    private void notifyTaskFinished(String action, int roundedAmounts, int alreadySavedRows) {
         Bundle extras = new Bundle();
         extras.putInt(ROUNDED_AMOUNTS, roundedAmounts);
+        extras.putInt(ALREADY_SAVED_ROWS, alreadySavedRows);
         mReporter.broadcast(action, extras);
     }
 
