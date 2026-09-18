@@ -19,10 +19,19 @@
 
 package com.oriondev.moneywallet.storage.preference;
 
+import androidx.annotation.Nullable;
+
 /**
  * Created by andrea on 04/09/18.
  */
 public interface CurrentWalletController {
 
     void onCurrentWalletChanged(long walletId);
+
+    /**
+     * @param walletName the new wallet's name when the switch carried it, otherwise null.
+     */
+    default void onCurrentWalletChanged(long walletId, @Nullable String walletName) {
+        onCurrentWalletChanged(walletId);
+    }
 }

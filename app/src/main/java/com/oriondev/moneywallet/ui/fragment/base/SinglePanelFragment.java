@@ -73,7 +73,12 @@ public abstract class SinglePanelFragment extends Fragment implements Toolbar.On
 
                 @Override
                 public void onCurrentWalletChanged(long walletId) {
-                    showCurrentWalletInToolbar(true);
+                    onCurrentWalletChanged(walletId, null);
+                }
+
+                @Override
+                public void onCurrentWalletChanged(long walletId, @Nullable String walletName) {
+                    showCurrentWalletInToolbar(true, walletName);
                 }
 
             });
@@ -133,7 +138,7 @@ public abstract class SinglePanelFragment extends Fragment implements Toolbar.On
     protected void setupPrimaryToolbar(Toolbar toolbar) {
         // setup toolbar title and menu (if provided)
         toolbar.setTitle(getTitleRes());
-        showCurrentWalletInToolbar(false);
+        showCurrentWalletInToolbar(false, null);
         int menuResId = onInflateMenu();
         if (menuResId > 0) {
             toolbar.inflateMenu(menuResId);
@@ -196,8 +201,10 @@ public abstract class SinglePanelFragment extends Fragment implements Toolbar.On
      *               rebuilt against the new id. False on the view creation path, where init
      *               redelivers the row a retained loader already holds instead of querying
      *               again on every rotation.
+     * @param walletName the name the switch carried for the wallet being selected, or null.
+     *                   Only read when reload is true.
      */
-    private void showCurrentWalletInToolbar(boolean reload) {
+    private void showCurrentWalletInToolbar(boolean reload, @Nullable String walletName) {
         if (!showsCurrentWallet() || mToolbar == null || !isAdded()) {
             return;
         }
@@ -210,9 +217,11 @@ public abstract class SinglePanelFragment extends Fragment implements Toolbar.On
             mToolbar.setSubtitle(null);
             LoaderManager.getInstance(this).destroyLoader(CURRENT_WALLET_LOADER_ID);
         } else if (reload) {
-            // clear first: the load is asynchronous, and until it lands the old name would be
-            // naming the wrong wallet rather than merely being out of date
-            mToolbar.setSubtitle(null);
+            // the carried name belongs to the wallet being switched to, so it can go up before
+            // the load lands and the toolbar keeps its height. With no name, clear, because the
+            // load is asynchronous and until it lands the old name would be naming the wrong
+            // wallet
+            mToolbar.setSubtitle(walletName);
             // a loader rather than a direct query: resolving a wallet row runs a balance
             // aggregate over the transactions table, and it redelivers when the row is renamed
             LoaderManager.getInstance(this).restartLoader(CURRENT_WALLET_LOADER_ID, null, mCurrentWalletCallbacks);
