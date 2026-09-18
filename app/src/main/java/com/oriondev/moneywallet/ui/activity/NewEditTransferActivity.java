@@ -725,7 +725,7 @@ public class NewEditTransferActivity extends NewEditItemActivity  implements Cur
         if (currencyUnit1 != null && currencyUnit2 != null && !currencyUnit1.equals(currencyUnit2)) {
             // we have two different currencies, its time to show the secondary currency line and do
             // a conversion on the fly with the provided conversion rate.
-            mExchangeRateTextView.setText(String.format(Locale.getDefault(), "%s ➡ %s: %.2f", currencyUnit1.getSymbol(), currencyUnit2.getSymbol(), conversionRate));
+            mExchangeRateTextView.setText(String.format(Locale.getDefault(), "%s -> %s: %.2f", currencyUnit1.getSymbol(), currencyUnit2.getSymbol(), conversionRate));
             long convertedAmount = mConverterPicker.convert(mMoneyPicker.getCurrentMoney());
             mMoneyFormatter.applyNotTinted(mSecondaryMoneyTextView, currencyUnit2, convertedAmount);
             mExchangeRateTextView.setVisibility(View.VISIBLE);
