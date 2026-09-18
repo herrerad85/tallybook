@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.activity;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -72,6 +73,11 @@ public class LauncherActivity extends ThemedActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (isMainScreenAtTheBaseOfThisTask()) {
+            // the running main screen is left as it was instead of stacking a second one
+            finish();
+            return;
+        }
         if (UpgradeLegacyEditionIntentService.isLegacyEditionDetected(this)) {
             setContentView(R.layout.activity_launcher_legacy_edition_upgrade);
             SystemBars.pad(findViewById(R.id.legacy_upgrade_layout), true, true, true);
@@ -171,6 +177,26 @@ public class LauncherActivity extends ThemedActivity {
                 new String[]{Contract.Wallet.ID}, null, null, null)) {
             return cursor != null ? cursor.getCount() : -1;
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean isMainScreenAtTheBaseOfThisTask() {
+        if (isTaskRoot()) {
+            return false;
+        }
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.AppTask task : manager.getAppTasks()) {
+            ActivityManager.RecentTaskInfo info;
+            try {
+                info = task.getTaskInfo();
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            if (info.persistentId == getTaskId()) {
+                return info.baseActivity != null && MainActivity.class.getName().equals(info.baseActivity.getClassName());
+            }
+        }
+        return false;
     }
 
     private void startMainActivity() {
