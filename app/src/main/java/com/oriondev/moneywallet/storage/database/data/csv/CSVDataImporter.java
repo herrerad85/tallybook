@@ -280,11 +280,11 @@ public class CSVDataImporter extends AbstractDataImporter {
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid money amount (" + e.getMessage() + ")");
         }
-        long money = toMinorUnitsCounting(moneyDecimal, moneyString, currencyUnit.getDecimals(), write);
+        long money = toMinorUnits(moneyDecimal, moneyString, currencyUnit.getDecimals());
         int direction = directionOf(money);
         Date datetime = parseDatetime(datetimeString);
-        if (write) {
-            insertTransaction(wallet, currencyUnit, category, datetime, Math.abs(money), direction, description, event, place, people, note);
+        if (write && insertTransaction(wallet, currencyUnit, category, datetime, Math.abs(money), direction, description, event, place, people, note)) {
+            countIfRounded(money, currencyUnit.getDecimals(), moneyDecimal);
         }
     }
 
@@ -307,14 +307,16 @@ public class CSVDataImporter extends AbstractDataImporter {
             amount = amount.negate();
         }
         Date datetime = CsvImportMapping.parseDate(dateString, mMapping.datePattern);
-        long money = toMinorUnitsCounting(amount, amountString, mMappedCurrency.getDecimals(), write);
+        long money = toMinorUnits(amount, amountString, mMappedCurrency.getDecimals());
         int direction = directionOf(money);
         if (write) {
             // read only when saving, so checking a row never reads a string resource
             if (category == null) {
                 category = getContext().getString(R.string.csv_import_default_category);
             }
-            insertTransaction(mMapping.walletId, category, datetime, Math.abs(money), direction, description, null, null, null, note);
+            if (insertTransaction(mMapping.walletId, category, datetime, Math.abs(money), direction, description, null, null, null, note)) {
+                countIfRounded(money, mMappedCurrency.getDecimals(), amount);
+            }
         }
     }
 
@@ -385,16 +387,9 @@ public class CSVDataImporter extends AbstractDataImporter {
      * elsewhere carries whatever precision that place kept, and nothing here shows the amount
      * for review before it is saved. The row's own currency column decides the scale.
      *
-     * Rows the currency could not hold exactly are counted, so the screen that reports the
-     * import can say so. The test is the stored amount read back against what the row said, not
-     * the rounded amount against the cut off one: a row rounded down lands where cutting off
-     * would have left it, and its value moved just the same. Counted only on the pass that
-     * writes, since every row is read twice.
-     *
-     * @param cell  the money column as the row wrote it, which is what a refusal quotes.
-     * @param write true on the pass that saves, which is the one that counts.
+     * @param cell the money column as the row wrote it, which is what a refusal quotes.
      */
-    private long toMinorUnitsCounting(BigDecimal amount, String cell, int decimals, boolean write) {
+    private long toMinorUnits(BigDecimal amount, String cell, int decimals) {
         long money;
         try {
             money = MoneyScale.toMinorUnitsRounded(amount, decimals);
@@ -406,10 +401,20 @@ public class CSVDataImporter extends AbstractDataImporter {
         if (money == Long.MIN_VALUE) {
             throw new RuntimeException("Money amount is out of range (" + cell + ")");
         }
-        if (write && MoneyScale.toHumanAmount(money, decimals).compareTo(amount) != 0) {
+        return money;
+    }
+
+    /**
+     * Rows the currency could not hold exactly are counted, so the screen that reports the
+     * import can say so. The test is the stored amount read back against what the row said, not
+     * the rounded amount against the cut off one: a row rounded down lands where cutting off
+     * would have left it, and its value moved just the same. Counted only for a row this import
+     * saved.
+     */
+    private void countIfRounded(long money, int decimals, BigDecimal amount) {
+        if (MoneyScale.toHumanAmount(money, decimals).compareTo(amount) != 0) {
             mRoundedAmounts++;
         }
-        return money;
     }
 
     /**

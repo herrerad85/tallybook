@@ -284,6 +284,67 @@ public class CsvMappedImportTest {
         assertEquals("Shop, Inc. 500|Cafe 300|Bakery 100|", savedRows());
     }
 
+    /**
+     * Through both read passes and the transaction the second one runs in, so a row is counted
+     * once and not once per pass. The file repeats a row, which the first import saves twice.
+     */
+    @Test
+    public void importingTheSameFileAgainSavesNothingAndCountsEveryRow() throws IOException {
+        File file = write("Date,Description,Amount\n"
+                + "01/02/2026,Shop,-5.00\n"
+                + "01/02/2026,Shop,-5.00\n"
+                + "01/03/2026,,-3.00\n");
+        assertEquals(0, importCountingSkipped(file, commaMapping()));
+        assertEquals(3, count(DataContentProvider.CONTENT_TRANSACTIONS, Contract.Transaction.ID));
+        assertEquals(3, importCountingSkipped(file, commaMapping()));
+        assertEquals(3, count(DataContentProvider.CONTENT_TRANSACTIONS, Contract.Transaction.ID));
+    }
+
+    @Test
+    public void aRowSkippedOnReimportIsNotCountedAsRounded() throws IOException {
+        File file = write("Date,Description,Amount\n01/02/2026,Shop,-5.005\n");
+        CSVDataImporter first = new CSVDataImporter(mContext, file, commaMapping());
+        CSVDataImporter second = new CSVDataImporter(mContext, file, commaMapping());
+        try {
+            first.importData();
+            assertEquals(1, first.getRoundedAmounts());
+            second.importData();
+            assertEquals(1, second.getAlreadySavedRows());
+            assertEquals(0, second.getRoundedAmounts());
+        } finally {
+            first.close();
+            second.close();
+        }
+    }
+
+    @Test
+    public void aRowSkippedOnReimportOfOurOwnFormatIsNotCountedAsRounded() throws IOException {
+        File file = write("wallet,currency,category,datetime,money,description\n"
+                + "Checking,EUR,Food,2026-01-02 10:00:00,-5.005,Shop\n");
+        CSVDataImporter first = new CSVDataImporter(mContext, file);
+        CSVDataImporter second = new CSVDataImporter(mContext, file);
+        try {
+            first.importData();
+            assertEquals(1, first.getRoundedAmounts());
+            second.importData();
+            assertEquals(1, second.getAlreadySavedRows());
+            assertEquals(0, second.getRoundedAmounts());
+        } finally {
+            first.close();
+            second.close();
+        }
+    }
+
+    private int importCountingSkipped(File file, CsvImportMapping mapping) throws IOException {
+        CSVDataImporter importer = new CSVDataImporter(mContext, file, mapping);
+        try {
+            importer.importData();
+            return importer.getAlreadySavedRows();
+        } finally {
+            importer.close();
+        }
+    }
+
     private CsvImportMapping semicolonMapping() {
         CsvImportMapping mapping = new CsvImportMapping();
         mapping.separator = ';';

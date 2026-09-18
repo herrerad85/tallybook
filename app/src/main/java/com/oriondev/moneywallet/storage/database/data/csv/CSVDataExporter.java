@@ -5,6 +5,7 @@ import android.database.Cursor;
 
 import com.opencsv.CSVWriter;
 import com.oriondev.moneywallet.model.Wallet;
+import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.data.AbstractDataExporter;
 import com.oriondev.moneywallet.storage.database.data.Constants;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
@@ -13,6 +14,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,6 +26,19 @@ public class CSVDataExporter extends AbstractDataExporter {
     // multiple people are joined with a bare comma (not ", ") because an exported CSV is parsed
     // back by CSVDataImporter, which splits the people cell on this exact separator.
     private static final String PEOPLE_SEPARATOR = ",";
+
+    /**
+     * The transactions a CSV export writes, every one but a transfer leg. CSV is the only format
+     * that can be imported back, and it carries nothing that pairs the two legs of a transfer, so
+     * importing them recreates each leg as an ordinary transaction. The fee stays, it is one
+     * expense and not half of anything. The importer looks for a row already saved among the same
+     * transactions.
+     */
+    public static final String ROWS_SELECTION = "(" + Contract.Transaction.TYPE + " != ? OR "
+            + Contract.Transaction.CATEGORY_TAG + " = ?)";
+
+    public static final List<String> ROWS_SELECTION_ARGS = Collections.unmodifiableList(Arrays.asList(
+            String.valueOf(Contract.TransactionType.TRANSFER), Contract.CategoryTag.TRANSFER_TAX));
 
     private final File mOutputFile;
     private final CSVWriter mWriter;

@@ -946,11 +946,16 @@ public class ImportExportActivity extends SinglePanelActivity implements ImportE
                         // rounded on the way in, so the screen that says the import worked says
                         // that too rather than leaving the user to find it in the ledger.
                         int roundedAmounts = intent.getIntExtra(ImportExportIntentService.ROUNDED_AMOUNTS, 0);
+                        String message = roundedAmounts > 0
+                                ? getString(R.string.message_data_import_success_rounded, roundedAmounts)
+                                : getString(R.string.message_data_import_success);
+                        int alreadySavedRows = intent.getIntExtra(ImportExportIntentService.ALREADY_SAVED_ROWS, 0);
+                        if (alreadySavedRows > 0) {
+                            message += " " + getString(R.string.message_data_import_already_saved, alreadySavedRows);
+                        }
                         ThemedDialog.buildMaterialDialog(ImportExportActivity.this)
                                 .setTitle(R.string.title_success)
-                                .setMessage(roundedAmounts > 0
-                                        ? getString(R.string.message_data_import_success_rounded, roundedAmounts)
-                                        : getString(R.string.message_data_import_success))
+                                .setMessage(message)
                                 .setPositiveButton(android.R.string.ok, null)
                                 .show();
                         break;

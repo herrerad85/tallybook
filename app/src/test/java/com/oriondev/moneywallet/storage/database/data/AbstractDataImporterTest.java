@@ -13,6 +13,7 @@ import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.utils.DateUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -329,6 +330,208 @@ public class AbstractDataImporterTest {
         assertEquals("the second income row did not reuse the income category the first made",
                 income, newestTransactionCategory());
         assertEquals(before + 1, countCategories());
+    }
+
+    @Test
+    public void aRowTheWalletAlreadyHoldsIsSkippedAndCounted() throws IOException {
+        importRow("Food", Contract.Direction.EXPENSE);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    /**
+     * Only rows that were in the wallet before the import count, so a row a file carries twice is
+     * saved twice the first time, and a third copy is saved on the next import.
+     */
+    @Test
+    public void aRowRepeatedInOneFileIsSavedEachTimeItIsNew() throws IOException {
+        importRow("Food", Contract.Direction.EXPENSE);
+        importRow("Food", Contract.Direction.EXPENSE);
+        assertEquals(2, countTransactions());
+        assertEquals(0, mImporter.getAlreadySavedRows());
+
+        TestImporter again = new TestImporter(mContext);
+        for (int i = 0; i < 3; i++) {
+            again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                    "desc", null, null, null, null);
+        }
+        assertEquals(3, countTransactions());
+        assertEquals(2, again.getAlreadySavedRows());
+    }
+
+    @Test
+    public void noDescriptionMatchesAnEmptyOne() throws IOException {
+        mImporter.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                null, null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    @Test
+    public void aDescriptionSavedWithSpacesMatchesTheTrimmedOne() throws IOException {
+        mImporter.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "Coffee ", null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "Coffee", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    @Test
+    public void aZeroExpenseMatchesTheZeroIncomeTheExportTurnsItInto() throws IOException {
+        mImporter.insertTransaction("Cash", mEuro, "Food", DATE, 0L, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, 0L, Contract.Direction.INCOME,
+                "desc", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    @Test
+    public void aWalletNameSavedWithASpaceIsFoundByTheTrimmedOne() throws IOException {
+        mImporter.insertTransaction("Cash ", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    /** SQLite TRIM strips only spaces unless told the rest, and Java trim strips a tab too. */
+    @Test
+    public void aWalletNameSavedWithATabIsFoundByTheTrimmedOne() throws IOException {
+        mImporter.insertTransaction("Cash\t", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    /** SQLite stops reading a statement at a NUL, so the name must never be part of the SQL text. */
+    @Test
+    public void aWalletNameWithANulInsideIsImported() throws IOException {
+        mImporter.insertTransaction("Ca\0sh", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Ca\0sh", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        assertEquals(1, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    /** A wallet saved under the exact name wins over a newer one that only matches trimmed. */
+    @Test
+    public void theWalletWithTheExactNameWinsOverANewerPaddedOne() throws IOException {
+        importRow("Food", Contract.Direction.EXPENSE);
+        mImporter.insertTransaction("Cash ", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "other", null, null, null, null);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        assertEquals(2, countTransactions());
+        assertEquals(1, again.getAlreadySavedRows());
+    }
+
+    /** Each field the match compares, changed on its own, makes a row that is saved. */
+    @Test
+    public void aRowDifferingInAnyComparedFieldIsSaved() throws IOException {
+        importRow("Food", Contract.Direction.EXPENSE);
+        TestImporter again = new TestImporter(mContext);
+        again.insertTransaction("Other", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        again.insertTransaction("Cash", mEuro, "Food", new Date(DATE.getTime() + 1000L), MONEY,
+                Contract.Direction.EXPENSE, "desc", null, null, null, null);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY + 1, Contract.Direction.EXPENSE,
+                "desc", null, null, null, null);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.INCOME,
+                "desc", null, null, null, null);
+        again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                "other", null, null, null, null);
+        assertEquals(6, countTransactions());
+        assertEquals(0, again.getAlreadySavedRows());
+    }
+
+    /**
+     * The match reads the same rows a CSV export writes, so a debt row, a saving row and a transfer
+     * fee are found again whatever type they were saved with, and a transfer leg, which the export
+     * leaves out, is not.
+     */
+    @Test
+    public void everyRowTheExportWritesIsMatchedAndATransferLegIsNot() throws IOException {
+        importRow("Food", Contract.Direction.EXPENSE);
+        long wallet = newestTransactionWallet();
+        insertTyped(wallet, "debt", Contract.TransactionType.DEBT, systemCategory(Contract.CategoryTag.DEBT));
+        insertTyped(wallet, "saving", Contract.TransactionType.SAVING,
+                systemCategory(Contract.CategoryTag.SAVING_DEPOSIT));
+        insertTyped(wallet, "fee", Contract.TransactionType.TRANSFER,
+                systemCategory(Contract.CategoryTag.TRANSFER_TAX));
+        insertTyped(wallet, "leg", Contract.TransactionType.TRANSFER, mTransferId);
+        TestImporter again = new TestImporter(mContext);
+        for (String description : new String[] {"debt", "saving", "fee", "leg"}) {
+            again.insertTransaction("Cash", mEuro, "Food", DATE, MONEY, Contract.Direction.EXPENSE,
+                    description, null, null, null, null);
+        }
+        assertEquals(3, again.getAlreadySavedRows());
+        assertEquals(6, countTransactions());
+    }
+
+    private long newestTransactionWallet() {
+        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_TRANSACTIONS,
+                new String[] {Contract.Transaction.WALLET_ID}, null, null, Contract.Transaction.ID + " DESC");
+        assertNotNull(cursor);
+        try {
+            assertTrue(cursor.moveToFirst());
+            return cursor.getLong(0);
+        } finally {
+            cursor.close();
+        }
+    }
+
+    private void insertTyped(long wallet, String description, int type, long category) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Transaction.MONEY, MONEY);
+        values.put(Contract.Transaction.DATE, DateUtils.getSQLDateTimeString(DATE));
+        values.put(Contract.Transaction.DESCRIPTION, description);
+        values.put(Contract.Transaction.CATEGORY_ID, category);
+        values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+        values.put(Contract.Transaction.TYPE, type);
+        values.put(Contract.Transaction.WALLET_ID, wallet);
+        values.put(Contract.Transaction.CONFIRMED, true);
+        values.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        assertNotNull(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values));
+    }
+
+    private long systemCategory(String tag) {
+        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_CATEGORIES,
+                new String[] {Contract.Category.ID}, Contract.Category.TAG + " = ?",
+                new String[] {tag}, null);
+        assertNotNull(cursor);
+        try {
+            assertTrue("no system category tagged " + tag, cursor.moveToFirst());
+            return cursor.getLong(0);
+        } finally {
+            cursor.close();
+        }
+    }
+
+    private int countTransactions() {
+        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_TRANSACTIONS,
+                new String[] {Contract.Transaction.ID}, null, null, null);
+        assertNotNull(cursor);
+        int count = cursor.getCount();
+        cursor.close();
+        return count;
     }
 
     private void importRow(String category, int direction) {
