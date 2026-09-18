@@ -84,7 +84,8 @@ public class CsvImportMappingTest {
             CsvImportMapping.readHeader(file);
             fail("a header with a quote that is never closed has to be refused");
         } catch (IOException expected) {
-            assertNotNull(expected.getMessage());
+            assertEquals("Line 1: a quote in this row is not closed on the same line, and every row has to fit on one line",
+                    expected.getMessage());
         }
     }
 
@@ -195,6 +196,7 @@ public class CsvImportMappingTest {
         refusesDate("2026-13-01", "yyyy-MM-dd");
         refusesDate("12/31/2026", "dd/MM/yyyy");
         refusesDate("31/12/2026", "MM/dd/yyyy");
+        refusesDate("08/12/26", "MM/dd/yyyy");
         refusesDate("12/08/26", "dd/MM/yyyy");
         refusesDate("26-08-12", "yyyy-MM-dd");
         refusesDate("12.08.26", "dd.MM.yyyy");
@@ -207,6 +209,18 @@ public class CsvImportMappingTest {
         refusesDate("2026-08-12 09:3", "yyyy-MM-dd");
         refusesDate("12.08.2026", "dd/MM/yyyy");
         refusesDate("", "yyyy-MM-dd");
+    }
+
+    /** SimpleDateFormat puts a two digit year within 80 years before today and 20 after. */
+    @Test
+    public void aTwoDigitYearTakesItsCenturyFromTheWindow() {
+        assertEquals(at(2026, 3, 5, 0, 0, 0), CsvImportMapping.parseDate("05/03/26", "dd/MM/yy"));
+        assertEquals(at(1999, 3, 5, 0, 0, 0), CsvImportMapping.parseDate("03/05/99", "MM/dd/yy"));
+        assertEquals(at(2026, 3, 5, 0, 0, 0), CsvImportMapping.parseDate("05.03.26", "dd.MM.yy"));
+        refusesDate("31/02/26", "dd/MM/yy");
+        refusesDate("05/03/2026", "dd/MM/yy");
+        refusesDate("03/05/1999", "MM/dd/yy");
+        refusesDate("05.03.2026", "dd.MM.yy");
     }
 
     @Test
@@ -270,10 +284,43 @@ public class CsvImportMappingTest {
         refusesAmount(".5", false);
         refusesAmount("--1", false);
         refusesAmount("1e3", false);
-        refusesAmount("$12.00", false);
         refusesAmount("", false);
         refusesAmount("1.23,4", true);
         refusesAmount("12,", true);
+    }
+
+    @Test
+    public void aCurrencySymbolBeforeOrAfterTheNumberIsDropped() {
+        assertEquals(new BigDecimal("1234.56"), CsvImportMapping.parseAmount("$1,234.56", false));
+        assertEquals(new BigDecimal("12.00"), CsvImportMapping.parseAmount("$12.00", false));
+        assertEquals(new BigDecimal("-5"), CsvImportMapping.parseAmount("-$5", false));
+        assertEquals(new BigDecimal("-5"), CsvImportMapping.parseAmount("$-5", false));
+        assertEquals(new BigDecimal("1234.56"), CsvImportMapping.parseAmount("1.234,56 €", true));
+        assertEquals(new BigDecimal("-1234.56"), CsvImportMapping.parseAmount("-1.234,56 €", true));
+        assertEquals(new BigDecimal("1234.56"), CsvImportMapping.parseAmount("1.234,56 €", true));
+        assertEquals(new BigDecimal("5"), CsvImportMapping.parseAmount("£5", false));
+        assertEquals(new BigDecimal("1234"), CsvImportMapping.parseAmount("¥1,234", false));
+    }
+
+    @Test
+    public void anAmountInParenthesesIsNegative() {
+        assertEquals(new BigDecimal("-12.50"), CsvImportMapping.parseAmount("(12.50)", false));
+        assertEquals(new BigDecimal("-1234.56"), CsvImportMapping.parseAmount("($1,234.56)", false));
+    }
+
+    @Test
+    public void anAmountWithATrailingMinusIsNegative() {
+        assertEquals(new BigDecimal("-1234.56"), CsvImportMapping.parseAmount("1234.56-", false));
+        assertEquals(new BigDecimal("-1234.56"), CsvImportMapping.parseAmount("1.234,56 €-", true));
+    }
+
+    /** Two signs, two symbols, or a symbol that is really a code have no one clear reading. */
+    @Test
+    public void aSignOrSymbolThatIsNotClearIsRefused() {
+        for (String cell : new String[] {"(-5)", "-5-", "+5-", "$5$", "5- €", "USD 5", "R$ 5", "CHF 5",
+                "$ $5", "$  5", "5  $", "()", "-", "$"}) {
+            refusesAmount(cell, false);
+        }
     }
 
     /** Grouping never starts with 0, so these used to import 500 and 250. */

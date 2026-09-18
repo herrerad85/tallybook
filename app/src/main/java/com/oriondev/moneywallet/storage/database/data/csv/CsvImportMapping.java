@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -28,14 +29,18 @@ public class CsvImportMapping implements Serializable {
 
     public static final int NONE = -1;
 
-    public static final String[] DATE_PATTERNS = {"yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy", "dd.MM.yyyy"};
+    public static final String[] DATE_PATTERNS = {
+            "yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "MM/dd/yyyy", "MM/dd/yy", "dd.MM.yyyy", "dd.MM.yy"};
 
     /** The digits each entry of {@link #DATE_PATTERNS} allows, in the same order. */
     private static final String[] DATE_DIGITS = {
             "\\d{4}-\\d{1,2}-\\d{1,2}",
             "\\d{1,2}/\\d{1,2}/\\d{4}",
+            "\\d{1,2}/\\d{1,2}/\\d{2}",
             "\\d{1,2}/\\d{1,2}/\\d{4}",
-            "\\d{1,2}\\.\\d{1,2}\\.\\d{4}"
+            "\\d{1,2}/\\d{1,2}/\\d{2}",
+            "\\d{1,2}\\.\\d{1,2}\\.\\d{4}",
+            "\\d{1,2}\\.\\d{1,2}\\.\\d{2}"
     };
 
     private static final String TIME_DIGITS = "( \\d{1,2}:\\d{2}(:\\d{2})?)?";
@@ -47,6 +52,9 @@ public class CsvImportMapping implements Serializable {
             "^[+-]?(\\d+|[1-9]\\d{0,2}(,\\d{3})+|[1-9]\\d{0,2}(" + SPACE + "\\d{3})+)(\\.\\d+)?$");
     private static final Pattern COMMA_AMOUNT = Pattern.compile(
             "^[+-]?(\\d+|[1-9]\\d{0,2}(\\.\\d{3})+|[1-9]\\d{0,2}(" + SPACE + "\\d{3})+)(,\\d+)?$");
+
+    private static final Pattern LEADING_SYMBOL = Pattern.compile("^([+-]?)\\p{Sc}" + SPACE + "?(.*)$");
+    private static final Pattern TRAILING_SYMBOL = Pattern.compile("^(.*?)" + SPACE + "?\\p{Sc}$");
 
     private static final String[] NATIVE_COLUMNS = {
             Constants.COLUMN_WALLET,
@@ -123,7 +131,13 @@ public class CsvImportMapping implements Serializable {
             // never null, since openFile refuses a file with nothing to read
             String line = reader.readLine();
             char separator = detectSeparator(line);
-            String[] cells = parser(separator).parseLine(line);
+            String[] cells;
+            try {
+                cells = parser(separator).parseLine(line);
+            } catch (IOException e) {
+                throw new IOException("Line 1: a quote in this row is not closed on the same line,"
+                        + " and every row has to fit on one line", e);
+            }
             boolean nativeHeader;
             try {
                 nativeHeader = isNativeHeader(line);
@@ -242,26 +256,52 @@ public class CsvImportMapping implements Serializable {
      * shows the amount for review before it is saved. A space groups exactly where the chosen
      * style's mark would, and one amount groups with one or the other, never both. Anything that
      * is not clearly one number in the chosen style is refused.
+     * <p>
+     * Bank exports also write a negative in parentheses, as (12.50), or with a trailing minus, as
+     * 12.50-, and put one currency symbol before or after the number, with at most one space
+     * between. Each of these is recognized as a whole form and read for what it means, never
+     * stripped as loose characters, because a parenthesized negative that lost its parentheses
+     * would import as income. A negative written that way cannot also carry its own sign, since
+     * (-5) or -5- has no one clear reading.
      */
     public static BigDecimal parseAmount(String cell, boolean decimalComma) {
-        String compact = cell.replaceAll(SPACE, "");
-        if (decimalComma) {
-            if (COMMA_AMOUNT.matcher(cell).matches()) {
-                return new BigDecimal(compact.replace(".", "").replace(',', '.'));
+        String number = cell;
+        boolean negative = false;
+        if (number.length() >= 2 && number.startsWith("(") && number.endsWith(")")) {
+            negative = true;
+            number = number.substring(1, number.length() - 1);
+        } else if (number.endsWith("-")) {
+            negative = true;
+            number = number.substring(0, number.length() - 1);
+        }
+        Matcher symbol = LEADING_SYMBOL.matcher(number);
+        if (symbol.matches()) {
+            number = symbol.group(1) + symbol.group(2);
+        } else if ((symbol = TRAILING_SYMBOL.matcher(number)).matches()) {
+            number = symbol.group(1);
+        }
+        BigDecimal amount = null;
+        if (!(negative && (number.startsWith("+") || number.startsWith("-")))) {
+            String compact = number.replaceAll(SPACE, "");
+            if (decimalComma && COMMA_AMOUNT.matcher(number).matches()) {
+                amount = new BigDecimal(compact.replace(".", "").replace(',', '.'));
+            } else if (!decimalComma && DOT_AMOUNT.matcher(number).matches()) {
+                amount = new BigDecimal(compact.replace(",", ""));
             }
-            throw new RuntimeException("the amount \"" + cell + "\" is not a number written as 1.234,56");
         }
-        if (DOT_AMOUNT.matcher(cell).matches()) {
-            return new BigDecimal(compact.replace(",", ""));
+        if (amount == null) {
+            throw new RuntimeException("the amount \"" + cell + "\" is not a number written as "
+                    + (decimalComma ? "1.234,56" : "1,234.56"));
         }
-        throw new RuntimeException("the amount \"" + cell + "\" is not a number written as 1,234.56");
+        return negative ? amount.negate() : amount;
     }
 
     /**
      * A date in one of {@link #DATE_PATTERNS}, alone or followed by a space and a time with or
      * without seconds, read strictly. The digit counts are checked first because the parse on
-     * its own accepts a two digit year, and a lenient parse rolls a day past the end of its month
-     * into the next one.
+     * its own accepts a two digit year where four are asked for, and a lenient parse rolls a day
+     * past the end of its month into the next one. A two digit year takes its century from
+     * SimpleDateFormat's own window, which places it within 80 years before today and 20 after.
      */
     public static Date parseDate(String cell, String datePattern) {
         int index = Arrays.asList(DATE_PATTERNS).indexOf(datePattern);
