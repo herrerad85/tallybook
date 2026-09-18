@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -34,6 +35,7 @@ import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.fragment.multipanel.CategoryMultiPanelViewPagerFragment;
 import com.oriondev.moneywallet.ui.fragment.multipanel.TransactionMultiPanelViewPagerFragment;
+import com.oriondev.moneywallet.ui.fragment.singlepanel.OverviewSinglePanelFragment;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
@@ -272,6 +274,63 @@ public class MainActivityTest {
     }
 
     @Test
+    public void pickingAWalletNamesItInTheToolbarBeforeItsLoaderLands() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                Toolbar toolbar = section(activity).requireView().findViewById(R.id.primary_toolbar);
+                awaitSubtitle(toolbar, "Cash");
+                activity.findViewById(R.id.navigation_drawer_header).performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(activity.onNavigationItemSelected(drawer(activity).getMenu().findItem(walletItem(mSecondWallet))));
+                // only the change broadcast, which the switch queues first. Idling could also
+                // deliver the reloaded row and hide an empty subtitle in between
+                shadowOf(Looper.getMainLooper()).runOneTask();
+                assertEquals("Bank", String.valueOf(toolbar.getSubtitle()));
+                awaitSubtitle(toolbar, "Bank");
+                for (int i = 0; i < 20; i++) {
+                    shadowOf(Looper.getMainLooper()).idle();
+                    sleep();
+                }
+                assertEquals("Bank", String.valueOf(toolbar.getSubtitle()));
+                ContentValues values = new ContentValues();
+                values.put(Contract.Wallet.NAME, "Savings");
+                mResolver.update(ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, mSecondWallet), values, null, null);
+                awaitSubtitle(toolbar, "Savings");
+            });
+        }
+    }
+
+    @Test
+    public void pickingAWalletNamesItInTheOverviewToolbarBeforeItsLoaderLands() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                assertTrue(drawer(activity).getMenu().performIdentifierAction(MainActivity.ID_SECTION_OVERVIEW, 0));
+                runPending(activity);
+                assertTrue(section(activity) instanceof OverviewSinglePanelFragment);
+                Toolbar toolbar = section(activity).requireView().findViewById(R.id.primary_toolbar);
+                awaitSubtitle(toolbar, "Cash");
+                activity.findViewById(R.id.navigation_drawer_header).performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertFalse(activity.onNavigationItemSelected(drawer(activity).getMenu().findItem(walletItem(mSecondWallet))));
+                shadowOf(Looper.getMainLooper()).runOneTask();
+                assertEquals("Bank", String.valueOf(toolbar.getSubtitle()));
+                awaitSubtitle(toolbar, "Bank");
+                for (int i = 0; i < 20; i++) {
+                    shadowOf(Looper.getMainLooper()).idle();
+                    sleep();
+                }
+                assertEquals("Bank", String.valueOf(toolbar.getSubtitle()));
+                ContentValues values = new ContentValues();
+                values.put(Contract.Wallet.NAME, "Savings");
+                mResolver.update(ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, mSecondWallet), values, null, null);
+                awaitSubtitle(toolbar, "Savings");
+            });
+        }
+    }
+
+    @Test
     public void aRowNamingAWalletThatIsGoneIsIgnored() {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> {
@@ -462,6 +521,22 @@ public class MainActivityTest {
             }
         }
         assertFalse("the wallets never loaded", headerName(activity).isEmpty());
+    }
+
+    private static void awaitSubtitle(Toolbar toolbar, String subtitle) {
+        for (int i = 0; i < 200 && !subtitle.equals(String.valueOf(toolbar.getSubtitle())); i++) {
+            shadowOf(Looper.getMainLooper()).idle();
+            sleep();
+        }
+        assertEquals(subtitle, String.valueOf(toolbar.getSubtitle()));
+    }
+
+    private static void sleep() {
+        try {
+            Thread.sleep(25);
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     private long insertWallet(String name, int index, long startMoney, boolean countInTotal, boolean archived) {

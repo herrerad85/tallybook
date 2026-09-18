@@ -50,4 +50,5 @@ public class LocalAction {
 
     public static final String ACTION_CURRENT_WALLET_CHANGED = "LocalBroadCast::CurrentWalletChanged";
     public static final String ARGUMENT_WALLET_ID = "LocalBroadCast::WalletId";
+    public static final String ARGUMENT_WALLET_NAME = "LocalBroadCast::WalletName";
 }

@@ -26,6 +26,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.oriondev.moneywallet.BuildConfig;
@@ -178,9 +179,17 @@ public class PreferenceManager {
     }
 
     public static void setCurrentWallet(Context context, long walletId) {
+        setCurrentWallet(context, walletId, null);
+    }
+
+    /**
+     * @param walletName the name of the wallet being selected, when the caller has it, so a
+     *                   toolbar can show it at once instead of waiting for its loader.
+     */
+    public static void setCurrentWallet(Context context, long walletId, @Nullable String walletName) {
         if (getCurrentWallet() != walletId) {
             mPreferences.edit().putLong(CURRENT_WALLET, walletId).apply();
-            notifyCurrentWalletIsChanged(context, walletId);
+            notifyCurrentWalletIsChanged(context, walletId, walletName);
         }
     }
 
@@ -441,10 +450,13 @@ public class PreferenceManager {
         return mPreferences.getLong(LAST_DATA_CHANGE_TIME, 0L);
     }
 
-    private static void notifyCurrentWalletIsChanged(Context context, long walletId) {
+    private static void notifyCurrentWalletIsChanged(Context context, long walletId, @Nullable String walletName) {
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(context);
         Intent intent = new Intent(LocalAction.ACTION_CURRENT_WALLET_CHANGED);
         intent.putExtra(LocalAction.ARGUMENT_WALLET_ID, walletId);
+        if (walletName != null) {
+            intent.putExtra(LocalAction.ARGUMENT_WALLET_NAME, walletName);
+        }
         localBroadcastManager.sendBroadcast(intent);
     }
 
@@ -457,7 +469,8 @@ public class PreferenceManager {
             public void onReceive(Context context, Intent intent) {
                 if (intent != null && TextUtils.equals(intent.getAction(), LocalAction.ACTION_CURRENT_WALLET_CHANGED)) {
                     long currentWalletId = intent.getLongExtra(LocalAction.ARGUMENT_WALLET_ID, -1L);
-                    controller.onCurrentWalletChanged(currentWalletId);
+                    String currentWalletName = intent.getStringExtra(LocalAction.ARGUMENT_WALLET_NAME);
+                    controller.onCurrentWalletChanged(currentWalletId, currentWalletName);
                 }
             }
 

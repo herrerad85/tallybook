@@ -424,7 +424,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
      */
     private void switchWallet(WalletAccount wallet) {
         mCurrentWallet = wallet;
-        PreferenceManager.setCurrentWallet(this, wallet.getId());
+        PreferenceManager.setCurrentWallet(this, wallet.getId(), wallet.getName());
         bindHeader();
         buildWalletMenu();
         showWalletList(false);
@@ -644,7 +644,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
             // is that choice written as the current one, which also broadcasts the change
             mCurrentWallet = mWallets.get(0);
             if (currentWalletId == PreferenceManager.NO_CURRENT_WALLET) {
-                PreferenceManager.setCurrentWallet(this, mCurrentWallet.getId());
+                PreferenceManager.setCurrentWallet(this, mCurrentWallet.getId(), mCurrentWallet.getName());
             }
         }
         buildWalletMenu();
