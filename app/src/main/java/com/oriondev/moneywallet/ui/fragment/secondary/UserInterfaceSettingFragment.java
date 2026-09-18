@@ -51,6 +51,7 @@ import java.text.DateFormatSymbols;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by andrea on 07/03/18.
@@ -153,11 +154,14 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                 String.valueOf(Calendar.SATURDAY)
         });
         // setup the first day of month preference: we set as upper bound the 28 day
+        // the entries are what the user reads, the values are parsed back with Integer.parseInt
+        String[] dayLabels = new String[28];
         String[] daysInMonth = new String[28];
         for (int i = 0; i < daysInMonth.length; i++) {
+            dayLabels[i] = String.format(Locale.getDefault(), "%d", i + 1);
             daysInMonth[i] = String.valueOf(i + 1);
         }
-        mFirstDayMonthPreference.setEntries(daysInMonth);
+        mFirstDayMonthPreference.setEntries(dayLabels);
         mFirstDayMonthPreference.setEntryValues(daysInMonth);
         // setup the group type preference
         mGroupTypePreference.setEntries(R.array.group_types);
@@ -350,9 +354,8 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
 
     private void setupCurrentFirstDayOfMonth() {
         int index = PreferenceManager.getFirstDayOfMonth();
-        String value = String.valueOf(index);
-        mFirstDayMonthPreference.setValue(value);
-        mFirstDayMonthPreference.setSummary(value);
+        mFirstDayMonthPreference.setValue(String.valueOf(index));
+        mFirstDayMonthPreference.setSummary(String.format(Locale.getDefault(), "%d", index));
     }
 
     private void setupCurrentGroupType() {

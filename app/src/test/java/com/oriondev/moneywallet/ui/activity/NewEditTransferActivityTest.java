@@ -827,7 +827,7 @@ public class NewEditTransferActivityTest {
      * built the way the activity builds it, for the EUR to JPY direction every case here uses.
      */
     private static String euroToYenRateLine(double rate) {
-        return String.format(Locale.getDefault(), "%s ➡ %s: %.2f",
+        return String.format(Locale.getDefault(), "%s -> %s: %.2f",
                 CurrencyManager.getCurrency("EUR").getSymbol(),
                 CurrencyManager.getCurrency("JPY").getSymbol(), rate);
     }

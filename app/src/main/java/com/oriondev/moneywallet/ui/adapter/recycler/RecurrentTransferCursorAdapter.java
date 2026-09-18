@@ -85,7 +85,7 @@ public class RecurrentTransferCursorAdapter extends AbstractCursorAdapter<Recurr
         mMoneyFormatter.applyNotTinted(holder.mMoneyTextView, currencyFrom, moneyFrom);
         String walletFrom = cursor.getString(mIndexWalletFromName);
         String walletTo = cursor.getString(mIndexWalletToName);
-        holder.mSecondaryTextView.setText(String.format(Locale.ENGLISH, "%s → %s", walletFrom, walletTo));
+        holder.mSecondaryTextView.setText(String.format(Locale.ENGLISH, "%s -> %s", walletFrom, walletTo));
         if (cursor.isNull(mIndexNextOccurrence)) {
             holder.mDateTextView.setText(R.string.hint_recurrence_finished);
         } else {

@@ -84,7 +84,7 @@ public class TransferModelCursorAdapter extends AbstractCursorAdapter<TransferMo
         mMoneyFormatter.applyNotTinted(holder.mMoneyTextView, currencyFrom, moneyFrom);
         String walletFrom = cursor.getString(mIndexWalletFromName);
         String walletTo = cursor.getString(mIndexWalletToName);
-        holder.mSecondaryTextView.setText(String.format(Locale.ENGLISH, "%s → %s", walletFrom, walletTo));
+        holder.mSecondaryTextView.setText(String.format(Locale.ENGLISH, "%s -> %s", walletFrom, walletTo));
         if (moneyTax != 0L) {
             holder.mTaxLayout.setVisibility(View.VISIBLE);
             mMoneyFormatter.applyNotTinted(holder.mTaxTextView, currencyFrom, moneyTax);

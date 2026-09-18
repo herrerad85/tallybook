@@ -45,6 +45,7 @@ import com.oriondev.moneywallet.ui.view.theme.ThemedSpinner;
 import com.oriondev.moneywallet.utils.DateFormatter;
 
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by andrea on 07/11/18.
@@ -292,7 +293,7 @@ public class RecurrencePickerDialog extends DialogFragment implements DateTimePi
     }
 
     private void updateRecurrenceOffsetValue(int offset) {
-        mRecurrenceEveryNumberEditText.setText(String.valueOf(offset));
+        mRecurrenceEveryNumberEditText.setText(String.format(Locale.getDefault(), "%d", offset));
     }
 
     private void updateRecurrenceWeekDays(boolean[] days) {
@@ -328,7 +329,7 @@ public class RecurrencePickerDialog extends DialogFragment implements DateTimePi
     }
 
     private void updateRecurrenceOccurrenceValue(int occurrences) {
-        mRecurrenceTimesNumberEditText.setText(String.valueOf(occurrences));
+        mRecurrenceTimesNumberEditText.setText(String.format(Locale.getDefault(), "%d", occurrences));
     }
 
     private int getCurrentRecurrenceType() {
