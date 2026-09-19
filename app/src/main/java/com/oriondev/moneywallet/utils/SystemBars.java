@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.utils;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
@@ -133,25 +134,50 @@ public final class SystemBars {
     }
 
     /**
-     * Pushes a horizontal guideline down by the status bar. The wide layouts start their panel
-     * cards partway up an extended app bar, measured from the top of the window, and that top is
-     * now behind the status bar. A guideline is not a view that can be constrained to another one,
-     * so its distance is set here instead.
+     * Keeps a horizontal guideline at the bottom of the toolbar, and never above the distance the
+     * layout gives it, counted from the toolbar's own top. The wide layouts start their panel
+     * cards partway up an extended app bar, and that toolbar sits below the status bar and grows
+     * when a title and subtitle need two lines; a card hung at a fixed distance would cover it. A
+     * guideline is not a view that can be constrained to another one, so its distance is set here
+     * instead.
      * <p>
-     * The listener goes on the parent because a guideline has no size of its own and is never
-     * laid out; the parent is the view the insets actually reach.
+     * The listener goes on the app bar and not on the toolbar. The app bar lays the toolbar out
+     * first and only then moves it down by the status bar, which calls no listener of the toolbar,
+     * so the toolbar's own listener sees its top without the status bar. The app bar's listener
+     * runs after both, and a taller toolbar lays the app bar out again too. It sets the guideline
+     * in that pass, but the view root drops a layout request made during layout by a view that is
+     * gone, and a guideline always is. So the request is made again just before the draw and that
+     * draw is skipped, which lays the parent out once more before a frame with the card over the
+     * toolbar can be shown.
      */
-    public static void offsetGuidelineByStatusBar(Guideline guideline) {
+    public static void keepGuidelineBelowToolbar(Guideline guideline, View toolbar) {
         if (guideline == null || !(guideline.getParent() instanceof View)) {
             return;
         }
+        if (toolbar == null || !(toolbar.getParent() instanceof View)
+                || ((View) toolbar.getParent()).getParent() != guideline.getParent()) {
+            return;
+        }
         final int base = ((ConstraintLayout.LayoutParams) guideline.getLayoutParams()).guideBegin;
-        View parent = (View) guideline.getParent();
-        ViewCompat.setOnApplyWindowInsetsListener(parent, (v, insets) -> {
-            guideline.setGuidelineBegin(base + barsAndCutout(insets).top);
-            return insets;
+        final View appBar = (View) toolbar.getParent();
+        appBar.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int begin = v.getTop() + toolbar.getTop() + Math.max(base, toolbar.getHeight());
+            if (begin == ((ConstraintLayout.LayoutParams) guideline.getLayoutParams()).guideBegin) {
+                return;
+            }
+            guideline.setGuidelineBegin(begin);
+            final ViewTreeObserver observer = v.getViewTreeObserver();
+            observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+
+                @Override
+                public boolean onPreDraw() {
+                    // A dead observer has handed its listeners to the view's current one.
+                    (observer.isAlive() ? observer : v.getViewTreeObserver()).removeOnPreDrawListener(this);
+                    guideline.requestLayout();
+                    return false;
+                }
+            });
         });
-        requestInsetsOnAttach(parent);
     }
 
     /**

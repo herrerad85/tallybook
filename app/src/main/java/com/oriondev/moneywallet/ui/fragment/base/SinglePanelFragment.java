@@ -98,7 +98,8 @@ public abstract class SinglePanelFragment extends Fragment implements Toolbar.On
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_single_panel, container, false);
         // Only the width qualified copies of these layouts carry one.
-        SystemBars.offsetGuidelineByStatusBar(view.findViewById(R.id.toolbar_delimiter_horizontal_guideline));
+        SystemBars.keepGuidelineBelowToolbar(view.findViewById(R.id.toolbar_delimiter_horizontal_guideline),
+                view.findViewById(R.id.primary_toolbar));
         mToolbar = view.findViewById(R.id.primary_toolbar);
         ViewGroup parent = Utils.findViewGroupByIds(view,
                 R.id.primary_panel_container_frame_layout,

@@ -29,7 +29,8 @@
       ~ Where the panel cards start, which is partway up the extended app bar so they overlap it;
       ~ the translationZ each card carries is what draws them over it. A guideline and not the app
       ~ bar's own bottom, because that bottom now includes the status bar and the cards would leave
-      ~ a band of primary color above them. SystemBars pushes this down by the status bar at runtime.
+      ~ a band of primary color above them. SystemBars keeps this below the bottom of the
+      ~ toolbar at runtime, which includes the status bar.
       -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/toolbar_delimiter_horizontal_guideline"
