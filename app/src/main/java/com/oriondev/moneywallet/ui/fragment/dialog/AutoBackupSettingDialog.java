@@ -171,7 +171,6 @@ public class AutoBackupSettingDialog extends DialogFragment {
                 if (activity != null) {
                     Intent intent = new Intent(activity, BackendExplorerActivity.class);
                     intent.putExtra(BackendExplorerActivity.BACKEND_ID, mBackendId);
-                    intent.putExtra(BackendExplorerActivity.MODE, BackendExplorerActivity.MODE_FOLDER_PICKER);
                     startActivityForResult(intent, REQUEST_CODE_FOLDER_PICKER);
                 }
             }

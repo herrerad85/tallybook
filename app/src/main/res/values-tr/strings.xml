@@ -194,8 +194,6 @@
     <string name="title_activity_search_transaction"> "Ara" </string>
     <string name="title_activity_calendar"> "Takvim" </string>
     <string name="title_activity_map"> "Harita" </string>
-    <string name="title_activity_backend_explorer"> "Arka ucu keşfedin" </string>
-    <string name="title_activity_backend_file_picker"> "Bir dosya seç" </string>
     <string name="title_activity_backend_folder_picker"> "Bir klasör seçin" </string>
     <string name="title_activity_import_data"> "Verileri içe aktar" </string>
     <string name="title_activity_export_data"> "Verileri dışa aktar" "</string>

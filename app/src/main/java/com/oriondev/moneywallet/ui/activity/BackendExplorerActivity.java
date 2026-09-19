@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.widget.EditText;
 import androidx.annotation.MenuRes;
 import androidx.appcompat.app.AlertDialog;
+import androidx.lifecycle.Lifecycle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -36,7 +37,6 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.widget.Toast;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,13 +60,8 @@ import java.util.List;
 public class BackendExplorerActivity extends SinglePanelActivity implements SwipeRefreshLayout.OnRefreshListener, BackupFileAdapter.Controller {
 
     public static final String BACKEND_ID = "BackendExplorerActivity::Arguments::BackendId";
-    public static final String MODE = "BackendExplorerActivity::Arguments::Mode";
 
     public static final String RESULT_FILE = "BackendExplorerActivity::Result::File";
-
-    public static final int MODE_EXPLORER = 0;
-    public static final int MODE_FILE_PICKER = 1;
-    public static final int MODE_FOLDER_PICKER = 2;
 
     private static final IFile ROOT_FOLDER = null;
 
@@ -74,24 +69,24 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
     private BackupFileAdapter mAdapter;
 
     private String mBackendId;
-    private int mActivityMode;
     private List<IFile> mFileStack;
 
     private LocalBroadcastManager mLocalBroadcastManager;
+
+    private boolean mReloadOnStart;
 
     @Override
     protected void onCreatePanelView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.layout_activity_single_panel_body_list, parent, true);
         mAdvancedRecyclerView = view.findViewById(R.id.advanced_recycler_view);
         mAdvancedRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mAdvancedRecyclerView.setEmptyText(R.string.message_no_icon_found);
+        mAdvancedRecyclerView.setEmptyText(R.string.message_no_file_found);
         mAdapter = new BackupFileAdapter(this);
         mAdvancedRecyclerView.setAdapter(mAdapter);
         mAdvancedRecyclerView.setOnRefreshListener(this);
         // unpack intent info
         Intent intent = getIntent();
         mBackendId = intent.getStringExtra(BACKEND_ID);
-        mActivityMode = intent.getIntExtra(MODE, MODE_EXPLORER);
         mFileStack = new ArrayList<>();
         // open where a backup would go, the same folder the backup screen opens on
         IFile defaultFolder = BackendServiceFactory.getFile(mBackendId, null);
@@ -102,6 +97,7 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(LocalAction.ACTION_BACKEND_SERVICE_STARTED);
         intentFilter.addAction(LocalAction.ACTION_BACKEND_SERVICE_FINISHED);
+        intentFilter.addAction(LocalAction.ACTION_BACKEND_SERVICE_FAILED);
         mLocalBroadcastManager = LocalBroadcastManager.getInstance(this);
         mLocalBroadcastManager.registerReceiver(mLocalBroadcastReceiver, intentFilter);
     }
@@ -120,6 +116,15 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (mReloadOnStart) {
+            mReloadOnStart = false;
+            loadCurrentFolder();
+        }
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         if (mLocalBroadcastManager != null) {
@@ -129,15 +134,7 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
 
     @Override
     protected int getActivityTitleRes() {
-        switch (mActivityMode) {
-            case MODE_EXPLORER:
-                return R.string.title_activity_backend_explorer;
-            case MODE_FILE_PICKER:
-                return R.string.title_activity_backend_file_picker;
-            case MODE_FOLDER_PICKER:
-                return R.string.title_activity_backend_folder_picker;
-        }
-        return 0;
+        return R.string.title_activity_backend_folder_picker;
     }
 
     @MenuRes
@@ -146,42 +143,25 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
     }
 
     @Override
-    protected void onMenuCreated(Menu menu) {
-        switch (mActivityMode) {
-            case MODE_EXPLORER:
-                menu.findItem(R.id.action_select_folder).setVisible(false);
-                break;
-            case MODE_FILE_PICKER:
-                menu.findItem(R.id.action_select_folder).setVisible(false);
-                break;
-            case MODE_FOLDER_PICKER:
-                menu.findItem(R.id.action_select_folder).setVisible(true);
-                break;
-        }
-    }
-
-    @Override
     public boolean onMenuItemClick(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_select_folder) {
-            if (mActivityMode == MODE_FOLDER_PICKER) {
-                IFile folder = getCurrentFolder();
-                if (folder == null) {
-                    // this backend's own default, rather than a local path it cannot decode
-                    folder = BackendServiceFactory.getFile(mBackendId, null);
-                }
-                if (folder == null) {
-                    // The top of the list is not a folder this backend can name. Choosing it used
-                    // to send back a result carrying no file, and the settings dialog read that as
-                    // the answer and dropped the folder it already held.
-                    Toast.makeText(this, R.string.message_backend_open_a_folder, Toast.LENGTH_LONG).show();
-                    return false;
-                }
-                Intent intent = new Intent();
-                intent.putExtra(RESULT_FILE, folder);
-                setResult(RESULT_OK, intent);
-                finish();
+            IFile folder = getCurrentFolder();
+            if (folder == null) {
+                // this backend's own default, rather than a local path it cannot decode
+                folder = BackendServiceFactory.getFile(mBackendId, null);
             }
+            if (folder == null) {
+                // The top of the list is not a folder this backend can name. Choosing it used
+                // to send back a result carrying no file, and the settings dialog read that as
+                // the answer and dropped the folder it already held.
+                Toast.makeText(this, R.string.message_backend_open_a_folder, Toast.LENGTH_LONG).show();
+                return false;
+            }
+            Intent intent = new Intent();
+            intent.putExtra(RESULT_FILE, folder);
+            setResult(RESULT_OK, intent);
+            finish();
         }
         return false;
     }
@@ -202,11 +182,6 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
             mFileStack.add(file);
             mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.LOADING);
             loadFolder(file);
-        } else if (mActivityMode == MODE_FILE_PICKER) {
-            Intent intent = new Intent();
-            intent.putExtra(RESULT_FILE, file);
-            setResult(RESULT_OK, intent);
-            finish();
         }
     }
 
@@ -280,8 +255,21 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
                         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.READY);
                     }
                 } else if (operation == BackendHandlerIntentService.ACTION_CREATE_FOLDER) {
-                    IFile folder = intent.getParcelableExtra(BackendHandlerIntentService.CREATED_FILE);
-                    mAdapter.addFileToList(folder);
+                    if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
+                        loadCurrentFolder();
+                    } else {
+                        // starting a service from the background can throw, so reload once the screen is back
+                        mReloadOnStart = true;
+                    }
+                }
+            } else if (TextUtils.equals(action, LocalAction.ACTION_BACKEND_SERVICE_FAILED)) {
+                int operation = intent.getIntExtra(BackendHandlerIntentService.ACTION, 0);
+                if (operation == BackendHandlerIntentService.ACTION_LIST) {
+                    mAdapter.setFileList(null, false);
+                    mAdvancedRecyclerView.setErrorText(R.string.message_error_backend_recoverable);
+                    mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.ERROR);
+                } else if (operation == BackendHandlerIntentService.ACTION_CREATE_FOLDER) {
+                    Toast.makeText(context, R.string.message_error_backend_recoverable, Toast.LENGTH_LONG).show();
                 }
             }
         }

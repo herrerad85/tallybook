@@ -185,8 +185,6 @@
     <string name="title_activity_search_transaction">"جستجو"</string>
     <string name="title_activity_calendar">"تقویم"</string>
     <string name="title_activity_map">"نقشه"</string>
-    <string name="title_activity_backend_explorer">"کاوش در backend"</string>
-    <string name="title_activity_backend_file_picker">"یک فایل انتخاب کنید"</string>
     <string name="title_activity_backend_folder_picker">"یک پوشه را انتخاب کنید"</string>
 
     <string name="title_fragment_item_wallet">"کیف پول"</string>

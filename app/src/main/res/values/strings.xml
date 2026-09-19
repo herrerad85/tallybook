@@ -240,8 +240,6 @@
     <string name="title_activity_search_transaction">"Search"</string>
     <string name="title_activity_calendar">"Calendar"</string>
     <string name="title_activity_map">"Map"</string>
-    <string name="title_activity_backend_explorer">"Explore backend"</string>
-    <string name="title_activity_backend_file_picker">"Pick a file"</string>
     <string name="title_activity_backend_folder_picker">"Pick a folder"</string>
     <string name="title_activity_import_data">"Import data"</string>
     <string name="title_activity_export_data">"Export data"</string>

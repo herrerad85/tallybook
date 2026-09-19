@@ -529,8 +529,6 @@
     <string name="system_category_transfer">Átvezetés</string>
     <string name="system_category_transfer_tax">Átvezetési adó</string>
     <string name="title_activity_about">Rólunk</string>
-    <string name="title_activity_backend_explorer">Backend felfedezése</string>
-    <string name="title_activity_backend_file_picker">Válassz egy file-t</string>
     <string name="title_activity_backend_folder_picker">VÁlassz egy mappát</string>
     <string name="title_activity_backup_services">Biztonsági mentés lehetőségek</string>
     <string name="title_activity_calculator">Számológép</string>
