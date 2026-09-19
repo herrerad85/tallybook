@@ -200,8 +200,6 @@
     <string name="title_activity_search_transaction">Rechercher</string>
     <string name="title_activity_calendar">Calendrier</string>
     <string name="title_activity_map">Carte</string>
-    <string name="title_activity_backend_explorer">"Explorer les services"</string>
-    <string name="title_activity_backend_file_picker">"Choisissez un fichier"</string>
     <string name="title_activity_backend_folder_picker">"Choisissez un dossier"</string>
     <string name="title_activity_import_data">"Importer des données"</string>
     <string name="title_activity_export_data">"Exporter des données"</string>

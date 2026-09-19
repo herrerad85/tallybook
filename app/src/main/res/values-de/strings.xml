@@ -481,8 +481,6 @@
     <string name="title_activity_calendar">Kalender</string>
     <string name="title_activity_backup_services">Sicherungsservice</string>
     <string name="title_activity_backend_folder_picker">Einen Ordner auswählen</string>
-    <string name="title_activity_backend_file_picker">Eine Datei auswählen</string>
-    <string name="title_activity_backend_explorer">Back-End erkunden</string>
     <string name="title_activity_about">Über</string>
     <string name="spinner_item_type_category">Kategorie</string>
     <string name="spinner_item_type_cash_flow">Cash Flow</string>

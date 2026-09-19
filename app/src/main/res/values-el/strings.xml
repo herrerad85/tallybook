@@ -200,8 +200,6 @@
     <string name="title_activity_search_transaction">"Αναζήτηση"</string>
     <string name="title_activity_calendar">"Ημερολόγιο"</string>
     <string name="title_activity_map">"Χάρτης"</string>
-    <string name="title_activity_backend_explorer">"Εξερεύνηση του backend"</string>
-    <string name="title_activity_backend_file_picker">"Επιλογή αρχείου"</string>
     <string name="title_activity_backend_folder_picker">"Επιλογή φακέλου"</string>
     <string name="title_activity_import_data">"Εισαγωγή δεδομένων"</string>
     <string name="title_activity_export_data">"Εξαγωγή δεδομένων"</string>

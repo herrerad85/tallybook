@@ -14473,28 +14473,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;title_activity_backend_explorer&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;title_activity_backend_explorer&quot;>&quot;Explore backend&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="220"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_activity_backend_file_picker&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;title_activity_backend_file_picker&quot;>&quot;Pick a file&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="221"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;title_activity_backend_folder_picker&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
         errorLine1="    &lt;string name=&quot;title_activity_backend_folder_picker&quot;>&quot;Pick a folder&quot;&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">

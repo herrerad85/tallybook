@@ -187,8 +187,6 @@
     <string name="title_activity_search_transaction">"തിരയുക"</string>
     <string name="title_activity_calendar">"കലണ്ടർ"</string>
     <string name="title_activity_map">"മാപ്പ്"</string>
-    <string name="title_activity_backend_explorer">"ബാക്കെൻഡ് പര്യവേക്ഷണം ചെയ്യുക"</string>
-    <string name="title_activity_backend_file_picker">"ഒരു ഫയൽ തിരഞ്ഞെടുക്കുക"</string>
     <string name="title_activity_backend_folder_picker">"ഒരു ഫോൾഡർ തിരഞ്ഞെടുക്കുക"</string>
     <string name="title_activity_import_data">"ഡാറ്റ ഇമ്പോർട്ടുചെയ്യുക"</string>
     <string name="title_activity_export_data">"ഡാറ്റ എക്സ്പോർട്ടുചെയ്യുക"</string>
