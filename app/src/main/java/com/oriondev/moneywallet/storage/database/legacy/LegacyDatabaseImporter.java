@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import com.oriondev.moneywallet.model.ColorIcon;
 import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.Icon;
+import com.oriondev.moneywallet.model.MoneyScale;
 import com.oriondev.moneywallet.model.RecurrenceSetting;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
@@ -51,7 +52,6 @@ import com.oriondev.moneywallet.storage.database.model.Wallet;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.IconLoader;
-import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.Utils;
 
 import java.io.File;
@@ -848,7 +848,7 @@ public class LegacyDatabaseImporter implements DatabaseImporter {
     private static long normalize(String currency, long money) {
         CurrencyUnit currencyUnit = CurrencyManager.getCurrency(currency);
         if (currencyUnit != null && currencyUnit.getDecimals() != LEGACY_DECIMALS) {
-            return MoneyFormatter.normalize(money, LEGACY_DECIMALS, currencyUnit.getDecimals());
+            return MoneyScale.toMinorUnitsRounded(MoneyScale.toHumanAmount(money, LEGACY_DECIMALS), currencyUnit.getDecimals());
         }
         return money;
     }
