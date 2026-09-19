@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2018.
  *
+ * Portions derived from datepicker-timeline, Copyright (c) 2015 Yann Badoual,
+ * MIT License.
+ *
  * This file is part of MoneyWallet.
  *
  * MoneyWallet is free software: you can redistribute it and/or modify
