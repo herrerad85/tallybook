@@ -48,7 +48,8 @@ public abstract class SinglePanelActivity extends BaseActivity implements Toolba
         super.onCreate(savedInstanceState);
         onInflateRootLayout();
         // Only the width qualified copies of these layouts carry one.
-        SystemBars.offsetGuidelineByStatusBar(findViewById(R.id.toolbar_delimiter_horizontal_guideline));
+        SystemBars.keepGuidelineBelowToolbar(findViewById(R.id.toolbar_delimiter_horizontal_guideline),
+                findViewById(R.id.primary_toolbar));
         onSetupRootLayout();
         onConfigureRootLayout(savedInstanceState);
         onSetupFloatingActionButton(mFloatingActionButton);

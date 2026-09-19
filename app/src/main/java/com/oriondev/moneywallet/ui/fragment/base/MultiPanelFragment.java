@@ -113,7 +113,8 @@ public abstract class MultiPanelFragment extends Fragment implements MultiPanelC
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = onInflateRootLayout(inflater, container, savedInstanceState);
         // Only the width qualified copies of these layouts carry one.
-        SystemBars.offsetGuidelineByStatusBar(view.findViewById(R.id.toolbar_delimiter_horizontal_guideline));
+        SystemBars.keepGuidelineBelowToolbar(view.findViewById(R.id.toolbar_delimiter_horizontal_guideline),
+                view.findViewById(R.id.primary_toolbar));
         onSetupRootLayout(view);
         onConfigureRootLayout(inflater, container, savedInstanceState);
         setupPrimaryToolbar(mPrimaryToolbar);
