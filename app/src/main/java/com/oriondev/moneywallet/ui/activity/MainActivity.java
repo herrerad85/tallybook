@@ -60,6 +60,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Space;
 import android.widget.TextView;
 
 import com.google.android.material.navigation.NavigationView;
@@ -247,7 +248,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
      * @return the created entry.
      */
     private MenuItem addEntry(Menu menu, int group, int identifier, @DrawableRes int icon, @StringRes int name) {
-        MenuItem item = menu.add(group, identifier, Menu.NONE, name).setIcon(icon);
+        MenuItem item = menu.add(group, identifier, Menu.NONE, name).setIcon(icon).setActionView(new Space(this));
         tintEntry(item, ThemeEngine.getTheme());
         return item;
     }

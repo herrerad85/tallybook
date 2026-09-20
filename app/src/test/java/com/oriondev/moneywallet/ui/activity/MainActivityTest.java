@@ -9,6 +9,8 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,6 +45,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -462,6 +467,68 @@ public class MainActivityTest {
                 assertEquals(MainActivity.ID_SECTION_TRANSACTIONS, drawer(activity).getCheckedItem().getItemId());
             });
         }
+    }
+
+    /**
+     * The wallet rows and the section rows are one menu, and the library skips a null action
+     * view instead of clearing the one already sitting there, so a wallet balance stayed on the
+     * section row that took its place. Every entry carries an empty action view now, and it has
+     * to be a Space, a plain View takes the row's width away from the label and leaves every
+     * row blank in a right to left locale.
+     */
+    @Test
+    public void goingBackToTheSectionsLeavesNoBalanceOnThemAndNoRoomForOne() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                View header = activity.findViewById(R.id.navigation_drawer_header);
+                header.performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                // the wallet rows really are carrying a balance first, or a clean section row
+                // afterwards proves nothing
+                List<ViewGroup> wallets = rows(drawer(activity));
+                assertEquals("Cash", label(wallets.get(0)));
+                assertTrue(actionArea(wallets.get(0)).getChildAt(0) instanceof TextView);
+                header.performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                List<ViewGroup> sections = rows(drawer(activity));
+                assertEquals("Transactions", label(sections.get(0)));
+                for (ViewGroup row : sections) {
+                    ViewGroup area = actionArea(row);
+                    assertFalse(label(row) + " kept a wallet balance", area.getChildAt(0) instanceof TextView);
+                    assertEquals(label(row) + " left the label no room", 0, area.getWidth());
+                }
+            });
+        }
+    }
+
+    /**
+     * Every drawer row the menu is currently showing, after a layout pass at a fixed width.
+     * A row is a label and an action area; the header and the dividers have one child each.
+     */
+    private static List<ViewGroup> rows(NavigationView drawer) {
+        drawer.measure(View.MeasureSpec.makeMeasureSpec(960, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1600, View.MeasureSpec.EXACTLY));
+        drawer.layout(0, 0, drawer.getMeasuredWidth(), drawer.getMeasuredHeight());
+        List<ViewGroup> rows = new ArrayList<>();
+        ViewGroup list = (ViewGroup) drawer.getChildAt(0);
+        for (int i = 0; i < list.getChildCount(); i++) {
+            View child = list.getChildAt(i);
+            if (child instanceof ViewGroup && ((ViewGroup) child).getChildCount() == 2
+                    && ((ViewGroup) child).getChildAt(0) instanceof CheckedTextView) {
+                rows.add((ViewGroup) child);
+            }
+        }
+        assertFalse("the drawer laid out no rows", rows.isEmpty());
+        return rows;
+    }
+
+    private static String label(ViewGroup row) {
+        return ((CheckedTextView) row.getChildAt(0)).getText().toString();
+    }
+
+    private static ViewGroup actionArea(ViewGroup row) {
+        return (ViewGroup) row.getChildAt(1);
     }
 
     private static int walletItem(long walletId) {
