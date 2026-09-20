@@ -107,6 +107,19 @@ public class SQLDatabaseImporter {
         return ContentUris.parseId(uri);
     }
 
+    public static long insert(ContentResolver contentResolver, CategoryRule categoryRule) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Schema.CategoryRule.PATTERN, categoryRule.mPattern);
+        contentValues.put(Schema.CategoryRule.CATEGORY, categoryRule.mCategory);
+        contentValues.put(Schema.CategoryRule.INDEX, categoryRule.mIndex);
+        contentValues.put(Schema.CategoryRule.UUID, categoryRule.mUUID);
+        contentValues.put(Schema.CategoryRule.LAST_EDIT, categoryRule.mLastEdit);
+        contentValues.put(Schema.CategoryRule.DELETED, categoryRule.mDeleted);
+        Uri uri = SyncContentProvider.CONTENT_CATEGORY_RULES;
+        uri = contentResolver.insert(uri, contentValues);
+        return ContentUris.parseId(uri);
+    }
+
     public static long insert(ContentResolver contentResolver, Place place) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Schema.Place.NAME, place.mName);

@@ -193,10 +193,14 @@ public class SQLDatabaseUpgradeTest {
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
         // written out so that the next version bump has to come through here
-        assertEquals(6, upgraded.getVersion());
+        assertEquals(7, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertSchemaMatchesAFreshInstall(upgraded);
+
+        // the rules table arrives with the upgrade and starts empty, no column and no preference
+        // held these before it
+        assertEquals(0L, count(upgraded, Schema.CategoryRule.TABLE, null));
 
         // the rows that were already there are carried over, the index columns come out on them at
         // the default the app sorts and reads by, and the two budget rule columns come out empty,
@@ -293,6 +297,40 @@ public class SQLDatabaseUpgradeTest {
     }
 
     /**
+     * A database this app wrote, put back to the version before the rules table, arriving at the
+     * upgrade a second time. The create is guarded, so the rules already stored stay where they
+     * are instead of the table being replaced with an empty one.
+     */
+    @Test
+    public void rulesSurviveTheUpgradeRunningASecondTime() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        insertCategory(old, 900, "Food");
+        insertCategoryRule(old, 1, "tesco", 900, 0);
+        insertCategoryRule(old, 2, "shell", 900, 1);
+        old.setVersion(6);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(7, upgraded.getVersion());
+        assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
+        assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
+        assertEquals(2L, count(upgraded, Schema.CategoryRule.TABLE, null));
+        assertEquals(1L, count(upgraded, Schema.CategoryRule.TABLE,
+                "rule_pattern = 'tesco' AND rule_category = 900 AND rule_index = 0"));
+        helper.close();
+    }
+
+    private void insertCategoryRule(SQLiteDatabase db, long id, String pattern, long category,
+                                    int index) {
+        db.execSQL("INSERT INTO category_rules (rule_id, rule_pattern, rule_category, " +
+                        "rule_index, uuid, last_edit, deleted) VALUES (?, ?, ?, ?, ?, ?, 0)",
+                new Object[] {id, pattern, category, index, "rule-" + id, EDIT});
+    }
+
+    /**
      * The join table is already there and already holds rows, so the create has to leave it alone
      * and the fill has to leave the categories a budget covers as they are. The column an older
      * release wrote names at most one of them.
@@ -342,7 +380,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(6, upgraded.getVersion());
+        assertEquals(7, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(7L, count(upgraded, Schema.BudgetCategory.TABLE, null));
@@ -448,7 +486,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(6, upgraded.getVersion());
+        assertEquals(7, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -531,7 +569,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase second = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = second.getWritableDatabase();
 
-        assertEquals(6, upgraded.getVersion());
+        assertEquals(7, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));

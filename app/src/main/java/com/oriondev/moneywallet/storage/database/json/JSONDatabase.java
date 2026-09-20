@@ -25,13 +25,16 @@ package com.oriondev.moneywallet.storage.database.json;
 /*package-local*/ class JSONDatabase {
 
     /*package-local*/ static final int MIN_SUPPORTED_VERSION = 1;
-    /*package-local*/ static final int MAX_SUPPORTED_VERSION = 3;
+    /*package-local*/ static final int MAX_SUPPORTED_VERSION = 4;
 
     // version 3 adds the budget_categories array, so that a budget covering more than one
     // category keeps every one of them through a backup. A release that predates it refuses a
     // version 3 file by its header instead of failing part way through the arrays, which is what
     // it would do with an array it does not expect in the middle of the stream.
-    /*package-local*/ static final int VERSION = 3;
+    // version 4 adds the category_rules array, so that the rules naming a category from a
+    // description survive a restore and a move to another device. A release that predates it
+    // refuses a version 4 file by its header instead of failing part way through the arrays.
+    /*package-local*/ static final int VERSION = 4;
 
     /*package-local*/ static class Header {
         /*package-local*/ static final String OBJECT = "header";
@@ -88,6 +91,16 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String START_DATE = "start_date";
         /*package-local*/ static final String END_DATE = "end_date";
         /*package-local*/ static final String TAG = "tag";
+        /*package-local*/ static final String LAST_EDIT = "last_edit";
+        /*package-local*/ static final String DELETED = "deleted";
+    }
+
+    /*package-local*/ static final class CategoryRule {
+        /*package-local*/ static final String ARRAY = "category_rules";
+        /*package-local*/ static final String ID = "id";
+        /*package-local*/ static final String PATTERN = "pattern";
+        /*package-local*/ static final String CATEGORY = "category";
+        /*package-local*/ static final String INDEX = "index";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
     }

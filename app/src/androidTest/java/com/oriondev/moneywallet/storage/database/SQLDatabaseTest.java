@@ -493,6 +493,118 @@ public class SQLDatabaseTest {
         return mDatabase.updatePlace(id, contentValues);
     }
 
+    private long insertCategoryRule(String pattern, long categoryId) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Contract.CategoryRule.PATTERN, pattern);
+        contentValues.put(Contract.CategoryRule.CATEGORY_ID, categoryId);
+        return mDatabase.insertCategoryRule(contentValues);
+    }
+
+    /**
+     * The category the rules name for a description, read the way the content provider reads it.
+     *
+     * @param description text to match the patterns against.
+     * @return the category id, or null when no rule matches.
+     */
+    private Long matchCategoryRule(String description) {
+        Cursor cursor = mDatabase.getCategoryRuleMatch(description);
+        assertNotNull(cursor);
+        Long categoryId = null;
+        if (cursor.moveToFirst()) {
+            categoryId = cursor.getLong(cursor.getColumnIndex(Contract.CategoryRule.CATEGORY_ID));
+        }
+        cursor.close();
+        return categoryId;
+    }
+
+    private void checkCategoryRuleId(long id, String pattern, long categoryId, int index) {
+        Cursor cursor = mDatabase.getCategoryRule(id, null);
+        assertNotNull(cursor);
+        assertEquals(1, cursor.getCount());
+        assertEquals(true, cursor.moveToFirst());
+        assertEquals(pattern, cursor.getString(cursor.getColumnIndex(Contract.CategoryRule.PATTERN)));
+        assertEquals(categoryId, cursor.getLong(cursor.getColumnIndex(Contract.CategoryRule.CATEGORY_ID)));
+        assertEquals(index, cursor.getInt(cursor.getColumnIndex(Contract.CategoryRule.INDEX)));
+        cursor.close();
+    }
+
+    @Test
+    public void categoryRulesAreAppendedInOrder() throws Exception {
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        long petrol = insertCategory("Petrol", "encoded-icon-petrol", 1, null, true, "tag-petrol");
+        long first = insertCategoryRule("tesco", food);
+        long second = insertCategoryRule("shell", petrol);
+        checkCategoryRuleId(first, "tesco", food, 0);
+        checkCategoryRuleId(second, "shell", petrol, 1);
+        checkCursorSize(mDatabase.getCategoryRules(null, null, null, null), 2);
+    }
+
+    @Test
+    public void categoryRuleMatchesDescriptionWhateverTheCase() throws Exception {
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        insertCategoryRule("TeSCo", food);
+        assertEquals(Long.valueOf(food), matchCategoryRule("Weekly shop at tesco extra"));
+        assertEquals(Long.valueOf(food), matchCategoryRule("TESCO"));
+        assertNull(matchCategoryRule("Corner shop"));
+    }
+
+    @Test
+    public void categoryRuleMatchTakesTheLowestIndexThatFits() throws Exception {
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        long petrol = insertCategory("Petrol", "encoded-icon-petrol", 1, null, true, "tag-petrol");
+        // both patterns are in the description, and only the one appended first answers
+        insertCategoryRule("tesco", food);
+        insertCategoryRule("petrol", petrol);
+        assertEquals(Long.valueOf(food), matchCategoryRule("tesco petrol station"));
+    }
+
+    @Test
+    public void categoryRulePatternIsNotAWildcard() throws Exception {
+        // a percent and an underscore are wildcards under LIKE, and the lookup uses instr, so
+        // they stand for themselves and match nothing else
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        insertCategoryRule("100% ju_ce", food);
+        assertNull(matchCategoryRule("orange juice"));
+        assertEquals(Long.valueOf(food), matchCategoryRule("Bought 100% ju_ce today"));
+    }
+
+    @Test
+    public void updateCategoryRuleReplacesPatternAndCategory() throws Exception {
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        long petrol = insertCategory("Petrol", "encoded-icon-petrol", 1, null, true, "tag-petrol");
+        long rule = insertCategoryRule("tesco", food);
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Contract.CategoryRule.PATTERN, "shell");
+        contentValues.put(Contract.CategoryRule.CATEGORY_ID, petrol);
+        assertEquals(1, mDatabase.updateCategoryRule(rule, contentValues));
+        checkCategoryRuleId(rule, "shell", petrol, 0);
+        assertNull(matchCategoryRule("tesco extra"));
+        assertEquals(Long.valueOf(petrol), matchCategoryRule("shell garage"));
+    }
+
+    @Test
+    public void deleteCategoryRuleLeavesTheOthers() throws Exception {
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        long petrol = insertCategory("Petrol", "encoded-icon-petrol", 1, null, true, "tag-petrol");
+        long first = insertCategoryRule("tesco", food);
+        insertCategoryRule("shell", petrol);
+        assertEquals(1, mDatabase.deleteCategoryRule(first));
+        checkCursorSize(mDatabase.getCategoryRules(null, null, null, null), 1);
+        assertNull(matchCategoryRule("tesco extra"));
+        assertEquals(Long.valueOf(petrol), matchCategoryRule("shell garage"));
+    }
+
+    @Test
+    public void deletingACategoryTakesItsRulesWithIt() throws Exception {
+        long food = insertCategory("Food", "encoded-icon-food", 1, null, true, "tag-food");
+        long petrol = insertCategory("Petrol", "encoded-icon-petrol", 1, null, true, "tag-petrol");
+        insertCategoryRule("tesco", food);
+        insertCategoryRule("shell", petrol);
+        mDatabase.deleteCategory(food);
+        checkCursorSize(mDatabase.getCategoryRules(null, null, null, null), 1);
+        assertNull(matchCategoryRule("tesco extra"));
+    }
+
     private void checkPersonId(long id, String name, String icon, String note, String tag) {
         Cursor cursor = mDatabase.getPerson(id, null);
         assertNotNull(cursor);

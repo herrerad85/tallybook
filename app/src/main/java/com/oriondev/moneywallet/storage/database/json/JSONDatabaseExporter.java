@@ -254,6 +254,22 @@ public class JSONDatabaseExporter implements DatabaseExporter {
     }
 
     @Override
+    public void exportCategoryRules(Cursor cursor) throws ExportException {
+        try {
+            mWriter.writeName(JSONDatabase.CategoryRule.ARRAY);
+            mWriter.beginArray();
+            while (cursor.moveToNext()) {
+                CategoryRule categoryRule = SQLDatabaseExporter.getCategoryRule(cursor);
+                JSONObject object = mFactory.getObject(categoryRule);
+                mWriter.writeJSONObject(object);
+            }
+            mWriter.endArray();
+        } catch (IOException | JSONException e) {
+            throw new ExportException(e.getMessage());
+        }
+    }
+
+    @Override
     public void exportSavings(Cursor cursor) throws ExportException {
         try {
             mWriter.writeName(JSONDatabase.Saving.ARRAY);

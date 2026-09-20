@@ -103,6 +103,7 @@
     <string name="hint_start_money">"Initial amount"</string>
     <string name="hint_not_exclude_wallet">"Show this wallet in the total count"</string>
     <string name="hint_category">"Category"</string>
+    <string name="hint_category_rule_pattern">"Text to look for"</string>
     <string name="hint_categories">"Categories"</string>
     <string name="hint_parent_category">"Parent category"</string>
     <string name="hint_show_category_report">"Show this category inside the reports"</string>
@@ -230,8 +231,12 @@
     <string name="title_activity_edit_person">"Edit person"</string>
     <string name="title_activity_wallet_sort">"Sort wallets"</string>
     <string name="title_activity_currency_list">"Currencies"</string>
+    <string name="title_activity_category_rule_list">"Automatic categories"</string>
+    <string name="title_activity_new_category_rule">"New rule"</string>
+    <string name="title_activity_edit_category_rule">"Edit rule"</string>
     <string name="title_activity_category_picker">"Pick a category"</string>
     <string name="title_activity_category_sort">"Sort categories"</string>
+    <string name="title_activity_category_rule_sort">"Sort rules"</string>
     <string name="title_activity_icon_list">"Icons"</string>
     <string name="title_activity_backup_services">"Backup services"</string>
     <string name="title_activity_about">"About"</string>
@@ -319,6 +324,7 @@
     <string name="error_input_missing_end_date">Select an end date</string>
     <string name="error_input_invalid_date_range">"Invalid date range"</string>
     <string name="error_input_missing_category">"Select a category"</string>
+    <string name="error_input_pattern_not_valid">"Type the text to look for"</string>
     <string name="error_input_missing_categories">"Select at least one category"</string>
     <string name="error_input_missing_description">"Provide a description"</string>
     <string name="error_input_missing_format">"Select a file format"</string>
@@ -367,6 +373,8 @@
     <string name="header_debts_finished">"Finished"</string>
 
     <string name="message_no_currency_found">"No currency found"</string>
+    <string name="message_no_category_rule_found">"No rule yet. Add one to have a category filled in from what you type in the description."</string>
+    <string name="message_no_category_rule_found_sort">"No rule to sort"</string>
     <string name="message_no_wallet_found">"No wallet found"</string>
     <string name="message_no_transaction_found">"No transaction found"</string>
     <string name="message_no_transaction_found_other_wallets">"No transaction found in the selected wallet. There are transactions in other wallets."</string>
@@ -451,7 +459,8 @@
     <string name="message_error_delete_currency">"This currency cannot be deleted because it is in use."</string>
     <string name="message_delete_wallet">"Are you sure you want to delete this wallet? All the related data will be removed."</string>
     <string name="message_error_delete_wallet_of_transfer">"This wallet cannot be deleted because is used in one or more transfers. Please remove the related transfers to delete this wallet."</string>
-    <string name="message_delete_category">"Are you sure you want to delete this category?"</string>
+    <string name="message_delete_category">"Are you sure you want to delete this category? Its automatic category rules are deleted with it."</string>
+    <string name="message_delete_category_rule">"Are you sure you want to delete the rule for %1$s?"</string>
     <string name="message_error_insert_category_deep_hierarchy">"Nested child categories are not supported: the selected parent category is already a child of another category."</string>
     <string name="message_error_insert_category_not_consistent">"The selected parent category is not of the same type of this category."</string>
     <string name="message_error_update_category_deep_hierarchy">"Nested child categories are not supported: this category has one or more children and cannot be updated as child category."</string>
@@ -576,6 +585,8 @@
     <string name="setting_summary_exchange_rate_update">"Last update: %s"</string>
     <string name="setting_title_currency_management">"Manage currencies"</string>
     <string name="setting_summary_currency_management">"Add custom currencies"</string>
+    <string name="setting_title_category_rules">"Automatic categories"</string>
+    <string name="setting_summary_category_rules">"Set a category from the description"</string>
     <string name="setting_subtitle_user_interface">"Personalize it as you want"</string>
     <string name="setting_subtitle_utility">"Setup the available tools"</string>
     <string name="setting_subtitle_database">"Manage your data"</string>

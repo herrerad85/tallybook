@@ -63,6 +63,7 @@ public class DataContentProvider extends ContentProvider {
     public static final Uri CONTENT_TRANSFER_MODELS = Uri.parse("content://" + AUTHORITY + "/models/transfers");
     public static final Uri CONTENT_PLACES = Uri.parse("content://" + AUTHORITY + "/places");
     public static final Uri CONTENT_PEOPLE = Uri.parse("content://" + AUTHORITY + "/people");
+    public static final Uri CONTENT_CATEGORY_RULES = Uri.parse("content://" + AUTHORITY + "/category_rules");
     public static final Uri CONTENT_ATTACHMENTS = Uri.parse("content://" + AUTHORITY + "/attachments");
 
     /**
@@ -125,6 +126,10 @@ public class DataContentProvider extends ContentProvider {
     private static final int PLACE_TRANSACTION_LIST = 44;
     private static final int PERSON_TRANSACTION_LIST = 45;
 
+    private static final int CATEGORY_RULE_LIST = 47;
+    private static final int CATEGORY_RULE_ITEM = 48;
+    private static final int CATEGORY_RULE_MATCH = 49;
+
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
     private static UriMatcher createUriMatcher() {
@@ -167,6 +172,11 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "models/transactions/#", TRANSACTION_MODEL_ITEM);
         matcher.addURI(AUTHORITY, "models/transfers", TRANSFER_MODEL_LIST);
         matcher.addURI(AUTHORITY, "models/transfers/#", TRANSFER_MODEL_ITEM);
+        matcher.addURI(AUTHORITY, "category_rules", CATEGORY_RULE_LIST);
+        matcher.addURI(AUTHORITY, "category_rules/#", CATEGORY_RULE_ITEM);
+        // the description is one encoded path segment, so a slash or a space typed into it
+        // travels whole and comes back out of getLastPathSegment decoded
+        matcher.addURI(AUTHORITY, "category_rules/match/*", CATEGORY_RULE_MATCH);
         matcher.addURI(AUTHORITY, "places", PLACE_LIST);
         matcher.addURI(AUTHORITY, "places/#", PLACE_ITEM);
         matcher.addURI(AUTHORITY, "places/#/transactions", PLACE_TRANSACTION_LIST);
@@ -332,6 +342,15 @@ public class DataContentProvider extends ContentProvider {
             case TRANSFER_MODEL_ITEM:
                 cursor = new MultiUriCursorWrapper(db().getTransferModel(ContentUris.parseId(uri), projection));
                 break;
+            case CATEGORY_RULE_LIST:
+                cursor = new MultiUriCursorWrapper(db().getCategoryRules(projection, selection, selectionArgs, sortOrder));
+                break;
+            case CATEGORY_RULE_ITEM:
+                cursor = new MultiUriCursorWrapper(db().getCategoryRule(ContentUris.parseId(uri), projection));
+                break;
+            case CATEGORY_RULE_MATCH:
+                cursor = new MultiUriCursorWrapper(db().getCategoryRuleMatch(uri.getLastPathSegment()));
+                break;
             case PLACE_LIST:
                 cursor = new MultiUriCursorWrapper(db().getPlaces(projection, selection, selectionArgs, sortOrder));
                 break;
@@ -443,6 +462,11 @@ public class DataContentProvider extends ContentProvider {
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.model.transfer";
             case TRANSFER_MODEL_ITEM:
                 return "vnd.android.cursor.item/vnd.com.oriondev.moneywallet.storage.model.transfer";
+            case CATEGORY_RULE_LIST:
+            case CATEGORY_RULE_MATCH:
+                return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.category_rule";
+            case CATEGORY_RULE_ITEM:
+                return "vnd.android.cursor.item/vnd.com.oriondev.moneywallet.storage.category_rule";
             case PLACE_LIST:
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.place";
             case PLACE_ITEM:
@@ -523,6 +547,9 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case TRANSFER_MODEL_LIST:
                 objectId = database.insertTransferModel(contentValues);
+                break;
+            case CATEGORY_RULE_LIST:
+                objectId = database.insertCategoryRule(contentValues);
                 break;
             case PLACE_LIST:
                 objectId = database.insertPlace(contentValues);
@@ -630,6 +657,10 @@ public class DataContentProvider extends ContentProvider {
                 notifyUri[0] = DataContentProvider.CONTENT_TRANSFER_MODELS;
                 result = database.deleteTransferModel(ContentUris.parseId(uri));
                 break;
+            case CATEGORY_RULE_ITEM:
+                notifyUri[0] = DataContentProvider.CONTENT_CATEGORY_RULES;
+                result = database.deleteCategoryRule(ContentUris.parseId(uri));
+                break;
             case PLACE_ITEM:
                 notifyUri[0] = DataContentProvider.CONTENT_PLACES;
                 result = database.deletePlace(ContentUris.parseId(uri));
@@ -697,6 +728,9 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case TRANSFER_MODEL_ITEM:
                 result = database.updateTransferModel(ContentUris.parseId(uri), values);
+                break;
+            case CATEGORY_RULE_ITEM:
+                result = database.updateCategoryRule(ContentUris.parseId(uri), values);
                 break;
             case PLACE_ITEM:
                 result = database.updatePlace(ContentUris.parseId(uri), values);

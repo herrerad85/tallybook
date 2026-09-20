@@ -80,6 +80,14 @@ package com.oriondev.moneywallet.storage.database;
         /*package-local*/ static final String INDEX = "category_index";
     }
 
+    /*package-local*/ static final class CategoryRule extends BaseTable {
+        /*package-local*/ static final String TABLE = "category_rules";
+        /*package-local*/ static final String ID = "rule_id";
+        /*package-local*/ static final String PATTERN = "rule_pattern";
+        /*package-local*/ static final String CATEGORY = "rule_category";
+        /*package-local*/ static final String INDEX = "rule_index";
+    }
+
     /*package-local*/ static final class Event extends BaseTable {
         /*package-local*/ static final String TABLE = "events";
         /*package-local*/ static final String ID = "event_id";
@@ -394,6 +402,29 @@ package com.oriondev.moneywallet.storage.database;
             Category.LAST_EDIT + " INTEGER NOT NULL, " +
             Category.DELETED + " INTEGER NOT NULL DEFAULT 0, " +
             "FOREIGN KEY (" + Category.PARENT + ") REFERENCES " + Category.TABLE +
+            "(" + Category.ID + ") ON UPDATE NO ACTION ON DELETE CASCADE " +
+            ")";
+
+    /**
+     * The rules that name a category from what a transaction description holds. IF NOT EXISTS
+     * because the upgrade that adds the table runs again after an older release is installed
+     * over this database and then upgraded, which leaves the table in place and stamps the
+     * version back.
+     *
+     * The category carries ON DELETE CASCADE, so deleting a category takes the rules that name
+     * it with it. A rule holds no ledger figure, and nothing else reads it, so keeping one that
+     * points at a category that is gone would only block the deletion.
+     */
+    /*package-local*/ static final String CREATE_TABLE_CATEGORY_RULE = "CREATE TABLE IF NOT EXISTS " +
+            CategoryRule.TABLE + " (" +
+            CategoryRule.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            CategoryRule.PATTERN + " TEXT NOT NULL, " +
+            CategoryRule.CATEGORY + " INTEGER NOT NULL, " +
+            CategoryRule.INDEX + " INTEGER NOT NULL, " +
+            CategoryRule.UUID + " TEXT NOT NULL UNIQUE, " +
+            CategoryRule.LAST_EDIT + " INTEGER NOT NULL, " +
+            CategoryRule.DELETED + " INTEGER NOT NULL DEFAULT 0, " +
+            "FOREIGN KEY (" + CategoryRule.CATEGORY + ") REFERENCES " + Category.TABLE +
             "(" + Category.ID + ") ON UPDATE NO ACTION ON DELETE CASCADE " +
             ")";
 

@@ -28,6 +28,7 @@ import com.oriondev.moneywallet.storage.database.model.Budget;
 import com.oriondev.moneywallet.storage.database.model.BudgetCategory;
 import com.oriondev.moneywallet.storage.database.model.BudgetWallet;
 import com.oriondev.moneywallet.storage.database.model.Category;
+import com.oriondev.moneywallet.storage.database.model.CategoryRule;
 import com.oriondev.moneywallet.storage.database.model.Currency;
 import com.oriondev.moneywallet.storage.database.model.Debt;
 import com.oriondev.moneywallet.storage.database.model.DebtPerson;
@@ -112,6 +113,18 @@ public class SQLDatabaseExporter {
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.Event.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.Event.LAST_EDIT));
         object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.Event.DELETED)) == 1;
+        return object;
+    }
+
+    public static CategoryRule getCategoryRule(Cursor cursor) {
+        CategoryRule object = new CategoryRule();
+        object.mId = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.CategoryRule.ID));
+        object.mPattern = cursor.getString(cursor.getColumnIndexOrThrow(Schema.CategoryRule.PATTERN));
+        object.mCategory = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.CategoryRule.CATEGORY));
+        object.mIndex = cursor.getInt(cursor.getColumnIndexOrThrow(Schema.CategoryRule.INDEX));
+        object.mUUID = cursor.getString(cursor.getColumnIndexOrThrow(Schema.CategoryRule.UUID));
+        object.mLastEdit = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.CategoryRule.LAST_EDIT));
+        object.mDeleted = cursor.getInt(cursor.getColumnIndexOrThrow(Schema.CategoryRule.DELETED)) == 1;
         return object;
     }
 
@@ -458,6 +471,13 @@ public class SQLDatabaseExporter {
         String selection = Schema.Event.DELETED + " = 0";
         return contentResolver.query(uri, null, selection, null, null);
     }
+
+    public static Cursor getAllCategoryRules(ContentResolver contentResolver) {
+        Uri uri = SyncContentProvider.CONTENT_CATEGORY_RULES;
+        String selection = Schema.CategoryRule.DELETED + " = 0";
+        return contentResolver.query(uri, null, selection, null, null);
+    }
+
 
     public static Cursor getAllPlaces(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_PLACES;
