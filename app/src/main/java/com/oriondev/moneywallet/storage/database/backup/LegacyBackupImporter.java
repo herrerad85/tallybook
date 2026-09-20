@@ -114,6 +114,7 @@ public class LegacyBackupImporter extends AbstractBackupImporter {
             mDatabaseImporter.importBudgets(contentResolver);
             mDatabaseImporter.importBudgetWallets(contentResolver);
             mDatabaseImporter.importBudgetCategories(contentResolver);
+            mDatabaseImporter.importCategoryRules(contentResolver);
             mDatabaseImporter.importSavings(contentResolver);
             mDatabaseImporter.importRecurrentTransactions(contentResolver);
             mDatabaseImporter.importRecurrentTransfers(contentResolver);

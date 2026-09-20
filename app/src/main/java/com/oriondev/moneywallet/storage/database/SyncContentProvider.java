@@ -47,6 +47,7 @@ public class SyncContentProvider extends ContentProvider {
     public static final Uri CONTENT_WALLETS = Uri.parse("content://" + AUTHORITY + "/wallets");
     public static final Uri CONTENT_CATEGORIES = Uri.parse("content://" + AUTHORITY + "/categories");
     public static final Uri CONTENT_EVENTS = Uri.parse("content://" + AUTHORITY + "/events");
+    public static final Uri CONTENT_CATEGORY_RULES = Uri.parse("content://" + AUTHORITY + "/category_rules");
     public static final Uri CONTENT_PLACES = Uri.parse("content://" + AUTHORITY + "/places");
     public static final Uri CONTENT_PEOPLE = Uri.parse("content://" + AUTHORITY + "/people");
     public static final Uri CONTENT_EVENT_PEOPLE = Uri.parse("content://" + AUTHORITY + "/event_people");
@@ -92,6 +93,7 @@ public class SyncContentProvider extends ContentProvider {
     private static final int TABLE_ATTACHMENTS = 21;
     private static final int TABLE_TRANSACTION_ATTACHMENTS = 22;
     private static final int TABLE_TRANSFER_ATTACHMENTS = 23;
+    private static final int TABLE_CATEGORY_RULES = 25;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -101,6 +103,7 @@ public class SyncContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "wallets", TABLE_WALLETS);
         matcher.addURI(AUTHORITY, "categories", TABLE_CATEGORIES);
         matcher.addURI(AUTHORITY, "events", TABLE_EVENTS);
+        matcher.addURI(AUTHORITY, "category_rules", TABLE_CATEGORY_RULES);
         matcher.addURI(AUTHORITY, "places", TABLE_PLACES);
         matcher.addURI(AUTHORITY, "people", TABLE_PEOPLE);
         matcher.addURI(AUTHORITY, "event_people", TABLE_EVENT_PEOPLE);
@@ -153,6 +156,8 @@ public class SyncContentProvider extends ContentProvider {
                 return Schema.Category.TABLE;
             case TABLE_EVENTS:
                 return Schema.Event.TABLE;
+            case TABLE_CATEGORY_RULES:
+                return Schema.CategoryRule.TABLE;
             case TABLE_PLACES:
                 return Schema.Place.TABLE;
             case TABLE_PEOPLE:

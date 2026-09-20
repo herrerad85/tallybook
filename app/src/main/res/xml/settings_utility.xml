@@ -75,6 +75,11 @@
             android:title="@string/setting_title_currency_management"
             android:summary="@string/setting_summary_currency_management"/>
 
+        <com.oriondev.moneywallet.ui.preference.ThemedPreference
+            android:key="category_rules"
+            android:title="@string/setting_title_category_rules"
+            android:summary="@string/setting_summary_category_rules"/>
+
     </com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

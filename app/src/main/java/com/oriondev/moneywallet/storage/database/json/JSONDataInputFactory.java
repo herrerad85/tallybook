@@ -159,6 +159,17 @@ import java.util.Map;
         return event;
     }
 
+    /*package-local*/ CategoryRule getCategoryRule(JSONObject object) {
+        CategoryRule categoryRule = new CategoryRule();
+        categoryRule.mPattern = object.optString(JSONDatabase.CategoryRule.PATTERN, null);
+        categoryRule.mCategory = mCacheCategories.get(object.optString(JSONDatabase.CategoryRule.CATEGORY, null));
+        categoryRule.mIndex = object.optInt(JSONDatabase.CategoryRule.INDEX, 0);
+        categoryRule.mUUID = object.optString(JSONDatabase.CategoryRule.ID, null);
+        categoryRule.mLastEdit = object.optLong(JSONDatabase.CategoryRule.LAST_EDIT, 0L);
+        categoryRule.mDeleted = object.optBoolean(JSONDatabase.CategoryRule.DELETED, false);
+        return categoryRule;
+    }
+
     /*package-local*/ Place getPlace(JSONObject object) {
         Place place = new Place();
         place.mName = object.optString(JSONDatabase.Place.NAME, null);

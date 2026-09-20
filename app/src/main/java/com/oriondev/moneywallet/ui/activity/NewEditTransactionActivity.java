@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
@@ -158,6 +159,11 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     private AttachmentPicker mAttachmentPicker;
 
     private TransactionEditorRules mRules = new TransactionEditorRules();
+
+    // true while the category on screen is one the rules filled in and the user has not touched.
+    // It is not carried across a rotation, so a rotated editor treats the category as the user's
+    // and leaves it alone, which is the safe direction to fail in
+    private boolean mCategoryFilledByRule;
 
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
 
@@ -896,6 +902,19 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         mPersonPicker = PersonPicker.createPicker(fragmentManager, TAG_PERSON_PICKER, people);
         mPlacePicker = PlacePicker.createPicker(fragmentManager, TAG_PLACE_PICKER, place);
         mAttachmentPicker = AttachmentPicker.createPicker(fragmentManager, TAG_ATTACHMENT_PICKER, attachments);
+        // here and not with the other listeners, because this one reaches the category picker and
+        // the pickers are built above. A focus listener and not a text watcher, so the lookup runs
+        // once the user has finished typing instead of once per character
+        mDescriptionEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
+            @Override
+            public void onFocusChange(View view, boolean hasFocus) {
+                if (!hasFocus) {
+                    fillCategoryFromRules();
+                }
+            }
+
+        });
         // check if the intent contains some predefined value for fields
         if (savedInstanceState == null) {
             fillFieldsFromIntent(getIntent());
@@ -920,6 +939,91 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
             cursor.close();
         }
         return plain;
+    }
+
+    /**
+     * Sets the category the rules name for what the description holds. A category the user picked
+     * is left alone; one an earlier run of this put there is reconsidered, so correcting the
+     * description corrects the category with it, and a correction that matches no rule empties the
+     * field instead of saving the row under a category the description no longer names. The pick
+     * stays editable, since it is made through the picker and repaints the field the same way a
+     * pick of the user's own does.
+     *
+     * The field has to be on screen for this to run. A debt row and a saving row are both filed
+     * under a category this editor chooses and hides, and one written there could be neither seen
+     * nor changed. An existing transaction is left alone, and so is a new one that already
+     * carries a category, which covers both a transaction started from a model and a copy of one.
+     */
+    private void fillCategoryFromRules() {
+        if (getMode() != Mode.NEW_ITEM || mRules.hidesCategoryField()) {
+            return;
+        }
+        if (mCategoryPicker.isSelected() && !mCategoryFilledByRule) {
+            return;
+        }
+        String description = mDescriptionEditText.getTextAsString();
+        Category category = TextUtils.isEmpty(description) ? null
+                : readCategoryNamedBy(getContentResolver(), description);
+        if (category == null && !mCategoryFilledByRule) {
+            return;
+        }
+        // setCategory reaches onCategoryChanged on this thread before it returns, and that clears
+        // the flag, so the flag is set after the call and not before it
+        mCategoryPicker.setCategory(category);
+        mCategoryFilledByRule = category != null;
+    }
+
+    /**
+     * The category the stored rules file this description under, or null when none of them does.
+     * The description travels as one path segment, which is what carries a slash or a space in it
+     * through to the lookup whole.
+     *
+     * Read on the calling thread, which is how every other read in this editor is made.
+     *
+     * @param contentResolver resolver to read through.
+     * @param description text the user typed on the transaction.
+     * @return the category, or null when no rule matches or its category is gone.
+     */
+    private static Category readCategoryNamedBy(ContentResolver contentResolver, String description) {
+        Uri matchUri = DataContentProvider.CONTENT_CATEGORY_RULES.buildUpon()
+                .appendPath("match")
+                .appendPath(description)
+                .build();
+        Long categoryId = null;
+        Cursor cursor = contentResolver.query(matchUri,
+                new String[] {Contract.CategoryRule.CATEGORY_ID}, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                categoryId = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.CategoryRule.CATEGORY_ID));
+            }
+            cursor.close();
+        }
+        if (categoryId == null) {
+            return null;
+        }
+        Uri categoryUri = ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, categoryId);
+        String[] projection = new String[] {
+                Contract.Category.ID,
+                Contract.Category.NAME,
+                Contract.Category.ICON,
+                Contract.Category.TYPE,
+                Contract.Category.TAG
+        };
+        Category category = null;
+        cursor = contentResolver.query(categoryUri, projection, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                category = new Category(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Category.ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.NAME)),
+                        IconLoader.parse(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.ICON))),
+                        Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Category.TYPE))),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.TAG))
+                );
+            }
+            cursor.close();
+        }
+        return category;
     }
 
     private void fillFieldsFromIntent(Intent intent) {
@@ -1160,6 +1264,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
 
     @Override
     protected void onSaveChanges(Mode mode) {
+        // the description field may never have lost focus, so the save is the second place the
+        // rules are read. The guard inside leaves a category the user picked alone
+        fillCategoryFromRules();
         if (validate()) {
             ContentValues contentValues = new TransactionContentValuesBuilder()
                     .money(mMoneyPicker.getCurrentMoney())
@@ -1270,6 +1377,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
 
     @Override
     public void onCategoryChanged(String tag, Category category) {
+        // every pick reaches here, the user's through the picker and the rules' through
+        // setCategory, so the flag is cleared here and set again only by the rule fill itself
+        mCategoryFilledByRule = false;
         if (category != null) {
             mCategoryEditText.setText(category.getName());
         } else {

@@ -29,6 +29,7 @@ import com.oriondev.moneywallet.storage.database.model.Budget;
 import com.oriondev.moneywallet.storage.database.model.BudgetCategory;
 import com.oriondev.moneywallet.storage.database.model.BudgetWallet;
 import com.oriondev.moneywallet.storage.database.model.Category;
+import com.oriondev.moneywallet.storage.database.model.CategoryRule;
 import com.oriondev.moneywallet.storage.database.model.Currency;
 import com.oriondev.moneywallet.storage.database.model.Debt;
 import com.oriondev.moneywallet.storage.database.model.DebtPerson;
@@ -333,6 +334,28 @@ public class JSONDatabaseImporter implements DatabaseImporter {
                     mReader.endArray();
                 } else {
                     throw new ImportException("Wrong array name (expected = 'budget_categories')");
+                }
+            } catch (IOException | JSONException e) {
+                throw new ImportException(e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void importCategoryRules(ContentResolver contentResolver) throws ImportException {
+        // category rules are stored starting from backup version >= 4
+        if (mVersion >= 4) {
+            try {
+                if (JSONDatabase.CategoryRule.ARRAY.equals(mReader.readName())) {
+                    mReader.beginArray();
+                    while (mReader.hasArrayAnotherObject()) {
+                        JSONObject object = mReader.readObject();
+                        CategoryRule categoryRule = mFactory.getCategoryRule(object);
+                        SQLDatabaseImporter.insert(contentResolver, categoryRule);
+                    }
+                    mReader.endArray();
+                } else {
+                    throw new ImportException("Wrong array name (expected = 'category_rules')");
                 }
             } catch (IOException | JSONException e) {
                 throw new ImportException(e.getMessage());

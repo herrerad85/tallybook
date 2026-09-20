@@ -53,6 +53,8 @@ public interface DatabaseImporter {
 
     void importBudgetCategories(ContentResolver contentResolver) throws ImportException;
 
+    void importCategoryRules(ContentResolver contentResolver) throws ImportException;
+
     void importSavings(ContentResolver contentResolver) throws ImportException;
 
     void importRecurrentTransactions(ContentResolver contentResolver) throws ImportException;

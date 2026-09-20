@@ -53,6 +53,8 @@ public interface DatabaseExporter {
 
     void exportBudgetCategories(Cursor cursor) throws ExportException;
 
+    void exportCategoryRules(Cursor cursor) throws ExportException;
+
     void exportSavings(Cursor cursor) throws ExportException;
 
     void exportRecurrentTransactions(Cursor cursor) throws ExportException;

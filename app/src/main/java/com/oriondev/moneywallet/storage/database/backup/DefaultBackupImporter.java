@@ -84,6 +84,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
             importer.importBudgets(contentResolver);
             importer.importBudgetWallets(contentResolver);
             importer.importBudgetCategories(contentResolver);
+            importer.importCategoryRules(contentResolver);
             importer.importSavings(contentResolver);
             importer.importRecurrentTransactions(contentResolver);
             importer.importRecurrentTransfers(contentResolver);

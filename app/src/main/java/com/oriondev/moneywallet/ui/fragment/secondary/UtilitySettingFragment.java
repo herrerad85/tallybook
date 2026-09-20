@@ -49,6 +49,7 @@ import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.service.AbstractCurrencyRateDownloadIntentService;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.utils.SystemBars;
+import com.oriondev.moneywallet.ui.activity.CategoryRuleListActivity;
 import com.oriondev.moneywallet.ui.activity.CurrencyListActivity;
 import com.oriondev.moneywallet.ui.activity.LockActivity;
 import com.oriondev.moneywallet.ui.preference.ThemedInputPreference;
@@ -90,6 +91,7 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
     private ThemedInputPreference mMapTileServerPreference;
     private Preference mExchangeRateUpdatePreference;
     private Preference mCurrencyManagementPreference;
+    private Preference mCategoryRulesPreference;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -121,6 +123,7 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
         mExchangeRateCustomApiKey = (ThemedInputPreference) findPreference("exchange_rate_api_key");
         mExchangeRateUpdatePreference = findPreference("exchange_rate_update");
         mCurrencyManagementPreference = findPreference("currency_management");
+        mCategoryRulesPreference = findPreference("category_rules");
         mMapTileServerPreference = (ThemedInputPreference) findPreference("map_tile_server");
         if (!MapViewWrapper.supportsCustomTileServer()) {
             PreferenceCategory mapCategory = (PreferenceCategory) findPreference("map_category");
@@ -304,6 +307,18 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
                     Intent intent = new Intent(activity, CurrencyListActivity.class);
                     intent.putExtra(CurrencyListActivity.ACTIVITY_MODE, CurrencyListActivity.CURRENCY_MANAGER);
                     startActivity(intent);
+                }
+                return false;
+            }
+
+        });
+        mCategoryRulesPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    startActivity(new Intent(activity, CategoryRuleListActivity.class));
                 }
                 return false;
             }

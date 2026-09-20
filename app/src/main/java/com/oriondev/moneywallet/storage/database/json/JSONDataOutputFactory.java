@@ -24,6 +24,7 @@ import com.oriondev.moneywallet.storage.database.model.Budget;
 import com.oriondev.moneywallet.storage.database.model.BudgetCategory;
 import com.oriondev.moneywallet.storage.database.model.BudgetWallet;
 import com.oriondev.moneywallet.storage.database.model.Category;
+import com.oriondev.moneywallet.storage.database.model.CategoryRule;
 import com.oriondev.moneywallet.storage.database.model.Currency;
 import com.oriondev.moneywallet.storage.database.model.Debt;
 import com.oriondev.moneywallet.storage.database.model.DebtPerson;
@@ -126,6 +127,17 @@ import java.util.HashMap;
         object.put(JSONDatabase.Event.LAST_EDIT, event.mLastEdit);
         object.put(JSONDatabase.Event.DELETED, event.mDeleted);
         mCacheEvents.put(event.mId, event.mUUID);
+        return object;
+    }
+
+    /*package-local*/ JSONObject getObject(CategoryRule categoryRule) throws JSONException {
+        JSONObject object = new JSONObject();
+        object.put(JSONDatabase.CategoryRule.PATTERN, categoryRule.mPattern);
+        object.put(JSONDatabase.CategoryRule.CATEGORY, mCacheCategories.get(categoryRule.mCategory));
+        object.put(JSONDatabase.CategoryRule.INDEX, categoryRule.mIndex);
+        object.put(JSONDatabase.CategoryRule.ID, categoryRule.mUUID);
+        object.put(JSONDatabase.CategoryRule.LAST_EDIT, categoryRule.mLastEdit);
+        object.put(JSONDatabase.CategoryRule.DELETED, categoryRule.mDeleted);
         return object;
     }
 

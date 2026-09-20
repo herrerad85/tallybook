@@ -458,6 +458,11 @@ public class LegacyDatabaseImporter implements DatabaseImporter {
     }
 
     @Override
+    public void importCategoryRules(ContentResolver contentResolver) throws ImportException {
+        // not supported in legacy database
+    }
+
+    @Override
     public void importSavings(ContentResolver contentResolver) throws ImportException {
         String selection = LegacyDatabaseSchema.Saving.DELETED + " = 0";
         Cursor cursor = mDatabase.query(LegacyDatabaseSchema.Saving.TABLE, null, selection, null, null, null, null);

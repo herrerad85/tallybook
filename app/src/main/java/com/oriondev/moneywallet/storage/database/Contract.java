@@ -618,6 +618,19 @@ public class Contract {
         public static final String TAG = Schema.Place.TAG;
     }
 
+    public static final class CategoryRule {
+        public static final String ID = Schema.CategoryRule.ID;
+        public static final String PATTERN = Schema.CategoryRule.PATTERN;
+        public static final String CATEGORY_ID = Schema.CategoryRule.CATEGORY;
+        /** Read only, joined from the category the rule names. Writes ignore it. */
+        public static final String CATEGORY_NAME = "rule_category_name";
+        /**
+         * The priority the rules are matched in, lowest first. An insert that names no index of
+         * its own is appended after the rules already stored.
+         */
+        public static final String INDEX = Schema.CategoryRule.INDEX;
+    }
+
     public static final class Person {
         public static final String ID = Schema.Person.ID;
         public static final String NAME = Schema.Person.NAME;

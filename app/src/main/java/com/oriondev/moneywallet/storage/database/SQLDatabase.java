@@ -76,7 +76,7 @@ import java.util.function.Supplier;
     private static final String TAG = "SQLDatabase";
 
     /*package-local*/ static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
 
     /**
      * The currencies whose shipped decimals were taken from the number of digits a country
@@ -360,6 +360,7 @@ import java.util.function.Supplier;
         db.execSQL(Schema.CREATE_TABLE_CURRENCY);
         db.execSQL(Schema.CREATE_TABLE_WALLET);
         db.execSQL(Schema.CREATE_TABLE_CATEGORY);
+        db.execSQL(Schema.CREATE_TABLE_CATEGORY_RULE);
         db.execSQL(Schema.CREATE_TABLE_EVENT);
         db.execSQL(Schema.CREATE_TABLE_PLACE);
         db.execSQL(Schema.CREATE_TABLE_PERSON);
@@ -459,6 +460,14 @@ import java.util.function.Supplier;
                     fixCurrencyAmounts(db, iso, 2);
                 }
             }
+        }
+        if (oldVersion < 7) {
+            // the rules that name a category from a transaction description. The create is
+            // guarded, because this runs a second time whenever a release that predates the
+            // table is installed over this database and then upgraded again, onDowngrade leaves
+            // the schema alone and only stamps the version back. There is nothing to fill from,
+            // no column and no preference held these before.
+            db.execSQL(Schema.CREATE_TABLE_CATEGORY_RULE);
         }
     }
 
@@ -2389,6 +2398,140 @@ import java.util.function.Supplier;
         where = Schema.Category.ID + " = ?";
         whereArgs = new String[]{String.valueOf(categoryId)};
         return getWritableDatabase().delete(Schema.Category.TABLE, where, whereArgs);
+    }
+
+    /**
+     * This method is called by the content provider when the user is querying a specific
+     * category rule.
+     *
+     * @param ruleId id of the rule.
+     * @param projection column names that are requested to be part of the cursor.
+     * @return a cursor with zero or one row.
+     */
+    /*package-local*/ Cursor getCategoryRule(long ruleId, String[] projection) {
+        String selection = Schema.CategoryRule.ID + " = ?";
+        String[] selectionArgs = new String[]{String.valueOf(ruleId)};
+        return getCategoryRules(projection, selection, selectionArgs, null);
+    }
+
+    /**
+     * This method is called by the content provider when the user is querying all the category
+     * rules.
+     *
+     * @param projection column names that are requested to be part of the cursor.
+     * @param selection string that may contains additional filters for the query.
+     * @param selectionArgs string array that may contains the arguments for the selection string.
+     * @param sortOrder string that may contains column name to use to sort the cursor.
+     * @return a cursor with zero or more rows.
+     */
+    /*package-local*/ Cursor getCategoryRules(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String subQuery = "SELECT " +
+                "cr." + Schema.CategoryRule.ID + " AS " + Contract.CategoryRule.ID + ", " +
+                "cr." + Schema.CategoryRule.PATTERN + " AS " + Contract.CategoryRule.PATTERN + ", " +
+                "cr." + Schema.CategoryRule.CATEGORY + " AS " + Contract.CategoryRule.CATEGORY_ID + ", " +
+                "c." + Schema.Category.NAME + " AS " + Contract.CategoryRule.CATEGORY_NAME + ", " +
+                "cr." + Schema.CategoryRule.INDEX + " AS " + Contract.CategoryRule.INDEX +
+                " FROM " + Schema.CategoryRule.TABLE + " AS cr JOIN " + Schema.Category.TABLE +
+                " AS c ON cr." + Schema.CategoryRule.CATEGORY + " = c." + Schema.Category.ID +
+                " AND c." + Schema.Category.DELETED + " = 0 WHERE cr." +
+                Schema.CategoryRule.DELETED + " = 0";
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
+    /**
+     * The category named by the first rule whose pattern appears in the given description, or an
+     * empty cursor when no rule matches. Which rule comes first is decided by the index column,
+     * the priority the rules are kept in. Two rules can hold the same index, since nothing in the
+     * schema stops it and a restore writes the column straight from the file, so the id breaks the
+     * tie and the older rule wins. Without it SQLite is free to answer either one.
+     *
+     * instr and not LIKE, because a percent or an underscore typed into a pattern is a wildcard
+     * under LIKE and would have to be escaped. lower() folds ASCII only, which is the same limit
+     * LIKE carries.
+     *
+     * @param description text the user typed on the transaction.
+     * @return a cursor with zero or one row, holding the category id.
+     */
+    /*package-local*/ Cursor getCategoryRuleMatch(String description) {
+        String query = "SELECT " + Schema.CategoryRule.CATEGORY + " AS " +
+                Contract.CategoryRule.CATEGORY_ID + " FROM " + Schema.CategoryRule.TABLE +
+                " WHERE " + Schema.CategoryRule.DELETED + " = 0 AND instr(lower(?), lower(" +
+                Schema.CategoryRule.PATTERN + ")) > 0 ORDER BY " + Schema.CategoryRule.INDEX +
+                ", " + Schema.CategoryRule.ID + " LIMIT 1";
+        return getReadableDatabase().rawQuery(query, new String[]{description});
+    }
+
+    /**
+     * The index a new rule is appended at, one past the highest the table holds. Rows flagged
+     * deleted count too, so a rule a restored backup brings back cannot collide with one written
+     * since.
+     *
+     * @return the index to write, zero when the table is empty.
+     */
+    private int nextCategoryRuleIndex() {
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT IFNULL(MAX(" +
+                Schema.CategoryRule.INDEX + "), -1) + 1 FROM " + Schema.CategoryRule.TABLE, null);
+        try {
+            return cursor.moveToFirst() ? cursor.getInt(0) : 0;
+        } finally {
+            cursor.close();
+        }
+    }
+
+    /**
+     * This method is called by the content provider when the user is inserting a new category
+     * rule. A rule that names no index of its own is appended after the ones already there.
+     *
+     * @param contentValues bundle that contains the data from the content provider.
+     * @return the id of the new item if inserted, -1 if an error occurs.
+     */
+    /*package-local*/ long insertCategoryRule(ContentValues contentValues) {
+        ContentValues cv = new ContentValues();
+        cv.put(Schema.CategoryRule.PATTERN, contentValues.getAsString(Contract.CategoryRule.PATTERN));
+        cv.put(Schema.CategoryRule.CATEGORY, contentValues.getAsLong(Contract.CategoryRule.CATEGORY_ID));
+        Integer index = contentValues.getAsInteger(Contract.CategoryRule.INDEX);
+        cv.put(Schema.CategoryRule.INDEX, index != null ? index : nextCategoryRuleIndex());
+        cv.put(Schema.CategoryRule.UUID, UUID.randomUUID().toString());
+        cv.put(Schema.CategoryRule.LAST_EDIT, System.currentTimeMillis());
+        cv.put(Schema.CategoryRule.DELETED, false);
+        return getWritableDatabase().insert(Schema.CategoryRule.TABLE, null, cv);
+    }
+
+    /**
+     * This method is called by the content provider when the user is updating an existing
+     * category rule.
+     *
+     * @param ruleId id of the rule to update.
+     * @param contentValues bundle that contains the values to update.
+     * @return the number of row affected.
+     */
+    /*package-local*/ int updateCategoryRule(long ruleId, ContentValues contentValues) {
+        ContentValues cv = new ContentValues();
+        if (contentValues.containsKey(Contract.CategoryRule.PATTERN)) {
+            cv.put(Schema.CategoryRule.PATTERN, contentValues.getAsString(Contract.CategoryRule.PATTERN));
+        }
+        if (contentValues.containsKey(Contract.CategoryRule.CATEGORY_ID)) {
+            cv.put(Schema.CategoryRule.CATEGORY, contentValues.getAsLong(Contract.CategoryRule.CATEGORY_ID));
+        }
+        if (contentValues.containsKey(Contract.CategoryRule.INDEX)) {
+            cv.put(Schema.CategoryRule.INDEX, contentValues.getAsInteger(Contract.CategoryRule.INDEX));
+        }
+        cv.put(Schema.CategoryRule.LAST_EDIT, System.currentTimeMillis());
+        String where = Schema.CategoryRule.ID + " = ?";
+        String[] whereArgs = new String[]{String.valueOf(ruleId)};
+        return getWritableDatabase().update(Schema.CategoryRule.TABLE, cv, where, whereArgs);
+    }
+
+    /**
+     * Delete a category rule from the database.
+     *
+     * @param ruleId id of the rule to remove.
+     * @return the number of rows affected by the deletion (must be 1 for success).
+     */
+    /*package-local*/ int deleteCategoryRule(long ruleId) {
+        String where = Schema.CategoryRule.ID + " = ?";
+        String[] whereArgs = new String[]{String.valueOf(ruleId)};
+        return getWritableDatabase().delete(Schema.CategoryRule.TABLE, where, whereArgs);
     }
 
     /**
