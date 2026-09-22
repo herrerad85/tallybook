@@ -20,6 +20,26 @@
 
 <changelog>
 
+    <version versionName="1.10.0" versionDate="Sep 21, 2026">
+        <change>[b]New![/b] A category can be filled in from the description. Settings, Utility, Automatic categories pairs the text to look for with the category to use.</change>
+        <change>[b]New![/b] Import a CSV file another app wrote by mapping its columns, so a bank statement or an export from another finance app can come in.</change>
+        <change>[b]New![/b] Automatic backup can save a CSV of your transactions beside each backup. It is off by default, and the CSV is not password protected.</change>
+        <change>[b]New![/b] Search the currency list and the category picker from the toolbar. A currency is found by its code as well as by its name.</change>
+        <change>[b]New![/b] Tap the star on a currency to pin it to the top of the list.</change>
+        <change>Transfers are no longer counted as income or expense on the transactions list header and the period summary. They have their own figure on both rows, shown when the period holds one.</change>
+        <change>The period summary's header and the row under it no longer disagree about the sign of the same total.</change>
+        <change>Importing the same CSV file twice no longer saves every row a second time.</change>
+        <change>A mapped CSV import reads a negative written in parentheses, a trailing minus, a currency symbol, and a two digit year.</change>
+        <change>Restoring a legacy backup, or upgrading from the legacy edition, keeps the cents on currencies without 2 decimals, where it used to cut them away.</change>
+        <change>The drawer no longer prints a wallet balance on the rows of its section list.</change>
+        <change>On screens 600dp and wider the panel card no longer sits under a tall toolbar.</change>
+        <change>A folder listing that fails while a backup destination is set up now says so, where the spinner used to run forever.</change>
+        <change>In a right to left layout the transfer arrows point at the destination instead of back at the source, and the first day of month setting and the recurrence counts show the digits of the app's language.</change>
+        <change>Switching wallets from the drawer no longer makes the app bar shrink and grow back.</change>
+        <change>Importing data no longer crashes when an older import screen is open underneath.</change>
+        <change>The Overview bar and line charts no longer label periods that do not exist.</change>
+        <change>The Overview radar page numbers its spokes from 1, like the bar and line pages.</change>
+    </version>
     <version versionName="1.9.0" versionDate="Sep 15, 2026">
         <change>[b]New![/b] Long press a transaction to select it, tap others to add them, then delete them together or move them to another wallet or category.</change>
         <change>[b]New![/b] A debt card offers Pay in full and a credit card Receive in full, opening the editor on what is left, and every debt payment opens with the debt's description filled in.</change>
