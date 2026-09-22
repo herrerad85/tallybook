@@ -123,6 +123,7 @@ import java.util.Map;
         wallet.mArchived = object.optBoolean(JSONDatabase.Wallet.ARCHIVED, false);
         wallet.mNote = object.optString(JSONDatabase.Wallet.NOTE, null);
         wallet.mTag = object.optString(JSONDatabase.Wallet.TAG, null);
+        wallet.mGroup = object.optString(JSONDatabase.Wallet.GROUP, null);
         wallet.mIndex = object.optInt(JSONDatabase.Wallet.INDEX, 0);
         wallet.mUUID = object.optString(JSONDatabase.Wallet.ID, null);
         wallet.mLastEdit = object.optLong(JSONDatabase.Wallet.LAST_EDIT, 0L);

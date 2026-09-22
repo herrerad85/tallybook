@@ -66,6 +66,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.Wallet.NOTE, wallet.mNote);
         contentValues.put(Schema.Wallet.INDEX, wallet.mIndex);
         contentValues.put(Schema.Wallet.TAG, wallet.mTag);
+        contentValues.put(Schema.Wallet.GROUP, wallet.mGroup);
         contentValues.put(Schema.Wallet.UUID, wallet.mUUID);
         contentValues.put(Schema.Wallet.LAST_EDIT, wallet.mLastEdit);
         contentValues.put(Schema.Wallet.DELETED, wallet.mDeleted);

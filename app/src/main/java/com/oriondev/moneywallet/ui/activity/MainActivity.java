@@ -35,6 +35,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.widget.EditText;
 import androidx.annotation.DrawableRes;
@@ -97,8 +98,11 @@ import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.SystemBars;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class MainActivity extends BaseActivity implements DrawerController, NavigationView.OnNavigationItemSelectedListener, LoaderManager.LoaderCallbacks<Cursor>  {
 
@@ -133,9 +137,18 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
 
     /*package-local*/ static final int ID_ACTION_NEW_WALLET = 18;
     /*package-local*/ static final int ID_ACTION_MANAGE_WALLET = 19;
-    // Every wallet entry takes this plus the wallet's own id, above every other id, so a lookup
-    // by id can never land on a section, and a row bound before a reload still names its wallet.
+    // Every account group header takes this plus its position in the drawn order.
+    /*package-local*/ static final int ID_GROUP_FIRST = 20;
+    // Every wallet entry takes this plus the wallet's own id, so a row bound before a reload
+    // still names its wallet.
     /*package-local*/ static final int ID_WALLET_FIRST = 100;
+
+    // Alphabetical, ignoring case, and never merging two names that differ only by case: the
+    // TreeMap would drop one of them and draw its wallets under the other's heading.
+    /*package-local*/ static final Comparator<String> GROUP_NAME_ORDER = (first, second) -> {
+        int result = first.compareToIgnoreCase(second);
+        return result != 0 ? result : first.compareTo(second);
+    };
 
     private final MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
     private final List<WalletAccount> mWallets = new ArrayList<>();
@@ -595,7 +608,8 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
                 Contract.Wallet.CURRENCY,
                 Contract.Wallet.START_MONEY,
                 Contract.Wallet.TOTAL_MONEY,
-                Contract.Wallet.ARCHIVED
+                Contract.Wallet.ARCHIVED,
+                Contract.Wallet.GROUP
         };
         Uri uri = DataContentProvider.CONTENT_WALLETS;
         String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
@@ -616,6 +630,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
             int indexWalletTotal = cursor.getColumnIndex(Contract.Wallet.TOTAL_MONEY);
             int indexWalletArchived = cursor.getColumnIndex(Contract.Wallet.ARCHIVED);
             int indexInTotal = cursor.getColumnIndex(Contract.Wallet.COUNT_IN_TOTAL);
+            int indexWalletGroup = cursor.getColumnIndex(Contract.Wallet.GROUP);
             for (int i = 0; i < cursor.getCount(); i++) {
                 cursor.moveToPosition(i);
                 String currency = cursor.getString(indexCurrency);
@@ -625,7 +640,8 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
                             cursor.getLong(indexWalletId),
                             cursor.getString(indexWalletName),
                             IconLoader.parse(cursor.getString(indexWalletIcon)),
-                            new Money(currency, money)
+                            new Money(currency, money),
+                            cursor.getString(indexWalletGroup)
                     ));
                 }
                 // an archived wallet stays out of the list but still counts toward the total
@@ -662,22 +678,49 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     }
 
     /**
-     * Rebuild the wallet group of the drawer menu from the wallet list: one entry per wallet
-     * with its balance at the end of the row, then the two wallet actions.
+     * Rebuild the wallet group of the drawer menu from the wallet list, the account groups first
+     * in alphabetical order, each led by a row carrying the group's own subtotal, then the wallets
+     * that are in no group, then the two wallet actions. Every row carries its balance at the end.
+     *
+     * The wallet list keeps the order the loader gave it inside each section, and the Total is the
+     * last entry of it and belongs to no group, so a database where nobody has named a group comes
+     * out as the menu built before groups existed.
      */
     private void buildWalletMenu() {
         ITheme theme = ThemeEngine.getTheme();
         Menu menu = mNavigationView.getMenu();
         menu.removeGroup(GROUP_WALLETS);
+        Map<String, List<WalletAccount>> groups = new TreeMap<>(GROUP_NAME_ORDER);
+        List<WalletAccount> ungrouped = new ArrayList<>();
         for (WalletAccount wallet : mWallets) {
-            TextView moneyView = new TextView(this);
-            moneyView.setText(mMoneyFormatter.getNotTintedString(wallet.getMoney()));
-            moneyView.setTextColor(wallet == mCurrentWallet ? theme.getDrawerSelectedTextColor() : theme.getDrawerTextColor());
-            moneyView.setGravity(Gravity.CENTER_VERTICAL);
-            menu.add(GROUP_WALLETS, walletItemId(wallet), Menu.NONE, wallet.getName())
-                    .setIcon(wallet.getIcon().getDrawable(this))
-                    .setActionView(moneyView)
-                    .setCheckable(true);
+            if (TextUtils.isEmpty(wallet.getGroup())) {
+                ungrouped.add(wallet);
+            } else {
+                List<WalletAccount> members = groups.get(wallet.getGroup());
+                if (members == null) {
+                    members = new ArrayList<>();
+                    groups.put(wallet.getGroup(), members);
+                }
+                members.add(wallet);
+            }
+        }
+        int headerId = ID_GROUP_FIRST;
+        for (Map.Entry<String, List<WalletAccount>> group : groups.entrySet()) {
+            Money subtotal = new Money();
+            for (WalletAccount wallet : group.getValue()) {
+                subtotal.addMoney(wallet.getMoney());
+            }
+            // the row is disabled so that it cannot be tapped or checked; the library binds an
+            // action view and the title color of a disabled row exactly as it binds an enabled one
+            menu.add(GROUP_WALLETS, headerId++, Menu.NONE, group.getKey())
+                    .setActionView(buildMoneyView(subtotal, theme.getDrawerTextColor()))
+                    .setEnabled(false);
+            for (WalletAccount wallet : group.getValue()) {
+                addWalletEntry(menu, wallet, theme);
+            }
+        }
+        for (WalletAccount wallet : ungrouped) {
+            addWalletEntry(menu, wallet, theme);
         }
         addEntry(menu, GROUP_WALLETS, ID_ACTION_NEW_WALLET, R.drawable.ic_add_24dp, R.string.action_new_wallet);
         addEntry(menu, GROUP_WALLETS, ID_ACTION_MANAGE_WALLET, R.drawable.ic_settings_24dp, R.string.action_manage_wallets);
@@ -685,6 +728,22 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         if (mWalletListShown && mCurrentWallet != null) {
             mNavigationView.setCheckedItem(walletItemId(mCurrentWallet));
         }
+    }
+
+    private void addWalletEntry(Menu menu, WalletAccount wallet, ITheme theme) {
+        int textColor = wallet == mCurrentWallet ? theme.getDrawerSelectedTextColor() : theme.getDrawerTextColor();
+        menu.add(GROUP_WALLETS, walletItemId(wallet), Menu.NONE, wallet.getName())
+                .setIcon(wallet.getIcon().getDrawable(this))
+                .setActionView(buildMoneyView(wallet.getMoney(), textColor))
+                .setCheckable(true);
+    }
+
+    private TextView buildMoneyView(Money money, int textColor) {
+        TextView moneyView = new TextView(this);
+        moneyView.setText(mMoneyFormatter.getNotTintedString(money));
+        moneyView.setTextColor(textColor);
+        moneyView.setGravity(Gravity.CENTER_VERTICAL);
+        return moneyView;
     }
 
     private static int walletItemId(WalletAccount wallet) {
