@@ -61,6 +61,17 @@
             app:mtv_bottomLineEnabled="true" />
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
+            android:id="@+id/group_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/material_activity_body_edit_text_margin_top"
+            android:inputType="textNoSuggestions"
+            app:mtv_mode="floatingLabel"
+            app:mtv_floatingLabelText="@string/hint_wallet_group"
+            app:mtv_leftIcon="@drawable/ic_folder_black_24dp"
+            app:mtv_bottomLineEnabled="true" />
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
             android:id="@+id/note_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -69,6 +69,7 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
     private TextView mNameTextView;
     private TextView mCurrencyTextView;
     private TextView mStartMoneyTextView;
+    private TextView mGroupTextView;
     private TextView mNoteTextView;
     private CheckBox mNotExcludeTotalCheckBox;
 
@@ -88,6 +89,7 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
         mMainLayout = view.findViewById(R.id.secondary_panel_layout);
         mCurrencyTextView = view.findViewById(R.id.currency_text_view);
         mStartMoneyTextView = view.findViewById(R.id.start_money_text_view);
+        mGroupTextView = view.findViewById(R.id.group_text_view);
         mNoteTextView = view.findViewById(R.id.note_text_view);
         mNotExcludeTotalCheckBox = view.findViewById(R.id.not_exclude_total_check_box);
     }
@@ -209,6 +211,7 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
             mNameTextView.setText(null);
             mCurrencyTextView.setText(null);
             mStartMoneyTextView.setText(null);
+            mGroupTextView.setText(null);
             mNoteTextView.setText(null);
             mProgressLayout.setVisibility(View.VISIBLE);
             mMainLayout.setVisibility(View.GONE);
@@ -230,6 +233,7 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
                     Contract.Wallet.ICON,
                     Contract.Wallet.CURRENCY,
                     Contract.Wallet.START_MONEY,
+                    Contract.Wallet.GROUP,
                     Contract.Wallet.NOTE,
                     Contract.Wallet.COUNT_IN_TOTAL,
                     Contract.Wallet.ARCHIVED
@@ -253,6 +257,13 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
             mCurrencyTextView.setText(currency != null ? currency.getName() : currencyIso);
             long startMoney = cursor.getLong(cursor.getColumnIndex(Contract.Wallet.START_MONEY));
             mMoneyFormatter.applyNotTinted(mStartMoneyTextView, currency, startMoney);
+            String group = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.GROUP));
+            if (!TextUtils.isEmpty(group)) {
+                mGroupTextView.setText(group);
+                mGroupTextView.setVisibility(View.VISIBLE);
+            } else {
+                mGroupTextView.setVisibility(View.GONE);
+            }
             String note = cursor.getString(cursor.getColumnIndex(Contract.Wallet.NOTE));
             if (!TextUtils.isEmpty(note)) {
                 mNoteTextView.setText(note);
