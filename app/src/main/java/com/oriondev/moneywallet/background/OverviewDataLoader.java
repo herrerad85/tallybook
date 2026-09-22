@@ -108,12 +108,14 @@ public class OverviewDataLoader extends AbstractGenericLoader<OverviewData> {
         switch (mOverviewSetting.getType()) {
             case CASH_FLOW:
                 switch (mOverviewSetting.getCashFlow()) {
+                    // Both of these chart one direction on its own, so transfers stay out of
+                    // them. NET_INCOMES keeps them, because it charts a net.
                     case INCOMES:
-                        selection += " AND " + Contract.Transaction.DIRECTION + " = ?";
+                        selection += " AND " + Contract.Transaction.DIRECTION + " = ? AND " + Contract.Transaction.NOT_TRANSFER;
                         selectionArgs = appendSelectionArgs(selectionArgs, String.valueOf(Contract.Direction.INCOME));
                         break;
                     case EXPENSES:
-                        selection += " AND " + Contract.Transaction.DIRECTION + " = ?";
+                        selection += " AND " + Contract.Transaction.DIRECTION + " = ? AND " + Contract.Transaction.NOT_TRANSFER;
                         selectionArgs = appendSelectionArgs(selectionArgs, String.valueOf(Contract.Direction.EXPENSE));
                         break;
                 }

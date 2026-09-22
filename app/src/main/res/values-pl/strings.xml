@@ -121,6 +121,7 @@
     <string name="hint_type">"Typ"</string>
     <string name="hint_incomes">"Dochody"</string>
     <string name="hint_expenses">"Wydatki"</string>
+    <string name="hint_transfers">"Przelewy"</string>
     <string name="hint_net_incomes">"Dochody netto"</string>
     <string name="hint_summary">"Podsumowanie"</string>
     <string name="hint_address">"Adres"</string>

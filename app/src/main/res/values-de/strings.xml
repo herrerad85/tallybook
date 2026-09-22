@@ -321,6 +321,7 @@
     <string name="hint_directory">Ordner</string>
     <string name="hint_exchange_rate">Wechselkurs</string>
     <string name="hint_expenses">Ausgaben</string>
+    <string name="hint_transfers">"Überweisungen"</string>
     <string name="hint_export_folder">Exportordner</string>
     <string name="hint_export_format">Exportformat</string>
     <string name="hint_export_optional_columns">Optionale Spalten</string>

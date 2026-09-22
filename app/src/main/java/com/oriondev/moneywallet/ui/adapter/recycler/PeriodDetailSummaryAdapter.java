@@ -61,7 +61,23 @@ public class PeriodDetailSummaryAdapter extends RecyclerView.Adapter<PeriodDetai
             DateFormatter.applyTimeRange(holder.mNameTextView, periodMoney.getStartDate(), periodMoney.getEndDate());
         }
         // TODO: maybe can be useful to display also incomes and expenses
-        mMoneyFormatter.applyTinted(holder.mMoneyTextView, periodMoney.getNetIncomes());
+        // Untinted, because a tinted amount drops its sign with the plus and minus setting
+        // off, which is the default, so a period that ended down printed as a positive number
+        // with only the color saying otherwise. Same call the transactions list header makes.
+        mMoneyFormatter.applyNotTinted(holder.mMoneyTextView, periodMoney.getNetIncomes());
+        // The figure above counts money moved between the user's own wallets and the two bar
+        // series do not, so a period that only moved money shows a net with both bars at
+        // nothing. Naming what moved is what closes that, and a period that moved none says
+        // nothing at all. Untinted and signed for the reason the transactions list header is,
+        // the word Transfers does not say which way the money went.
+        if (TransactionCursorAdapter.isZero(periodMoney.getTransfers())) {
+            holder.mTransferTextView.setVisibility(View.GONE);
+        } else {
+            holder.mTransferTextView.setVisibility(View.VISIBLE);
+            holder.mTransferTextView.setText(holder.itemView.getContext().getString(
+                    R.string.hint_transfers) + " "
+                    + mMoneyFormatter.getNotTintedString(periodMoney.getTransfers()));
+        }
     }
 
     @Override
@@ -78,11 +94,13 @@ public class PeriodDetailSummaryAdapter extends RecyclerView.Adapter<PeriodDetai
 
         private TextView mNameTextView;
         private TextView mMoneyTextView;
+        private TextView mTransferTextView;
 
         public ViewHolder(View itemView) {
             super(itemView);
             mNameTextView = itemView.findViewById(R.id.name_text_view);
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
+            mTransferTextView = itemView.findViewById(R.id.transfer_text_view);
 
             itemView.setOnClickListener(this);
         }

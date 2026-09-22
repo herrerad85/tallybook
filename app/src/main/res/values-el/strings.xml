@@ -123,6 +123,7 @@
     <string name="hint_type">"Είδος"</string>
     <string name="hint_incomes">"Έσοδα"</string>
     <string name="hint_expenses">"Έξοδα"</string>
+    <string name="hint_transfers">"Μεταφορές"</string>
     <string name="hint_net_incomes">"Καθαρά Έσοδα"</string>
     <string name="hint_summary">"Σύνοψη"</string>
     <string name="hint_address">"Διεύθυνση"</string>

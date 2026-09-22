@@ -80,7 +80,8 @@ public class PeriodDetailSummaryLoader extends AbstractGenericLoader<PeriodDetai
                 Contract.Transaction.DATE,
                 Contract.Transaction.DIRECTION,
                 Contract.Transaction.WALLET_CURRENCY,
-                Contract.Transaction.MONEY
+                Contract.Transaction.MONEY,
+                Contract.Transaction.CATEGORY_TAG
         };
         String selection;
         String[] selectionArgs;
@@ -111,11 +112,25 @@ public class PeriodDetailSummaryLoader extends AbstractGenericLoader<PeriodDetai
                             int direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION));
                             String currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY));
                             long money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY));
-                            if (direction == Contract.Direction.INCOME) {
+                            String categoryTag = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Transaction.CATEGORY_TAG));
+                            boolean incoming = direction == Contract.Direction.INCOME;
+                            // Money moved between two of the user's own wallets is neither
+                            // earned nor spent, so it stays out of the two bar series while
+                            // still reaching both net figures. The header on the transactions
+                            // list holds it apart the same way, so the two screens agree. The
+                            // tag is what tells a transfer apart and not the transaction type,
+                            // since a transfer fee is written with the same type and is money
+                            // genuinely spent.
+                            if (Contract.CategoryTag.TRANSFER.equals(categoryTag)) {
+                                currentPeriod.addTransfer(currency, money, incoming);
+                            } else if (incoming) {
                                 currentPeriod.addIncome(currency, money);
-                                totalNetIncomes.addMoney(currency, money);
                             } else if (direction == Contract.Direction.EXPENSE) {
                                 currentPeriod.addExpense(currency, money);
+                            }
+                            if (incoming) {
+                                totalNetIncomes.addMoney(currency, money);
+                            } else if (direction == Contract.Direction.EXPENSE) {
                                 totalNetIncomes.removeMoney(currency, money);
                             }
                         } else {

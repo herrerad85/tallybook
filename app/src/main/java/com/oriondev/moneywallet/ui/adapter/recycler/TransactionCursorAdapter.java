@@ -67,6 +67,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private int mIndexHeaderMoney;
     private int mIndexHeaderIncome;
     private int mIndexHeaderExpense;
+    private int mIndexHeaderTransfer;
     private int mIndexHeaderGroupType;
     private int mIndexCategoryName;
     private int mIndexCategoryIcon;
@@ -122,6 +123,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mIndexHeaderMoney = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_MONEY);
         mIndexHeaderIncome = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_INCOME);
         mIndexHeaderExpense = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_EXPENSE);
+        mIndexHeaderTransfer = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_TRANSFER);
         mIndexHeaderGroupType = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_GROUP_TYPE);
         mIndexCategoryName = cursor.getColumnIndex(Contract.Transaction.CATEGORY_NAME);
         mIndexCategoryIcon = cursor.getColumnIndex(Contract.Transaction.CATEGORY_ICON);
@@ -364,6 +366,19 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         Money expense = Money.parse(cursor.getString(mIndexHeaderExpense));
         mMoneyFormatter.applyTintedIncome(holder.mIncomeTextView, orZero(income, money));
         mMoneyFormatter.applyTintedExpense(holder.mExpenseTextView, orZero(expense, money));
+        Money transfer = Money.parse(cursor.getString(mIndexHeaderTransfer));
+        // A period that moved nothing between wallets says nothing, so the two views go with
+        // each other. Untinted for the same reason the total above it is: a tinted amount
+        // drops its sign with the plus and minus setting off, which is the default, and the
+        // word Transfers does not say which way the money went, so an outgoing transfer would
+        // read exactly like an incoming one with only the color to tell them apart. The two
+        // figures beside it are tinted because their own labels carry the direction.
+        if (isZero(transfer)) {
+            holder.mTransferLayout.setVisibility(View.GONE);
+        } else {
+            holder.mTransferLayout.setVisibility(View.VISIBLE);
+            mMoneyFormatter.applyNotTinted(holder.mTransferTextView, transfer);
+        }
         bindPeriodToggle(holder, cursor);
     }
 
@@ -377,6 +392,20 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
                 collapsed ? R.string.description_show_period_transactions
                         : R.string.description_hide_period_transactions,
                 holder.mLeftTextView.getText()));
+    }
+
+    /**
+     * Whether this figure came to nothing. A period with no rows of this kind holds no currency
+     * at all, and one whose rows cancelled holds a currency at zero, which on the Total wallet
+     * is what a transfer between two counted wallets in the same currency does.
+     */
+    /*package-local*/ static boolean isZero(Money money) {
+        for (long amount : money.getCurrencyMoneys().values()) {
+            if (amount != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -429,6 +458,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         private TextView mRightTextView;
         private TextView mIncomeTextView;
         private TextView mExpenseTextView;
+        private View mTransferLayout;
+        private TextView mTransferTextView;
         private ImageView mPeriodToggle;
 
         /*package-local*/ HeaderViewHolder(View itemView) {
@@ -437,6 +468,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             mRightTextView = itemView.findViewById(R.id.right_text_view);
             mIncomeTextView = itemView.findViewById(R.id.income_text_view);
             mExpenseTextView = itemView.findViewById(R.id.expense_text_view);
+            mTransferLayout = itemView.findViewById(R.id.transfer_summary_layout);
+            mTransferTextView = itemView.findViewById(R.id.transfer_text_view);
             mPeriodToggle = itemView.findViewById(R.id.period_toggle_image_view);
             // Its own listener, because a tap on the row still means what it always did: open
             // the report of this period, or nothing at all.

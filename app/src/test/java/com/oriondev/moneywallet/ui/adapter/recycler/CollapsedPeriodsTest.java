@@ -82,6 +82,7 @@ public class CollapsedPeriodsTest {
             Contract.Transaction.COUNT_IN_TOTAL,
             Contract.Transaction.CATEGORY_NAME,
             Contract.Transaction.CATEGORY_ICON,
+            Contract.Transaction.CATEGORY_TAG,
             Contract.Transaction.DESCRIPTION
     };
 
@@ -105,7 +106,7 @@ public class CollapsedPeriodsTest {
         for (int row = 0; row < DATES.length; row++) {
             cursor.addRow(new Object[] {
                     (long) (row + 1), DATES[row], Contract.Direction.EXPENSE, 1000L, "EUR",
-                    1, 1, "Category", null, "Description"
+                    1, 1, "Category", null, null, "Description"
             });
         }
         return cursor;

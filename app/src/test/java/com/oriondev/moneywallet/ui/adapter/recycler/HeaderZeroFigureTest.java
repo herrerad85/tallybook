@@ -24,6 +24,7 @@ import com.oriondev.moneywallet.model.Money;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -98,5 +99,40 @@ public class HeaderZeroFigureTest {
     public void nothingCountedAtAllStaysUnknown() {
         Money zero = TransactionCursorAdapter.orZero(new Money(), new Money());
         assertEquals(0, zero.getNumberOfCurrencies());
+    }
+
+    /**
+     * The Transfers figure is hidden when the period moved nothing, and a period whose transfers
+     * cancelled moved nothing just as much as one that had none. Asking whether the figure holds
+     * any currency would answer no only to the second, and the Total wallet, where both sides of
+     * a transfer land and cancel, is the first.
+     */
+    @Test
+    public void aFigureWhoseRowsCancelledCameToNothing() {
+        Money transfer = new Money(USD, 40000);
+        transfer.addMoney(USD, -40000);
+        assertEquals(1, transfer.getNumberOfCurrencies());
+        assertTrue(TransactionCursorAdapter.isZero(transfer));
+    }
+
+    @Test
+    public void aFigureWithNoRowsAtAllCameToNothing() {
+        assertTrue(TransactionCursorAdapter.isZero(new Money()));
+    }
+
+    /**
+     * Several currencies, only one of them left over. A check that stopped at the first entry
+     * would call this nothing and hide a figure that has something to say. Money keeps its
+     * currencies in a HashMap, so which one is read first is not ours to pick, and both
+     * pairings are asserted, since whichever comes first one of them puts the zero in front.
+     */
+    @Test
+    public void aFigureHoldingOneCurrencyOutOfTwoDidNot() {
+        Money transfer = new Money(USD, 0);
+        transfer.addMoney(EUR, -9200);
+        assertFalse(TransactionCursorAdapter.isZero(transfer));
+        Money flipped = new Money(EUR, 0);
+        flipped.addMoney(USD, -9200);
+        assertFalse(TransactionCursorAdapter.isZero(flipped));
     }
 }

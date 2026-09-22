@@ -136,6 +136,7 @@
     <string name="hint_type">"Type"</string>
     <string name="hint_incomes">"Incomes"</string>
     <string name="hint_expenses">"Expenses"</string>
+    <string name="hint_transfers">"Transfers"</string>
     <string name="hint_net_incomes">"Net incomes"</string>
     <string name="hint_summary">"Summary"</string>
     <string name="hint_address">"Address"</string>

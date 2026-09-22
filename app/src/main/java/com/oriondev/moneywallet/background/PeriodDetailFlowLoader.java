@@ -98,6 +98,9 @@ public class PeriodDetailFlowLoader extends AbstractGenericLoader<PeriodDetailFl
         selection += " AND " + Contract.Transaction.REPORT_FILTER;
         selection += " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')";
         selection += " AND " + Contract.Transaction.DIRECTION + " = " + (mIncomes ? Contract.Direction.INCOME : Contract.Direction.EXPENSE);
+        // This tab sums one direction on its own, so it matches the month header on the
+        // transactions list and holds transfers out of the total and off the pie.
+        selection += " AND " + Contract.Transaction.NOT_TRANSFER;
         if (mStartDate != null) {
             selection += " AND DATETIME(" + Contract.Transaction.DATE + ") >= DATETIME('" + DateUtils.getSQLDateTimeString(mStartDate) + "')";
         }

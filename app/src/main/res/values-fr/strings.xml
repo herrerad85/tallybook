@@ -123,6 +123,7 @@
     <string name="hint_type">"Type"</string>
     <string name="hint_incomes">"Bénéfices"</string>
     <string name="hint_expenses">"Dépenses"</string>
+    <string name="hint_transfers">"Transfert"</string>
     <string name="hint_net_incomes">"Bénéfices net"</string>
     <string name="hint_summary">"Résumé"</string>
     <string name="hint_address">"Adresse"</string>

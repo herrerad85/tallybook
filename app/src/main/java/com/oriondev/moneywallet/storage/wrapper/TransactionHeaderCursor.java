@@ -39,6 +39,7 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
     public static final String COLUMN_HEADER_MONEY = "header_money";
     public static final String COLUMN_HEADER_INCOME = "header_income";
     public static final String COLUMN_HEADER_EXPENSE = "header_expense";
+    public static final String COLUMN_HEADER_TRANSFER = "header_transfer";
     public static final String COLUMN_HEADER_GROUP_TYPE = "header_group_type";
 
     public final static int TYPE_HEADER = 0;
@@ -50,7 +51,8 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
     private static final int INDEX_HEADER_MONEY = 3;
     private static final int INDEX_HEADER_INCOME = 4;
     private static final int INDEX_HEADER_EXPENSE = 5;
-    private static final int INDEX_HEADER_GROUP_TYPE = 6;
+    private static final int INDEX_HEADER_TRANSFER = 6;
+    private static final int INDEX_HEADER_GROUP_TYPE = 7;
 
     private final Group mGroup;
     private final Date mLowerBound;
@@ -72,6 +74,7 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
         int indexCurrency = cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY);
         int indexTransactionConfirmed = cursor.getColumnIndex(Contract.Transaction.CONFIRMED);
         int indexTransactionCountInTotal = cursor.getColumnIndex(Contract.Transaction.COUNT_IN_TOTAL);
+        int indexCategoryTag = cursor.getColumnIndex(Contract.Transaction.CATEGORY_TAG);
         if (cursor.moveToFirst()) {
             Header header = null;
             do {
@@ -91,7 +94,7 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
                     String currency = cursor.getString(indexCurrency);
                     long money = cursor.getLong(indexTransactionMoney);
                     int direction = cursor.getInt(indexTransactionDirection);
-                    header.add(currency, money, direction);
+                    header.add(currency, money, direction, cursor.getString(indexCategoryTag));
                 }
             } while (cursor.moveToNext());
         }
@@ -106,6 +109,7 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
                 COLUMN_HEADER_MONEY,
                 COLUMN_HEADER_INCOME,
                 COLUMN_HEADER_EXPENSE,
+                COLUMN_HEADER_TRANSFER,
                 COLUMN_HEADER_GROUP_TYPE
         };
     }
@@ -125,6 +129,8 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
                     return header.getIncome().toString();
                 case INDEX_HEADER_EXPENSE:
                     return header.getExpense().toString();
+                case INDEX_HEADER_TRANSFER:
+                    return header.getTransfer().toString();
             }
         }
         return null;
@@ -172,33 +178,44 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
         private final Money mMoney;
         private final Money mIncome;
         private final Money mExpense;
+        private final Money mTransfer;
 
         /*package-local*/ Header(Group group, Date lowerBound, Date upperBound, Date date) {
             super(group, lowerBound, upperBound, date);
             mMoney = new Money();
             mIncome = new Money();
             mExpense = new Money();
+            mTransfer = new Money();
         }
 
         /**
-         * Count one row into this header. The total is the difference and can come out either
-         * sign. The other two are the same rows split by their direction and both only ever
-         * grow, so a row adds to one of them and leaves the other alone, while the total takes
-         * that same amount as a plus or a minus.
+         * Count one row into this header. The total is the difference, can come out either sign,
+         * and every row reaches it.
          *
-         * Direction is all that is read here, so the two halves of a transfer land in both, and a
-         * debt taken on lands in the incoming one. PeriodDetailSummaryLoader, the report a reader
-         * reaches from this header, splits a row the same way, so a row lands on the same side in
-         * both. It counts fewer rows than this does, since it drops a category kept out of the
-         * reports and a header counts every row on the list under it.
+         * Money moved between two of the user's own wallets is neither earned nor spent, so a
+         * row in the transfer category is held apart from the other two and counted as a plus
+         * or a minus of its own. Incomes and expenses only ever grow, so a row that is not a
+         * transfer adds to one of them and leaves the other alone. The three together still
+         * come to the total.
+         *
+         * The tag is what tells a transfer apart and not the transaction type, because a transfer
+         * with a fee writes a third row carrying that same type and the fee is money genuinely
+         * spent.
+         *
+         * A debt taken on lands in the incoming figure, which is unchanged. PeriodDetailSummaryLoader,
+         * the report a reader reaches from this header, splits a row the same way, so a row lands
+         * on the same side in both. It counts fewer rows than this does, since it drops a category
+         * kept out of the reports and a header counts every row on the list under it.
          */
-        /*package-local*/ void add(String currency, long money, int direction) {
-            if (direction == Contract.Direction.INCOME) {
+        /*package-local*/ void add(String currency, long money, int direction, String categoryTag) {
+            long signed = direction == Contract.Direction.INCOME ? money : -money;
+            mMoney.addMoney(currency, signed);
+            if (Contract.CategoryTag.TRANSFER.equals(categoryTag)) {
+                mTransfer.addMoney(currency, signed);
+            } else if (direction == Contract.Direction.INCOME) {
                 mIncome.addMoney(currency, money);
-                mMoney.addMoney(currency, money);
             } else {
                 mExpense.addMoney(currency, money);
-                mMoney.addMoney(currency, -money);
             }
         }
 
@@ -212,6 +229,10 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
 
         /*package-local*/ Money getExpense() {
             return mExpense;
+        }
+
+        /*package-local*/ Money getTransfer() {
+            return mTransfer;
         }
     }
 }

@@ -107,6 +107,7 @@
     <string name="hint_type">"ടൈപ്പ് ചെയ്യുക"</string>
     <string name="hint_incomes">"വരുമാനം"</string>
     <string name="hint_expenses">"ചെലവുകൾ"</string>
+    <string name="hint_transfers">"കൈമാറ്റങ്ങൾ"</string>
     <string name="hint_net_incomes">"അറ്റ വരുമാനം"</string>
     <string name="hint_summary">"സംഗ്രഹം"</string>
     <string name="hint_address">"വിലാസം"</string>

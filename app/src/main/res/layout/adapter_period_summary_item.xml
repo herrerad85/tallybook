@@ -23,9 +23,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/material_component_lists_one_line_with_avatar_height"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/material_component_lists_one_line_with_avatar_height"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:background="?attr/selectableItemBackground" >
 
+    <!--
+      The vertical chain is carried by the name and not by the amount. The name takes the room
+      the amount leaves, so it is the one that wraps, and a name centered on a one line amount
+      overflows above and below it with the lower half drawn over the Transfers line, which is
+      right aligned across the whole row. Chaining the name puts that line under its last line.
+
+      A Total wallet holding several currencies joins every one of them into a single amount,
+      and an amount that wide takes the whole row and resolves the name to nothing, which lays
+      its date range out one character per line. The floor keeps the name a readable width and
+      the amount gives way instead. 80dp is the widest floor that leaves every amount this
+      screen can show at one currency untouched, tested at three screen widths and four font
+      scales, so on the rows that are most of them nothing moves.
+    -->
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/name_text_view"
         android:layout_width="0dp"
@@ -35,24 +51,54 @@
         android:layout_marginRight="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:textSize="@dimen/material_component_lists_one_line_with_avatar_primary_text_size"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_min="80dp"
+        app:layout_constraintBottom_toTopOf="@+id/transfer_text_view"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/money_text_view"
         app:theme_textColor="textColorPrimary"
         tools:text="Period here" />
 
-    <TextView
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/money_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_one_line_primary_text_end_margin"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textSize="@dimen/material_component_lists_one_line_with_avatar_primary_text_size"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintTop_toTopOf="@+id/name_text_view"
+        app:layout_constraintBottom_toBottomOf="@+id/name_text_view"
         app:layout_constraintStart_toEndOf="@+id/name_text_view"
         app:layout_constraintEnd_toEndOf="parent"
+        app:theme_textColor="textColorPrimary"
         tools:text="€ 500.00" />
+
+    <!--
+      What the period moved between the user's own wallets, shown only when it moved something.
+      The two bar series above this list leave transfers out and the figure beside each period
+      counts them, so without this a period that only moved money reads as a net that came from
+      nowhere. Gone on every other period, which is most of them, and the row is back to one line.
+    -->
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+        android:id="@+id/transfer_text_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/material_component_lists_one_line_primary_text_start_margin"
+        android:layout_marginRight="@dimen/material_component_lists_one_line_primary_text_end_margin"
+        android:layout_marginEnd="@dimen/material_component_lists_one_line_primary_text_end_margin"
+        android:ellipsize="end"
+        android:gravity="end"
+        android:maxLines="1"
+        android:textSize="@dimen/material_component_lists_header_summary_text_size"
+        app:layout_constraintTop_toBottomOf="@+id/name_text_view"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:theme_textColor="textColorPrimary"
+        tools:text="Transfers € -250.00" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -82,6 +82,15 @@ public class Contract {
          * filter on this, so a category hidden on one of them cannot still be counted on the other.
          */
         public static final String REPORT_FILTER = "(" + CATEGORY_SHOW_REPORT + " = 1 AND IFNULL(" + CATEGORY_PARENT_SHOW_REPORT + ", 1) = 1)";
+        /**
+         * Money moved between two of the user's own wallets is neither earned nor spent, so a
+         * screen that sums one direction on its own leaves both legs out. A screen that shows a
+         * net keeps them, since a wallet that sent money does hold less of it. The tag is what
+         * tells a transfer apart and not the transaction type, because the fee on a transfer
+         * carries the same type and is money genuinely spent. The tag is null on every category
+         * the user made.
+         */
+        public static final String NOT_TRANSFER = "IFNULL(" + CATEGORY_TAG + ", '') <> '" + CategoryTag.TRANSFER + "'";
         public static final String DIRECTION = Schema.Transaction.DIRECTION;
         public static final String TYPE = Schema.Transaction.TYPE;
         public static final String WALLET_ID = Schema.Transaction.WALLET;

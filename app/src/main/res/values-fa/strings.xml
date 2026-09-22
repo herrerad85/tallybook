@@ -122,6 +122,7 @@
     <string name="hint_type">"نوع"</string>
     <string name="hint_incomes">"درآمدها"</string>
     <string name="hint_expenses">"هزینه‌ها"</string>
+    <string name="hint_transfers">"نقل و انتقالات"</string>
     <string name="hint_net_incomes">"درآمدهای خالص"</string>
     <string name="hint_summary">"خلاصه"</string>
     <string name="hint_address">"آدرس"</string>

@@ -26,13 +26,26 @@
     android:layout_height="@dimen/material_component_lists_header_height"
     android:background="?attr/selectableItemBackground">
 
+    <!--
+      Five screens show this row and three of them put an amount on the right. A Total wallet joins
+      every currency it holds into one amount, and an amount that wide takes the whole row and
+      resolves the label beside it to nothing, which lays the label out one character per line.
+      The floor keeps the label readable. The row is a fixed height, so both sides are held to one
+      line and ellipsized, since at a larger system font a second line does not fit and is cut off.
+      The amount is held between the label and the end of the row, because a view anchored by its
+      end alone is bounded by nothing and takes its full width off the start of the row, over the
+      label and past the edge of the screen.
+    -->
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/left_text_view"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/material_component_lists_header_start_margin"
         android:layout_marginStart="@dimen/material_component_lists_header_start_margin"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textSize="@dimen/material_component_lists_header_text_size"
+        app:layout_constraintWidth_min="80dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +53,7 @@
         app:theme_textColor="textColorPrimary"
         tools:text="This is the left text" />
 
-    <TextView
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/right_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -48,10 +61,15 @@
         android:layout_marginStart="@dimen/material_component_lists_header_start_margin"
         android:layout_marginRight="@dimen/material_component_lists_header_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_header_end_margin"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textSize="@dimen/material_component_lists_header_text_size"
+        app:layout_constrainedWidth="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/left_text_view"
         app:layout_constraintEnd_toEndOf="parent"
+        app:theme_textColor="textColorPrimary"
         tools:text="This is the right text" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

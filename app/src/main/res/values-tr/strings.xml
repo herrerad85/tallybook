@@ -122,6 +122,7 @@
     <string name="hint_type"> "Tür" </string>
     <string name="hint_incomes"> "Gelirler" </string>
     <string name="hint_expenses"> "Giderler" </string>
+    <string name="hint_transfers">"Transferler"</string>
     <string name="hint_net_incomes"> "Net gelirler" </string>
     <string name="hint_summary"> "Özet" </string>
     <string name="hint_address"> "Adres" </string>

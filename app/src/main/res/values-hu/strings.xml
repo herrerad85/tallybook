@@ -160,6 +160,7 @@
     <string name="hint_exchange_rate">Árfolyam</string>
     <string name="hint_expense">Kiadás</string>
     <string name="hint_expenses">Kiadások</string>
+    <string name="hint_transfers">Átvezetések</string>
     <string name="hint_expiration_date">Lejárat idátum</string>
     <string name="hint_export_folder">Kiírás mappája</string>
     <string name="hint_export_format">Kiírás formátuma</string>

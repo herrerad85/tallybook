@@ -123,6 +123,7 @@
     <string name="hint_type">"Genere"</string>
     <string name="hint_incomes">"Entrate"</string>
     <string name="hint_expenses">"Uscite"</string>
+    <string name="hint_transfers">"Trasferimenti"</string>
     <string name="hint_net_incomes">"Entrate nette"</string>
     <string name="hint_summary">"Sommario"</string>
     <string name="hint_address">"Indirizzo"</string>

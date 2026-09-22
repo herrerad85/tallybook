@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,6 +37,10 @@ import static org.junit.Assert.fail;
  * covers what that constant selects. Nothing covers whether a loader still appends it, and a
  * loader that stops puts back the defect where one period reads differently on the overview list,
  * on the two flow tabs and on the summary tab.
+ *
+ * The same holds for NOT_TRANSFER, which keeps money moved between two of the user's own wallets
+ * out of a figure that sums one direction on its own. Two of the three append it, and the third
+ * shows a net and classifies its rows in Java, so it is absent there on purpose.
  *
  * This reads the source, so it is a tripwire against a revert and not a proof of behavior. It
  * cannot see a loader that appends the filter and then reassigns selection underneath it, or one
@@ -60,6 +65,8 @@ public class ReportLoaderSourceTest {
     private static final String APPEND =
             "selection += \" AND \" + Contract.Transaction.REPORT_FILTER;";
 
+    private static final String NOT_TRANSFER = "AND \" + Contract.Transaction.NOT_TRANSFER";
+
     @Test
     public void everyReportLoaderAppliesTheReportFilter() {
         for (String loader : LOADERS) {
@@ -67,6 +74,33 @@ public class ReportLoaderSourceTest {
                     + "kept out of the reports again, and disagrees with the other two: " + loader,
                     readSource(loader).contains(APPEND));
         }
+    }
+
+    /**
+     * The count is the assertion, not the presence. OverviewDataLoader appends it on the incomes
+     * chart and again on the expenses chart, so one branch losing it while the other keeps it is
+     * what a presence check would miss.
+     */
+    @Test
+    public void everyScreenThatSumsOneDirectionHoldsTransfersOut() {
+        assertEquals("a chart that stops filtering on NOT_TRANSFER plots both halves of a "
+                + "transfer as money earned and money spent, and disagrees with the header on "
+                + "the transactions list: OverviewDataLoader",
+                2, countOf(NOT_TRANSFER, readSource("OverviewDataLoader")));
+        assertEquals("a tab that stops filtering on NOT_TRANSFER counts both halves of a "
+                + "transfer into its total and onto its pie, and disagrees with the header on "
+                + "the transactions list: PeriodDetailFlowLoader",
+                1, countOf(NOT_TRANSFER, readSource("PeriodDetailFlowLoader")));
+    }
+
+    private int countOf(String statement, String source) {
+        int count = 0;
+        int at = source.indexOf(statement);
+        while (at >= 0) {
+            count++;
+            at = source.indexOf(statement, at + statement.length());
+        }
+        return count;
     }
 
     private String readSource(String loader) {
