@@ -1,0 +1,3 @@
+New: a rule can fill a category in from what you type in the description. Import a CSV another app wrote by mapping its columns. Save a CSV beside each automatic backup. Search the currency list and the category picker. Pin favorite currencies.
+
+Fixes: transfers are no longer counted as income or expense on the period totals, and have their own figure. Importing the same CSV twice no longer doubles the rows. A legacy restore keeps the cents on currencies without 2 decimals.

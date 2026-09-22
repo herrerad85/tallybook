@@ -9,6 +9,7 @@ Features:
 * Multiple wallets, each with its own balance
 * Income and expense transactions with categories and notes
 * Select several transactions and delete them together or move them to another wallet or category
+* Automatic categories, so a rule fills the category in from what you type
 * Budgets to keep categories on track
 * Recurring transactions for bills and regular income
 * Multi-currency with exchange rates
