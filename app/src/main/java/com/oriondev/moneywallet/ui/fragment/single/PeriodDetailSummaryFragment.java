@@ -162,7 +162,7 @@ public class PeriodDetailSummaryFragment extends Fragment implements PeriodDetai
     @Override
     public void onLoadFinished(Loader<PeriodDetailSummaryData> loader, PeriodDetailSummaryData data) {
         if (data != null) {
-            mMoneyFormatter.applyTinted(mHeaderRightTextView, data.getNetIncomes());
+            mMoneyFormatter.applyNotTinted(mHeaderRightTextView, data.getNetIncomes());
             mBarChartViewPagerAdapter.setData(data);
             mRecyclerViewAdapter.setData(data);
             mChartViewPagerIndicator.setVisibility(data.getChartCount() > 1 ? View.VISIBLE : View.GONE);
