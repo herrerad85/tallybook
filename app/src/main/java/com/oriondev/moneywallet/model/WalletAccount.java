@@ -32,12 +32,18 @@ public class WalletAccount {
     private final String mName;
     private final Icon mIcon;
     private final Money mMoney;
+    private final String mGroup;
 
     public WalletAccount(long id, String name, Icon icon, Money money) {
+        this(id, name, icon, money, null);
+    }
+
+    public WalletAccount(long id, String name, Icon icon, Money money, String group) {
         mId = id;
         mName = name;
         mIcon = icon != null ? icon : IconLoader.UNKNOWN;
         mMoney = money;
+        mGroup = group;
     }
 
     public long getId() {
@@ -55,5 +61,12 @@ public class WalletAccount {
 
     public Money getMoney() {
         return mMoney;
+    }
+
+    /**
+     * @return the name of the group this wallet belongs to, or null when it is in none.
+     */
+    public String getGroup() {
+        return mGroup;
     }
 }

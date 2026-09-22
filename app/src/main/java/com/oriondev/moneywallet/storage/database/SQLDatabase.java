@@ -76,7 +76,7 @@ import java.util.function.Supplier;
     private static final String TAG = "SQLDatabase";
 
     /*package-local*/ static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 8;
 
     /**
      * The currencies whose shipped decimals were taken from the number of digits a country
@@ -469,6 +469,15 @@ import java.util.function.Supplier;
             // no column and no preference held these before.
             db.execSQL(Schema.CREATE_TABLE_CATEGORY_RULE);
         }
+        if (oldVersion < 8) {
+            // the name of the group a wallet belongs to, null on a wallet the user has not put in
+            // one. The add is guarded for the same reason the budget rule columns are, onDowngrade
+            // leaves the schema alone and only stamps the version back, so an older release
+            // installed over this database and upgraded again arrives here a second time.
+            if (!hasColumn(db, Schema.Wallet.TABLE, Schema.Wallet.GROUP)) {
+                db.execSQL(Schema.CREATE_WALLET_GROUP_COLUMN);
+            }
+        }
     }
 
     /**
@@ -803,6 +812,7 @@ import java.util.function.Supplier;
                 Schema.Wallet.ARCHIVED + " AS " + Contract.Wallet.ARCHIVED + ", " +
                 Schema.Wallet.INDEX + " AS " + Contract.Wallet.INDEX + ", " +
                 Schema.Wallet.TAG + " AS " + Contract.Wallet.TAG + ", " +
+                Schema.Wallet.GROUP + " AS " + Contract.Wallet.GROUP + ", " +
                 "total_money AS " + Contract.Wallet.TOTAL_MONEY + " FROM " + Schema.Wallet.TABLE +
                 " LEFT JOIN (SELECT " + Schema.Transaction.WALLET + " AS _wallet," +
                 " SUM(((" + Schema.Transaction.DIRECTION + " * 2) - 1) * " + Schema.Transaction.MONEY +
@@ -835,6 +845,7 @@ import java.util.function.Supplier;
         Integer index = contentValues.getAsInteger(Contract.Wallet.INDEX);
         cv.put(Schema.Wallet.INDEX, index != null ? index : 0);
         cv.put(Schema.Wallet.TAG, contentValues.getAsString(Contract.Wallet.TAG));
+        cv.put(Schema.Wallet.GROUP, contentValues.getAsString(Contract.Wallet.GROUP));
         cv.put(Schema.Wallet.UUID, UUID.randomUUID().toString());
         cv.put(Schema.Wallet.LAST_EDIT, System.currentTimeMillis());
         cv.put(Schema.Wallet.DELETED, false);
@@ -879,6 +890,9 @@ import java.util.function.Supplier;
         }
         if (contentValues.containsKey(Contract.Wallet.TAG)) {
             cv.put(Schema.Wallet.TAG, contentValues.getAsString(Contract.Wallet.TAG));
+        }
+        if (contentValues.containsKey(Contract.Wallet.GROUP)) {
+            cv.put(Schema.Wallet.GROUP, contentValues.getAsString(Contract.Wallet.GROUP));
         }
         cv.put(Schema.Wallet.LAST_EDIT, System.currentTimeMillis());
         String where = Schema.Wallet.ID + " = ?";

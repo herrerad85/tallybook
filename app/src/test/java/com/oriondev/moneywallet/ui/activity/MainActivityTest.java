@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -163,6 +164,127 @@ public class MainActivityTest {
                 assertEquals(3, walletRows(menu));
                 assertFalse(menu.findItem(walletItem(mFirstWallet)).isVisible());
                 assertEquals("Cash", headerName(activity));
+            });
+        }
+    }
+
+    /**
+     * The guard on the whole feature. Nobody in this fixture has named a group, so the wallet list
+     * is the wallets in the loader's order and then the Total, which is what the release before
+     * groups drew, and not one header row is added.
+     */
+    @Test
+    public void aDatabaseWithNoGroupNamedDrawsTheListItAlwaysDrew() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                Menu menu = drawer(activity).getMenu();
+                assertEquals(List.of("Cash", "Bank", "Total"), walletSection(menu));
+                assertEquals(3, walletRows(menu));
+            });
+        }
+    }
+
+    /**
+     * Groups come first in alphabetical order, each one led by its own header, then the wallets in
+     * no group, then the Total. The Total belongs to no group, so it lands at the end of the
+     * ungrouped run without the drawer ever naming it.
+     */
+    @Test
+    public void groupsComeFirstAlphabeticallyAndTheTotalStaysLast() {
+        insertWallet("Pension", 2, 0L, true, false, "Retirement");
+        insertWallet("Rainy day", 3, 0L, true, false, "Savings");
+        insertWallet("Holiday", 4, 0L, true, false, "Savings");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                Menu menu = drawer(activity).getMenu();
+                assertEquals(List.of("Retirement", "Pension", "Savings", "Rainy day", "Holiday",
+                        "Cash", "Bank", "Total"), walletSection(menu));
+                // the headers are not wallets, and the wallet count is untouched by them
+                assertEquals(6, walletRows(menu));
+            });
+        }
+    }
+
+    /**
+     * A header carries the money of the wallets drawn under it, a wallet left out of the Total
+     * included, since the figure answers what is in that group and not what the app totals.
+     *
+     * Read off the laid out row and not off the MenuItem, because the MenuItem hands back the
+     * same TextView the drawer built two frames earlier and a disabled row is the one thing here
+     * the library could decline to bind.
+     */
+    @Test
+    public void aGroupHeaderCarriesTheMoneyOfTheWalletsUnderIt() {
+        insertWallet("Rainy day", 2, 30000L, true, false, "Savings");
+        insertWallet("Holiday", 3, 12500L, false, false, "Savings");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                activity.findViewById(R.id.navigation_drawer_header).performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                ViewGroup header = rowLabelled(rows(drawer(activity)), "Savings");
+                String expected = MoneyFormatter.getInstance().getNotTintedString(new Money("EUR", 42500L));
+                assertEquals(expected, ((TextView) actionArea(header).getChildAt(0)).getText().toString());
+            });
+        }
+    }
+
+    /**
+     * Two names differing only by case are two groups with their own headers, and the order
+     * ignores case so that Bills does not land between them. Nothing in the editor can produce
+     * that pair, but a restore and the content provider both write the name verbatim.
+     */
+    @Test
+    public void namesDifferingOnlyByCaseStayTwoGroups() {
+        insertWallet("Deposit", 2, 25000L, true, false, "Apartment");
+        insertWallet("Rent", 3, 10000L, true, false, "apartment");
+        insertWallet("Utilities", 4, 0L, true, false, "Bills");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                assertEquals(List.of("Apartment", "Deposit", "apartment", "Rent", "Bills",
+                        "Utilities", "Cash", "Bank", "Total"), walletSection(drawer(activity).getMenu()));
+            });
+        }
+    }
+
+    /**
+     * Archiving a wallet, bringing it back and dragging the wallet list into a new order each
+     * send one column and nothing else. The group has to survive a write that never mentions it,
+     * and a reorder sends one of those writes per wallet in the ledger.
+     */
+    @Test
+    public void aWriteNamingOneOtherColumnLeavesTheGroupWhereItIs() {
+        long wallet = insertWallet("Rainy day", 2, 0L, true, false, "Savings");
+        ContentValues reorder = new ContentValues();
+        reorder.put(Contract.Wallet.INDEX, 9);
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, wallet);
+        assertEquals(1, mResolver.update(uri, reorder, null, null));
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                assertEquals(List.of("Savings", "Rainy day", "Cash", "Bank", "Total"),
+                        walletSection(drawer(activity).getMenu()));
+            });
+        }
+    }
+
+    /**
+     * A header is not a wallet and must not behave like one. It is disabled, so the library never
+     * calls performClick on it and it can neither switch the wallet nor take the checked mark off
+     * the one that is open.
+     */
+    @Test
+    public void aGroupHeaderCannotBeTappedOrChecked() {
+        insertWallet("Rainy day", 2, 0L, true, false, "Savings");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                MenuItem header = groupHeader(drawer(activity).getMenu(), "Savings");
+                assertFalse(header.isEnabled());
+                assertFalse(header.isCheckable());
             });
         }
     }
@@ -527,6 +649,15 @@ public class MainActivityTest {
         return ((CheckedTextView) row.getChildAt(0)).getText().toString();
     }
 
+    private static ViewGroup rowLabelled(List<ViewGroup> rows, String text) {
+        for (ViewGroup row : rows) {
+            if (text.equals(label(row))) {
+                return row;
+            }
+        }
+        throw new AssertionError("no drawer row is labelled " + text);
+    }
+
     private static ViewGroup actionArea(ViewGroup row) {
         return (ViewGroup) row.getChildAt(1);
     }
@@ -537,6 +668,37 @@ public class MainActivityTest {
 
     private static WalletAccount quickWallet(View icon) {
         return (WalletAccount) icon.getTag(icon.getId());
+    }
+
+    /**
+     * Every row of the wallet list in the order it is drawn, group headers included. The two
+     * actions sit below the group band, so they are out of this by their own ids.
+     */
+    private static List<String> walletSection(Menu menu) {
+        List<String> titles = new ArrayList<>();
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            if (item.getItemId() >= MainActivity.ID_GROUP_FIRST) {
+                titles.add(item.getTitle().toString());
+            }
+        }
+        return titles;
+    }
+
+    /**
+     * The group header of that name. Found by its id band and not by its title alone, because a
+     * group can be named after a drawer section, and the Savings section is one of them.
+     */
+    private static MenuItem groupHeader(Menu menu, String name) {
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            if (item.getItemId() >= MainActivity.ID_GROUP_FIRST
+                    && item.getItemId() < MainActivity.ID_WALLET_FIRST
+                    && name.contentEquals(item.getTitle())) {
+                return item;
+            }
+        }
+        return null;
     }
 
     private static int walletRows(Menu menu) {
@@ -607,6 +769,11 @@ public class MainActivityTest {
     }
 
     private long insertWallet(String name, int index, long startMoney, boolean countInTotal, boolean archived) {
+        return insertWallet(name, index, startMoney, countInTotal, archived, null);
+    }
+
+    private long insertWallet(String name, int index, long startMoney, boolean countInTotal,
+                              boolean archived, String group) {
         ContentValues values = new ContentValues();
         values.put(Contract.Wallet.NAME, name);
         values.put(Contract.Wallet.ICON, ICON);
@@ -615,6 +782,7 @@ public class MainActivityTest {
         values.put(Contract.Wallet.COUNT_IN_TOTAL, countInTotal);
         values.put(Contract.Wallet.ARCHIVED, archived);
         values.put(Contract.Wallet.INDEX, index);
+        values.put(Contract.Wallet.GROUP, group);
         return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
     }
 }

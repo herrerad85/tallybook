@@ -64,6 +64,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String NOTE = "note";
         /*package-local*/ static final String INDEX = "index";
         /*package-local*/ static final String TAG = "tag";
+        /*package-local*/ static final String GROUP = "group";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
     }

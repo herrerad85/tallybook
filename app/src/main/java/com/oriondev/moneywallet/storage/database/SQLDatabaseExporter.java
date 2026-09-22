@@ -79,6 +79,7 @@ public class SQLDatabaseExporter {
         object.mArchived = cursor.getInt(cursor.getColumnIndex(Schema.Wallet.ARCHIVED)) == 1;
         object.mIndex = cursor.getInt(cursor.getColumnIndex(Schema.Wallet.INDEX));
         object.mTag = cursor.getString(cursor.getColumnIndex(Schema.Wallet.TAG));
+        object.mGroup = cursor.getString(cursor.getColumnIndexOrThrow(Schema.Wallet.GROUP));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.Wallet.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.Wallet.LAST_EDIT));
         object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.Wallet.DELETED)) == 1;

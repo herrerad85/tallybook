@@ -91,6 +91,7 @@ import java.util.HashMap;
         object.put(JSONDatabase.Wallet.ARCHIVED, wallet.mArchived);
         object.put(JSONDatabase.Wallet.NOTE, wallet.mNote);
         object.put(JSONDatabase.Wallet.TAG, wallet.mTag);
+        object.put(JSONDatabase.Wallet.GROUP, wallet.mGroup);
         object.put(JSONDatabase.Wallet.ID, wallet.mUUID);
         object.put(JSONDatabase.Wallet.INDEX, wallet.mIndex);
         object.put(JSONDatabase.Wallet.LAST_EDIT, wallet.mLastEdit);

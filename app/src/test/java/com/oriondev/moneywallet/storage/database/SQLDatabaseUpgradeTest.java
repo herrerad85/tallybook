@@ -193,7 +193,7 @@ public class SQLDatabaseUpgradeTest {
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
         // written out so that the next version bump has to come through here
-        assertEquals(7, upgraded.getVersion());
+        assertEquals(8, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertSchemaMatchesAFreshInstall(upgraded);
@@ -314,12 +314,62 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(7, upgraded.getVersion());
+        assertEquals(8, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(2L, count(upgraded, Schema.CategoryRule.TABLE, null));
         assertEquals(1L, count(upgraded, Schema.CategoryRule.TABLE,
                 "rule_pattern = 'tesco' AND rule_category = 900 AND rule_index = 0"));
+        helper.close();
+    }
+
+    /**
+     * A database this app wrote before the group column, arriving at the upgrade. The column is
+     * added and every wallet already stored reads null out of it, which is what puts them all in
+     * the drawer's ungrouped run and leaves the menu as the release before this one drew it.
+     */
+    @Test
+    public void walletsFromBeforeTheGroupColumnComeForwardInNoGroup() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        old.execSQL("ALTER TABLE wallets DROP COLUMN wallet_group");
+        insertWalletIn(old, 901, "Cash", "EUR", 1500L, false);
+        insertWalletIn(old, 902, "Bank", "EUR", 2500L, false);
+        old.setVersion(7);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(8, upgraded.getVersion());
+        assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
+        assertEquals(2L, count(upgraded, Schema.Wallet.TABLE, "wallet_group IS NULL"));
+        helper.close();
+    }
+
+    /**
+     * A database this app wrote, put back to the version before the group column, arriving at the
+     * upgrade a second time. The add is guarded, so the groups already stored stay where they are
+     * instead of the ALTER throwing and taking every read of the database with it.
+     */
+    @Test
+    public void groupsSurviveTheUpgradeRunningASecondTime() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        insertWalletIn(old, 901, "Cash", "EUR", 1500L, false);
+        insertWalletIn(old, 902, "Bank", "EUR", 2500L, false);
+        old.execSQL("UPDATE wallets SET wallet_group = 'Savings' WHERE wallet_id = 902");
+        old.setVersion(7);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(8, upgraded.getVersion());
+        assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
+        assertEquals(1L, count(upgraded, Schema.Wallet.TABLE, "wallet_group = 'Savings'"));
+        assertEquals(1L, count(upgraded, Schema.Wallet.TABLE,
+                "wallet_group IS NULL AND wallet_id = 901"));
         helper.close();
     }
 
@@ -340,6 +390,8 @@ public class SQLDatabaseUpgradeTest {
         old.execSQL(Schema.CREATE_TABLE_CATEGORY);
         old.execSQL(Schema.CREATE_TABLE_BUDGET);
         old.execSQL(Schema.CREATE_TABLE_BUDGET_CATEGORY);
+        // the group step reads the wallet table, and a database this app wrote has one
+        old.execSQL(Schema.CREATE_TABLE_WALLET);
         // every release has shipped a currency table, and the decimals step reads it. The
         // declaration has not changed since the initial commit, so Schema is the one a
         // release of any of these versions wrote
@@ -380,7 +432,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(7, upgraded.getVersion());
+        assertEquals(8, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(7L, count(upgraded, Schema.BudgetCategory.TABLE, null));
@@ -486,7 +538,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(7, upgraded.getVersion());
+        assertEquals(8, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -569,7 +621,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase second = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = second.getWritableDatabase();
 
-        assertEquals(7, upgraded.getVersion());
+        assertEquals(8, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));

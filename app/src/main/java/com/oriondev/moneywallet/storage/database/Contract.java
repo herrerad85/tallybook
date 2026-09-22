@@ -61,6 +61,7 @@ public class Contract {
         public static final String ARCHIVED = Schema.Wallet.ARCHIVED;
         public static final String TAG = Schema.Wallet.TAG;
         public static final String INDEX = Schema.Wallet.INDEX;
+        public static final String GROUP = Schema.Wallet.GROUP;
     }
 
     public static final class Transaction {

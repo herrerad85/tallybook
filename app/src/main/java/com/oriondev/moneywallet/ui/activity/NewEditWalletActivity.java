@@ -26,13 +26,16 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.oriondev.moneywallet.R;
@@ -46,9 +49,15 @@ import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
 import com.oriondev.moneywallet.ui.view.text.NonEmptyTextValidator;
 import com.oriondev.moneywallet.ui.view.text.Validator;
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This class is buildMaterialDialog on top of {@link NewEditItemActivity} and let the user to create a new wallet
@@ -68,6 +77,7 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
     private MaterialEditText mNameEditText;
     private MaterialEditText mCurrencyEditText;
     private MaterialEditText mStartMoneyEditText;
+    private MaterialEditText mGroupEditText;
     private MaterialEditText mNoteEditText;
     private CheckBox mNotExcludeTotalCheckBox;
 
@@ -99,6 +109,7 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
         View view = inflater.inflate(R.layout.layout_panel_new_edit_wallet, parent, true);
         mCurrencyEditText = view.findViewById(R.id.currency_edit_text);
         mStartMoneyEditText = view.findViewById(R.id.start_money_edit_text);
+        mGroupEditText = view.findViewById(R.id.group_edit_text);
         mNoteEditText = view.findViewById(R.id.note_edit_text);
         mNotExcludeTotalCheckBox = view.findViewById(R.id.not_exclude_total_check_box);
         mCurrencyEditText.addValidator(new Validator() {
@@ -123,6 +134,15 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
         // disable edit text capabilities when not needed
         mCurrencyEditText.setTextViewMode(true);
         mStartMoneyEditText.setTextViewMode(true);
+        mGroupEditText.setTextViewMode(true);
+        mGroupEditText.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                showGroupPicker();
+            }
+
+        });
         // attach a click listener to the picker views
         mCurrencyEditText.setOnClickListener(new View.OnClickListener() {
 
@@ -161,7 +181,8 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
                     Contract.Wallet.CURRENCY,
                     Contract.Wallet.START_MONEY,
                     Contract.Wallet.COUNT_IN_TOTAL,
-                    Contract.Wallet.NOTE
+                    Contract.Wallet.NOTE,
+                    Contract.Wallet.GROUP
             };
             Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, getItemId());
             Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
@@ -173,6 +194,7 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
                     startMoney = cursor.getLong(cursor.getColumnIndex(Contract.Wallet.START_MONEY));
                     mNotExcludeTotalCheckBox.setChecked(cursor.getInt(cursor.getColumnIndex(Contract.Wallet.COUNT_IN_TOTAL)) == 1);
                     mNoteEditText.setText(cursor.getString(cursor.getColumnIndex(Contract.Wallet.NOTE)));
+                    mGroupEditText.setText(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.GROUP)));
                     loadComplete = true;
                 }
                 cursor.close();
@@ -213,6 +235,103 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
     }
 
     /**
+     * Offers the group names already in use, plus an entry that puts the wallet in no group and
+     * one that asks for a new name. A name is typed once, on the wallet that first uses it, and
+     * every later wallet picks it from this list.
+     */
+    private void showGroupPicker() {
+        String current = mGroupEditText.getTextAsString();
+        List<String> stored = getGroupNamesInUse();
+        Set<String> offered = new TreeSet<>(MainActivity.GROUP_NAME_ORDER);
+        offered.addAll(stored);
+        if (!TextUtils.isEmpty(current)) {
+            // a name typed a moment ago, or this wallet's own when no other wallet shares it,
+            // sits on no other wallet, and the picker still has to be able to show it as the one
+            // that is set
+            offered.add(current);
+        }
+        List<String> names = new ArrayList<>(offered);
+        String[] items = new String[names.size() + 2];
+        items[0] = getString(R.string.wallet_group_none);
+        for (int i = 0; i < names.size(); i++) {
+            items[i + 1] = names.get(i);
+        }
+        items[items.length - 1] = getString(R.string.action_new_wallet_group);
+        int checked = TextUtils.isEmpty(current) ? 0 : names.indexOf(current) + 1;
+        ThemedDialog.buildMaterialDialog(this)
+                .setTitle(R.string.hint_wallet_group)
+                .setSingleChoiceItems(items, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    if (which == items.length - 1) {
+                        showNewGroupDialog(stored);
+                    } else {
+                        mGroupEditText.setText(which == 0 ? null : items[which]);
+                    }
+                })
+                .show();
+    }
+
+    private void showNewGroupDialog(List<String> names) {
+        View inputView = LayoutInflater.from(this).inflate(R.layout.dialog_input, null);
+        final EditText inputEditText = inputView.findViewById(R.id.dialog_input_edit_text);
+        inputEditText.setHint(R.string.hint_wallet_group);
+        AlertDialog dialog = ThemedDialog.buildMaterialDialog(this)
+                .setTitle(R.string.action_new_wallet_group)
+                .setView(inputView)
+                .setPositiveButton(android.R.string.ok, (dialogInterface, which) -> {
+                    String name = inputEditText.getText().toString().trim();
+                    // OK stays live on a field holding only spaces, and creating a group is never
+                    // a way to leave one, so a name that trims away leaves the field alone
+                    if (!TextUtils.isEmpty(name)) {
+                        mGroupEditText.setText(matching(names, name));
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        ThemedDialog.showWithInput(dialog, inputEditText, false);
+    }
+
+    /**
+     * @return the offered name that differs from the typed one only by case, or the typed one.
+     *         Somebody typing "savings" for a wallet that already sits beside "Savings" means the
+     *         group they can see, and the drawer draws those two names as two headings.
+     */
+    private static String matching(List<String> names, String typed) {
+        for (String name : names) {
+            if (name.equalsIgnoreCase(typed)) {
+                return name;
+            }
+        }
+        return typed;
+    }
+
+    /**
+     * @return every group name a wallet other than this one currently carries, without repeats
+     *         and in the order the drawer lists them. A new wallet's id is -1, which no row has.
+     */
+    private List<String> getGroupNamesInUse() {
+        Set<String> names = new TreeSet<>(MainActivity.GROUP_NAME_ORDER);
+        String[] projection = new String[] {Contract.Wallet.GROUP};
+        Cursor cursor = getContentResolver().query(DataContentProvider.CONTENT_WALLETS,
+                projection, Contract.Wallet.ID + " != ?",
+                new String[] {String.valueOf(getItemId())}, null);
+        if (cursor != null) {
+            try {
+                int index = cursor.getColumnIndexOrThrow(Contract.Wallet.GROUP);
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(index);
+                    if (!TextUtils.isEmpty(name)) {
+                        names.add(name);
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return new ArrayList<>(names);
+    }
+
+    /**
      * This method checks if everything has been correctly provided by the user.
      * It is responsible to show error messages if something is wrong or missing.
      * @return true if everything is ok, false otherwise.
@@ -236,6 +355,8 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
             contentValues.put(Contract.Wallet.START_MONEY, mMoneyPicker.getCurrentMoney());
             contentValues.put(Contract.Wallet.COUNT_IN_TOTAL, mNotExcludeTotalCheckBox.isChecked());
             contentValues.put(Contract.Wallet.NOTE, mNoteEditText.getTextAsString());
+            String group = mGroupEditText.getTextAsString();
+            contentValues.put(Contract.Wallet.GROUP, TextUtils.isEmpty(group) ? null : group);
             ContentResolver contentResolver = getContentResolver();
             switch (mode) {
                 case NEW_ITEM:
