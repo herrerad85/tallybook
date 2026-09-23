@@ -24,6 +24,7 @@ import android.content.Intent;
 
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 
@@ -79,6 +80,22 @@ public abstract class AbstractBackendServiceDelegate {
      */
     public boolean isDisconnectable() {
         return true;
+    }
+
+    /**
+     * Whether {@link #setup} can be run again on an enabled backend to pick a different location.
+     */
+    public boolean isFolderChangeable() {
+        return false;
+    }
+
+    /**
+     * A line naming where this backend stores its backups, or null if it has none to show. It
+     * may query another app's provider, so call it off the main thread.
+     */
+    @Nullable
+    public String describeLocation(Context context) {
+        return null;
     }
 
     protected void setBackendServiceEnabled(boolean enabled) {

@@ -280,10 +280,25 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
         if (mCoverLayout != null) {
             // setup menu item visibility
             setMenuItemVisibility(R.id.action_disconnect, mBackendService.isDisconnectable());
+            setMenuItemVisibility(R.id.action_change_folder, mBackendService.isFolderChangeable());
             // setup layout visibility
             mCoverLayout.setVisibility(View.GONE);
             mPrimaryLayout.setVisibility(View.VISIBLE);
+            showLocation();
         }
+    }
+
+    private void showLocation() {
+        // a WebDAV check can finish after this fragment is detached
+        if (getContext() == null) {
+            return;
+        }
+        final Context context = getContext().getApplicationContext();
+        final AbstractBackendServiceDelegate backendService = mBackendService;
+        new Thread(() -> {
+            final String location = backendService.describeLocation(context);
+            mToolbar.post(() -> mToolbar.setSubtitle(location));
+        }, "backup-location").start();
     }
 
     protected int getTitle() {
@@ -311,6 +326,14 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
         if (itemId == R.id.action_disconnect) {
             try {
                 mBackendService.teardown(getActivity());
+            } catch (BackendException e) {
+                e.printStackTrace();
+            }
+        } else if (itemId == R.id.action_change_folder) {
+            // the folders on the stack belong to the folder being replaced
+            mFileStack.clear();
+            try {
+                mBackendService.setup(getActivity());
             } catch (BackendException e) {
                 e.printStackTrace();
             }

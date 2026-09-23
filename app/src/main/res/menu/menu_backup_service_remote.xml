@@ -29,6 +29,13 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_change_folder"
+        android:icon="@drawable/ic_folder_open_black_24dp"
+        android:title="@string/menu_action_service_change_folder"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_disconnect"
         android:icon="@drawable/ic_exit_to_app_black_24dp"
         android:title="@string/menu_action_service_disconnect"

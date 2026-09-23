@@ -5,11 +5,17 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.net.Uri;
+import android.provider.DocumentsContract;
+import android.util.Log;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.api.AbstractBackendServiceDelegate;
 import com.oriondev.moneywallet.api.BackendServiceFactory;
+import com.oriondev.moneywallet.model.SAFFile;
+import com.oriondev.moneywallet.storage.preference.BackendManager;
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 
 import androidx.activity.ComponentActivity;
@@ -18,6 +24,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 
 /**
@@ -91,19 +98,114 @@ public class SAFBackendService extends AbstractBackendServiceDelegate {
             new ActivityResultCallback<Uri>() {
                 @Override
                 public void onActivityResult(Uri uri) {
-                    boolean enabled = false;
+                    Activity activity = fragment.requireActivity();
                     if (uri != null) {
-                        Activity activity = fragment.requireActivity();
+                        Uri previous = getUri(activity);
                         activity.getContentResolver().takePersistableUriPermission(
                                 uri,
                                 FLAG_URI_READ_WRITE
                         );
                         storeUri(activity, uri);
-                        enabled = true;
+                        if (previous != null && !previous.equals(uri)) {
+                            onFolderChanged(activity.getApplicationContext(), previous, uri);
+                        }
                     }
-                    setBackendServiceEnabled(enabled);
+                    // a Change folder that was cancelled keeps the folder already in use
+                    setBackendServiceEnabled(getUri(activity) != null);
                 }
             });
+    }
+
+    /**
+     * Moves auto backup to the new folder, then drops the permission on the folder being
+     * replaced. The auto backup folder is a document inside the old folder, and once that
+     * permission is gone every scheduled backup to it would fail, so the permission goes last:
+     * if the process dies first, auto backup still points at a folder the app can reach.
+     */
+    private static void onFolderChanged(final Context context, final Uri previous, final Uri current) {
+        new Thread(() -> {
+            // a second change can start before this one finishes, and the checks against the
+            // stored folder below only hold if the two do not interleave
+            synchronized (FOLDER_CHANGE_LOCK) {
+                String backendId = BackendServiceFactory.SERVICE_ID_SAF;
+                String encoded = BackendManager.getAutoBackupFolder(backendId);
+                Uri replaced = null;
+                // a quick change back finds auto backup still inside the folder it returns to
+                if (encoded != null && !current.equals(treeOf(encoded))) {
+                    DocumentFile root = DocumentFile.fromTreeUri(context, current);
+                    SAFFile folder = root != null ? new SAFFile(root) : null;
+                    if (!current.equals(getUri(context))) {
+                        // a later change replaced this folder and moves auto backup itself
+                    } else if (folder != null && folder.getName() != null) {
+                        BackendManager.setAutoBackupFolder(backendId, folder.encodeToString());
+                        replaced = treeOf(encoded);
+                    } else {
+                        // a descriptor with no name cannot be decoded again
+                        BackendManager.disableAutoBackupAfterFailure(backendId);
+                        BackendManager.setAutoBackupFolder(backendId, null);
+                        replaced = treeOf(encoded);
+                    }
+                }
+                releaseUnlessInUse(context, previous);
+                if (replaced != null && !replaced.equals(previous)) {
+                    releaseUnlessInUse(context, replaced);
+                }
+            }
+        }, "saf-auto-backup-folder").start();
+    }
+
+    private static final Object FOLDER_CHANGE_LOCK = new Object();
+
+    private static void releaseUnlessInUse(Context context, Uri tree) {
+        if (tree.equals(getUri(context))) {
+            return;
+        }
+        try {
+            context.getContentResolver().releasePersistableUriPermission(tree, FLAG_URI_READ_WRITE);
+        } catch (SecurityException e) {
+            Log.w("SAFBackendService", "No permission held on the replaced folder", e);
+        }
+    }
+
+    /**
+     * The picked folder an encoded auto backup folder lies in, or null when it names none.
+     */
+    private static Uri treeOf(String encoded) {
+        SAFFile folder = SAFFile.decode(encoded);
+        if (folder == null || !DocumentsContract.isTreeUri(folder.getUri())) {
+            return null;
+        }
+        Uri uri = folder.getUri();
+        return DocumentsContract.buildTreeDocumentUri(uri.getAuthority(), DocumentsContract.getTreeDocumentId(uri));
+    }
+
+    @Override
+    public boolean isDisconnectable() {
+        return false;
+    }
+
+    @Override
+    public boolean isFolderChangeable() {
+        return true;
+    }
+
+    @Override
+    public String describeLocation(Context context) {
+        Uri uri = getUri(context);
+        if (uri == null) {
+            return null;
+        }
+        DocumentFile root = DocumentFile.fromTreeUri(context, uri);
+        String folder = root != null ? root.getName() : null;
+        if (folder == null) {
+            return null;
+        }
+        PackageManager packageManager = context.getPackageManager();
+        ProviderInfo provider = packageManager.resolveContentProvider(uri.getAuthority(), 0);
+        if (provider == null) {
+            return folder;
+        }
+        return context.getString(R.string.backup_location_in_app, provider.loadLabel(packageManager), folder);
     }
 
     @Override
@@ -113,8 +215,7 @@ public class SAFBackendService extends AbstractBackendServiceDelegate {
 
     @Override
     public void teardown(final ComponentActivity activity) {
-        final Uri uri = getUri(activity);
-        if (uri == null) {
+        if (getUri(activity) == null) {
             return;
         }
         ThemedDialog.buildMaterialDialog(activity)
@@ -124,8 +225,17 @@ public class SAFBackendService extends AbstractBackendServiceDelegate {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        activity.getContentResolver()
-                                .releasePersistableUriPermission(uri, FLAG_URI_READ_WRITE);
+                        // read at the tap: Change folder can store a new folder while this
+                        // dialog is up, and the pending change releases the one it replaced
+                        Uri uri = getUri(activity);
+                        if (uri != null) {
+                            try {
+                                activity.getContentResolver()
+                                        .releasePersistableUriPermission(uri, FLAG_URI_READ_WRITE);
+                            } catch (SecurityException e) {
+                                Log.w("SAFBackendService", "No permission held on the folder", e);
+                            }
+                        }
                         clearUri(activity);
                         setBackendServiceEnabled(false);
                     }
