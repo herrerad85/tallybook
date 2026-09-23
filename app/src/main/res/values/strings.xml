@@ -202,6 +202,7 @@
     <string name="hint_auto_backup_folder_unavailable">"Not available"</string>
     <string name="message_auto_backup_folder_required">"Choose a folder before turning automatic backup on."</string>
     <string name="message_auto_backup_csv_not_password_protected">"The CSV file is not password protected."</string>
+    <string name="message_auto_backup_disabled_at_launch">"Automatic backup was turned off because a backup service stopped working. Open backups to check it."</string>
     <string name="message_auto_backup_disabled_after_failure">"Automatic backup was turned off after this backup service failed. Check it before turning automatic backup back on."</string>
     <string name="message_backend_open_a_folder">"Open a folder to choose it."</string>
 
@@ -285,6 +286,8 @@
     <string name="menu_action_show_finished_only">"Show finished only"</string>
     <string name="menu_action_show_transaction_list">"Show transactions"</string>
     <string name="menu_action_service_disconnect">"Disconnect"</string>
+    <string name="menu_action_service_change_folder">"Change folder"</string>
+    <string name="backup_location_in_app" translatable="false">"%1$s › %2$s"</string>
     <string name="menu_action_service_auto_backup">"Auto backup"</string>
     <string name="menu_action_select_folder">"Select folder"</string>
     <string name="menu_action_import_data">"Import data"</string>

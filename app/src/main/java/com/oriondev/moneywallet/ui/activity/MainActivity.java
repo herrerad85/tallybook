@@ -74,6 +74,7 @@ import com.oriondev.moneywallet.model.WalletAccount;
 import com.oriondev.moneywallet.service.BackupHandlerIntentService;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.preference.BackendManager;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.activity.base.BaseActivity;
 import com.oriondev.moneywallet.ui.fragment.base.NavigableFragment;
@@ -179,6 +180,47 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         initializeUi();
         loadUi(savedInstanceState);
         registerReceiver();
+        if (savedInstanceState == null && BackendManager.hasUnseenAutoBackupFailure()) {
+            showAutoBackupFailureDialog();
+        }
+    }
+
+    /**
+     * The failure is only marked seen when the user answers, so a dialog lost to a rotation is
+     * shown again at the next launch.
+     */
+    private void showAutoBackupFailureDialog() {
+        ThemedDialog.buildMaterialDialog(this)
+                .setTitle(R.string.title_warning)
+                .setMessage(R.string.message_auto_backup_disabled_at_launch)
+                .setPositiveButton(R.string.action_open, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        BackendManager.markAutoBackupFailuresSeen();
+                        Intent intent = new Intent(MainActivity.this, BackupListActivity.class);
+                        intent.putExtra(BackupListActivity.BACKUP_MODE, BackupListActivity.FULL);
+                        startActivity(intent);
+                    }
+
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        BackendManager.markAutoBackupFailuresSeen();
+                    }
+
+                })
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        BackendManager.markAutoBackupFailuresSeen();
+                    }
+
+                })
+                .show();
     }
 
     /**

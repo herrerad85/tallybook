@@ -266,8 +266,9 @@ public class AutoBackupSettingDialog extends DialogFragment {
     }
 
     /**
-     * Saves the settings, or refuses and returns false. Nowhere else writes a backup folder, and
-     * the only other way a backend's enabled state changes is
+     * Saves the settings, or refuses and returns false. The only other writer of a backup folder
+     * is a Local folder change, which clears one only while turning the backend off, and the only
+     * other way a backend's enabled state changes is
      * {@link BackendManager#disableAutoBackupAfterFailure}, which turns it off, so nothing outside
      * this screen can leave a backend enabled with no folder.
      *

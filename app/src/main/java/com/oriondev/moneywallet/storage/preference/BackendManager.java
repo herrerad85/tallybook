@@ -42,6 +42,7 @@ public class BackendManager {
     private static final String BACKEND_AUTO_BACKUP_PASSWORD = "auto_backup_password_";
     private static final String BACKEND_AUTO_BACKUP_LAST_TIME = "auto_backup_last_time_";
     private static final String BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE = "auto_backup_disabled_by_failure_";
+    private static final String BACKEND_AUTO_BACKUP_FAILURE_SEEN = "auto_backup_failure_seen_";
 
     private static SharedPreferences mPreferences;
 
@@ -51,8 +52,8 @@ public class BackendManager {
 
     /**
      * Turns automatic backup off for a backend because a backup, a restore or a listing failed in
-     * a way the app treats as not recoverable, and records that the app is the one that turned it
-     * off. Nothing else sets that flag, so a user switching the service off in the settings dialog
+     * a way the app treats as not recoverable, or a Local folder change could not read the new
+     * folder, and records that the app is the one that turned it off. Nothing else sets that flag, so a user switching the service off in the settings dialog
      * is not mistaken for a failure.
      *
      * The sweep builds its backend before the block that calls this, so a backend that cannot be
@@ -74,13 +75,44 @@ public class BackendManager {
      */
     public static void disableAutoBackupAfterFailure(String backendId) {
         if (isAutoBackupEnabled(backendId)) {
-            mPreferences.edit().putBoolean(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE + backendId, true).apply();
+            mPreferences.edit()
+                    .putBoolean(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE + backendId, true)
+                    .remove(BACKEND_AUTO_BACKUP_FAILURE_SEEN + backendId)
+                    .apply();
         }
         setAutoBackupEnabled(backendId, false);
     }
 
     public static boolean isAutoBackupDisabledByFailure(String backendId) {
         return mPreferences.getBoolean(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE + backendId, false);
+    }
+
+    /**
+     * Whether a failure turned automatic backup off for any backend and the launch prompt has not
+     * been answered for it yet. Reads the records themselves, so a failure recorded before the
+     * prompt existed is reported too.
+     */
+    public static boolean hasUnseenAutoBackupFailure() {
+        for (String key : mPreferences.getAll().keySet()) {
+            if (key.startsWith(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE)) {
+                String backendId = key.substring(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE.length());
+                if (!mPreferences.getBoolean(BACKEND_AUTO_BACKUP_FAILURE_SEEN + backendId, false)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static void markAutoBackupFailuresSeen() {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        for (String key : mPreferences.getAll().keySet()) {
+            if (key.startsWith(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE)) {
+                String backendId = key.substring(BACKEND_AUTO_BACKUP_DISABLED_BY_FAILURE.length());
+                editor.putBoolean(BACKEND_AUTO_BACKUP_FAILURE_SEEN + backendId, true);
+            }
+        }
+        editor.apply();
     }
 
     public static void setAutoBackupEnabled(String backendId, boolean enabled) {
