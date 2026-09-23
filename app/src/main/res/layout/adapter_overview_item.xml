@@ -23,8 +23,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/material_component_lists_one_line_with_avatar_height"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/material_component_lists_one_line_with_avatar_height"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:background="?attr/selectableItemBackground" >
+
+    <!--
+      The same 80dp floor the period summary row puts under its name, and for the same reason: an
+      amount wide enough takes the whole row and resolves the name to nothing.
+    -->
 
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/name_text_view"
@@ -35,6 +43,7 @@
         android:layout_marginRight="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:textSize="@dimen/material_component_lists_one_line_with_avatar_primary_text_size"
+        app:layout_constraintWidth_min="80dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,7 +57,11 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_one_line_primary_text_end_margin"
+        android:ellipsize="end"
+        android:gravity="end"
+        android:maxLines="1"
         android:textSize="@dimen/material_component_lists_one_line_with_avatar_primary_text_size"
+        app:layout_constrainedWidth="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/name_text_view"

@@ -54,6 +54,7 @@ public class MoneyFormatter {
     private boolean mGroupDigitEnabled;
     private boolean mRoundDecimalsEnabled;
     private boolean mShowSymbolEnabled;
+    private String mDivider = DIVIDER_TEXT;
     private NumberFormat mFormatter;
 
     public enum CurrencyMode {
@@ -122,6 +123,13 @@ public class MoneyFormatter {
         mShowSymbolEnabled = enabled;
     }
 
+    /**
+     * What goes between the currencies of an amount that holds more than one.
+     */
+    public void setDivider(String divider) {
+        mDivider = divider;
+    }
+
     public boolean isCurrencyEnabled() {
         return mCurrencyEnabled;
     }
@@ -147,7 +155,7 @@ public class MoneyFormatter {
             CurrencyMode currencyMode = money.getNumberOfCurrencies() > 1 ? CurrencyMode.ALWAYS_SHOWN : CurrencyMode.USER_PREFERENCE;
             for (Map.Entry<String, Long> entry : money.getCurrencyMoneys().entrySet()) {
                 if (builder.length() > 0) {
-                    builder.append(DIVIDER_TEXT);
+                    builder.append(mDivider);
                 }
                 CurrencyUnit currencyUnit = CurrencyManager.getCurrency(entry.getKey());
                 long currencyMoney = entry.getValue();
@@ -211,7 +219,7 @@ public class MoneyFormatter {
             CurrencyMode currencyMode = money.getNumberOfCurrencies() > 1 ? CurrencyMode.ALWAYS_SHOWN : CurrencyMode.USER_PREFERENCE;
             for (Map.Entry<String, Long> entry : money.getCurrencyMoneys().entrySet()) {
                 if (builder.length() > 0) {
-                    SpannableString divider = new SpannableString(DIVIDER_TEXT);
+                    SpannableString divider = new SpannableString(mDivider);
                     divider.setSpan(new ForegroundColorSpan(ThemeEngine.getTheme().getTextColorPrimary()), 0, divider.length(), 0);
                     builder.append(divider);
                 }

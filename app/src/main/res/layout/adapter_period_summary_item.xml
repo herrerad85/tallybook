@@ -67,6 +67,7 @@
         android:layout_marginRight="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_one_line_primary_text_end_margin"
         android:ellipsize="end"
+        android:gravity="end"
         android:maxLines="1"
         android:textSize="@dimen/material_component_lists_one_line_with_avatar_primary_text_size"
         app:layout_constrainedWidth="true"

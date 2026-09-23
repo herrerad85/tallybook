@@ -45,6 +45,7 @@ public class PeriodDetailSummaryAdapter extends RecyclerView.Adapter<PeriodDetai
     public PeriodDetailSummaryAdapter(Controller controller) {
         mController = controller;
         mMoneyFormatter = MoneyFormatter.getInstance();
+        mMoneyFormatter.setDivider("\n");
     }
 
     @Override
@@ -65,6 +66,12 @@ public class PeriodDetailSummaryAdapter extends RecyclerView.Adapter<PeriodDetai
         // off, which is the default, so a period that ended down printed as a positive number
         // with only the color saying otherwise. Same call the transactions list header makes.
         mMoneyFormatter.applyNotTinted(holder.mMoneyTextView, periodMoney.getNetIncomes());
+        // One currency per line. The name is made as tall as the amount, because the Transfers
+        // line hangs off the name's last line and an amount taller than the name is drawn over it
+        int lines = TransactionCursorAdapter.lines(periodMoney.getNetIncomes());
+        holder.mMoneyTextView.setMaxLines(lines);
+        holder.mNameTextView.setMinLines(lines);
+        holder.mTransferTextView.setMaxLines(TransactionCursorAdapter.lines(periodMoney.getTransfers()));
         // The figure above counts money moved between the user's own wallets and the two bar
         // series do not, so a period that only moved money shows a net with both bars at
         // nothing. Naming what moved is what closes that, and a period that moved none says

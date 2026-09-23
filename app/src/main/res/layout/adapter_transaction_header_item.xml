@@ -28,16 +28,17 @@
     android:background="?attr/selectableItemBackground">
 
     <!--
-      A Total wallet joins every currency it holds into one amount, and an amount that wide takes
-      the whole row and resolves the date range beside it to nothing, so the header stops saying
-      which period it covers. The floor keeps the date readable and the amount is cut instead. It
-      is the same 80dp floor the period summary row uses, and at one currency nothing moves.
+      An amount wide enough takes the whole row and resolves the date range beside it to nothing,
+      so the header stops saying which period it covers. The floor keeps the date readable and the
+      amount is cut instead. It is the same 80dp floor the period summary row uses, and at one
+      currency nothing moves.
 
       The amount is held between the date and the fold arrow, since a view anchored by its end
       alone is bounded by nothing and takes its full width off the start of the row, over the date
       and past the edge of the screen. Bounded, it is held to one line as well, because a wrapped
       amount is sized again after the barrier below has been placed, so the barrier keeps the
-      height of the first pass and the amount is drawn over the summary line.
+      height of the first pass and the amount is drawn over the summary line. The binder gives an
+      amount holding several currencies one line for each, and caps it there for the same reason.
     -->
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/left_text_view"
@@ -65,6 +66,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:ellipsize="end"
+        android:gravity="end"
         android:maxLines="1"
         android:textSize="@dimen/material_component_lists_header_text_size"
         app:layout_constrainedWidth="true"
@@ -94,9 +96,8 @@
       measures a wrap content child against the whole row, never against the region its Flow was
       given, and the Flow lays a child out at whatever width came back. A box wider than the
       region would be drawn under the fold arrow and the report arrow, which paint over it, and
-      it would ellipsize only at the far edge of the row. A Total wallet holding three currencies
-      reaches that at an ordinary font size, since every currency is joined into one string.
-      Bounding the container bounds the boxes, so a wide one ellipsizes where a reader can see it.
+      it would ellipsize only at the far edge of the row. Bounding the container bounds the boxes,
+      so a wide one ellipsizes where a reader can see it.
 
       Inside a box only the figure carries a weight, so a box holding more than the container
       allows takes the room off the number and the word keeps its natural width. A weight on the
@@ -267,8 +268,8 @@
         android:layout_marginEnd="@dimen/material_component_lists_header_end_margin"
         android:contentDescription="@string/description_show_period_report"
         android:src="@drawable/ic_chevron_right_black_24dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/period_toggle_image_view"
+        app:layout_constraintBottom_toBottomOf="@+id/period_toggle_image_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:theme_backgroundColor="colorWindowForeground" />
 

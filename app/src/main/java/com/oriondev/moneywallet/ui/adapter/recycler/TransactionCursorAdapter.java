@@ -25,6 +25,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.helper.widget.Flow;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -113,6 +115,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mActionListener = actionListener;
         mHeaderOpensReport = headerOpensReport;
         mMoneyFormatter = MoneyFormatter.getInstance();
+        // the header figures are the only ones here that can hold more than one currency
+        mMoneyFormatter.setDivider("\n");
     }
 
     @Override
@@ -362,10 +366,14 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         // nothing, and left the color to say which way it went, on a line whose other two
         // figures are colored whatever they hold
         mMoneyFormatter.applyNotTinted(holder.mRightTextView, money);
-        Money income = Money.parse(cursor.getString(mIndexHeaderIncome));
-        Money expense = Money.parse(cursor.getString(mIndexHeaderExpense));
-        mMoneyFormatter.applyTintedIncome(holder.mIncomeTextView, orZero(income, money));
-        mMoneyFormatter.applyTintedExpense(holder.mExpenseTextView, orZero(expense, money));
+        Money income = orZero(Money.parse(cursor.getString(mIndexHeaderIncome)), money);
+        Money expense = orZero(Money.parse(cursor.getString(mIndexHeaderExpense)), money);
+        // the plain buffer, since with a SPANNABLE one the text is laid out past maxLines and
+        // the view cuts it off with no ellipsis, whole currencies included
+        holder.mIncomeTextView.setText(mMoneyFormatter.getTintedString(income,
+                MoneyFormatter.TintMode.INCOME));
+        holder.mExpenseTextView.setText(mMoneyFormatter.getTintedString(expense,
+                MoneyFormatter.TintMode.EXPENSE));
         Money transfer = Money.parse(cursor.getString(mIndexHeaderTransfer));
         // A period that moved nothing between wallets says nothing, so the two views go with
         // each other. Untinted for the same reason the total above it is: a tinted amount
@@ -379,7 +387,30 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             holder.mTransferLayout.setVisibility(View.VISIBLE);
             mMoneyFormatter.applyNotTinted(holder.mTransferTextView, transfer);
         }
+        // A figure holding several currencies prints one per line, and then every box takes a
+        // line of its own and the fold arrow stays level with the date instead of centering in a
+        // row several lines tall. A row where every figure holds one currency is left as it was.
+        holder.mRightTextView.setMaxLines(lines(money));
+        holder.mIncomeTextView.setMaxLines(lines(income));
+        holder.mExpenseTextView.setMaxLines(lines(expense));
+        holder.mTransferTextView.setMaxLines(lines(transfer));
+        boolean stacked = lines(money) > 1 || lines(income) > 1 || lines(expense) > 1
+                || (!isZero(transfer) && lines(transfer) > 1);
+        // -1 is the Flow's own default, no limit
+        holder.mSummaryFlow.setMaxElementsWrap(stacked ? 1 : -1);
+        ConstraintLayout.LayoutParams toggle =
+                (ConstraintLayout.LayoutParams) holder.mPeriodToggle.getLayoutParams();
+        toggle.bottomToBottom = stacked ? ConstraintLayout.LayoutParams.UNSET
+                : ConstraintLayout.LayoutParams.PARENT_ID;
+        holder.mPeriodToggle.setLayoutParams(toggle);
         bindPeriodToggle(holder, cursor);
+    }
+
+    /**
+     * The lines a figure takes, one for each currency it holds.
+     */
+    /*package-local*/ static int lines(Money money) {
+        return Math.max(1, money.getNumberOfCurrencies());
     }
 
     private void bindPeriodToggle(HeaderViewHolder holder, Cursor cursor) {
@@ -460,6 +491,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         private TextView mExpenseTextView;
         private View mTransferLayout;
         private TextView mTransferTextView;
+        private Flow mSummaryFlow;
         private ImageView mPeriodToggle;
 
         /*package-local*/ HeaderViewHolder(View itemView) {
@@ -470,6 +502,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             mExpenseTextView = itemView.findViewById(R.id.expense_text_view);
             mTransferLayout = itemView.findViewById(R.id.transfer_summary_layout);
             mTransferTextView = itemView.findViewById(R.id.transfer_text_view);
+            mSummaryFlow = itemView.findViewById(R.id.summary_flow);
             mPeriodToggle = itemView.findViewById(R.id.period_toggle_image_view);
             // Its own listener, because a tap on the row still means what it always did: open
             // the report of this period, or nothing at all.
