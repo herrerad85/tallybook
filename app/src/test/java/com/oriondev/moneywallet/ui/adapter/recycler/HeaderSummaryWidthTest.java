@@ -41,9 +41,7 @@ import static org.junit.Assert.assertTrue;
  * The month header's summary boxes have to stay inside the room their Flow was given.
  * ConstraintLayout measures a wrap content child against the whole row, and the Flow draws it at
  * whatever width came back, so without a container bounding them a wide box runs under the fold
- * arrow and the report arrow and ellipsizes only at the far edge of the row. A Total wallet
- * holding several currencies reaches that at an ordinary font size, because every currency is
- * joined into one string.
+ * arrow and the report arrow and ellipsizes only at the far edge of the row.
  *
  * Native graphics is what makes these assertions mean anything, since the legacy shadow gives
  * every character one unit of width whatever its glyph.

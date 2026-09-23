@@ -45,6 +45,7 @@ public class OverviewItemAdapter extends RecyclerView.Adapter<OverviewItemAdapte
     public OverviewItemAdapter(Controller controller) {
         mController = controller;
         mMoneyFormatter = MoneyFormatter.getInstance();
+        mMoneyFormatter.setDivider("\n");
     }
 
     @Override
@@ -57,7 +58,13 @@ public class OverviewItemAdapter extends RecyclerView.Adapter<OverviewItemAdapte
         PeriodMoney periodMoney = mData.getPeriodMoney(position);
         DateFormatter.applyDateRange(holder.mNameTextView, periodMoney.getStartDate(), periodMoney.getEndDate());
         // TODO: maybe can be useful to display also incomes and expenses
-        mMoneyFormatter.applyTinted(holder.mMoneyTextView, periodMoney.getNetIncomes());
+        // the plain buffer, since with a SPANNABLE one the text is laid out past maxLines and
+        // the view cuts it off with no ellipsis
+        holder.mMoneyTextView.setText(mMoneyFormatter.getTintedString(periodMoney.getNetIncomes()));
+        // one currency per line, and the name as tall so it stays level with the first of them
+        int lines = TransactionCursorAdapter.lines(periodMoney.getNetIncomes());
+        holder.mMoneyTextView.setMaxLines(lines);
+        holder.mNameTextView.setMinLines(lines);
     }
 
     @Override

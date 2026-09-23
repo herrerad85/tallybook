@@ -38,6 +38,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -171,10 +172,10 @@ public class PeriodSummaryTransferRowTest {
     }
 
     /**
-     * A Total wallet over several currencies joins them into one amount wide enough to take the
-     * whole row, and the name is what gives way. Left to itself it resolves to nothing wide and
+     * A Total wallet over several currencies prints one currency per line, and the name is the
+     * one that gives way when an amount is wide. Left to itself it resolves to nothing wide and
      * lays its date range out one character per line, which on a phone is a row taller than the
-     * screen. The amount is the one that has to give.
+     * screen.
      */
     @Test
     public void aMultiCurrencyAmountDoesNotSqueezeThePeriodNameAway() {
@@ -200,34 +201,35 @@ public class PeriodSummaryTransferRowTest {
         assertTrue("the row is " + row.getMeasuredHeight() + "px tall",
                 row.getMeasuredHeight() <= 3 * oneLine);
 
-        // and it gives way by being cut, not by hanging off the end of the row, which draws
-        // the same number with its own ellipsis clipped away
         TextView money = row.findViewById(R.id.money_text_view);
         assertTrue("the amount ends at " + money.getRight() + " on a row "
                         + row.getMeasuredWidth() + " wide",
                 money.getRight() <= row.getMeasuredWidth());
-        assertTrue("the amount drew no ellipsis",
-                money.getLayout().getEllipsisCount(0) > 0);
+        Layout layout = money.getLayout();
+        assertEquals("the amount took " + layout.getLineCount() + " lines for three currencies",
+                3, layout.getLineCount());
+        assertEquals("the amount was cut", 0, layout.getEllipsisCount(2));
+        // the name is as tall as the amount, so the Transfers line hung off it clears all three
+        assertEquals(money.getHeight(), name.getHeight());
     }
 
     /**
      * The Transfers line spans the whole row and is aligned to the far side, so it only reaches
-     * the near one when it is long enough to be cut, which a Total wallet over several currencies
-     * makes it. It then starts inside the margin every other line on the row starts at. Right to
-     * left is the worse half and it is not only the long lines, the end margin is the only one
-     * that survives the direction swap, so the line runs to the screen edge on every period.
+     * the near one when it is long enough to be cut, which a large amount at the largest system
+     * font makes it. It then starts inside the margin every other line on the row starts at.
+     * Right to left is the worse half and it is not only the long lines, the end margin is the
+     * only one that survives the direction swap, so the line runs to the screen edge on every
+     * period.
      */
     @Test
-    @Config(qualifiers = "w320dp-420dpi")
+    @Config(qualifiers = "w320dp-420dpi", fontScale = 2.0f)
     public void theTransfersLineStartsWhereThePeriodNameStarts() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(2026, Calendar.SEPTEMBER, 1, 0, 0, 0);
         Date start = calendar.getTime();
         calendar.add(Calendar.DAY_OF_MONTH, 29);
         PeriodMoney period = new PeriodMoney(start, calendar.getTime());
-        period.addTransfer(USD, 123456789, false);
-        period.addTransfer("EUR", 123456789, false);
-        period.addTransfer("GBP", 123456789, false);
+        period.addTransfer(USD, 123456789012L, false);
         View row = bind(period);
 
         TextView name = row.findViewById(R.id.name_text_view);
@@ -247,18 +249,57 @@ public class PeriodSummaryTransferRowTest {
                 name.getRight(), transfer.getRight());
     }
 
+    /**
+     * The adapter binds the next period into a row it drew another one in, so a one currency
+     * period after a stacked one has to get its single line back.
+     */
+    @Test
+    public void aOneCurrencyPeriodAfterAStackedOneIsOneLineAgain() {
+        PeriodMoney single = new PeriodMoney(new Date(0), new Date(0));
+        single.addIncome(USD, 12345);
+        int fresh = bind(single).getMeasuredHeight();
+
+        PeriodMoney stacked = new PeriodMoney(new Date(0), new Date(0));
+        stacked.addIncome(USD, 100000);
+        stacked.addIncome("EUR", 100000);
+        stacked.addIncome("GBP", 100000);
+        stacked.addTransfer(USD, 40000, false);
+        stacked.addTransfer("EUR", 40000, false);
+        PeriodDetailSummaryAdapter adapter = adapter(stacked, single);
+        PeriodDetailSummaryAdapter.ViewHolder holder = adapter.onCreateViewHolder(parent(), 0);
+        adapter.onBindViewHolder(holder, 0);
+        assertTrue("the stacked period was not taller, so this cannot see the defect",
+                measure(holder.itemView).getMeasuredHeight() > fresh);
+        Layout transfers = ((TextView) holder.itemView.findViewById(
+                R.id.transfer_text_view)).getLayout();
+        assertEquals("the Transfers line took " + transfers.getLineCount()
+                + " lines for two currencies", 2, transfers.getLineCount());
+        assertEquals("the Transfers line was cut", 0, transfers.getEllipsisCount(1));
+        adapter.onBindViewHolder(holder, 1);
+
+        assertEquals(fresh, measure(holder.itemView).getMeasuredHeight());
+    }
+
     private View bind(PeriodMoney period) {
-        List<PeriodMoney> periods = Collections.singletonList(period);
-        PeriodDetailSummaryData data = new PeriodDetailSummaryData(
-                new Money(), Collections.<com.github.mikephil.charting.data.BarData>emptyList(),
-                Collections.<com.oriondev.moneywallet.model.CurrencyUnit>emptyList(), periods);
-        PeriodDetailSummaryAdapter adapter = new PeriodDetailSummaryAdapter(null);
-        adapter.setData(data);
-        FrameLayout parent = new FrameLayout(new ContextThemeWrapper(
-                ApplicationProvider.getApplicationContext(), R.style.MoneyWalletAppTheme));
-        PeriodDetailSummaryAdapter.ViewHolder holder = adapter.onCreateViewHolder(parent, 0);
+        PeriodDetailSummaryAdapter adapter = adapter(period);
+        PeriodDetailSummaryAdapter.ViewHolder holder = adapter.onCreateViewHolder(parent(), 0);
         adapter.onBindViewHolder(holder, 0);
         return measure(holder.itemView);
+    }
+
+    private static PeriodDetailSummaryAdapter adapter(PeriodMoney... periods) {
+        List<PeriodMoney> list = Arrays.asList(periods);
+        PeriodDetailSummaryData data = new PeriodDetailSummaryData(
+                new Money(), Collections.<com.github.mikephil.charting.data.BarData>emptyList(),
+                Collections.<com.oriondev.moneywallet.model.CurrencyUnit>emptyList(), list);
+        PeriodDetailSummaryAdapter adapter = new PeriodDetailSummaryAdapter(null);
+        adapter.setData(data);
+        return adapter;
+    }
+
+    private static FrameLayout parent() {
+        return new FrameLayout(new ContextThemeWrapper(
+                ApplicationProvider.getApplicationContext(), R.style.MoneyWalletAppTheme));
     }
 
     private View measure(View row) {
