@@ -133,6 +133,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     private static final String TAG_ATTACHMENT_PICKER = "NewEditTransactionActivity::Tag::AttachmentPicker";
 
     private static final String SS_RULES = "NewEditTransactionActivity::SavedState::Rules";
+    private static final String SS_OPEN_CALCULATOR = "NewEditTransactionActivity::SavedState::OpenCalculator";
 
     private TextView mCurrencyTextView;
     private TextView mMoneyTextView;
@@ -164,6 +165,11 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     // It is not carried across a rotation, so a rotated editor treats the category as the user's
     // and leaves it alone, which is the safe direction to fail in
     private boolean mCategoryFilledByRule;
+
+    // set once on a fresh new item with no amount, when the user asked for the keypad to open by
+    // itself. Kept across a rotation only while it is still waiting, for the lock screen. It is
+    // cleared before the keypad opens, so a rotated editor never opens it a second time
+    private boolean mOpenCalculatorOnResume;
 
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
 
@@ -918,6 +924,25 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         // check if the intent contains some predefined value for fields
         if (savedInstanceState == null) {
             fillFieldsFromIntent(getIntent());
+            mOpenCalculatorOnResume = getMode() == Mode.NEW_ITEM && money == 0L && !isFinishing()
+                    && PreferenceManager.isAutoOpenCalculatorEnabled();
+        } else {
+            mOpenCalculatorOnResume = savedInstanceState.getBoolean(SS_OPEN_CALCULATOR);
+        }
+    }
+
+    /**
+     * Opens the keypad here and not from onViewCreated, because the picker is added with a commit
+     * that has not run yet by then. It runs after super.onResume, which is where the lock screen
+     * is started. While that is showing the request is kept, and the resume that follows a
+     * successful unlock opens it.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mOpenCalculatorOnResume && !isActivityLocked()) {
+            mOpenCalculatorOnResume = false;
+            mMoneyPicker.showPicker();
         }
     }
 
@@ -1051,6 +1076,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putSerializable(SS_RULES, mRules);
+        outState.putBoolean(SS_OPEN_CALCULATOR, mOpenCalculatorOnResume);
     }
 
     @Override

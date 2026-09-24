@@ -60,6 +60,14 @@ public abstract class BaseActivity extends ThemedActivity {
         }
     }
 
+    /**
+     * Whether the lock screen is being shown over this activity. Only meaningful from onResume
+     * onwards, after the check above has run.
+     */
+    protected boolean isActivityLocked() {
+        return mActivityLocked;
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE_LOCK_ACTIVITY) {
