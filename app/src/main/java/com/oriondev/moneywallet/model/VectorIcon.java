@@ -88,6 +88,10 @@ public class VectorIcon extends Icon {
         return getDrawableId(context, mResourceName);
     }
 
+    public String getResourceName() {
+        return mResourceName;
+    }
+
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mResourceName);
