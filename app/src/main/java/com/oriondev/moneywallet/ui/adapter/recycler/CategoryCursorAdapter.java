@@ -100,7 +100,7 @@ public class CategoryCursorAdapter extends AbstractCursorAdapter<CategoryCursorA
     }
 
     public void setQuery(String query) {
-        mQuery = query == null ? "" : query.toLowerCase(Locale.getDefault());
+        mQuery = (query == null ? "" : query.trim()).toLowerCase(Locale.getDefault());
         rebuildVisibleRows();
         notifyDataSetChanged();
     }

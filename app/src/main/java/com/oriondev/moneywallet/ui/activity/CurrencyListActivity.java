@@ -173,12 +173,13 @@ public class CurrencyListActivity extends SinglePanelSimpleListActivity implemen
                 Contract.Currency.DECIMALS,
                 Contract.Currency.FAVOURITE
         };
+        String query = mQuery.trim();
         String selection = null;
         String[] selectionArgs = null;
-        if (!mQuery.isEmpty()) {
+        if (!query.isEmpty()) {
             selection = Contract.Currency.NAME + " LIKE '%'||?||'%' OR " +
                     Contract.Currency.ISO + " LIKE '%'||?||'%'";
-            selectionArgs = new String[] {mQuery, mQuery};
+            selectionArgs = new String[] {query, query};
         }
         String sortBy = Contract.Currency.FAVOURITE + " DESC, " + Contract.Currency.NAME + " ASC";
         return new CursorLoader(this, uri, projection, selection, selectionArgs, sortBy);
