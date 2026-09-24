@@ -224,9 +224,6 @@
     <string name="menu_action_import_data">"ഡാറ്റ ഇമ്പോർട്ടുചെയ്യുക"</string>
     <string name="menu_action_export_data">"ഡാറ്റ എക്സ്പോർട്ടുചെയ്യുക"</string>
 
-    <string name="bottom_sheet_icon_picker_title">"ഐക്കൺ വ്യക്തിഗതമാക്കുക"</string>
-    <string name="bottom_sheet_icon_picker_action_select_icon">"ഒരു ഐക്കൺ തിരഞ്ഞെടുക്കുക"</string>
-    <string name="bottom_sheet_icon_picker_action_change_icon">"ഐക്കൺ മാറ്റുക"</string>
     <string name="bottom_sheet_icon_picker_action_remove_icon">"ഐക്കൺ നീക്കംചെയ്യുക"</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">"പശ്ചാത്തല വർണ്ണം മാറ്റുക"</string>
 

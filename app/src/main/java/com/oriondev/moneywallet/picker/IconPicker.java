@@ -30,17 +30,14 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MenuItem;
 import android.widget.EditText;
 
-import com.google.android.material.navigation.NavigationView;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.ColorIcon;
 import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.model.VectorIcon;
 import com.oriondev.moneywallet.ui.activity.IconListActivity;
 import com.oriondev.moneywallet.ui.fragment.dialog.ColorChooserDialog;
-import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.Utils;
 
@@ -172,68 +169,18 @@ public class IconPicker extends Fragment implements ColorChooserDialog.Callback 
     }
 
     /**
-     * This method is responsible to analyze the current icon and detect the possible actions that
-     * the user can make on it.
-     * In details, if the current icon is an instance of:
-     * - {@link ColorIcon} the user can select an icon instead or modify the background color.
-     * - {@link VectorIcon} the user can change the icon or simply remove it.
+     * Opens the icon list. Its menu offers to change the background color of a {@link ColorIcon}
+     * or to remove a {@link VectorIcon}.
      */
     public void showPicker() {
         Activity activity = getActivity();
         if (activity != null) {
-            if (mCurrentIcon instanceof ColorIcon) {
-                ThemedDialog.buildBottomSheet(activity)
-                        .addTitleItem(R.string.bottom_sheet_icon_picker_title)
-                        .addItem(1, R.string.bottom_sheet_icon_picker_action_select_icon, R.drawable.ic_add_24dp)
-                        .addItem(2, R.string.bottom_sheet_icon_picker_action_change_bg_color, R.drawable.ic_format_color_fill_black_24dp)
-                        .setItemClickListener(new NavigationView.OnNavigationItemSelectedListener() {
-
-                            @Override
-                            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                                switch (item.getItemId()) {
-                                    case 1:
-                                        startIconPickerActivity();
-                                        break;
-                                    case 2:
-                                        openColorPicker();
-                                        break;
-                                }
-                                return true;
-                            }
-
-                        })
-                        .createDialog()
-                        .show();
-            } else if (mCurrentIcon instanceof VectorIcon) {
-                ThemedDialog.buildBottomSheet(activity)
-                        .addTitleItem(R.string.bottom_sheet_icon_picker_title)
-                        .addItem(1, R.string.bottom_sheet_icon_picker_action_change_icon, R.drawable.ic_add_24dp)
-                        .addItem(2, R.string.bottom_sheet_icon_picker_action_remove_icon, R.drawable.ic_format_color_fill_black_24dp)
-                        .setItemClickListener(new NavigationView.OnNavigationItemSelectedListener() {
-
-                            @Override
-                            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                                switch (item.getItemId()) {
-                                    case 1:
-                                        startIconPickerActivity();
-                                        break;
-                                    case 2:
-                                        restoreColorIcon();
-                                        break;
-                                }
-                                return true;
-                            }
-
-                        })
-                        .createDialog()
-                        .show();
+            Intent intent = new Intent(activity, IconListActivity.class);
+            if (mCurrentIcon != null) {
+                intent.putExtra(IconListActivity.CURRENT_ICON_TYPE, mCurrentIcon.getType());
             }
+            startActivityForResult(intent, REQUEST_ICON_PICKER);
         }
-    }
-
-    private void startIconPickerActivity() {
-        Intent intent = new Intent(getActivity(), IconListActivity.class);
-        startActivityForResult(intent, REQUEST_ICON_PICKER);
     }
 
     private void openColorPicker() {
@@ -283,9 +230,17 @@ public class IconPicker extends Fragment implements ColorChooserDialog.Callback 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_ICON_PICKER) {
-            if (resultCode == Activity.RESULT_OK) {
-                mCurrentIcon = intent.getParcelableExtra(IconListActivity.RESULT_ICON);
-                fireCallbackSafely();
+            if (resultCode == Activity.RESULT_OK && intent != null) {
+                String action = intent.getStringExtra(IconListActivity.RESULT_ACTION);
+                if (IconListActivity.ACTION_CHANGE_BG_COLOR.equals(action)) {
+                    // The dialog lives here because it calls back the fragment that hosts it.
+                    openColorPicker();
+                } else if (IconListActivity.ACTION_REMOVE_ICON.equals(action)) {
+                    restoreColorIcon();
+                } else {
+                    mCurrentIcon = intent.getParcelableExtra(IconListActivity.RESULT_ICON);
+                    fireCallbackSafely();
+                }
             }
         } else {
             super.onActivityResult(requestCode, resultCode, intent);

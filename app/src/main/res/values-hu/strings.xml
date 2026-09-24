@@ -49,10 +49,7 @@
     <string name="adapter_tax_money">Adó:</string>
     <string name="adapter_used_money">Felhasznált:</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">Háttérszín megváltoztatása</string>
-    <string name="bottom_sheet_icon_picker_action_change_icon">Ikon megváltoztatása</string>
     <string name="bottom_sheet_icon_picker_action_remove_icon">Ikon eltávolítása</string>
-    <string name="bottom_sheet_icon_picker_action_select_icon">Ikon kiválasztása</string>
-    <string name="bottom_sheet_icon_picker_title">Ikon személyre szabása</string>
     <string name="cover_message_backup_external_memory_button">Tovább</string>
     <string name="cover_message_backup_external_memory_title">Az alkalmazás képes csinálni és visszaállítani biztonsági mentést az eszközről.</string>
     <string name="default_category_car_expenses">Autós kiadások</string>

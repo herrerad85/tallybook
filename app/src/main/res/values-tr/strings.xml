@@ -231,9 +231,6 @@
     <string name="menu_action_import_data"> "Verileri içe aktarın" </string>
     <string name="menu_action_export_data"> "Verileri dışa aktar" </string>
 
-    <string name="bottom_sheet_icon_picker_title"> "Simgeyi kişiselleştirin" </string>
-    <string name="bottom_sheet_icon_picker_action_select_icon"> "Bir simge seçin" </string>
-    <string name="bottom_sheet_icon_picker_action_change_icon"> "Simgeyi değiştir" </string>
     <string name="bottom_sheet_icon_picker_action_remove_icon"> "Simgeyi kaldır" </string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color"> "Arka plan rengini değiştir" </string>
 
