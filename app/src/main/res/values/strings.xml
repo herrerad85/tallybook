@@ -559,6 +559,8 @@
     <string name="setting_category_ui_new_transaction">"New transaction"</string>
     <string name="setting_title_ui_auto_open_calculator">"Open the calculator first"</string>
     <string name="setting_summary_ui_auto_open_calculator">"A new transaction starts on the calculator to enter the amount"</string>
+    <string name="setting_title_ui_dot_matrix_icons">"Dot matrix icons"</string>
+    <string name="setting_summary_ui_dot_matrix_icons">"Draw category icons as dots on a round tile instead of the classic style"</string>
     <string name="setting_title_ui_income_color">"Income color"</string>
     <string name="setting_title_ui_expense_color">"Expense color"</string>
     <string name="setting_title_ui_custom_digits">"Display style of digits"</string>

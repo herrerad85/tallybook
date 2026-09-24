@@ -27,6 +27,8 @@ import android.os.Parcelable;
 import androidx.annotation.ColorInt;
 import android.widget.ImageView;
 
+import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.ui.drawable.DotMatrixDrawable;
 import com.oriondev.moneywallet.ui.drawable.TextDrawable;
 import com.oriondev.moneywallet.utils.Utils;
 
@@ -106,6 +108,12 @@ public class ColorIcon extends Icon {
 
     public Drawable getDrawable() {
         int backgroundColor = getColor();
+        if (PreferenceManager.isDotMatrixIconsEnabled()) {
+            Drawable dotMatrix = DotMatrixDrawable.forText(mName, backgroundColor);
+            if (dotMatrix != null) {
+                return dotMatrix;
+            }
+        }
         return TextDrawable.builder()
                 .beginConfig()
                     .width(60)

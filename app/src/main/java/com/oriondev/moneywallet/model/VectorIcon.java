@@ -29,6 +29,8 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.ui.drawable.DotMatrixDrawable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,6 +64,10 @@ public class VectorIcon extends Icon {
 
     @Override
     public Drawable getDrawable(Context context) {
+        Drawable dotMatrix = getDotMatrix(context);
+        if (dotMatrix != null) {
+            return dotMatrix;
+        }
         int drawableId = getDrawableId(context, mResourceName);
         if (drawableId > 0) {
             return ContextCompat.getDrawable(context, drawableId);
@@ -71,6 +77,13 @@ public class VectorIcon extends Icon {
 
     @Override
     public boolean apply(ImageView imageView) {
+        Drawable dotMatrix = getDotMatrix(imageView.getContext());
+        if (dotMatrix != null) {
+            // a row recycled from a classic icon may still have a Glide load in flight
+            Glide.with(imageView).clear(imageView);
+            imageView.setImageDrawable(dotMatrix);
+            return true;
+        }
         int resourceId = getResource(imageView.getContext());
         if (resourceId > 0) {
             Glide.with(imageView)
@@ -81,6 +94,10 @@ public class VectorIcon extends Icon {
         } else {
             return false;
         }
+    }
+
+    private Drawable getDotMatrix(Context context) {
+        return PreferenceManager.isDotMatrixIconsEnabled() ? DotMatrixDrawable.forResource(context, mResourceName) : null;
     }
 
     @DrawableRes

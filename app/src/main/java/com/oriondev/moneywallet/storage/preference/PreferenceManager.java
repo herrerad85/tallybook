@@ -61,6 +61,7 @@ public class PreferenceManager {
     private static final String SHOW_PLUS_MINUS_SYMBOL = "show_plus_minus_symbol";
     private static final String DEBT_FINISHED_ONLY = "debt_finished_only";
     private static final String AUTO_OPEN_CALCULATOR = "auto_open_calculator";
+    private static final String DOT_MATRIX_ICONS = "dot_matrix_icons";
     private static final String DATE_FORMAT = "date_format";
     private static final String FIRST_DAY_OF_WEEK = "first_day_of_week";
     private static final String FIRST_DAY_OF_MONTH = "first_day_of_month";
@@ -239,6 +240,23 @@ public class PreferenceManager {
         mPreferences.edit().putBoolean(AUTO_OPEN_CALCULATOR, enabled).apply();
     }
 
+    public static void setDotMatrixIconsEnabled(boolean enabled) {
+        mPreferences.edit().putBoolean(DOT_MATRIX_ICONS, enabled).apply();
+    }
+
+    /**
+     * Stores the icon style once, on the first start of a version that has the setting. A new
+     * install gets the dot matrix icons and someone upgrading keeps the classic ones they know,
+     * and after this the stored value is only ever changed by the user.
+     *
+     * @param existingUser whether this install already had data before this start.
+     */
+    public static void resolveDotMatrixIcons(boolean existingUser) {
+        if (!mPreferences.contains(DOT_MATRIX_ICONS)) {
+            setDotMatrixIconsEnabled(!existingUser);
+        }
+    }
+
     public static void setCurrentDateFormatIndex(int index) {
         mPreferences.edit().putInt(DATE_FORMAT, index).apply();
     }
@@ -342,6 +360,10 @@ public class PreferenceManager {
 
     public static boolean isAutoOpenCalculatorEnabled() {
         return mPreferences.getBoolean(AUTO_OPEN_CALCULATOR, false);
+    }
+
+    public static boolean isDotMatrixIconsEnabled() {
+        return mPreferences.getBoolean(DOT_MATRIX_ICONS, false);
     }
 
     /**

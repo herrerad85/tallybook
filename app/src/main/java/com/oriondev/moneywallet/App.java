@@ -28,6 +28,7 @@ import androidx.annotation.NonNull;
 import com.oriondev.moneywallet.broadcast.AutoBackupBroadcastReceiver;
 import com.oriondev.moneywallet.broadcast.DailyBroadcastReceiver;
 import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver;
+import com.oriondev.moneywallet.storage.database.SQLDatabaseImporter;
 import com.oriondev.moneywallet.storage.database.SystemCategoryLocalizer;
 import com.oriondev.moneywallet.storage.preference.BackendManager;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
@@ -48,6 +49,10 @@ public class App extends Application {
         super.onCreate();
         mLocales = getResources().getConfiguration().getLocales();
         PreferenceManager.initialize(this);
+        // Before anything below can open the database, since opening it is what creates the file.
+        // The file is the signal and not the first start flag, because shared_prefs is left out of
+        // the backup rules and a ledger restored onto a new phone arrives without the flag.
+        PreferenceManager.resolveDotMatrixIcons(getDatabasePath(SQLDatabaseImporter.DATABASE_NAME).exists());
         BackendManager.initialize(this);
         ThemeEngine.initialize(this);
         CurrencyManager.initialize(this);

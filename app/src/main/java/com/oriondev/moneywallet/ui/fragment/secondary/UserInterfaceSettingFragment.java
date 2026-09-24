@@ -78,6 +78,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     private ThemedListPreference mFirstDayMonthPreference;
     private ThemedListPreference mGroupTypePreference;
     private SwitchPreferenceCompat mAutoOpenCalculatorPreference;
+    private SwitchPreferenceCompat mDotMatrixIconsPreference;
     private ColorPreference mColorPrimaryPreference;
     private ColorPreference mColorAccentPreference;
     private ThemedListPreference mThemeTypePreference;
@@ -101,6 +102,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         mFirstDayMonthPreference = (ThemedListPreference) findPreference("first_day_month");
         mGroupTypePreference = (ThemedListPreference) findPreference("group_type");
         mAutoOpenCalculatorPreference = (SwitchPreferenceCompat) findPreference("auto_open_calculator");
+        mDotMatrixIconsPreference = (SwitchPreferenceCompat) findPreference("dot_matrix_icons");
         mColorPrimaryPreference = (ColorPreference) findPreference("theme_color_primary");
         mColorAccentPreference = (ColorPreference) findPreference("theme_color_accent");
         mThemeTypePreference = (ThemedListPreference) findPreference("theme_type");
@@ -203,6 +205,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         setupCurrentGroupType();
         setupCurrentThemeType();
         mAutoOpenCalculatorPreference.setChecked(PreferenceManager.isAutoOpenCalculatorEnabled());
+        mDotMatrixIconsPreference.setChecked(PreferenceManager.isDotMatrixIconsEnabled());
         // attach listeners to each preference to get notified when a value changes
         mCustomDigitsSetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
@@ -282,6 +285,19 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 PreferenceManager.setAutoOpenCalculatorEnabled((Boolean) newValue);
+                return true;
+            }
+
+        });
+        mDotMatrixIconsPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                PreferenceManager.setDotMatrixIconsEnabled((Boolean) newValue);
+                // Every list builds its icons again when its section is opened, but the drawer
+                // around this screen keeps the wallet icons it already has. Recreating the
+                // activity rebuilds it the way a rotation does and comes back to this screen.
+                requireActivity().recreate();
                 return true;
             }
 

@@ -839,6 +839,15 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         applyNavigationDrawerTheme(theme);
     }
 
+    /**
+     * The theme setup rebuilds the wallet menu but not the header, so the header is bound again.
+     */
+    @Override
+    public void onThemeChanged(ITheme theme) {
+        super.onThemeChanged(theme);
+        bindHeader();
+    }
+
     private void applyNavigationDrawerTheme(ITheme theme) {
         applyNavigationDrawerHeaderTheme(theme);
         applyNavigationDrawerBodyTheme(theme);
