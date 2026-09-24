@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.adapter.recycler;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,10 +30,12 @@ import android.widget.TextView;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.model.IconGroup;
+import com.oriondev.moneywallet.model.VectorIcon;
 import com.oriondev.moneywallet.utils.IconLoader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by andrea on 12/08/18.
@@ -48,6 +51,9 @@ public class IconAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final List<IconGroup> mIconGroups = new ArrayList<>();
     private final List<ItemWrapper> mItems = new ArrayList<>();
+
+    private String mHeadingQuery = "";
+    private String mNameQuery = "";
 
     public IconAdapter(Controller controller) {
         mController = controller;
@@ -86,29 +92,61 @@ public class IconAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setIconGroups(List<IconGroup> iconGroups) {
         mIconGroups.clear();
+        mIconGroups.addAll(iconGroups);
+        rebuildItems();
+    }
+
+    public void setQuery(String query) {
+        String trimmed = query == null ? "" : query.trim();
+        // group headings are translated, icon file names are always English
+        mHeadingQuery = trimmed.toLowerCase(Locale.getDefault());
+        mNameQuery = trimmed.toLowerCase(Locale.ROOT);
+        rebuildItems();
+    }
+
+    private void rebuildItems() {
         mItems.clear();
-        for (int i = 0; i < iconGroups.size(); i++) {
-            IconGroup group = iconGroups.get(i);
-            mItems.add(new ItemWrapper(i, INDEX_HEADER));
-            mIconGroups.add(group);
+        for (int i = 0; i < mIconGroups.size(); i++) {
+            IconGroup group = mIconGroups.get(i);
+            // a group whose heading matches keeps every icon, otherwise only the icons whose name matches
+            String groupName = group.getGroupName();
+            boolean keepAll = groupName != null && groupName.toLowerCase(Locale.getDefault()).contains(mHeadingQuery);
+            List<ItemWrapper> icons = new ArrayList<>();
             for (int j = 0; j < group.size(); j++) {
-                mItems.add(new ItemWrapper(i, j));
+                if (keepAll || matches(group.getGroupIcons().get(j))) {
+                    icons.add(new ItemWrapper(i, j));
+                }
+            }
+            if (!icons.isEmpty()) {
+                mItems.add(new ItemWrapper(i, INDEX_HEADER));
+                mItems.addAll(icons);
             }
         }
         notifyDataSetChanged();
+    }
+
+    private boolean matches(Icon icon) {
+        if (icon instanceof VectorIcon) {
+            // ic_icon_dart_board_2 is searched as "dart board 2"
+            String name = ((VectorIcon) icon).getResourceName();
+            return name.replace("ic_icon_", "").replace('_', ' ').toLowerCase(Locale.ROOT).contains(mNameQuery);
+        }
+        return false;
     }
 
     public boolean isHeader(int position) {
         return mItems.get(position).mItemIndex == INDEX_HEADER;
     }
 
-    private String getHeaderTextAt(int position) {
+    @VisibleForTesting
+    String getHeaderTextAt(int position) {
         ItemWrapper itemWrapper = mItems.get(position);
         IconGroup group = mIconGroups.get(itemWrapper.mGroupIndex);
         return group.getGroupName();
     }
 
-    private Icon getIconAt(int position) {
+    @VisibleForTesting
+    Icon getIconAt(int position) {
         ItemWrapper itemWrapper = mItems.get(position);
         IconGroup group = mIconGroups.get(itemWrapper.mGroupIndex);
         return group.getGroupIcons().get(itemWrapper.mItemIndex);
@@ -149,6 +187,10 @@ public class IconAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         public void onClick(View v) {
             if (mController != null) {
                 int position = getAdapterPosition();
+                // the list is rebuilt on every keystroke and a tap can land before the next layout
+                if (position == RecyclerView.NO_POSITION) {
+                    return;
+                }
                 Icon icon = getIconAt(position);
                 if (icon != null) {
                     mController.onIconClick(icon);

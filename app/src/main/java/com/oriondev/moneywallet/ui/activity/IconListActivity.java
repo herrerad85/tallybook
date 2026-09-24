@@ -21,7 +21,10 @@ package com.oriondev.moneywallet.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -30,6 +33,7 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.background.IconGroupLoader;
@@ -52,10 +56,68 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
 
     private static final int ICON_WIDTH_DP = 64;
 
+    private static final String SS_QUERY = "IconListActivity::SavedState::Query";
+
     private AdvancedRecyclerView mAdvancedRecyclerView;
     private IconAdapter mAdapter;
 
     private int mIconSpan;
+
+    private String mQuery = "";
+
+    private boolean mLoading;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // The adapter takes the query when the panel is built, so a restored query has to be in
+        // the field already by then.
+        if (savedInstanceState != null) {
+            mQuery = savedInstanceState.getString(SS_QUERY, "");
+        }
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(SS_QUERY, mQuery);
+    }
+
+    @Override
+    protected void onToolbarReady(Toolbar toolbar) {
+        toolbar.setTitle(null);
+        View view = getLayoutInflater().inflate(R.layout.layout_toolbar_search_view, toolbar, true);
+        EditText searchEditText = view.findViewById(R.id.search_edit_text);
+        searchEditText.setText(mQuery);
+        searchEditText.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString();
+                // The view state restore after a rotation sets the same text again and would
+                // filter for nothing.
+                if (!query.equals(mQuery)) {
+                    mQuery = query;
+                    mAdapter.setQuery(mQuery);
+                    // while the loader runs its own state is showing and onLoadFinished settles it
+                    if (!mLoading) {
+                        updateListState();
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+
+        });
+    }
 
     @Override
     protected void onCreatePanelView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
@@ -74,6 +136,7 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
         mAdvancedRecyclerView.setLayoutManager(gridLayoutManager);
         mAdvancedRecyclerView.setEmptyText(R.string.message_no_icon_found);
         mAdapter = new IconAdapter(this);
+        mAdapter.setQuery(mQuery);
         mAdvancedRecyclerView.setAdapter(mAdapter);
         mAdvancedRecyclerView.setOnRefreshListener(this);
         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.LOADING);
@@ -100,6 +163,7 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
 
     @Override
     protected void onViewCreated(Bundle savedInstanceState) {
+        mLoading = true;
         getSupportLoaderManager().restartLoader(ICON_LOADER_ID, null, this);
     }
 
@@ -123,6 +187,7 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
 
     @Override
     public void onRefresh() {
+        mLoading = true;
         getSupportLoaderManager().restartLoader(ICON_LOADER_ID, null, this);
         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.REFRESHING);
     }
@@ -135,8 +200,13 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
 
     @Override
     public void onLoadFinished(@NonNull Loader<List<IconGroup>> loader, List<IconGroup> iconGroups) {
+        mLoading = false;
         mAdapter.setIconGroups(iconGroups);
-        if (iconGroups != null && iconGroups.size() > 0) {
+        updateListState();
+    }
+
+    private void updateListState() {
+        if (mAdapter.getItemCount() > 0) {
             mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.READY);
         } else {
             mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.EMPTY);
