@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -76,6 +77,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     private ThemedListPreference mFirstDayWeekPreference;
     private ThemedListPreference mFirstDayMonthPreference;
     private ThemedListPreference mGroupTypePreference;
+    private SwitchPreferenceCompat mAutoOpenCalculatorPreference;
     private ColorPreference mColorPrimaryPreference;
     private ColorPreference mColorAccentPreference;
     private ThemedListPreference mThemeTypePreference;
@@ -98,6 +100,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         mFirstDayWeekPreference = (ThemedListPreference) findPreference("first_day_week");
         mFirstDayMonthPreference = (ThemedListPreference) findPreference("first_day_month");
         mGroupTypePreference = (ThemedListPreference) findPreference("group_type");
+        mAutoOpenCalculatorPreference = (SwitchPreferenceCompat) findPreference("auto_open_calculator");
         mColorPrimaryPreference = (ColorPreference) findPreference("theme_color_primary");
         mColorAccentPreference = (ColorPreference) findPreference("theme_color_accent");
         mThemeTypePreference = (ThemedListPreference) findPreference("theme_type");
@@ -199,6 +202,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         setupCurrentFirstDayOfMonth();
         setupCurrentGroupType();
         setupCurrentThemeType();
+        mAutoOpenCalculatorPreference.setChecked(PreferenceManager.isAutoOpenCalculatorEnabled());
         // attach listeners to each preference to get notified when a value changes
         mCustomDigitsSetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
@@ -270,6 +274,15 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                 PreferenceManager.setCurrentGroupType(Group.fromType(groupType));
                 setupCurrentGroupType();
                 return false;
+            }
+
+        });
+        mAutoOpenCalculatorPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                PreferenceManager.setAutoOpenCalculatorEnabled((Boolean) newValue);
+                return true;
             }
 
         });

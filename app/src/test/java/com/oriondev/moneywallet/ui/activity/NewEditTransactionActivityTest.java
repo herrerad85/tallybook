@@ -19,6 +19,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Attachment;
 import com.oriondev.moneywallet.model.Category;
+import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.model.Person;
 import com.oriondev.moneywallet.picker.AttachmentPicker;
 import com.oriondev.moneywallet.picker.CategoryPicker;
@@ -45,7 +46,9 @@ import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 /**
  * Drives the real editor on the JVM, against the real content provider over a fresh database,
@@ -809,6 +812,96 @@ public class NewEditTransactionActivityTest {
     }
 
     // intents
+
+    @Test
+    public void aNewTransactionOpensTheCalculatorOnlyWhenTheSettingIsOn() {
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> assertNull(shadowOf(activity).getNextStartedActivity()));
+        }
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> assertStartedCalculator(activity));
+        }
+    }
+
+    @Test
+    public void theCalculatorOpensOnceAndNotAgainAfterARecreate() {
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> assertStartedCalculator(activity));
+            scenario.recreate();
+            scenario.onActivity(activity -> assertNull(shadowOf(activity).getNextStartedActivity()));
+        }
+    }
+
+    @Test
+    public void theCalculatorDoesNotOpenAgainWhenTheEditorComesBack() {
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> assertStartedCalculator(activity));
+            // the calculator closing brings the editor back through onResume
+            scenario.moveToState(Lifecycle.State.STARTED);
+            scenario.moveToState(Lifecycle.State.RESUMED);
+            scenario.onActivity(activity -> assertNull(shadowOf(activity).getNextStartedActivity()));
+        }
+    }
+
+    @Test
+    public void theCalculatorStaysClosedWhenTheAmountIsAlreadyThere() {
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        long debt = insertPartlyPaidDebt();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(
+                debtIntent(debt, NewEditTransactionActivity.DEBT_PAY_IN_FULL))) {
+            scenario.onActivity(activity -> assertNull(shadowOf(activity).getNextStartedActivity()));
+        }
+        long empty = insertSavingRow(0L, daysFromNow(-1), Contract.CategoryTag.SAVING_DEPOSIT, true, mEuroWallet);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(editIntent(empty))) {
+            scenario.onActivity(activity -> assertNull(shadowOf(activity).getNextStartedActivity()));
+        }
+    }
+
+    @Test
+    public void theCalculatorStillOpensAfterTheUnlockWhenTheEditorWasRecreatedUnderTheLock() {
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        PreferenceManager.setCurrentLockMode(LockMode.PIN);
+        PreferenceManager.setLastLockTime(0L);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> assertEquals(LockActivity.class.getName(),
+                    shadowOf(activity).getNextStartedActivity().getComponent().getClassName()));
+            scenario.recreate();
+            scenario.onActivity(activity -> assertEquals(LockActivity.class.getName(),
+                    shadowOf(activity).getNextStartedActivity().getComponent().getClassName()));
+            PreferenceManager.setLastLockTime(System.currentTimeMillis());
+            scenario.moveToState(Lifecycle.State.STARTED);
+            scenario.moveToState(Lifecycle.State.RESUMED);
+            scenario.onActivity(activity -> assertStartedCalculator(activity));
+        }
+    }
+
+    @Test
+    public void theCalculatorWaitsForTheLockScreenAndOpensAfterTheUnlock() {
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        PreferenceManager.setCurrentLockMode(LockMode.PIN);
+        PreferenceManager.setLastLockTime(0L);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                Intent lock = shadowOf(activity).getNextStartedActivity();
+                assertEquals(LockActivity.class.getName(), lock.getComponent().getClassName());
+                assertNull(shadowOf(activity).getNextStartedActivity());
+            });
+            // what the lock screen records on a correct pin, then the editor comes back
+            PreferenceManager.setLastLockTime(System.currentTimeMillis());
+            scenario.moveToState(Lifecycle.State.STARTED);
+            scenario.moveToState(Lifecycle.State.RESUMED);
+            scenario.onActivity(activity -> assertStartedCalculator(activity));
+        }
+    }
+
+    private static void assertStartedCalculator(NewEditTransactionActivity activity) {
+        Intent started = shadowOf(activity).getNextStartedActivity();
+        assertEquals(CalculatorActivity.class.getName(), started.getComponent().getClassName());
+        assertNull(shadowOf(activity).getNextStartedActivity());
+    }
 
     private static Intent newItemIntent() {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(),
