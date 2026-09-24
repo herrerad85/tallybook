@@ -95,7 +95,7 @@
       The boxes are wrapped in a container of their own, and it is load bearing. ConstraintLayout
       measures a wrap content child against the whole row, never against the region its Flow was
       given, and the Flow lays a child out at whatever width came back. A box wider than the
-      region would be drawn under the fold arrow and the report arrow, which paint over it, and
+      region would be drawn under the fold arrow and the report icon, which paint over it, and
       it would ellipsize only at the far edge of the row. Bounding the container bounds the boxes,
       so a wide one ellipsizes where a reader can see it.
 
@@ -239,7 +239,7 @@
 
     <!--
       The fold arrow. Its gone margin puts its glyph the same 16dp from the edge of the row that
-      the report arrow's keeps. The height is fixed at 48dp because a height taken from the parent
+      the report icon's keeps. The height is fixed at 48dp because a height taken from the parent
       constraints excluded the paddings and came out at 37.7dp on a device. The row's 8dp of top
       and bottom space is carried as margins on the text, not as padding on the row, since a fixed
       size child taller than a padded wrap content box grows the box instead of centering in it.
@@ -267,7 +267,7 @@
         android:layout_marginRight="@dimen/material_component_lists_header_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_header_end_margin"
         android:contentDescription="@string/description_show_period_report"
-        android:src="@drawable/ic_chevron_right_black_24dp"
+        android:src="@drawable/ic_equalizer_24dp"
         app:layout_constraintTop_toTopOf="@+id/period_toggle_image_view"
         app:layout_constraintBottom_toBottomOf="@+id/period_toggle_image_view"
         app:layout_constraintEnd_toEndOf="parent"

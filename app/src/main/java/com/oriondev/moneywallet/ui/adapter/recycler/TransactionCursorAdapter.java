@@ -107,7 +107,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
 
     /**
      * Three of the four screens using this adapter answer a header click with an empty method, so
-     * the arrow and the click both wait to be asked for. A screen that shows the arrow has to
+     * the report icon and the click both wait to be asked for. A screen that shows the icon has to
      * open something from onHeaderClick, and one that does not must not show it.
      */
     public TransactionCursorAdapter(ActionListener actionListener, boolean headerOpensReport) {
@@ -518,7 +518,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
                 }
 
             });
-            // the arrow is a ThemedImageView, which tints itself from the row it sits on and
+            // the report icon is a ThemedImageView, which tints itself from the row it sits on and
             // repaints when the mode changes. A theme attribute in the vector would resolve
             // against the xml theme, which is the light one whatever mode the user picked
             itemView.findViewById(R.id.report_image_view)
