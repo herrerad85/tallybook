@@ -237,9 +237,6 @@
     <string name="menu_action_import_data">"Εισαγωγή δεδομένων"</string>
     <string name="menu_action_export_data">"Εξαγωγή δεδομένων"</string>
 
-    <string name="bottom_sheet_icon_picker_title">"Εξατομοίκευση εικονιδίου"</string>
-    <string name="bottom_sheet_icon_picker_action_select_icon">"Επέλεξε εικονίδιο"</string>
-    <string name="bottom_sheet_icon_picker_action_change_icon">"Άλλαξε το εικονίδιο"</string>
     <string name="bottom_sheet_icon_picker_action_remove_icon">"Αφαίρεσε το εικονίδιο"</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">"Άλλαξε το χρώμα του φόντου"</string>
 

@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.loader.app.LoaderManager;
@@ -31,6 +32,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -50,7 +53,12 @@ import java.util.List;
  */
 public class IconListActivity extends SinglePanelActivity implements SwipeRefreshLayout.OnRefreshListener, LoaderManager.LoaderCallbacks<List<IconGroup>>, IconAdapter.Controller {
 
+    public static final String CURRENT_ICON_TYPE = "IconListActivity::Arguments::CurrentIconType";
     public static final String RESULT_ICON = "IconListActivity::Result::SelectedIcon";
+    public static final String RESULT_ACTION = "IconListActivity::Result::Action";
+
+    public static final String ACTION_CHANGE_BG_COLOR = "IconListActivity::Action::ChangeBackgroundColor";
+    public static final String ACTION_REMOVE_ICON = "IconListActivity::Action::RemoveIcon";
 
     private static final int ICON_LOADER_ID = 46;
 
@@ -175,6 +183,39 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
     @Override
     protected boolean isFloatingActionButtonEnabled() {
         return false;
+    }
+
+    @Override
+    @MenuRes
+    protected int onInflateMenu() {
+        return R.menu.menu_icon_list;
+    }
+
+    @Override
+    protected void onMenuCreated(Menu menu) {
+        Icon.Type type = (Icon.Type) getIntent().getSerializableExtra(CURRENT_ICON_TYPE);
+        menu.findItem(R.id.action_change_bg_color).setVisible(type == Icon.Type.COLOR);
+        menu.findItem(R.id.action_remove_icon).setVisible(type == Icon.Type.RESOURCE);
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_change_bg_color) {
+            finishWithAction(ACTION_CHANGE_BG_COLOR);
+            return true;
+        } else if (itemId == R.id.action_remove_icon) {
+            finishWithAction(ACTION_REMOVE_ICON);
+            return true;
+        }
+        return false;
+    }
+
+    private void finishWithAction(String action) {
+        Intent intent = new Intent();
+        intent.putExtra(RESULT_ACTION, action);
+        setResult(RESULT_OK, intent);
+        finish();
     }
 
     @Override

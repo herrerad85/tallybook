@@ -217,9 +217,6 @@
     <string name="menu_action_service_auto_backup">"پشتیبان گیری خودکار"</string>
     <string name="menu_action_select_folder">"پوشه را انتخاب کنید"</string>
 
-    <string name="bottom_sheet_icon_picker_title">"آیکون را شخصی کنید"</string>
-    <string name="bottom_sheet_icon_picker_action_select_icon">"یک آیکون را انتخاب کنید"</string>
-    <string name="bottom_sheet_icon_picker_action_change_icon">"آیکون را تغییر دهید"</string>
     <string name="bottom_sheet_icon_picker_action_remove_icon">"حذف آیکون"</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">"تغییر رنک پس‌زمینه"</string>
 

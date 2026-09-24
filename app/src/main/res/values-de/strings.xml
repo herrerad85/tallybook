@@ -234,10 +234,7 @@
     <string name="adapter_used_money">Verwendet:</string>
     <string name="app_name">Tallybook</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">Hintergrundfarbe ändern</string>
-    <string name="bottom_sheet_icon_picker_action_change_icon">Symbol ändern</string>
     <string name="bottom_sheet_icon_picker_action_remove_icon">Symbol entfernen</string>
-    <string name="bottom_sheet_icon_picker_action_select_icon">Symbol auswählen</string>
-    <string name="bottom_sheet_icon_picker_title">Symbol personalisieren</string>
     <string name="cover_message_backup_external_memory_button">Weiter</string>
     <string name="cover_message_backup_external_memory_title">Die Anwendung kann die Sicherungen direkt auf dem externen Speicher des Gerätes erstellen und abrufen</string>
     <string name="description_attachment_icon">Anhang</string>

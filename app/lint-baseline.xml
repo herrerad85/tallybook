@@ -14803,39 +14803,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;bottom_sheet_icon_picker_title&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;bottom_sheet_icon_picker_title&quot;>&quot;Personalize the icon&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="263"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;bottom_sheet_icon_picker_action_select_icon&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;bottom_sheet_icon_picker_action_select_icon&quot;>&quot;Select an icon&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="264"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;bottom_sheet_icon_picker_action_change_icon&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;bottom_sheet_icon_picker_action_change_icon&quot;>&quot;Change the icon&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="265"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;bottom_sheet_icon_picker_action_remove_icon&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
         errorLine1="    &lt;string name=&quot;bottom_sheet_icon_picker_action_remove_icon&quot;>&quot;Remove the icon&quot;&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">

@@ -237,9 +237,6 @@
     <string name="menu_action_import_data">"Importa dati"</string>
     <string name="menu_action_export_data">"Esporta dati"</string>
 
-    <string name="bottom_sheet_icon_picker_title">"Personalizza icona"</string>
-    <string name="bottom_sheet_icon_picker_action_select_icon">"Seleziona un icona"</string>
-    <string name="bottom_sheet_icon_picker_action_change_icon">"Cambia icona"</string>
     <string name="bottom_sheet_icon_picker_action_remove_icon">"Rimuovi icona"</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">"Cambia il colore dello sfondo"</string>
 
