@@ -128,7 +128,8 @@ public class BackupFileAdapter extends RecyclerView.Adapter<BackupFileAdapter.Vi
             if (file2.isDirectory()) {
                 return 1;
             } else {
-                return file1.getName().compareTo(file2.getName());
+                // a backup name carries the time it was made, so reverse name order lists the newest first
+                return file2.getName().compareTo(file1.getName());
             }
         }
     }
