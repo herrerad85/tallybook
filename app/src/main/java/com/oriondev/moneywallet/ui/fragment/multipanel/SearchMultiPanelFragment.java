@@ -115,7 +115,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mQuery = s.toString();
+                mQuery = s.toString().trim();
                 recreateLoader();
             }
 
@@ -250,12 +250,40 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
 
     private String[] getSelectionArguments(String query) {
         List<String> arguments = new ArrayList<>();
-        for (boolean flag : mSearchFlags) {
-            if (flag) {
-                arguments.add(query);
+        for (int i = 0; i < mSearchFlags.length; i++) {
+            if (mSearchFlags[i]) {
+                arguments.add(i == 3 ? moneySearchText(query) : query);
             }
         }
         return arguments.toArray(new String[arguments.size()]);
+    }
+
+    /**
+     * Money is stored as a whole number of minor units, so separators, symbols, signs and leading
+     * zeros in the query can never match it. A query with digits and no letters is searched by
+     * its digits alone, unless it reads as a date, a time or a reference, which an amount never
+     * does.
+     */
+    static String moneySearchText(String query) {
+        StringBuilder digits = new StringBuilder();
+        boolean hasDigit = false;
+        for (int i = 0; i < query.length(); i += Character.charCount(query.codePointAt(i))) {
+            int c = query.codePointAt(i);
+            if (Character.isLetter(c) || c == ':' || c == '/' || (c == '-' && hasDigit)) {
+                return query;
+            }
+            if (Character.isDigit(c)) {
+                hasDigit = true;
+                int digit = Character.digit(c, 10);
+                if (digit != 0 || digits.length() != 0) {
+                    digits.append(digit);
+                }
+            }
+        }
+        if (!hasDigit) {
+            return query;
+        }
+        return digits.length() != 0 ? digits.toString() : "0";
     }
 
     @Override
