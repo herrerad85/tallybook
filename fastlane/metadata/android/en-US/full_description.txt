@@ -6,7 +6,7 @@ Tallybook is a separate app from MoneyWallet. It uses its own application id, so
 
 Features:
 
-* Multiple wallets, each with its own balance
+* Multiple wallets, each with its own balance, which you can put in named groups
 * Income and expense transactions with categories and notes
 * Select several transactions and delete them together or move them to another wallet or category
 * Automatic categories, so a rule fills the category in from what you type

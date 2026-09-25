@@ -1,0 +1,3 @@
+Fixes: if a Local folder backup lost access to its folder, for example after the app holding it was removed, tapping OK to disconnect froze Tallybook and the prompt came back on every visit. Local folder now offers Change folder in place of Disconnect.
+
+New: put wallets in named groups in the drawer. A dot matrix icon style. Search the icon picker, and find a transaction by typing its amount. A setting to open the calculator first. Backups list newest first.

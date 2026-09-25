@@ -20,6 +20,21 @@
 
 <changelog>
 
+    <version versionName="1.11.0" versionDate="Sep 24, 2026">
+        <change>If a Local folder backup lost access to its folder, for example after the app holding it was removed, tapping OK to disconnect froze Tallybook and the prompt came back on every visit. Disconnecting now works.</change>
+        <change>[b]New![/b] Local folder offers Change folder in place of Disconnect. Automatic backup moves to the new folder with it.</change>
+        <change>[b]New![/b] Wallets can go in named groups. Set a group in the wallet editor, and the drawer lists each group under a heading with its subtotal.</change>
+        <change>[b]New![/b] A dot matrix icon style, under Settings, User interface.</change>
+        <change>[b]New![/b] Search the icon picker from the toolbar.</change>
+        <change>[b]New![/b] Transaction search finds an amount typed as 6.47, 6,47 or with a currency symbol.</change>
+        <change>[b]New![/b] A setting under Settings, User interface opens the calculator first on a new transaction.</change>
+        <change>Tapping the icon in an editor opens the icon list directly. Changing the color or removing the icon moved to its menu.</change>
+        <change>Backups are listed newest first.</change>
+        <change>A figure holding several currencies shows one currency per line on the month header, the period summary and Overview, where it used to be cut off.</change>
+        <change>The transactions list header shows a chart icon for the period report in place of a chevron.</change>
+        <change>A space after the search text, which keyboards add after a suggested word, no longer empties the category and currency searches or the transaction search.</change>
+    </version>
+
     <version versionName="1.10.0" versionDate="Sep 21, 2026">
         <change>[b]New![/b] A category can be filled in from the description. Settings, Utility, Automatic categories pairs the text to look for with the category to use.</change>
         <change>[b]New![/b] Import a CSV file another app wrote by mapping its columns, so a bank statement or an export from another finance app can come in.</change>
