@@ -17,8 +17,6 @@
     <string name="menu_people">"ആളുകൾ"</string>
     <string name="menu_converter">"പരിവർത്തന"</string>
     <string name="menu_calculator">"കാൽക്കുലേറ്റർ"</string>
-    <string name="menu_search_atm">"എടിഎമ്മിൽ തിരയുക"</string>
-    <string name="menu_search_bank">"തിരയൽ ബാങ്ക്"</string>
     <string name="menu_setting">"ക്രമീകരണങ്ങൾ"</string>
     <string name="menu_about">"കുറിച്ച്"</string>
 
@@ -117,8 +115,6 @@
     <string name="hint_directory">"ഡയറക്ടറി"</string>
     <string name="hint_navigate_up">"നാവിഗേറ്റുചെയ്യുക"</string>
     <string name="hint_password">"Password"</string>
-    <string name="hint_atm_name">"എടിഎം നാമം"</string>
-    <string name="hint_bank_name">"ബാങ്കിന്റെ പേര്"</string>
     <string name="hint_attachments">"അറ്റാച്ചുമെന്റുകൾ"</string>
     <string name="hint_operation_in_progress">"പുരോഗതിയിൽ…"</string>
     <string name="hint_search_something">"എന്തെങ്കിലും തിരയുക"</string>
@@ -335,8 +331,6 @@
     <string name="title_success">"വിജയം"</string>
     <string name="title_failed">"പരാജയപ്പെട്ടു"</string>
     <string name="title_error">"പിശക്"</string>
-    <string name="title_atm_search">"എടിഎം തിരയുക"</string>
-    <string name="title_bank_search">"തിരയൽ ബാങ്ക്"</string>
     <string name="title_changelog">"ചേഞ്ച്ലോഗ്"</string>
     <string name="title_licenses">"ലൈസൻസുകൾ"</string>
     <string name="title_debt_insert_master_transaction">"നന്നായി"</string>

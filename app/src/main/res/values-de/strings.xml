@@ -30,8 +30,6 @@
     <string name="menu_people">"Personen"</string>
     <string name="menu_converter">"Währungsumrechner"</string>
     <string name="menu_calculator">"Taschenrechner"</string>
-    <string name="menu_search_atm">"Suche Bankautomaten"</string>
-    <string name="menu_search_bank">"Suche Banken"</string>
     <string name="menu_setting">"Einstellungen"</string>
     <string name="menu_about">"Über"</string>
     <!-- Transactions -->
@@ -102,8 +100,6 @@
     <string name="hint_place">"Ort"</string>
     <string name="hint_note">"Notiz"</string>
     <string name="hint_tax">"Transaktionssteuer"</string>
-    <string name="hint_atm_name">"Name des Bankautomaten"</string>
-    <string name="hint_bank_name">"Name der Bank"</string>
     <string name="hint_show_currency_symbol">"Währungssymbol anzeigen"</string>
     <string name="hint_group_digits">"Ziffern gruppieren"</string>
     <string name="hint_round_decimals">"Dezimalstellen runden"</string>
@@ -451,13 +447,11 @@
     <string name="title_data_exporting">Exportiere Daten</string>
     <string name="title_currency_exchange_rate">Wechselkurs</string>
     <string name="title_changelog">Änderungsprotokoll</string>
-    <string name="title_bank_search">Bank suchen</string>
     <string name="title_backup_restoring">Sicherung wiederherstellen</string>
     <string name="title_backup_restore">Sicherung wiederherstellen</string>
     <string name="title_backup_creation">Sicherung erstellen</string>
     <string name="title_backup_create">Sicherung erstellen</string>
     <string name="title_backend_create_folder">Neuer Ordner</string>
-    <string name="title_atm_search">Bankautomat suchen</string>
     <string name="title_activity_wallet_sort">Geldbörsen sortieren</string>
     <string name="title_activity_search_transaction">Suche</string>
     <string name="title_activity_new_transfer">Neuer Transfer</string>

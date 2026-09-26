@@ -27,8 +27,6 @@
     <string name="menu_event">"Događaji"</string>
     <string name="menu_converter">"Pretvarač"</string>
     <string name="menu_calculator">"Kalkulator"</string>
-    <string name="menu_search_atm">"Traži bankomat"</string>
-    <string name="menu_search_bank">"Traži banku"</string>
     <string name="menu_setting">"Postavke"</string>
     <string name="menu_about">"O aplikaciji"</string>
     <!-- Transactions -->
@@ -69,8 +67,6 @@
     <string name="hint_place">"Mjesto"</string>
     <string name="hint_note">"Bilješka"</string>
     <string name="hint_tax">"Porez na transakciju"</string>
-    <string name="hint_atm_name">"Naziv bankomata"</string>
-    <string name="hint_bank_name">"Naziv banke"</string>
     <string name="hint_show_currency_symbol">"Prikaži oznaku valute"</string>
     <string name="hint_group_digits">"Grupiraj znamenke"</string>
     <string name="hint_round_decimals">"Zaokruži decimale"</string>

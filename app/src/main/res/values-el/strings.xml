@@ -33,8 +33,6 @@
     <string name="menu_people">"Άτομα"</string>
     <string name="menu_converter">"Μετατροπέας"</string>
     <string name="menu_calculator">"Αριθμομηχανή"</string>
-    <string name="menu_search_atm">"Αναζήτηση ΑΤΜ"</string>
-    <string name="menu_search_bank">"Αναζήτηση τράπεζας"</string>
     <string name="menu_setting">"Ρυθμίσεις"</string>
     <string name="menu_about">"Σχετικά"</string>
 
@@ -133,8 +131,6 @@
     <string name="hint_directory">"Φάκελος"</string>
     <string name="hint_navigate_up">"Πλοήγηση προς τα επάνω"</string>
     <string name="hint_password">"Κωδικός"</string>
-    <string name="hint_atm_name">"Όνομα ATM"</string>
-    <string name="hint_bank_name">"Όνομα τράπεζας"</string>
     <string name="hint_attachments">"Επισυνημμένα"</string>
     <string name="hint_operation_in_progress">"Σε εξέλιξη.."</string>
     <string name="hint_search_something">"Αναζητήστε κάτι"</string>
@@ -349,8 +345,6 @@
     <string name="title_success">"Επιτυχία"</string>
     <string name="title_failed">"Αποτυχία"</string>
     <string name="title_error">"Σφάλμα"</string>
-    <string name="title_atm_search">"Αναζήτηση ATM"</string>
-    <string name="title_bank_search">"Αναζήτηση τράπεζας"</string>
     <string name="title_changelog">"Ιστορικό αλλαγών"</string>
     <string name="title_licenses">"Άδειες"</string>
     <string name="title_debt_insert_master_transaction">"Πολύ καλά"</string>

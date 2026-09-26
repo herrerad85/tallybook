@@ -27,8 +27,6 @@
     <string name="menu_event">"События"</string>
     <string name="menu_converter">"Конвертер"</string>
     <string name="menu_calculator">"Калькулятор"</string>
-    <string name="menu_search_atm">"Поиск банкоматов"</string>
-    <string name="menu_search_bank">"Поиск банка"</string>
     <string name="menu_setting">"Настройки"</string>
     <string name="menu_about">"О программе"</string>
     <!-- Transactions -->
@@ -69,8 +67,6 @@
     <string name="hint_place">"Место"</string>
     <string name="hint_note">"Заметка"</string>
     <string name="hint_tax">"Налог на операцию"</string>
-    <string name="hint_atm_name">"Имя банкомата"</string>
-    <string name="hint_bank_name">"Имя банка"</string>
     <string name="hint_show_currency_symbol">"Показать значок валюты"</string>
     <string name="hint_group_digits">"Отделять порядки"</string>
     <string name="hint_round_decimals">"Округлять"</string>

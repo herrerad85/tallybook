@@ -27,8 +27,6 @@
     <string name="menu_event">"Udalosti"</string>
     <string name="menu_converter">"Konvertor"</string>
     <string name="menu_calculator">"Kalkulačka"</string>
-    <string name="menu_search_atm">"Hľadať bankomat"</string>
-    <string name="menu_search_bank">"Hľadať banku"</string>
     <string name="menu_setting">"Nastavenia"</string>
     <string name="menu_about">"O aplikácii"</string>
     <!-- Transactions -->
@@ -69,8 +67,6 @@
     <string name="hint_place">"Miesto"</string>
     <string name="hint_note">"Poznámka"</string>
     <string name="hint_tax">"Daň z transakcie"</string>
-    <string name="hint_atm_name">"Názov bankomatu"</string>
-    <string name="hint_bank_name">"Názov banky"</string>
     <string name="hint_show_currency_symbol">"Zobraziť symbol meny"</string>
     <string name="hint_group_digits">"Zoskupenie číslic"</string>
     <string name="hint_round_decimals">"Zaokrúhlenie desatinných miest"</string>

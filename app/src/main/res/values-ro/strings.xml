@@ -27,8 +27,6 @@
     <string name="menu_event">"Evenimente"</string>
     <string name="menu_converter">"Convertizor"</string>
     <string name="menu_calculator">"Calculator"</string>
-    <string name="menu_search_atm">"Caută Atm"</string>
-    <string name="menu_search_bank">"Caută Bancă"</string>
     <string name="menu_setting">"Setări"</string>
     <string name="menu_about">"Despre"</string>
     <!-- Transactions -->
@@ -65,8 +63,6 @@
     <string name="hint_place">"Loc"</string>
     <string name="hint_note">"Notă"</string>
     <string name="hint_tax">"Taxă tranzacție"</string>
-    <string name="hint_atm_name">"Numele Atm-ului"</string>
-    <string name="hint_bank_name">"Numele Băncii"</string>
     <string name="hint_show_currency_symbol">"Afișați simbolul monedei"</string>
     <string name="hint_round_decimals">"Rotunjește zecimalele"</string>
     <string name="total_wallet_name">"Total"</string>

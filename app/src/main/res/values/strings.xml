@@ -33,8 +33,6 @@
     <string name="menu_people">"People"</string>
     <string name="menu_converter">"Converter"</string>
     <string name="menu_calculator">"Calculator"</string>
-    <string name="menu_search_atm">"Search atm"</string>
-    <string name="menu_search_bank">"Search bank"</string>
     <string name="menu_setting">"Settings"</string>
     <string name="menu_about">"About"</string>
 
@@ -149,8 +147,6 @@
     <string name="hint_directory">"Directory"</string>
     <string name="hint_navigate_up">"Navigate up"</string>
     <string name="hint_password">"Password"</string>
-    <string name="hint_atm_name">"ATM name"</string>
-    <string name="hint_bank_name">"Bank name"</string>
     <string name="hint_attachments">"Attachments"</string>
     <string name="hint_operation_in_progress">"In progress…"</string>
     <string name="hint_search_something">"Search something"</string>
@@ -422,8 +418,6 @@
     <string name="title_failed">"Failed"</string>
     <string name="title_error">"Error"</string>
     <string name="error_saving_withdraw_over_balance">"You cannot withdraw more than %1$s from this saving."</string>
-    <string name="title_atm_search">"Search ATM"</string>
-    <string name="title_bank_search">"Search bank"</string>
     <string name="title_changelog">"Changelog"</string>
     <string name="title_licenses">"Licenses"</string>
     <string name="title_debt_insert_master_transaction">"Well done"</string>

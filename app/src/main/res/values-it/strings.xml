@@ -33,8 +33,6 @@
     <string name="menu_people">"Persone"</string>
     <string name="menu_converter">"Convertitore"</string>
     <string name="menu_calculator">"Calcolatrice"</string>
-    <string name="menu_search_atm">"Cerca atm"</string>
-    <string name="menu_search_bank">"Cerca banca"</string>
     <string name="menu_setting">"Impostazioni"</string>
     <string name="menu_about">"Informazioni"</string>
 
@@ -133,8 +131,6 @@
     <string name="hint_directory">"Cartella"</string>
     <string name="hint_navigate_up">"Vai verso l'alto"</string>
     <string name="hint_password">"Password"</string>
-    <string name="hint_atm_name">"Nome ATM"</string>
-    <string name="hint_bank_name">"Nome Banca"</string>
     <string name="hint_attachments">"Allegato"</string>
     <string name="hint_operation_in_progress">"In corso…"</string>
     <string name="hint_search_something">"Cerca qualcosa"</string>
@@ -348,8 +344,6 @@
     <string name="title_success">"Successo"</string>
     <string name="title_failed">"Fallito"</string>
     <string name="title_error">"Errore"</string>
-    <string name="title_atm_search">"Cerca ATM"</string>
-    <string name="title_bank_search">"Cerca banca"</string>
     <string name="title_changelog">"Changelog"</string>
     <string name="title_licenses">"Licenze"</string>
     <string name="title_debt_insert_master_transaction">"Ben fatto"</string>
