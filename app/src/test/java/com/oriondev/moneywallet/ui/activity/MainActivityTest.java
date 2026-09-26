@@ -48,7 +48,10 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -78,6 +81,7 @@ public class MainActivityTest {
         TestDatabases.useFreshDatabase(context);
         mResolver = context.getContentResolver();
         PreferenceManager.setCurrentWallet(context, PreferenceManager.NO_CURRENT_WALLET);
+        PreferenceManager.setHiddenDrawerEntries(Collections.<String>emptySet());
         // named against their order, so a list sorted by name instead of by index shows
         mFirstWallet = insertWallet("Cash", 0, 0L, true, false);
         mSecondWallet = insertWallet("Bank", 1, 0L, true, false);
@@ -622,6 +626,66 @@ public class MainActivityTest {
                 }
             });
         }
+    }
+
+    @Test
+    public void aHiddenEntryIsLeftOutOfTheDrawer() {
+        hide(String.valueOf(MainActivity.ID_SECTION_BUDGETS), String.valueOf(MainActivity.ID_SECTION_CALCULATOR));
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                Menu menu = drawer(activity).getMenu();
+                assertNull(menu.findItem(MainActivity.ID_SECTION_BUDGETS));
+                assertNull(menu.findItem(MainActivity.ID_SECTION_CALCULATOR));
+                assertNotNull(menu.findItem(MainActivity.ID_SECTION_TRANSACTIONS));
+                assertNotNull(menu.findItem(MainActivity.ID_SECTION_SETTING));
+                assertNotNull(menu.findItem(MainActivity.ID_SECTION_ABOUT));
+            });
+        }
+    }
+
+    /**
+     * The header arrow sets every entry of a group visible when it hides the wallet list, so an
+     * entry that was added and then hidden would come back here.
+     */
+    @Test
+    public void aHiddenEntryStaysOutAfterTheWalletListIsShownAndHidden() {
+        hide(String.valueOf(MainActivity.ID_SECTION_BUDGETS));
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                Menu menu = drawer(activity).getMenu();
+                assertFalse(isShown(menu, MainActivity.ID_SECTION_BUDGETS));
+                View header = activity.findViewById(R.id.navigation_drawer_header);
+                header.performClick();
+                assertTrue(menu.findItem(walletItem(mFirstWallet)).isVisible());
+                header.performClick();
+                assertTrue(menu.findItem(MainActivity.ID_SECTION_TRANSACTIONS).isVisible());
+                assertFalse(isShown(menu, MainActivity.ID_SECTION_BUDGETS));
+            });
+        }
+    }
+
+    @Test
+    public void transactionsAndSettingsCannotBeHidden() {
+        hide("unknown", String.valueOf(MainActivity.ID_SECTION_TRANSACTIONS), String.valueOf(MainActivity.ID_SECTION_SETTING));
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                Menu menu = drawer(activity).getMenu();
+                assertNotNull(menu.findItem(MainActivity.ID_SECTION_TRANSACTIONS));
+                assertNotNull(menu.findItem(MainActivity.ID_SECTION_SETTING));
+            });
+        }
+    }
+
+    private static boolean isShown(Menu menu, int id) {
+        MenuItem item = menu.findItem(id);
+        return item != null && item.isVisible();
+    }
+
+    private static void hide(String... ids) {
+        Set<String> hidden = new HashSet<>();
+        Collections.addAll(hidden, ids);
+        PreferenceManager.setHiddenDrawerEntries(hidden);
     }
 
     /**
