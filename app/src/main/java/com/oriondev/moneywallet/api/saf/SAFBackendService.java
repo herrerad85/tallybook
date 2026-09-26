@@ -14,6 +14,7 @@ import android.util.Log;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.api.AbstractBackendServiceDelegate;
 import com.oriondev.moneywallet.api.BackendServiceFactory;
+import com.oriondev.moneywallet.model.IFile;
 import com.oriondev.moneywallet.model.SAFFile;
 import com.oriondev.moneywallet.storage.preference.BackendManager;
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
@@ -26,6 +27,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
+
+import java.util.Objects;
 
 /**
  * Backend service used to access files over the android storage access framework.
@@ -165,6 +168,23 @@ public class SAFBackendService extends AbstractBackendServiceDelegate {
         } catch (SecurityException e) {
             Log.w("SAFBackendService", "No permission held on the replaced folder", e);
         }
+    }
+
+    /**
+     * True for a Local folder file that does not lie in the folder connected now, which is what
+     * a disconnect or a replaced folder leaves behind in the auto backup settings. Its permission
+     * is gone, so a backup there can only fail. Every other file is false. Compares the decoded
+     * tree ids, since a provider may encode one differently from how the platform rebuilds it.
+     */
+    public static boolean isOutsideCurrentFolder(Context context, IFile file) {
+        if (!(file instanceof SAFFile)) {
+            return false;
+        }
+        Uri uri = ((SAFFile) file).getUri();
+        Uri root = getUri(context);
+        return root == null || !DocumentsContract.isTreeUri(uri)
+                || !Objects.equals(root.getAuthority(), uri.getAuthority())
+                || !DocumentsContract.getTreeDocumentId(root).equals(DocumentsContract.getTreeDocumentId(uri));
     }
 
     /**

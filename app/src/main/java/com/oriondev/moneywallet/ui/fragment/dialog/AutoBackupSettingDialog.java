@@ -42,6 +42,7 @@ import android.widget.Toast;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.api.BackendServiceFactory;
+import com.oriondev.moneywallet.api.saf.SAFBackendService;
 import com.oriondev.moneywallet.broadcast.AutoBackupBroadcastReceiver;
 import com.oriondev.moneywallet.model.IFile;
 import com.oriondev.moneywallet.storage.preference.BackendManager;
@@ -185,6 +186,9 @@ public class AutoBackupSettingDialog extends DialogFragment {
             mFolder = BackendServiceFactory.getFile(mBackendId, BackendManager.getAutoBackupFolder(mBackendId));
             mPasswordEditText.setText(BackendManager.getAutoBackupPassword(mBackendId));
         }
+        if (SAFBackendService.isOutsideCurrentFolder(activity, mFolder)) {
+            mFolder = null;
+        }
         onProgressChanged(mOffsetSeekBar.getProgress());
         onFolderChanged();
         onServiceEnabledChanged();
@@ -279,6 +283,11 @@ public class AutoBackupSettingDialog extends DialogFragment {
      * the sweep asks for the same file, gets null, and reports a failed backup instead.
      */
     private boolean onSaveSetting() {
+        // the Local folder can be disconnected while this dialog is open
+        if (SAFBackendService.isOutsideCurrentFolder(requireContext(), mFolder)) {
+            mFolder = null;
+            onFolderChanged();
+        }
         if (mServiceEnabledSwitchCompat.isChecked() && mFolder == null) {
             Toast.makeText(getContext(), R.string.message_auto_backup_folder_required, Toast.LENGTH_LONG).show();
             return false;
