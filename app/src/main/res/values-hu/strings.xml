@@ -137,14 +137,12 @@
     <string name="help_verify_created_sequence_failed">A minta nem egyezik, csinálj újat</string>
     <string name="hint_address">Cím</string>
     <string name="hint_address_unknown">Ismeretlen cím</string>
-    <string name="hint_atm_name">ATM név</string>
     <string name="hint_attachments">Csatolmányok</string>
     <string name="hint_auto_backup_enabled">Engedélyezve</string>
     <string name="hint_auto_backup_every_n_hours">Minden %d órában</string>
     <string name="hint_auto_backup_folder">Mappa</string>
     <string name="hint_auto_backup_only_if_data_changed">Csak ha az adat változott</string>
     <string name="hint_auto_backup_wifi_only">Csak Wifi hálózaton</string>
-    <string name="hint_bank_name">Bank név</string>
     <string name="hint_category">Kategória</string>
     <string name="hint_confirmed">Visszaigazolva</string>
     <string name="hint_currency">Pénznem</string>
@@ -284,8 +282,6 @@
     <string name="menu_saving">Megtakarítások</string>
     <string name="menu_saving_tab_completed">Befejezett</string>
     <string name="menu_saving_tab_running">Aktív</string>
-    <string name="menu_search_atm">ATM kereső</string>
-    <string name="menu_search_bank">Bank kereső</string>
     <string name="menu_setting">Beállítások</string>
     <string name="menu_transaction">Tranzakciók</string>
     <string name="menu_transaction_tab_transactions">Tranzakciók</string>
@@ -567,13 +563,11 @@
     <string name="title_activity_new_wallet">Új pénztárca</string>
     <string name="title_activity_search_transaction">Keresés</string>
     <string name="title_activity_wallet_sort">Pénztárcák rendezése</string>
-    <string name="title_atm_search">ATM kereső</string>
     <string name="title_backend_create_folder">Új könyvtár</string>
     <string name="title_backup_create">Biztonsági mentés készítése</string>
     <string name="title_backup_creation">Biztonsági mentés készítése folyamatban</string>
     <string name="title_backup_restore">Biztonsági mentés visszaállítása</string>
     <string name="title_backup_restoring">Biztonsági mentés visszaállítása folyamatban</string>
-    <string name="title_bank_search">Bank kereső</string>
     <string name="title_changelog">Változások listája</string>
     <string name="title_currency_exchange_rate">Árfolyam</string>
     <string name="title_data_exporting">Adat mentése folyamatban</string>

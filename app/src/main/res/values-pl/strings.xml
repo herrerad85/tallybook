@@ -31,8 +31,6 @@
     <string name="menu_people">"Ludzie"</string>
     <string name="menu_converter">"Konwerter"</string>
     <string name="menu_calculator">"Kalkulator"</string>
-    <string name="menu_search_atm">"Wyszukaj bankomat"</string>
-    <string name="menu_search_bank">"Wyszukaj bank"</string>
     <string name="menu_setting">"Ustawienia"</string>
     <string name="menu_about">"O aplikacji"</string>
 
@@ -131,8 +129,6 @@
     <string name="hint_directory">"Scierzka"</string>
     <string name="hint_navigate_up">"Nawiguj w górę"</string>
     <string name="hint_password">"Hasło"</string>
-    <string name="hint_atm_name">"Nazwa bankomatu"</string>
-    <string name="hint_bank_name">"Nazwa banku"</string>
     <string name="hint_attachments">"Załączniki"</string>
     <string name="hint_operation_in_progress">"W trakcie…"</string>
     <string name="hint_search_something">"Wyszukaj coś"</string>
@@ -349,8 +345,6 @@
     <string name="title_success">"Sukces"</string>
     <string name="title_failed">"Niepowodzenie"</string>
     <string name="title_error">"Błąd"</string>
-    <string name="title_atm_search">"Wyszukaj bankomat"</string>
-    <string name="title_bank_search">"Wyszukaj bank"</string>
     <string name="title_changelog">"Dziennik zmian"</string>
     <string name="title_licenses">"Licencje"</string>
     <string name="title_debt_insert_master_transaction">"Dobra robota"</string>

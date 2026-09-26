@@ -33,8 +33,6 @@
     <string name="menu_people">"افراد"</string>
     <string name="menu_converter">"مبدل"</string>
     <string name="menu_calculator">"ماشین حساب"</string>
-    <string name="menu_search_atm">"جستجوی خودپرداز"</string>
-    <string name="menu_search_bank">"جستجوی بانک"</string>
     <string name="menu_setting">"تنظیمات"</string>
     <string name="menu_about">"درباره"</string>
 
@@ -132,8 +130,6 @@
     <string name="hint_directory">"دایرکتوری"</string>
     <string name="hint_navigate_up">"حرکت به بالا"</string>
     <string name="hint_password">"گذرواژه"</string>
-    <string name="hint_atm_name">"خودپرداز نام"</string>
-    <string name="hint_bank_name">"نام بانک"</string>
     <string name="hint_attachments">"پیوست‌ها"</string>
     <string name="hint_operation_in_progress">"در جریان …"</string>
     <string name="hint_search_something">"چیزی را جستجو کنید"</string>
@@ -321,8 +317,6 @@
     <string name="title_success">"موفقیت"</string>
     <string name="title_failed">"ناموفق"</string>
     <string name="title_error">"خطا"</string>
-    <string name="title_atm_search">"جستجو خودپرداز"</string>
-    <string name="title_bank_search">"جستجو بانک"</string>
     <string name="title_changelog">"تغییرات"</string>
     <string name="title_licenses">"مجوزها"</string>
     <string name="title_debt_insert_master_transaction">"آفرین"</string>

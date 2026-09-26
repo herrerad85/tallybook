@@ -31,8 +31,6 @@
     <string name="menu_people">"Pessoas"</string>
     <string name="menu_converter">"Conversor"</string>
     <string name="menu_calculator">"Calculadora"</string>
-    <string name="menu_search_atm">"Buscar caixas eletrônicos"</string>
-    <string name="menu_search_bank">"Buscar bancos"</string>
     <string name="menu_setting">"Configurações"</string>
     <string name="menu_about">"Informação"</string>
 
@@ -131,8 +129,6 @@
     <string name="hint_directory">"Diretório"</string>
     <string name="hint_navigate_up">"Pra cima"</string>
     <string name="hint_password">"Senha"</string>
-    <string name="hint_atm_name">"Nome do caixa eletrônico"</string>
-    <string name="hint_bank_name">"Nome do banco"</string>
     <string name="hint_attachments">"Anexos"</string>
     <string name="hint_operation_in_progress">"Em progresso…"</string>
     <string name="hint_search_something">"Procurando algo"</string>
@@ -350,8 +346,6 @@
     <string name="title_success">"Sucesso"</string>
     <string name="title_failed">"Falhou"</string>
     <string name="title_error">"Erro"</string>
-    <string name="title_atm_search">"Procurar caixa eletrônico"</string>
-    <string name="title_bank_search">"Procurar banco"</string>
     <string name="title_changelog">"Changelog"</string>
     <string name="title_licenses">"Licenças"</string>
     <string name="title_debt_insert_master_transaction">"Bem feito"</string>

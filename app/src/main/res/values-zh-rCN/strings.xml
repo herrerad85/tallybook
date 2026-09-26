@@ -27,8 +27,6 @@
     <string name="menu_event">"事件"</string>
     <string name="menu_converter">"汇率换算"</string>
     <string name="menu_calculator">"计算器"</string>
-    <string name="menu_search_atm">"搜索自动取款机"</string>
-    <string name="menu_search_bank">"搜索银行"</string>
     <string name="menu_setting">"设置"</string>
     <string name="menu_about">"关于"</string>
     <!-- Transactions -->
@@ -69,8 +67,6 @@
     <string name="hint_place">"地点"</string>
     <string name="hint_note">"笔记"</string>
     <string name="hint_tax">"交易税"</string>
-    <string name="hint_atm_name">"自动取款机名称"</string>
-    <string name="hint_bank_name">"银行名称"</string>
     <string name="hint_show_currency_symbol">"显示货币符号"</string>
     <string name="hint_group_digits">"千位分隔符"</string>
     <string name="hint_round_decimals">"省略小数"</string>

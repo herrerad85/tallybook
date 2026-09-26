@@ -15804,28 +15804,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;title_atm_search&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;title_atm_search&quot;>&quot;Search ATM&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="392"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_bank_search&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;title_bank_search&quot;>&quot;Search bank&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="393"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;title_changelog&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
         errorLine1="    &lt;string name=&quot;title_changelog&quot;>&quot;Changelog&quot;&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">

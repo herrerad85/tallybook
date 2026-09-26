@@ -33,8 +33,6 @@
     <string name="menu_people"> "Kişiler" </string>
     <string name="menu_converter"> "Dönüştürücü" </string>
     <string name="menu_calculator"> "Hesap Makinesi" </string>
-    <string name="menu_search_atm"> "Arama atm" </string>
-    <string name="menu_search_bank"> "Arama banka" </string>
     <string name="menu_setting"> "Ayarlar" </string>
     <string name="menu_about"> "Hakkında" </string>
 
@@ -132,8 +130,6 @@
     <string name="hint_directory"> "Dizin" </string>
     <string name="hint_navigate_up"> "Gezin" "</string>
     <string name="hint_password"> "Şifre" </string>
-    <string name="hint_atm_name"> "ATM adı" </string>
-    <string name="hint_bank_name"> "Banka adı" </string>
     <string name="hint_attachments"> "Ekler" </string>
     <string name="hint_operation_in_progress"> "Devam ediyor…" </string>
     <string name="hint_search_something"> "Bir şey arayın" </string>
@@ -340,8 +336,6 @@
     <string name="title_success"> "Başarı" </string>
     <string name="title_failed"> "Başarısız" </string>
     <string name="title_error"> "Hata" </string>
-    <string name="title_atm_search"> "ATM’yi Ara" </string>
-    <string name="title_bank_search"> "Arama bankası" </string>
     <string name="title_changelog"> "Değişiklikler" </string>
     <string name="title_licenses"> "Lisanslar" </string>
     <string name="title_debt_insert_master_transaction"> "Aferin" </string>

@@ -27,8 +27,6 @@
     <string name="menu_event">"Esdeveniments"</string>
     <string name="menu_converter">"Convertidor"</string>
     <string name="menu_calculator">"Calculadora"</string>
-    <string name="menu_search_atm">"Cerca caixer automàtic"</string>
-    <string name="menu_search_bank">"Cercar banc"</string>
     <string name="menu_setting">"Paràmetres"</string>
     <string name="menu_about">"Quant a"</string>
     <!-- Transactions -->
@@ -69,8 +67,6 @@
     <string name="hint_place">"Lloc"</string>
     <string name="hint_note">"Nota"</string>
     <string name="hint_tax">"Impostos de la transacció"</string>
-    <string name="hint_atm_name">"Nom del caixer automàtic"</string>
-    <string name="hint_bank_name">"Nom del banc"</string>
     <string name="hint_show_currency_symbol">"Mostrar símbol de la moneda"</string>
     <string name="hint_group_digits">"Agrupar dígits"</string>
     <string name="hint_round_decimals">"Arrodonir decimals"</string>

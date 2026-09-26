@@ -19,7 +19,6 @@
 
 package com.oriondev.moneywallet.ui.activity;
 
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -36,13 +35,10 @@ import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.widget.EditText;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -131,8 +127,6 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     /*package-local*/ static final int ID_SECTION_PEOPLE = 10;
     /*package-local*/ static final int ID_SECTION_CALCULATOR = 11;
     /*package-local*/ static final int ID_SECTION_CONVERTER = 12;
-    /*package-local*/ static final int ID_SECTION_ATM = 13;
-    /*package-local*/ static final int ID_SECTION_BANK = 14;
     /*package-local*/ static final int ID_SECTION_SETTING = 15;
     /*package-local*/ static final int ID_SECTION_ABOUT = 17;
 
@@ -272,8 +266,6 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         menu.setGroupCheckable(GROUP_SECTIONS, true, false);
         addEntry(menu, GROUP_TOOLS, ID_SECTION_CALCULATOR, R.drawable.ic_calculator_24dp, R.string.menu_calculator);
         addEntry(menu, GROUP_TOOLS, ID_SECTION_CONVERTER, R.drawable.ic_converter_24dp, R.string.menu_converter);
-        addEntry(menu, GROUP_TOOLS, ID_SECTION_ATM, R.drawable.ic_credit_card_24dp, R.string.menu_search_atm);
-        addEntry(menu, GROUP_TOOLS, ID_SECTION_BANK, R.drawable.ic_account_balance_24dp, R.string.menu_search_bank);
         addEntry(menu, GROUP_SETTINGS, ID_SECTION_SETTING, R.drawable.ic_settings_24dp, R.string.menu_setting).setCheckable(true);
         addEntry(menu, GROUP_SETTINGS, ID_SECTION_ABOUT, R.drawable.ic_info_outline_24dp, R.string.menu_about);
         mHeaderView = mNavigationView.getHeaderView(0);
@@ -455,12 +447,6 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
             case ID_SECTION_CONVERTER:
                 startActivity(new Intent(this, CurrencyConverterActivity.class));
                 break;
-            case ID_SECTION_ATM:
-                showAtmSearchDialog();
-                break;
-            case ID_SECTION_BANK:
-                showBankSearchDialog();
-                break;
             case ID_SECTION_ABOUT:
                 startActivity(new Intent(this, AboutActivity.class));
                 break;
@@ -507,64 +493,6 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
             mNavigationView.setCheckedItem(mCurrentSelection);
         }
         mWalletListArrowView.animate().rotation(show ? 180 : 0).start();
-    }
-
-    private void showAtmSearchDialog() {
-        View inputView = LayoutInflater.from(this).inflate(R.layout.dialog_input, null);
-        final EditText inputEditText = inputView.findViewById(R.id.dialog_input_edit_text);
-        inputEditText.setHint(R.string.hint_atm_name);
-        AlertDialog dialog = ThemedDialog.buildMaterialDialog(this)
-                .setTitle(R.string.title_atm_search)
-                .setView(inputView)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Uri mapUri = Uri.parse("geo:0,0?q=atm " + inputEditText.getText());
-                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, mapUri);
-                        try {
-                            startActivity(mapIntent);
-                        } catch (ActivityNotFoundException ignore) {
-                            showActivityNotFoundDialog();
-                        }
-                    }
-
-                })
-                .create();
-        ThemedDialog.showWithInput(dialog, inputEditText, false);
-    }
-
-    private void showBankSearchDialog() {
-        View inputView = LayoutInflater.from(this).inflate(R.layout.dialog_input, null);
-        final EditText inputEditText = inputView.findViewById(R.id.dialog_input_edit_text);
-        inputEditText.setHint(R.string.hint_bank_name);
-        AlertDialog dialog = ThemedDialog.buildMaterialDialog(this)
-                .setTitle(R.string.title_bank_search)
-                .setView(inputView)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Uri mapUri = Uri.parse("geo:0,0?q=bank " + inputEditText.getText());
-                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, mapUri);
-                        try {
-                            startActivity(mapIntent);
-                        } catch (ActivityNotFoundException ignore) {
-                            showActivityNotFoundDialog();
-                        }
-                    }
-
-                })
-                .create();
-        ThemedDialog.showWithInput(dialog, inputEditText, false);
-    }
-
-    private void showActivityNotFoundDialog() {
-        ThemedDialog.buildMaterialDialog(this)
-                .setTitle(R.string.title_error)
-                .setMessage(R.string.message_error_activity_not_found)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
     }
 
     /**

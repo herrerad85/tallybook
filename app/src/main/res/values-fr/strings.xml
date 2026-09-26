@@ -33,8 +33,6 @@
     <string name="menu_people">"Personnes"</string>
     <string name="menu_converter">"Convertisseur"</string>
     <string name="menu_calculator">"Calculatrice"</string>
-    <string name="menu_search_atm">"Rechercher DAB"</string>
-    <string name="menu_search_bank">"Rechercher banque"</string>
     <string name="menu_setting">"Paramètres"</string>
     <string name="menu_about">"À propos"</string>
 
@@ -133,8 +131,6 @@
     <string name="hint_directory">"Dossier"</string>
     <string name="hint_navigate_up">"Remonter"</string>
     <string name="hint_password">"Mot de passe"</string>
-    <string name="hint_atm_name">"Nom du Distributeur automatique de billets"</string>
-    <string name="hint_bank_name">"Nom de la banque"</string>
     <string name="hint_attachments">"Pièces jointes"</string>
     <string name="hint_operation_in_progress">"En cours…"</string>
     <string name="hint_search_something">"Rechercher quelque chose"</string>
@@ -348,8 +344,6 @@
     <string name="title_success">Succès</string>
     <string name="title_failed">Échec</string>
     <string name="title_error">Erreur</string>
-    <string name="title_atm_search">"Recherche DAB"</string>
-    <string name="title_bank_search">"Recherche banque"</string>
     <string name="title_changelog">"Changelog"</string>
     <string name="title_licenses">"Licenses"</string>
     <string name="title_debt_insert_master_transaction">"Bien joué"</string>

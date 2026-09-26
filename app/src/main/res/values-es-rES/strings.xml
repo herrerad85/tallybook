@@ -27,8 +27,6 @@
     <string name="menu_event">"Eventos"</string>
     <string name="menu_converter">"Convertidor"</string>
     <string name="menu_calculator">"Calculadora"</string>
-    <string name="menu_search_atm">"Buscar cajero automático"</string>
-    <string name="menu_search_bank">"Buscar banco"</string>
     <string name="menu_setting">"Configuración"</string>
     <string name="menu_about">"Acerca de"</string>
     <!-- Transactions -->
@@ -69,8 +67,6 @@
     <string name="hint_place">"Lugar"</string>
     <string name="hint_note">"Nota"</string>
     <string name="hint_tax">"Impuestos de la transacción "</string>
-    <string name="hint_atm_name">"Nombre del cajero automático"</string>
-    <string name="hint_bank_name">"Nombre del banco"</string>
     <string name="hint_show_currency_symbol">"Mostrar símbolo de moneda"</string>
     <string name="hint_group_digits">"Agrupar dígitos"</string>
     <string name="hint_round_decimals">"Redondear decimales"</string>
