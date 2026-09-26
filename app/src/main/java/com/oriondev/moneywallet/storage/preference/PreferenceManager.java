@@ -78,6 +78,7 @@ public class PreferenceManager {
     private static final String MAP_TILE_SERVER = "map_tile_server";
     private static final String COLLAPSED_CATEGORIES = "collapsed_categories";
     private static final String COLLAPSED_PERIODS = "collapsed_periods";
+    private static final String HIDDEN_DRAWER_ENTRIES = "hidden_drawer_entries";
 
     private static final String LAST_DATA_CHANGE_TIME = "last_data_change_time";
 
@@ -178,6 +179,18 @@ public class PreferenceManager {
 
     public static void setCollapsedPeriods(Set<String> periodKeys) {
         mPreferences.edit().putStringSet(COLLAPSED_PERIODS, periodKeys).apply();
+    }
+
+    /**
+     * @return the ids, as text, of the drawer entries the user has hidden. The hidden ones are
+     *          stored and not the shown ones, so an entry added in a later version shows.
+     */
+    public static Set<String> getHiddenDrawerEntries() {
+        return new HashSet<>(mPreferences.getStringSet(HIDDEN_DRAWER_ENTRIES, Collections.<String>emptySet()));
+    }
+
+    public static void setHiddenDrawerEntries(Set<String> entryIds) {
+        mPreferences.edit().putStringSet(HIDDEN_DRAWER_ENTRIES, entryIds).apply();
     }
 
     public static void setCurrentWallet(Context context, long walletId) {

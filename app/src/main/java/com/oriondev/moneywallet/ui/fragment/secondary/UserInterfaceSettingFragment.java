@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.ui.fragment.secondary;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -39,6 +40,7 @@ import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Group;
 import com.oriondev.moneywallet.picker.ColorPicker;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.ui.activity.MainActivity;
 import com.oriondev.moneywallet.utils.SystemBars;
 import com.oriondev.moneywallet.ui.fragment.dialog.CustomDigitSetupDialog;
 import com.oriondev.moneywallet.ui.preference.ColorPreference;
@@ -52,7 +54,9 @@ import java.text.DateFormatSymbols;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Created by andrea on 07/03/18.
@@ -77,6 +81,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     private ThemedListPreference mFirstDayWeekPreference;
     private ThemedListPreference mFirstDayMonthPreference;
     private ThemedListPreference mGroupTypePreference;
+    private Preference mDrawerEntriesPreference;
     private SwitchPreferenceCompat mAutoOpenCalculatorPreference;
     private SwitchPreferenceCompat mDotMatrixIconsPreference;
     private ColorPreference mColorPrimaryPreference;
@@ -101,6 +106,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         mFirstDayWeekPreference = (ThemedListPreference) findPreference("first_day_week");
         mFirstDayMonthPreference = (ThemedListPreference) findPreference("first_day_month");
         mGroupTypePreference = (ThemedListPreference) findPreference("group_type");
+        mDrawerEntriesPreference = findPreference("drawer_entries");
         mAutoOpenCalculatorPreference = (SwitchPreferenceCompat) findPreference("auto_open_calculator");
         mDotMatrixIconsPreference = (SwitchPreferenceCompat) findPreference("dot_matrix_icons");
         mColorPrimaryPreference = (ColorPreference) findPreference("theme_color_primary");
@@ -280,6 +286,15 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
             }
 
         });
+        mDrawerEntriesPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                showDrawerEntriesDialog();
+                return false;
+            }
+
+        });
         mAutoOpenCalculatorPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
             @Override
@@ -334,6 +349,50 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         SystemBars.pad(recyclerView,
                 false, getResources().getBoolean(R.bool.secondary_panel_fills_window), true);
         return recyclerView;
+    }
+
+    /**
+     * A checked entry is one the drawer shows. The drawer is only built when the activity is
+     * created, so a change recreates it the way the dot matrix setting does.
+     */
+    private void showDrawerEntriesDialog() {
+        final Set<String> hidden = PreferenceManager.getHiddenDrawerEntries();
+        final int[] ids = MainActivity.HIDEABLE_ENTRY_IDS;
+        String[] items = new String[ids.length];
+        final boolean[] shown = new boolean[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            items[i] = getString(MainActivity.HIDEABLE_ENTRY_NAMES[i]);
+            shown[i] = !hidden.contains(String.valueOf(ids[i]));
+        }
+        ThemedDialog.buildMaterialDialog(requireActivity())
+                .setTitle(R.string.setting_title_ui_drawer_entries)
+                .setMultiChoiceItems(items, shown, new DialogInterface.OnMultiChoiceClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        shown[which] = isChecked;
+                    }
+
+                })
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Set<String> nextHidden = new HashSet<>();
+                        for (int i = 0; i < ids.length; i++) {
+                            if (!shown[i]) {
+                                nextHidden.add(String.valueOf(ids[i]));
+                            }
+                        }
+                        if (!nextHidden.equals(hidden)) {
+                            PreferenceManager.setHiddenDrawerEntries(nextHidden);
+                            requireActivity().recreate();
+                        }
+                    }
+
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void setupCurrentDateFormat() {

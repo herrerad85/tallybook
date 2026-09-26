@@ -562,6 +562,7 @@
     <string name="setting_title_ui_first_day_week">"First day of week"</string>
     <string name="setting_title_ui_first_day_month">"First day of month"</string>
     <string name="setting_title_ui_group_type">"Grouping"</string>
+    <string name="setting_title_ui_drawer_entries">"Drawer entries"</string>
     <string name="setting_title_ui_theme_color_primary">"Color primary"</string>
     <string name="setting_title_ui_theme_color_accent">"Color accent"</string>
     <string name="setting_title_ui_theme_type">"Type"</string>

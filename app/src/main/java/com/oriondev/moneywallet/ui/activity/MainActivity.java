@@ -99,6 +99,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class MainActivity extends BaseActivity implements DrawerController, NavigationView.OnNavigationItemSelectedListener, LoaderManager.LoaderCallbacks<Cursor>  {
@@ -114,6 +115,8 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     private static final int GROUP_SETTINGS = 3;
     private static final int GROUP_WALLETS = 4;
 
+    // The hidden drawer entries are stored in preferences by these values, so never renumber
+    // or reuse one.
     /*package-local*/ static final int ID_SECTION_TRANSACTIONS = 0;
     /*package-local*/ static final int ID_SECTION_CATEGORIES = 1;
     /*package-local*/ static final int ID_SECTION_OVERVIEW = 2;
@@ -129,6 +132,21 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     /*package-local*/ static final int ID_SECTION_CONVERTER = 12;
     /*package-local*/ static final int ID_SECTION_SETTING = 15;
     /*package-local*/ static final int ID_SECTION_ABOUT = 17;
+
+    // The entries the user can hide, in drawer order. Transactions is left out because it is the
+    // start screen and where back lands, and Settings because it is the way to show them again.
+    public static final int[] HIDEABLE_ENTRY_IDS = {
+            ID_SECTION_CATEGORIES, ID_SECTION_OVERVIEW, ID_SECTION_DEBTS, ID_SECTION_BUDGETS,
+            ID_SECTION_SAVINGS, ID_SECTION_EVENTS, ID_SECTION_RECURRENCES, ID_SECTION_MODELS,
+            ID_SECTION_PLACES, ID_SECTION_PEOPLE, ID_SECTION_CALCULATOR, ID_SECTION_CONVERTER,
+            ID_SECTION_ABOUT
+    };
+    public static final int[] HIDEABLE_ENTRY_NAMES = {
+            R.string.menu_category, R.string.menu_overview, R.string.menu_debt, R.string.menu_budget,
+            R.string.menu_saving, R.string.menu_event, R.string.menu_recurrences, R.string.menu_models,
+            R.string.menu_place, R.string.menu_people, R.string.menu_calculator, R.string.menu_converter,
+            R.string.menu_about
+    };
 
     /*package-local*/ static final int ID_ACTION_NEW_WALLET = 18;
     /*package-local*/ static final int ID_ACTION_MANAGE_WALLET = 19;
@@ -252,22 +270,25 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         // the section icons are tinted one by one below, so the wallet icons keep their colors
         mNavigationView.setItemIconTintList(null);
         Menu menu = mNavigationView.getMenu();
+        // A hidden entry is never added, since showWalletList makes every entry of a group
+        // visible again.
+        Set<String> hidden = PreferenceManager.getHiddenDrawerEntries();
         addEntry(menu, GROUP_SECTIONS, ID_SECTION_TRANSACTIONS, R.drawable.ic_shopping_cart_24dp, R.string.menu_transaction);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_CATEGORIES, R.drawable.ic_table_large_24dp, R.string.menu_category);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_OVERVIEW, R.drawable.ic_equalizer_24dp, R.string.menu_overview);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_DEBTS, R.drawable.ic_debt_24dp, R.string.menu_debt);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_BUDGETS, R.drawable.ic_budget_24dp, R.string.menu_budget);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_SAVINGS, R.drawable.ic_saving_24dp, R.string.menu_saving);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_EVENTS, R.drawable.ic_assistant_photo_24dp, R.string.menu_event);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_RECURRENCES, R.drawable.ic_restore_24dp, R.string.menu_recurrences);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_MODELS, R.drawable.ic_bookmark_black_24dp, R.string.menu_models);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_PLACES, R.drawable.ic_place_24dp, R.string.menu_place);
-        addEntry(menu, GROUP_SECTIONS, ID_SECTION_PEOPLE, R.drawable.ic_people_black_24dp, R.string.menu_people);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_CATEGORIES, R.drawable.ic_table_large_24dp, R.string.menu_category);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_OVERVIEW, R.drawable.ic_equalizer_24dp, R.string.menu_overview);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_DEBTS, R.drawable.ic_debt_24dp, R.string.menu_debt);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_BUDGETS, R.drawable.ic_budget_24dp, R.string.menu_budget);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_SAVINGS, R.drawable.ic_saving_24dp, R.string.menu_saving);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_EVENTS, R.drawable.ic_assistant_photo_24dp, R.string.menu_event);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_RECURRENCES, R.drawable.ic_restore_24dp, R.string.menu_recurrences);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_MODELS, R.drawable.ic_bookmark_black_24dp, R.string.menu_models);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_PLACES, R.drawable.ic_place_24dp, R.string.menu_place);
+        addEntryUnlessHidden(menu, hidden, GROUP_SECTIONS, ID_SECTION_PEOPLE, R.drawable.ic_people_black_24dp, R.string.menu_people);
         menu.setGroupCheckable(GROUP_SECTIONS, true, false);
-        addEntry(menu, GROUP_TOOLS, ID_SECTION_CALCULATOR, R.drawable.ic_calculator_24dp, R.string.menu_calculator);
-        addEntry(menu, GROUP_TOOLS, ID_SECTION_CONVERTER, R.drawable.ic_converter_24dp, R.string.menu_converter);
+        addEntryUnlessHidden(menu, hidden, GROUP_TOOLS, ID_SECTION_CALCULATOR, R.drawable.ic_calculator_24dp, R.string.menu_calculator);
+        addEntryUnlessHidden(menu, hidden, GROUP_TOOLS, ID_SECTION_CONVERTER, R.drawable.ic_converter_24dp, R.string.menu_converter);
         addEntry(menu, GROUP_SETTINGS, ID_SECTION_SETTING, R.drawable.ic_settings_24dp, R.string.menu_setting).setCheckable(true);
-        addEntry(menu, GROUP_SETTINGS, ID_SECTION_ABOUT, R.drawable.ic_info_outline_24dp, R.string.menu_about);
+        addEntryUnlessHidden(menu, hidden, GROUP_SETTINGS, ID_SECTION_ABOUT, R.drawable.ic_info_outline_24dp, R.string.menu_about);
         mHeaderView = mNavigationView.getHeaderView(0);
         // Top only, to match the menu below it. The navigation view pads its own list from the
         // top and bottom and leaves the sides to its inset scrims, so a header that also took
@@ -298,6 +319,12 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         MenuItem item = menu.add(group, identifier, Menu.NONE, name).setIcon(icon).setActionView(new Space(this));
         tintEntry(item, ThemeEngine.getTheme());
         return item;
+    }
+
+    private void addEntryUnlessHidden(Menu menu, Set<String> hidden, int group, int identifier, @DrawableRes int icon, @StringRes int name) {
+        if (!hidden.contains(String.valueOf(identifier))) {
+            addEntry(menu, group, identifier, icon, name);
+        }
     }
 
     private void tintEntry(MenuItem item, ITheme theme) {
