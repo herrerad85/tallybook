@@ -33,6 +33,7 @@ import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.api.BackendException;
 import com.oriondev.moneywallet.api.BackendServiceFactory;
 import com.oriondev.moneywallet.api.IBackendServiceAPI;
+import com.oriondev.moneywallet.api.saf.SAFBackendService;
 import com.oriondev.moneywallet.broadcast.AutoBackupBroadcastReceiver;
 import com.oriondev.moneywallet.model.DataFormat;
 import com.oriondev.moneywallet.model.IFile;
@@ -202,6 +203,11 @@ public class AutoBackupJobService extends JobService {
     private static void runBackend(Context context, String backendId) throws Exception {
         String encodedFolder = BackendManager.getAutoBackupFolder(backendId);
         IFile folder = BackendServiceFactory.getFile(backendId, encodedFolder);
+        if (SAFBackendService.isOutsideCurrentFolder(context, folder)) {
+            // a Local folder disconnected or replaced since this was chosen, so the write
+            // would be refused
+            folder = null;
+        }
         if (folder == null) {
             // Legacy or undecodable backup location (issue #177): skip this backend instead of
             // failing the sweep. The backend stays configured; the folder can be chosen again.
@@ -214,7 +220,7 @@ public class AutoBackupJobService extends JobService {
             // them looking for a folder that is not there to find.
             boolean nothingStored = encodedFolder == null;
             Log.w(TAG, "Skipping auto backup for '" + backendId + "': "
-                    + (nothingStored ? "no backup folder is set" : "backup location not decodable"));
+                    + (nothingStored ? "no backup folder is set" : "backup location not available"));
             notifyMessage(context, context.getString(nothingStored
                     ? R.string.notification_content_backup_error_location_unset
                     : R.string.notification_content_backup_error_location));

@@ -2,6 +2,8 @@ package com.oriondev.moneywallet.ui.fragment.secondary;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
@@ -14,9 +16,11 @@ import android.net.Uri;
 import android.os.Looper;
 import android.provider.DocumentsContract;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.test.core.app.ActivityScenario;
@@ -28,10 +32,12 @@ import com.oriondev.moneywallet.api.BackendException;
 import com.oriondev.moneywallet.api.BackendServiceFactory;
 import com.oriondev.moneywallet.broadcast.LocalAction;
 import com.oriondev.moneywallet.model.SAFFile;
+import com.oriondev.moneywallet.service.AutoBackupJobService;
 import com.oriondev.moneywallet.service.BackupHandlerIntentService;
 import com.oriondev.moneywallet.storage.preference.BackendManager;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
+import com.oriondev.moneywallet.ui.fragment.dialog.AutoBackupSettingDialog;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -321,6 +327,105 @@ public class BackupHandlerFragmentTest {
     }
 
     @Test
+    public void theAutoBackupDialogShowsAFolderInAReplacedTreeAsUnavailable() {
+        Context context = ApplicationProvider.getApplicationContext();
+        // what a disconnect and then a pick from the cover button leave behind
+        useLocalFolder(context, NEW_FOLDER);
+        useAutoBackupFolderInsideOld();
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                AlertDialog dialog = showAutoBackupSettings(activity);
+                TextView folder = dialog.findViewById(R.id.auto_backup_folder_text_view);
+                assertEquals(activity.getString(R.string.hint_auto_backup_folder_unavailable), folder.getText().toString());
+            });
+        }
+    }
+
+    @Test
+    public void anOpenAutoBackupDialogRefusesAFolderLeftByADisconnect() {
+        Context context = ApplicationProvider.getApplicationContext();
+        useLocalFolder(context, OLD_FOLDER);
+        useAutoBackupFolderInsideOld();
+        // the failed listing that raises the disconnect prompt turns auto backup off first
+        BackendManager.setAutoBackupEnabled(BackendServiceFactory.SERVICE_ID_SAF, false);
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                AlertDialog dialog = showAutoBackupSettings(activity);
+                // what the teardown dialog does
+                context.getSharedPreferences("storage_access_framework", Context.MODE_PRIVATE).edit().clear().commit();
+                SwitchCompat enabled = dialog.findViewById(R.id.auto_backup_enable_switch);
+                enabled.setChecked(true);
+                dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
+                assertTrue(dialog.isShowing());
+                TextView folder = dialog.findViewById(R.id.auto_backup_folder_text_view);
+                assertEquals(activity.getString(R.string.hint_auto_backup_folder_unavailable), folder.getText().toString());
+            });
+        }
+        assertFalse(BackendManager.isAutoBackupEnabled(BackendServiceFactory.SERVICE_ID_SAF));
+    }
+
+    @Test
+    public void theAutoBackupDialogShowsAFolderInTheConnectedTreeByName() {
+        Context context = ApplicationProvider.getApplicationContext();
+        useLocalFolder(context, OLD_FOLDER);
+        useAutoBackupFolderInsideOld();
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                AlertDialog dialog = showAutoBackupSettings(activity);
+                TextView folder = dialog.findViewById(R.id.auto_backup_folder_text_view);
+                assertEquals("Backups", folder.getText().toString());
+                dialog.dismiss();
+            });
+        }
+        // the same tree id under another provider is another tree
+        useLocalFolder(context, Uri.parse("content://com.example.other/tree/primary%3AOld"));
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                AlertDialog dialog = showAutoBackupSettings(activity);
+                TextView folder = dialog.findViewById(R.id.auto_backup_folder_text_view);
+                assertEquals(activity.getString(R.string.hint_auto_backup_folder_unavailable), folder.getText().toString());
+            });
+        }
+    }
+
+    @Test
+    public void aRestoredAutoBackupDialogShowsAFolderLeftByADisconnectAsUnavailable() {
+        Context context = ApplicationProvider.getApplicationContext();
+        useLocalFolder(context, OLD_FOLDER);
+        useAutoBackupFolderInsideOld();
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                showAutoBackupSettings(activity);
+                context.getSharedPreferences("storage_access_framework", Context.MODE_PRIVATE).edit().clear().commit();
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                shadowOf(Looper.getMainLooper()).idle();
+                AutoBackupSettingDialog settings = (AutoBackupSettingDialog) activity.getSupportFragmentManager()
+                        .findFragmentByTag("AutoBackupSettingDialog");
+                TextView folder = settings.getDialog().findViewById(R.id.auto_backup_folder_text_view);
+                assertEquals(activity.getString(R.string.hint_auto_backup_folder_unavailable), folder.getText().toString());
+            });
+        }
+    }
+
+    @Test
+    public void theSweepReportsAFolderInAReplacedTreeAsUnavailable() {
+        Context context = ApplicationProvider.getApplicationContext();
+        useLocalFolder(context, NEW_FOLDER);
+        useAutoBackupFolderInsideOld();
+        // due now, whether or not the data changed
+        BackendManager.setAutoBackupLastTime(BackendServiceFactory.SERVICE_ID_SAF, 0);
+        BackendManager.setAutoBackupWhenDataIsChangedOnly(BackendServiceFactory.SERVICE_ID_SAF, false);
+        AutoBackupJobService.runSweep(context);
+        List<String> texts = new ArrayList<>();
+        for (Notification notification : shadowOf((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).getAllNotifications()) {
+            texts.add(String.valueOf(notification.extras.getCharSequence(Notification.EXTRA_TEXT)));
+        }
+        assertEquals(Collections.singletonList(context.getString(R.string.notification_content_backup_error_location)), texts);
+    }
+
+    @Test
     public void cancellingChangeFolderKeepsTheFolderInUse() {
         Context context = ApplicationProvider.getApplicationContext();
         useLocalFolder(context, OLD_FOLDER);
@@ -505,6 +610,14 @@ public class BackupHandlerFragmentTest {
             });
         }
         return primary[0];
+    }
+
+    private static AlertDialog showAutoBackupSettings(FragmentActivity activity) {
+        AutoBackupSettingDialog settings = new AutoBackupSettingDialog();
+        settings.show(activity.getSupportFragmentManager(), "AutoBackupSettingDialog", BackendServiceFactory.SERVICE_ID_SAF);
+        activity.getSupportFragmentManager().executePendingTransactions();
+        shadowOf(Looper.getMainLooper()).idle();
+        return (AlertDialog) settings.getDialog();
     }
 
     private void clickTheCoverButton(FragmentActivity activity, String backendId) {
