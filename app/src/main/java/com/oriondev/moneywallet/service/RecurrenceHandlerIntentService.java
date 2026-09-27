@@ -19,23 +19,34 @@
 
 package com.oriondev.moneywallet.service;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.service.notification.StatusBarNotification;
+import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.JobIntentService;
+import androidx.core.app.NotificationCompat;
 
+import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver;
+import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.model.RecurrenceSetting;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.SQLiteDataException;
 import com.oriondev.moneywallet.storage.database.TransactionContentValuesBuilder;
 import com.oriondev.moneywallet.storage.database.TransferContentValuesBuilder;
+import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.ui.activity.LauncherActivity;
+import com.oriondev.moneywallet.ui.notification.NotificationContract;
 import com.oriondev.moneywallet.utils.DateUtils;
 
 import java.util.ArrayList;
@@ -55,16 +66,78 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
     // single pass; the period that is still open keeps the rule, so the next run carries on
     private static final int MAX_BUDGET_PERIODS_PER_RUN = 400;
 
+    private static final String EXTRA_POSTED_COUNT = "RecurrenceHandler::PostedCount";
+
+    private int mPostedCount;
+    private String mFirstPostedLabel;
+
     public static void enqueueWork(Context context, Intent intent) {
         enqueueWork(context, RecurrenceHandlerIntentService.class, JOB_ID, intent);
     }
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
+        // the rows a recurrence already had due when it was saved are written by the provider
+        // insert itself, so only the rows that came due afterwards are counted here
+        mPostedCount = 0;
+        mFirstPostedLabel = null;
         addMissingRecurrentTransactionOccurrences();
         addMissingRecurrentTransferOccurrences();
         addMissingBudgetPeriods();
         RecurrenceBroadcastReceiver.scheduleRecurrenceTask(this);
+        if (mPostedCount > 0) {
+            notifyPostedOccurrences();
+        }
+    }
+
+    private void onOccurrencePosted(String label) {
+        if (mPostedCount == 0) {
+            mFirstPostedLabel = label;
+        }
+        mPostedCount++;
+    }
+
+    private static String labelOf(String description, String fallback) {
+        return description != null && !description.trim().isEmpty() ? description.trim() : fallback;
+    }
+
+    private void notifyPostedOccurrences() {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            return;
+        }
+        int total = mPostedCount;
+        for (StatusBarNotification active : notificationManager.getActiveNotifications()) {
+            if (active.getId() == NotificationContract.NOTIFICATION_ID_RECURRENCE) {
+                total += active.getNotification().extras.getInt(EXTRA_POSTED_COUNT);
+            }
+        }
+        boolean locked = PreferenceManager.getCurrentLockMode() != LockMode.NONE;
+        String title = total == 1 ? getString(R.string.notification_title_recurrence_added)
+                : getResources().getQuantityString(R.plurals.notification_title_recurrences_added, total, total);
+        String label = total == 1 && !locked ? mFirstPostedLabel : null;
+        Bundle extras = new Bundle();
+        extras.putInt(EXTRA_POSTED_COUNT, total);
+        Intent intent = new Intent(this, LauncherActivity.class);
+        PendingIntent pending = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationContract.NOTIFICATION_CHANNEL_RECURRENCE)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .addExtras(extras)
+                .setAutoCancel(true)
+                .setContentIntent(pending);
+        if (!TextUtils.isEmpty(label)) {
+            builder.setContentText(label)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(label));
+        }
+        if (!locked) {
+            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                    .setPublicVersion(new NotificationCompat.Builder(this, NotificationContract.NOTIFICATION_CHANNEL_RECURRENCE)
+                            .setSmallIcon(R.drawable.ic_notification)
+                            .setContentTitle(title)
+                            .build());
+        }
+        notificationManager.notify(NotificationContract.NOTIFICATION_ID_RECURRENCE, builder.build());
     }
 
     /**
@@ -178,6 +251,8 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
                 Date firstOccurrenceDate = DateUtils.getDateFromSQLDateString(firstOccurrenceDateString);
                 String rule = cursor.getString(cursor.getColumnIndex(Contract.RecurrentTransaction.RULE));
                 RecurrenceSetting.OccurrenceUpdate update = RecurrenceSetting.computeOccurrences(rule, firstOccurrenceDate, new Date());
+                String label = labelOf(cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransaction.DESCRIPTION)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransaction.CATEGORY_NAME)));
                 for (Date occurrenceDate : update.getOccurrenceDates()) {
                     TransactionContentValuesBuilder builder = new TransactionContentValuesBuilder()
                             .money(cursor.getLong(cursor.getColumnIndex(Contract.RecurrentTransaction.MONEY)))
@@ -198,7 +273,9 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
                             .confirmed(cursor.getInt(cursor.getColumnIndex(Contract.RecurrentTransaction.CONFIRMED)) == 1)
                             .countInTotal(cursor.getInt(cursor.getColumnIndex(Contract.RecurrentTransaction.COUNT_IN_TOTAL)) == 1);
                     ContentValues contentValues = builder.build();
-                    getContentResolver().insert(DataContentProvider.CONTENT_TRANSACTIONS, contentValues);
+                    if (getContentResolver().insert(DataContentProvider.CONTENT_TRANSACTIONS, contentValues) != null) {
+                        onOccurrencePosted(label);
+                    }
                 }
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(Contract.RecurrentTransaction.LAST_OCCURRENCE, DateUtils.getSQLDateString(update.getLastOccurrence()));
@@ -222,6 +299,10 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
                 Date firstOccurrenceDate = DateUtils.getDateFromSQLDateString(firstOccurrenceDateString);
                 String rule = cursor.getString(cursor.getColumnIndex(Contract.RecurrentTransfer.RULE));
                 RecurrenceSetting.OccurrenceUpdate update = RecurrenceSetting.computeOccurrences(rule, firstOccurrenceDate, new Date());
+                String label = labelOf(cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransfer.DESCRIPTION)),
+                        getString(R.string.notification_text_recurrence_transfer,
+                                cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransfer.WALLET_FROM_NAME)),
+                                cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransfer.WALLET_TO_NAME))));
                 for (Date occurrenceDate : update.getOccurrenceDates()) {
                     TransferContentValuesBuilder builder = new TransferContentValuesBuilder()
                             .description(cursor.getString(cursor.getColumnIndex(Contract.RecurrentTransfer.DESCRIPTION)))
@@ -243,7 +324,9 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
                             .confirmed(cursor.getInt(cursor.getColumnIndex(Contract.RecurrentTransfer.CONFIRMED)) == 1)
                             .countInTotal(cursor.getInt(cursor.getColumnIndex(Contract.RecurrentTransfer.COUNT_IN_TOTAL)) == 1);
                     ContentValues contentValues = builder.build();
-                    getContentResolver().insert(DataContentProvider.CONTENT_TRANSFERS, contentValues);
+                    if (getContentResolver().insert(DataContentProvider.CONTENT_TRANSFERS, contentValues) != null) {
+                        onOccurrencePosted(label);
+                    }
                 }
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(Contract.RecurrentTransfer.LAST_OCCURRENCE, DateUtils.getSQLDateString(update.getLastOccurrence()));
