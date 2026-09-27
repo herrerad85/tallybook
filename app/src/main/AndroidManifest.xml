@@ -144,9 +144,7 @@
         <provider
             android:name=".storage.database.DataContentProvider"
             android:authorities="${applicationId}.storage.data"
-            android:readPermission="${applicationId}.permission.READ_DATA"
-            android:writePermission="${applicationId}.permission.WRITE_DATA"
-            android:exported="true" />
+            android:exported="false" />
         <provider
             android:name=".storage.database.SyncContentProvider"
             android:authorities="${applicationId}.storage.sync"
