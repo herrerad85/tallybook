@@ -20,6 +20,14 @@
 
 <changelog>
 
+    <version versionName="1.12.0" versionDate="Sep 27, 2026">
+        <change>After a different Local folder was connected, automatic backup kept the old folder and every scheduled backup failed. The old folder now shows as not available until a new one is picked.</change>
+        <change>[b]New![/b] A notification when a recurring transaction or transfer comes due and is added. On Android 13 and later, adding one may ask for the notification permission.</change>
+        <change>[b]New![/b] Choose which entries the drawer shows, under Settings, User interface, Drawer entries.</change>
+        <change>ATM and bank search are removed from the drawer. They only passed the typed text to a maps app, which can search on its own.</change>
+        <change>Other apps can no longer reach Tallybook's data.</change>
+    </version>
+
     <version versionName="1.11.0" versionDate="Sep 24, 2026">
         <change>If a Local folder backup lost access to its folder, for example after the app holding it was removed, tapping OK to disconnect froze Tallybook and the prompt came back on every visit. Disconnecting now works.</change>
         <change>[b]New![/b] Local folder offers Change folder in place of Disconnect. Automatic backup moves to the new folder with it.</change>
