@@ -35,6 +35,7 @@ public class NotificationContract {
     public static final String NOTIFICATION_CHANNEL_EXCHANGE_RATE = "channel_exchange_rate";
     public static final String NOTIFICATION_CHANNEL_REMINDER = "channel_reminder";
     public static final String NOTIFICATION_CHANNEL_ERROR = "channel_error";
+    public static final String NOTIFICATION_CHANNEL_RECURRENCE = "channel_recurrence";
 
     public static final int NOTIFICATION_ID_BACKUP_PROGRESS = 23454;
     public static final int NOTIFICATION_ID_BACKUP_ERROR = 23455;
@@ -42,6 +43,7 @@ public class NotificationContract {
     public static final int NOTIFICATION_ID_EXCHANGE_RATE_ERROR = 23457;
     public static final int NOTIFICATION_ID_REMINDER = 23458;
     public static final int NOTIFICATION_ID_CSV_EXPORT_ERROR = 23459;
+    public static final int NOTIFICATION_ID_RECURRENCE = 23460;
 
     public static void initializeNotificationChannels(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,11 +70,19 @@ public class NotificationContract {
                     context.getString(R.string.notification_channel_name_error),
                     NotificationManager.IMPORTANCE_DEFAULT
             );
+            // low because the recurrence task runs at midnight, and the importance of a channel
+            // cannot be raised by the app once the channel exists
+            NotificationChannel channelRecurrence = new NotificationChannel(
+                    NotificationContract.NOTIFICATION_CHANNEL_RECURRENCE,
+                    context.getString(R.string.notification_channel_name_recurrence),
+                    NotificationManager.IMPORTANCE_LOW
+            );
             // disable the badge for all the channels
             channelBackup.setShowBadge(false);
             channelExchangeRate.setShowBadge(false);
             channelReminder.setShowBadge(false);
             channelError.setShowBadge(false);
+            channelRecurrence.setShowBadge(false);
             // Register the channels with the system
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             if (notificationManager != null) {
@@ -80,6 +90,7 @@ public class NotificationContract {
                 notificationManager.createNotificationChannel(channelExchangeRate);
                 notificationManager.createNotificationChannel(channelReminder);
                 notificationManager.createNotificationChannel(channelError);
+                notificationManager.createNotificationChannel(channelRecurrence);
             }
         }
     }

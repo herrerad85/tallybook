@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.activity;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -26,6 +27,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,6 +58,7 @@ import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
+import com.oriondev.moneywallet.utils.Utils;
 
 import java.util.Date;
 import java.util.Locale;
@@ -103,7 +106,20 @@ public class NewEditRecurrentTransferActivity extends NewEditItemActivity implem
     private EventPicker mEventPicker;
     private PlacePicker mPlacePicker;
 
+    private static final int REQUEST_CODE_NOTIFICATION_PERMISSION = 35627;
+
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getMode() == Mode.NEW_ITEM && Utils.shouldAskNotificationPermission(this)) {
+            PreferenceManager.setAskedNotificationPermission();
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    REQUEST_CODE_NOTIFICATION_PERMISSION);
+        }
+    }
     
     @Override
     protected void onCreateHeaderView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {

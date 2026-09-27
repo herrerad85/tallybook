@@ -786,6 +786,13 @@
     <string name="notification_channel_name_reminder">"Reminder"</string>
     <string name="notification_channel_name_exchange_rate">"Exchange rates"</string>
     <string name="notification_channel_name_error">"Error"</string>
+    <string name="notification_channel_name_recurrence">"Recurring transactions"</string>
+    <string name="notification_title_recurrence_added">"Recurring transaction added"</string>
+    <plurals name="notification_title_recurrences_added">
+        <item quantity="one">"%d recurring transaction added"</item>
+        <item quantity="other">"%d recurring transactions added"</item>
+    </plurals>
+    <string name="notification_text_recurrence_transfer">"Transfer: %1$s -> %2$s"</string>
 
     <string name="widget_label">"Wallet balance"</string>
     <string name="widget_description">"The money in one wallet, with a button that adds a transaction to it"</string>

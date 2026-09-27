@@ -28,6 +28,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.api.BackendException;
@@ -244,6 +245,8 @@ public class BackupHandlerIntentService extends IntentService {
         try {
             File databaseFile = getDatabasePath(SQLDatabaseImporter.DATABASE_NAME);
             importer.importDatabase(temporaryFolder, databaseFile.getParentFile());
+            // the count on a recurrence notification still showing belongs to the ledger just replaced
+            NotificationManagerCompat.from(this).cancel(NotificationContract.NOTIFICATION_ID_RECURRENCE);
             // Announced here, between the two, and nowhere else. The ledger is live from the
             // rename inside importDatabase, so waiting until after the attachments would leave
             // the current wallet and every widget binding naming rows out of the database that
