@@ -49,6 +49,7 @@ public class PreferenceManager {
     private static final String FILE_NAME = "preferences";
 
     private static final String CURRENT_WALLET = "current_wallet_id";
+    private static final String DEFAULT_WALLET = "default_wallet";
     private static final String ASKED_NOTIFICATION_PERMISSION = "asked_notification_permission";
     private static final String CURRENT_LOCK_MODE = "current_lock_mode";
     private static final String CURRENT_LOCK_CODE = "current_lock_code";
@@ -108,6 +109,7 @@ public class PreferenceManager {
 
     public static final long NO_CURRENT_WALLET = -1L;
     public static final long TOTAL_WALLET_ID = 0L;
+    public static final long NO_DEFAULT_WALLET = -1L;
 
     // Color.BLUE is 1.17:1 on a card, unreadable in both dark modes. These two are what a color
     // that cannot be seen falls back to, and getVisibleColor returns a fallback unchecked, so
@@ -341,6 +343,14 @@ public class PreferenceManager {
 
     public static long getCurrentWallet() {
         return mPreferences.getLong(CURRENT_WALLET, NO_CURRENT_WALLET);
+    }
+
+    public static long getDefaultWallet() {
+        return mPreferences.getLong(DEFAULT_WALLET, NO_DEFAULT_WALLET);
+    }
+
+    public static void setDefaultWallet(long walletId) {
+        mPreferences.edit().putLong(DEFAULT_WALLET, walletId).apply();
     }
 
     public static LockMode getCurrentLockMode() {

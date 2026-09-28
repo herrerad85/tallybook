@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
@@ -39,6 +40,8 @@ import android.view.ViewGroup;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Group;
 import com.oriondev.moneywallet.picker.ColorPicker;
+import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.activity.MainActivity;
 import com.oriondev.moneywallet.utils.SystemBars;
@@ -51,10 +54,12 @@ import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.DateFormatter;
 
 import java.text.DateFormatSymbols;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -82,6 +87,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     private ThemedListPreference mFirstDayMonthPreference;
     private ThemedListPreference mGroupTypePreference;
     private Preference mDrawerEntriesPreference;
+    private Preference mDefaultWalletPreference;
     private SwitchPreferenceCompat mAutoOpenCalculatorPreference;
     private SwitchPreferenceCompat mDotMatrixIconsPreference;
     private ColorPreference mColorPrimaryPreference;
@@ -107,6 +113,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         mFirstDayMonthPreference = (ThemedListPreference) findPreference("first_day_month");
         mGroupTypePreference = (ThemedListPreference) findPreference("group_type");
         mDrawerEntriesPreference = findPreference("drawer_entries");
+        mDefaultWalletPreference = findPreference("default_wallet");
         mAutoOpenCalculatorPreference = (SwitchPreferenceCompat) findPreference("auto_open_calculator");
         mDotMatrixIconsPreference = (SwitchPreferenceCompat) findPreference("dot_matrix_icons");
         mColorPrimaryPreference = (ColorPreference) findPreference("theme_color_primary");
@@ -295,6 +302,16 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
             }
 
         });
+        setupCurrentDefaultWallet();
+        mDefaultWalletPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                showDefaultWalletDialog();
+                return false;
+            }
+
+        });
         mAutoOpenCalculatorPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
             @Override
@@ -393,6 +410,83 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    /**
+     * Lists "Current wallet" and every non archived wallet by sort index. The first entry stores
+     * NO_DEFAULT_WALLET so a new item follows whatever wallet is being viewed; each other entry
+     * stores its wallet id.
+     */
+    private void showDefaultWalletDialog() {
+        final List<String> names = new ArrayList<>();
+        final List<Long> ids = new ArrayList<>();
+        names.add(getString(R.string.setting_default_wallet_current));
+        ids.add(PreferenceManager.NO_DEFAULT_WALLET);
+        Cursor cursor = requireActivity().getContentResolver().query(
+                DataContentProvider.CONTENT_WALLETS,
+                new String[]{Contract.Wallet.ID, Contract.Wallet.NAME},
+                Contract.Wallet.ARCHIVED + " = 0", null,
+                Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC");
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    ids.add(cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Wallet.ID)));
+                    names.add(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.NAME)));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        int stored = ids.indexOf(PreferenceManager.getDefaultWallet());
+        // The stored wallet was archived or deleted, so fall back to the Current wallet entry.
+        final int checked = stored < 0 ? 0 : stored;
+        final int[] selected = {checked};
+        ThemedDialog.buildMaterialDialog(requireActivity())
+                .setTitle(R.string.setting_title_ui_default_wallet)
+                .setSingleChoiceItems(names.toArray(new String[0]), checked, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        selected[0] = which;
+                    }
+
+                })
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        PreferenceManager.setDefaultWallet(ids.get(selected[0]));
+                        setupCurrentDefaultWallet();
+                    }
+
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void setupCurrentDefaultWallet() {
+        long stored = PreferenceManager.getDefaultWallet();
+        String summary = null;
+        if (stored != PreferenceManager.NO_DEFAULT_WALLET) {
+            Cursor cursor = requireActivity().getContentResolver().query(
+                    DataContentProvider.CONTENT_WALLETS,
+                    new String[]{Contract.Wallet.NAME},
+                    Contract.Wallet.ID + " = ? AND " + Contract.Wallet.ARCHIVED + " = 0",
+                    new String[]{String.valueOf(stored)}, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        summary = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.NAME));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+        if (summary == null) {
+            summary = getString(R.string.setting_default_wallet_current);
+        }
+        mDefaultWalletPreference.setSummary(summary);
     }
 
     private void setupCurrentDateFormat() {

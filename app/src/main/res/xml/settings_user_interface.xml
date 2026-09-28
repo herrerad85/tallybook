@@ -78,6 +78,11 @@
             android:summary="@string/setting_summary_ui_auto_open_calculator"
             android:persistent="false" />
 
+        <com.oriondev.moneywallet.ui.preference.ThemedPreference
+            android:key="default_wallet"
+            android:title="@string/setting_title_ui_default_wallet"
+            android:persistent="false" />
+
     </com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory>
 
     <com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory
