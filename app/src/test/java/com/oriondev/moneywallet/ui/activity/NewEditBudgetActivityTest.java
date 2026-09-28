@@ -59,7 +59,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -317,15 +316,14 @@ public class NewEditBudgetActivityTest {
 
     @Test
     public void aNewBudgetOnTheTotalWalletOpensOnTheFirstWalletRow() {
+        insertArchivedWallet("AAA Archived", "EUR");
         PreferenceManager.setCurrentWallet(mContext, PreferenceManager.TOTAL_WALLET_ID);
-        long first = firstWalletRow();
-        assertNotEquals(mWalletA, first);
         try (ActivityScenario<NewEditBudgetActivity> scenario =
                      ActivityScenario.launch(newItemIntent())) {
-            scenario.onActivity(activity -> {
-                assertEquals(Collections.singletonList(first), walletPickerIds(activity));
-                assertEquals(Collections.singletonList(mUnusedWallet), walletPickerIds(activity));
-            });
+            // the archived wallet sorts first by name but is skipped, so the editor lands on Bank,
+            // the first unarchived wallet in the drawer's INDEX, NAME order
+            scenario.onActivity(activity ->
+                    assertEquals(Collections.singletonList(mWalletB), walletPickerIds(activity)));
         }
     }
 
@@ -1554,6 +1552,17 @@ public class NewEditBudgetActivityTest {
         return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
     }
 
+    private long insertArchivedWallet(String name, String currency) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Wallet.NAME, name);
+        values.put(Contract.Wallet.ICON, ICON);
+        values.put(Contract.Wallet.CURRENCY, currency);
+        values.put(Contract.Wallet.START_MONEY, 0L);
+        values.put(Contract.Wallet.COUNT_IN_TOTAL, true);
+        values.put(Contract.Wallet.ARCHIVED, true);
+        return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
+    }
+
     private long insertCategory(String name, Contract.CategoryType type, Long parent) {
         ContentValues values = new ContentValues();
         values.put(Contract.Category.NAME, name);
@@ -1981,14 +1990,5 @@ public class NewEditBudgetActivityTest {
         cursor.close();
         Collections.sort(ids);
         return ids;
-    }
-
-    private long firstWalletRow() {
-        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_WALLETS,
-                new String[] {Contract.Wallet.ID}, null, null, null);
-        assertTrue(cursor.moveToFirst());
-        long id = cursor.getLong(0);
-        cursor.close();
-        return id;
     }
 }

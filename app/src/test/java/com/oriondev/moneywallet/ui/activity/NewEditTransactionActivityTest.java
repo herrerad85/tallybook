@@ -472,13 +472,15 @@ public class NewEditTransactionActivityTest {
 
     @Test
     public void aNewTransactionOnTheTotalWalletStillOpensOnAWallet() {
+        insertArchivedWallet("AAA Archived", "EUR");
         PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
                 PreferenceManager.TOTAL_WALLET_ID);
         Intent intent = newItemIntent();
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
         try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
-            // the total wallet is every wallet, so the editor takes the first one
-            scenario.onActivity(activity -> assertEquals("Unused", walletField(activity)));
+            // the archived wallet sorts first by name but is skipped, so the editor lands on Bank,
+            // the first unarchived wallet in the drawer's INDEX, NAME order
+            scenario.onActivity(activity -> assertEquals("Bank", walletField(activity)));
         }
     }
 
@@ -698,6 +700,17 @@ public class NewEditTransactionActivityTest {
         values.put(Contract.Wallet.START_MONEY, 0L);
         values.put(Contract.Wallet.COUNT_IN_TOTAL, true);
         values.put(Contract.Wallet.ARCHIVED, false);
+        return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
+    }
+
+    private long insertArchivedWallet(String name, String currency) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Wallet.NAME, name);
+        values.put(Contract.Wallet.ICON, ICON);
+        values.put(Contract.Wallet.CURRENCY, currency);
+        values.put(Contract.Wallet.START_MONEY, 0L);
+        values.put(Contract.Wallet.COUNT_IN_TOTAL, true);
+        values.put(Contract.Wallet.ARCHIVED, true);
         return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
     }
 
