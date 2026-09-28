@@ -258,14 +258,14 @@ public class NewEditTransferActivityTest {
 
     @Test
     public void aNewTransferOnTheTotalWalletOpensOnTheFirstWalletRow() {
+        insertArchivedWallet("AAA Archived", "EUR");
         PreferenceManager.setCurrentWallet(mContext, PreferenceManager.TOTAL_WALLET_ID);
-        long first = firstWalletRow();
         try (ActivityScenario<NewEditTransferActivity> scenario =
                      ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
-            scenario.onActivity(activity -> {
-                assertEquals(first, walletFromPicker(activity).getCurrentWallet().getId());
-                assertEquals(mUnusedWallet, walletFromPicker(activity).getCurrentWallet().getId());
-            });
+            // the archived wallet sorts first by name but is skipped, so the editor lands on Bank,
+            // the first unarchived wallet in the drawer's INDEX, NAME order
+            scenario.onActivity(activity ->
+                    assertEquals(mWalletC, walletFromPicker(activity).getCurrentWallet().getId()));
         }
     }
 
@@ -644,6 +644,17 @@ public class NewEditTransferActivityTest {
         return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
     }
 
+    private long insertArchivedWallet(String name, String currency) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Wallet.NAME, name);
+        values.put(Contract.Wallet.ICON, ICON);
+        values.put(Contract.Wallet.CURRENCY, currency);
+        values.put(Contract.Wallet.START_MONEY, 0L);
+        values.put(Contract.Wallet.COUNT_IN_TOTAL, true);
+        values.put(Contract.Wallet.ARCHIVED, true);
+        return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
+    }
+
     private long insertPerson(String name) {
         ContentValues person = new ContentValues();
         person.put(Contract.Person.NAME, name);
@@ -944,15 +955,6 @@ public class NewEditTransferActivityTest {
         long total = cursor.getLong(0);
         cursor.close();
         return total;
-    }
-
-    private long firstWalletRow() {
-        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_WALLETS,
-                new String[] {Contract.Wallet.ID}, null, null, null);
-        assertTrue(cursor.moveToFirst());
-        long id = cursor.getLong(0);
-        cursor.close();
-        return id;
     }
 
     private static void assertDatedNow(Cursor row, long now) {
