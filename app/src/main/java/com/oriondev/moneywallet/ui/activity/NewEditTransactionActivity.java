@@ -66,6 +66,7 @@ import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
+import com.oriondev.moneywallet.utils.DefaultWallet;
 import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
@@ -566,7 +567,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                             Contract.Wallet.START_MONEY,
                             Contract.Wallet.TOTAL_MONEY
                     };
-                    long currentWallet = intent.getLongExtra(WALLET_ID, PreferenceManager.getCurrentWallet());
+                    long currentWallet = intent.getLongExtra(WALLET_ID, DefaultWallet.resolveNewItemWallet(contentResolver));
                     Cursor cursor;
                     if (currentWallet == PreferenceManager.TOTAL_WALLET_ID) {
                         Uri uri = DataContentProvider.CONTENT_WALLETS;

@@ -485,6 +485,51 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
+    public void aNewTransactionOnTheTotalViewOpensOnTheConfiguredDefaultWallet() {
+        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
+                PreferenceManager.TOTAL_WALLET_ID);
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals("Bank", walletField(activity)));
+        }
+    }
+
+    @Test
+    public void aConfiguredDefaultIsIgnoredWhileViewingAWallet() {
+        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(), mEuroWallet);
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals("Cash", walletField(activity)));
+        }
+    }
+
+    @Test
+    public void aNewTransactionFallsBackWhenTheConfiguredDefaultIsArchived() {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Wallet.NAME, "Old");
+        values.put(Contract.Wallet.ICON, ICON);
+        values.put(Contract.Wallet.CURRENCY, "EUR");
+        values.put(Contract.Wallet.START_MONEY, 0L);
+        values.put(Contract.Wallet.COUNT_IN_TOTAL, true);
+        values.put(Contract.Wallet.ARCHIVED, true);
+        long archived = ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
+        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
+                PreferenceManager.TOTAL_WALLET_ID);
+        PreferenceManager.setDefaultWallet(archived);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            // the archived default is refused, and the Total branch skips archived wallets and
+            // sorts by INDEX then NAME, so it lands on Bank
+            scenario.onActivity(activity -> assertEquals("Bank", walletField(activity)));
+        }
+    }
+
+    @Test
     public void withdrawEverythingOffersTheWholeBalanceOnASavingPastItsTarget() {
         long saving = insertSaving(0L, 1000L, mEuroWallet);
         insertSavingRow(saving, 5000L, daysFromNow(-10), Contract.CategoryTag.SAVING_DEPOSIT, true, mEuroWallet);
