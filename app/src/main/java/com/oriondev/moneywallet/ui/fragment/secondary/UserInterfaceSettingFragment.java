@@ -437,9 +437,18 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                 cursor.close();
             }
         }
-        int stored = ids.indexOf(PreferenceManager.getDefaultWallet());
-        // The stored wallet was archived or deleted, so fall back to the Current wallet entry.
-        final int checked = stored < 0 ? 0 : stored;
+        long stored = PreferenceManager.getDefaultWallet();
+        int checked = ids.indexOf(stored);
+        if (checked < 0) {
+            String label = getWalletLabel(stored);
+            if (label != null) {
+                ids.add(stored);
+                names.add(label);
+                checked = ids.size() - 1;
+            } else {
+                checked = 0;
+            }
+        }
         final int[] selected = {checked};
         ThemedDialog.buildMaterialDialog(requireActivity())
                 .setTitle(R.string.setting_title_ui_default_wallet)
@@ -468,25 +477,40 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         long stored = PreferenceManager.getDefaultWallet();
         String summary = null;
         if (stored != PreferenceManager.NO_DEFAULT_WALLET) {
-            Cursor cursor = requireActivity().getContentResolver().query(
-                    DataContentProvider.CONTENT_WALLETS,
-                    new String[]{Contract.Wallet.NAME},
-                    Contract.Wallet.ID + " = ? AND " + Contract.Wallet.ARCHIVED + " = 0",
-                    new String[]{String.valueOf(stored)}, null);
-            if (cursor != null) {
-                try {
-                    if (cursor.moveToFirst()) {
-                        summary = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.NAME));
-                    }
-                } finally {
-                    cursor.close();
-                }
-            }
+            summary = getWalletLabel(stored);
         }
         if (summary == null) {
             summary = getString(R.string.setting_default_wallet_current);
         }
         mDefaultWalletPreference.setSummary(summary);
+    }
+
+    /**
+     * The wallet's name, marked when it is archived, or null when the id names no wallet or a
+     * deleted one.
+     */
+    @Nullable
+    private String getWalletLabel(long walletId) {
+        String label = null;
+        Cursor cursor = requireActivity().getContentResolver().query(
+                DataContentProvider.CONTENT_WALLETS,
+                new String[]{Contract.Wallet.NAME, Contract.Wallet.ARCHIVED},
+                Contract.Wallet.ID + " = ?",
+                new String[]{String.valueOf(walletId)}, null);
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    label = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.NAME));
+                    int archived = cursor.getColumnIndexOrThrow(Contract.Wallet.ARCHIVED);
+                    if (cursor.getInt(archived) != 0) {
+                        label = getString(R.string.setting_default_wallet_archived, label);
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return label;
     }
 
     private void setupCurrentDateFormat() {

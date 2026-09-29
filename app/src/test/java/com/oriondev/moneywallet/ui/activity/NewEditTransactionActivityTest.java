@@ -404,6 +404,17 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
+    public void theWalletTheIntentNamesWinsOverTheConfiguredDefault() {
+        PreferenceManager.setDefaultWallet(mEuroWallet);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        intent.putExtra(NewEditTransactionActivity.WALLET_ID, mDollarWallet);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals("Bank", walletField(activity)));
+        }
+    }
+
+    @Test
     public void aNewTransactionOpensOnTheCurrentWalletWhenTheIntentNamesNone() {
         PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(), mDollarWallet);
         Intent intent = newItemIntent();
@@ -488,6 +499,17 @@ public class NewEditTransactionActivityTest {
     public void aNewTransactionOnTheTotalViewOpensOnTheConfiguredDefaultWallet() {
         PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
                 PreferenceManager.TOTAL_WALLET_ID);
+        PreferenceManager.setDefaultWallet(mEuroWallet);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals("Cash", walletField(activity)));
+        }
+    }
+
+    @Test
+    public void aConfiguredDefaultWinsOverTheViewedWallet() {
+        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(), mEuroWallet);
         PreferenceManager.setDefaultWallet(mDollarWallet);
         Intent intent = newItemIntent();
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
@@ -497,9 +519,20 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
-    public void aConfiguredDefaultIsIgnoredWhileViewingAWallet() {
-        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(), mEuroWallet);
-        PreferenceManager.setDefaultWallet(mDollarWallet);
+    public void aNewTransactionOnTheTotalViewOpensOnTheLowestSortIndexBeforeTheName() {
+        // written the way the wallet sort screen writes it, so Cash sorts ahead of Bank
+        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_WALLETS,
+                new String[]{Contract.Wallet.ID}, null, null, null);
+        while (cursor.moveToNext()) {
+            long walletId = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Wallet.ID));
+            ContentValues values = new ContentValues();
+            values.put(Contract.Wallet.INDEX, walletId == mEuroWallet ? 1 : 2);
+            Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, walletId);
+            mResolver.update(uri, values, null, null);
+        }
+        cursor.close();
+        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
+                PreferenceManager.TOTAL_WALLET_ID);
         Intent intent = newItemIntent();
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
         try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {

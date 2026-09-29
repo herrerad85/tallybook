@@ -40,11 +40,10 @@ import org.robolectric.RobolectricTestRunner;
 import static org.junit.Assert.assertEquals;
 
 /**
- * The resolver behind #126. The wallet you are viewing wins while you are on one; the wallet
- * chosen in settings applies on the Total view, or when the viewed wallet has been archived or
- * deleted; the Total view is the last fallback. isUsable queries the collection uri, so an
- * archived or deleted default is refused and the fallback fires; the archived and deleted cases
- * below fail if that query is ever moved to the item uri, which reports both as usable.
+ * The resolver behind #126. The wallet chosen in settings wins whenever it is usable, then the
+ * wallet you are viewing, then the Total view. isUsable queries the collection uri, so an
+ * archived or deleted default is refused and the fallback fires; the archived cases below fail
+ * if that query is ever moved to the item uri.
  */
 @RunWith(RobolectricTestRunner.class)
 public class DefaultWalletTest {
@@ -67,9 +66,38 @@ public class DefaultWalletTest {
     }
 
     @Test
-    public void theViewedWalletWinsEvenWhenADefaultIsSet() {
+    public void theConfiguredDefaultWinsOverTheViewedWallet() {
         PreferenceManager.setCurrentWallet(mContext, mCash);
         PreferenceManager.setDefaultWallet(mBank);
+        assertEquals(mBank, DefaultWallet.resolveNewItemWallet(mResolver));
+    }
+
+    @Test
+    public void theViewedWalletIsUsedWithNoDefault() {
+        PreferenceManager.setCurrentWallet(mContext, mCash);
+        assertEquals(mCash, DefaultWallet.resolveNewItemWallet(mResolver));
+    }
+
+    @Test
+    public void anArchivedDefaultFallsBackToTheViewedWallet() {
+        long archived = insertWallet("Old", true);
+        PreferenceManager.setCurrentWallet(mContext, mCash);
+        PreferenceManager.setDefaultWallet(archived);
+        assertEquals(mCash, DefaultWallet.resolveNewItemWallet(mResolver));
+    }
+
+    @Test
+    public void aDeletedDefaultFallsBackToTheViewedWallet() {
+        PreferenceManager.setCurrentWallet(mContext, mCash);
+        PreferenceManager.setDefaultWallet(mBank);
+        deleteWallet(mBank);
+        assertEquals(mCash, DefaultWallet.resolveNewItemWallet(mResolver));
+    }
+
+    @Test
+    public void aDefaultThatDoesNotExistFallsBackToTheViewedWallet() {
+        PreferenceManager.setCurrentWallet(mContext, mCash);
+        PreferenceManager.setDefaultWallet(9999L);
         assertEquals(mCash, DefaultWallet.resolveNewItemWallet(mResolver));
     }
 
@@ -110,17 +138,17 @@ public class DefaultWalletTest {
     }
 
     @Test
-    public void anArchivedViewedWalletFallsBackToTheDefault() {
-        long archived = insertWallet("Old", true);
-        PreferenceManager.setCurrentWallet(mContext, archived);
-        PreferenceManager.setDefaultWallet(mBank);
-        assertEquals(mBank, DefaultWallet.resolveNewItemWallet(mResolver));
-    }
-
-    @Test
     public void anArchivedViewedWalletWithNoDefaultFallsBackToTotal() {
         long archived = insertWallet("Old", true);
         PreferenceManager.setCurrentWallet(mContext, archived);
+        assertEquals(PreferenceManager.TOTAL_WALLET_ID, DefaultWallet.resolveNewItemWallet(mResolver));
+    }
+
+    @Test
+    public void anArchivedViewedWalletWithAnArchivedDefaultFallsBackToTotal() {
+        long archived = insertWallet("Old", true);
+        PreferenceManager.setCurrentWallet(mContext, archived);
+        PreferenceManager.setDefaultWallet(insertWallet("Older", true));
         assertEquals(PreferenceManager.TOTAL_WALLET_ID, DefaultWallet.resolveNewItemWallet(mResolver));
     }
 
