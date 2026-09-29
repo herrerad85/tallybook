@@ -27,10 +27,10 @@ import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 
 /**
- * Picks the wallet a new item opens on. The wallet you are viewing wins while you are on one; the
- * wallet chosen in settings applies on the Total view, or when the viewed wallet has been archived
- * or deleted; the Total view is the last fallback. Returning TOTAL_WALLET_ID hands the choice to
- * the editor's existing Total branch.
+ * Picks the wallet a new item opens on. The wallet chosen in settings wins whenever it exists and
+ * is neither archived nor deleted. Otherwise the wallet you are viewing is used if it is a real
+ * wallet that is neither archived nor deleted. Otherwise TOTAL_WALLET_ID is returned, which hands
+ * the choice to the editor's existing Total branch.
  */
 public class DefaultWallet {
 
@@ -38,20 +38,14 @@ public class DefaultWallet {
     }
 
     public static long resolveNewItemWallet(ContentResolver resolver) {
-        long current = PreferenceManager.getCurrentWallet();
-        if (current == PreferenceManager.TOTAL_WALLET_ID) {
-            return configuredOrTotal(resolver);
-        }
-        if (current != PreferenceManager.NO_CURRENT_WALLET && isUsable(resolver, current)) {
-            return current;
-        }
-        return configuredOrTotal(resolver);
-    }
-
-    private static long configuredOrTotal(ContentResolver resolver) {
         long configured = PreferenceManager.getDefaultWallet();
         if (configured != PreferenceManager.NO_DEFAULT_WALLET && isUsable(resolver, configured)) {
             return configured;
+        }
+        long current = PreferenceManager.getCurrentWallet();
+        if (current != PreferenceManager.TOTAL_WALLET_ID
+                && current != PreferenceManager.NO_CURRENT_WALLET && isUsable(resolver, current)) {
+            return current;
         }
         return PreferenceManager.TOTAL_WALLET_ID;
     }

@@ -552,6 +552,7 @@
     <string name="setting_summary_ui_auto_open_calculator">"A new transaction starts on the calculator to enter the amount"</string>
     <string name="setting_title_ui_default_wallet">"Default wallet"</string>
     <string name="setting_default_wallet_current">"Current wallet"</string>
+    <string name="setting_default_wallet_archived">"%1$s (archived)"</string>
     <string name="setting_title_ui_dot_matrix_icons">"Dot matrix icons"</string>
     <string name="setting_summary_ui_dot_matrix_icons">"Draw category icons as dots on a round tile instead of the classic style"</string>
     <string name="setting_title_ui_income_color">"Income color"</string>
