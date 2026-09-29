@@ -929,11 +929,12 @@ public class DataContentProvider extends ContentProvider {
             if (contentProvider instanceof DataContentProvider) {
                 SQLDatabase.resetShared(context);
                 PreferenceManager.setCurrentWallet(context, PreferenceManager.NO_CURRENT_WALLET);
-                // Same reason the current wallet is cleared just above. Every wallet is inserted
-                // fresh by a restore, so the ids come back naming other wallets, and a widget is
-                // pointed at one by its id. Left alone it would show a wallet nobody chose and
-                // file new transactions into it. Nothing on this path calls notifyChange either,
-                // which is why the redraw is asked for here.
+                PreferenceManager.setDefaultWallet(PreferenceManager.NO_DEFAULT_WALLET);
+                // Same reason the current and default wallets are cleared just above. Every
+                // wallet is inserted fresh by a restore, so the ids come back naming other wallets,
+                // and a widget is pointed at one by its id. Left alone it would show a wallet
+                // nobody chose and file new transactions into it. Nothing on this path calls
+                // notifyChange either, which is why the redraw is asked for here.
                 WalletWidgetProvider.forgetConfiguredWallets(context);
             }
             client.close();
