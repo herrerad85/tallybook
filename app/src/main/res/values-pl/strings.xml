@@ -451,7 +451,6 @@
     <string name="setting_title_ui_group_type">"Grupowanie"</string>
     <string name="setting_title_ui_theme_color_primary">"Kolor podstawowy"</string>
     <string name="setting_title_ui_theme_color_accent">"Akcent kolorystyczny"</string>
-    <string name="setting_title_ui_theme_type">"Typ"</string>
 
     <string name="setting_category_utility_notification">"Powiadomienie"</string>
     <string name="setting_category_utility_security">"Bezpieczeństwo"</string>

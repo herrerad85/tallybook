@@ -25,6 +25,25 @@
         android:title="@string/setting_category_ui_appearance" >
 
         <com.oriondev.moneywallet.ui.preference.ColorPreference
+            android:key="theme_color_primary"
+            android:title="@string/setting_title_ui_theme_color_primary" />
+
+        <com.oriondev.moneywallet.ui.preference.ColorPreference
+            android:key="theme_color_accent"
+            android:title="@string/setting_title_ui_theme_color_accent" />
+
+        <com.oriondev.moneywallet.ui.preference.ThemedListPreference
+            android:key="theme_type"
+            android:title="@string/setting_category_ui_theme"
+            android:persistent="false" />
+
+        <com.oriondev.moneywallet.ui.preference.ThemedSwitchPreference
+            android:key="dot_matrix_icons"
+            android:title="@string/setting_title_ui_dot_matrix_icons"
+            android:summary="@string/setting_summary_ui_dot_matrix_icons"
+            android:persistent="false" />
+
+        <com.oriondev.moneywallet.ui.preference.ColorPreference
             android:key="income_color"
             android:title="@string/setting_title_ui_income_color" />
 
@@ -81,30 +100,6 @@
         <com.oriondev.moneywallet.ui.preference.ThemedPreference
             android:key="default_wallet"
             android:title="@string/setting_title_ui_default_wallet"
-            android:persistent="false" />
-
-    </com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory>
-
-    <com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory
-        android:title="@string/setting_category_ui_theme" >
-
-        <com.oriondev.moneywallet.ui.preference.ColorPreference
-            android:key="theme_color_primary"
-            android:title="@string/setting_title_ui_theme_color_primary" />
-
-        <com.oriondev.moneywallet.ui.preference.ColorPreference
-            android:key="theme_color_accent"
-            android:title="@string/setting_title_ui_theme_color_accent" />
-
-        <com.oriondev.moneywallet.ui.preference.ThemedListPreference
-            android:key="theme_type"
-            android:title="@string/setting_title_ui_theme_type"
-            android:persistent="false" />
-
-        <com.oriondev.moneywallet.ui.preference.ThemedSwitchPreference
-            android:key="dot_matrix_icons"
-            android:title="@string/setting_title_ui_dot_matrix_icons"
-            android:summary="@string/setting_summary_ui_dot_matrix_icons"
             android:persistent="false" />
 
     </com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory>

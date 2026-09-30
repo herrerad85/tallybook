@@ -448,7 +448,6 @@
     <string name="setting_title_ui_group_type">"Regroupement"</string>
     <string name="setting_title_ui_theme_color_primary">"Couleur primaire"</string>
     <string name="setting_title_ui_theme_color_accent">"Couleur secondaire"</string>
-    <string name="setting_title_ui_theme_type">"Affichage"</string>
 
     <string name="setting_category_utility_notification">"Notification"</string>
     <string name="setting_category_utility_security">"Sécurité"</string>

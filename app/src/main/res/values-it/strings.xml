@@ -448,7 +448,6 @@
     <string name="setting_title_ui_group_type">"Raggruppamento"</string>
     <string name="setting_title_ui_theme_color_primary">"Colore primario"</string>
     <string name="setting_title_ui_theme_color_accent">"Tono di colore"</string>
-    <string name="setting_title_ui_theme_type">"Tipo"</string>
 
     <string name="setting_category_utility_notification">"Notifica"</string>
     <string name="setting_category_utility_security">"Sicurezza"</string>

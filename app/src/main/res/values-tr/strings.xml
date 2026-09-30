@@ -436,7 +436,6 @@
     <string name="setting_title_ui_group_type"> "Gruplandırma" </string>
     <string name="setting_title_ui_theme_color_primary"> "Birincil renk" </string>
     <string name="setting_title_ui_theme_color_accent"> "Renk vurgusu" </string>
-    <string name="setting_title_ui_theme_type"> "Tür" </string>
 
     <string name="setting_category_utility_notification"> "Bildirim" </string>
     <string name="setting_category_utility_security"> "Güvenlik" </string>

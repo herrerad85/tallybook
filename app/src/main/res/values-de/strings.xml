@@ -485,7 +485,6 @@
     <string name="snackbar_message_model_transfer_added">Transfer hinzugefügt</string>
     <string name="snackbar_message_model_transaction_removed">Transaktion entfernt</string>
     <string name="snackbar_message_model_transaction_added">Transaktion hinzugefügt</string>
-    <string name="setting_title_ui_theme_type">Typ</string>
     <string name="setting_title_security_change_sequence">Entsperrabfolge ändern</string>
     <string name="setting_title_security_change_pin">PIN ändern</string>
     <string name="setting_title_security">Zugangsbeschränkung</string>
