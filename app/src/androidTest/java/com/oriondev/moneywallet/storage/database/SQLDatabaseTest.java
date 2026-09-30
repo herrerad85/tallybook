@@ -3202,8 +3202,7 @@ public class SQLDatabaseTest {
         Date date = DateUtils.getDateFromSQLDateString("2026-07-01");
         // The debt is held in euro and its payment sits in the dollar wallet.
         long debtId = insertDebt(Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, euroWallet, "note-1", null, 2000L, false, null, "tag-1", false);
-        insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
-                Contract.TransactionType.DEBT, dollarWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
+        insertMismatchedPayment(date, paidCategoryId, euroWallet, dollarWallet, debtId);
         assertEquals(1, updateDebt(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, dollarWallet, "note-1", null, 2000L, false, null, "tag-1"));
         checkDebtId(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, dollarWallet, "note-1", null, 2000L, false, null, "tag-1");
     }
@@ -3221,8 +3220,7 @@ public class SQLDatabaseTest {
         long paidCategoryId = getSystemCategory(Contract.CategoryTag.PAID_DEBT);
         Date date = DateUtils.getDateFromSQLDateString("2026-07-01");
         long debtId = insertDebt(Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, euroWallet, "note-1", null, 2000L, false, null, "tag-1", false);
-        insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
-                Contract.TransactionType.DEBT, dollarWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
+        insertMismatchedPayment(date, paidCategoryId, euroWallet, dollarWallet, debtId);
         assertEquals(1, updateDebt(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, otherEuroWallet, "note-1", null, 2000L, false, null, "tag-1"));
         checkDebtId(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, otherEuroWallet, "note-1", null, 2000L, false, null, "tag-1");
     }
@@ -3239,8 +3237,7 @@ public class SQLDatabaseTest {
         long paidCategoryId = getSystemCategory(Contract.CategoryTag.PAID_DEBT);
         Date date = DateUtils.getDateFromSQLDateString("2026-07-01");
         long debtId = insertDebt(Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, euroWallet, "note-1", null, 2000L, false, null, "tag-1", false);
-        insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
-                Contract.TransactionType.DEBT, dollarWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
+        insertMismatchedPayment(date, paidCategoryId, euroWallet, dollarWallet, debtId);
         try {
             updateDebt(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, poundWallet, "note-1", null, 2000L, false, null, "tag-1");
             fail("The debt was moved to a currency matching neither what it holds nor its payments");
@@ -3265,8 +3262,7 @@ public class SQLDatabaseTest {
         long debtId = insertDebt(Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, euroWallet, "note-1", null, 2000L, false, null, "tag-1", false);
         insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
                 Contract.TransactionType.DEBT, euroWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
-        insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
-                Contract.TransactionType.DEBT, dollarWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
+        insertMismatchedPayment(date, paidCategoryId, euroWallet, dollarWallet, debtId);
         try {
             updateDebt(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, poundWallet, "note-1", null, 2000L, false, null, "tag-1");
             fail("The debt was moved to a currency it holds nothing in");
@@ -3288,8 +3284,7 @@ public class SQLDatabaseTest {
         long debtId = insertDebt(Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, euroWallet, "note-1", null, 2000L, false, null, "tag-1", false);
         insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
                 Contract.TransactionType.DEBT, euroWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
-        insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
-                Contract.TransactionType.DEBT, dollarWallet, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
+        insertMismatchedPayment(date, paidCategoryId, euroWallet, dollarWallet, debtId);
         assertEquals(1, updateDebt(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, dollarWallet, "note-1", null, 2000L, false, null, "tag-1"));
         checkDebtId(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, dollarWallet, "note-1", null, 2000L, false, null, "tag-1");
     }
@@ -3342,6 +3337,21 @@ public class SQLDatabaseTest {
         }
         checkDebtId(debtId, Contract.DebtType.DEBT.getValue(), "encoded-icon-1", "desc-1", date, null, euroWallet, "note-1", null, 2000L, false, null, "tag-1");
         assertEquals(euroWallet, masterTransactionWallet(debtId));
+    }
+
+    /**
+     * A payment in another currency than its debt, the way a ledger from before
+     * checkDebtPaymentWalletCurrency can hold one. insertTransaction refuses that now, so the row
+     * goes in on the debt's own wallet and is then moved straight on the table.
+     */
+    private void insertMismatchedPayment(Date date, long paidCategoryId, long debtWalletId,
+                                         long walletId, long debtId) {
+        long paymentId = insertTransaction(500L, date, "payment", paidCategoryId, Contract.Direction.EXPENSE,
+                Contract.TransactionType.DEBT, debtWalletId, null, "payment-note", null, null, debtId, true, true, null, null, "tag-payment");
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Schema.Transaction.WALLET, walletId);
+        assertEquals(1, mDatabase.getWritableDatabase().update(Schema.Transaction.TABLE, contentValues,
+                Schema.Transaction.ID + " = ?", new String[] {String.valueOf(paymentId)}));
     }
 
     private long masterTransactionWallet(long debtId) {

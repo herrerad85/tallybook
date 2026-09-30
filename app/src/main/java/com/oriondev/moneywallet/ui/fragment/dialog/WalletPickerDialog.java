@@ -55,6 +55,7 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
 
     private static final String SS_SINGLE_PICKER = "WalletPickerDialog::SavedState::SinglePicker";
     private static final String SS_SELECTED_WALLETS = "WalletPickerDialog::SavedState::SelectedWallets";
+    private static final String SS_CURRENCY_ISO = "WalletPickerDialog::SavedState::CurrencyIso";
 
     private static final int DEFAULT_LOADER_ID = 1;
 
@@ -66,6 +67,7 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
 
     private boolean mSinglePicker;
     private LongSparseArray<Wallet> mSelectedWallets;
+    private String mCurrencyIso;
 
     private RecyclerView mRecyclerView;
     private TextView mMessageTextView;
@@ -82,6 +84,7 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
         if (savedInstanceState != null) {
             mSelectedWallets = new LongSparseArray<>();
             mSinglePicker = savedInstanceState.getBoolean(SS_SINGLE_PICKER);
+            mCurrencyIso = savedInstanceState.getString(SS_CURRENCY_ISO);
             Wallet[] wallets = (Wallet[]) savedInstanceState.getParcelableArray(SS_SELECTED_WALLETS);
             if (wallets != null) {
                 for (Wallet wallet : wallets) {
@@ -150,6 +153,7 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
         }
         outState.putBoolean(SS_SINGLE_PICKER, mSinglePicker);
         outState.putParcelableArray(SS_SELECTED_WALLETS, wallets);
+        outState.putString(SS_CURRENCY_ISO, mCurrencyIso);
     }
 
     public void setCallback(Callback callback) {
@@ -157,7 +161,12 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
     }
 
     public void showSinglePicker(FragmentManager fragmentManager, String tag, Wallet wallet) {
+        showSinglePicker(fragmentManager, tag, wallet, null);
+    }
+
+    public void showSinglePicker(FragmentManager fragmentManager, String tag, Wallet wallet, String currencyIso) {
         mSinglePicker = true;
+        mCurrencyIso = currencyIso;
         mSelectedWallets = new LongSparseArray<>();
         if (wallet != null) {
             mSelectedWallets.append(wallet.getId(), wallet);
@@ -192,8 +201,13 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
                     Contract.Wallet.TOTAL_MONEY
             };
             String selection = Contract.Wallet.ARCHIVED + " = 0";
+            String[] selectionArgs = null;
+            if (mCurrencyIso != null) {
+                selection += " AND " + Contract.Wallet.CURRENCY + " = ?";
+                selectionArgs = new String[] {mCurrencyIso};
+            }
             String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
-            return new CursorLoader(activity, uri, projection, selection, null, sortOrder);
+            return new CursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
         }
         throw new RuntimeException("Activity is null");
     }

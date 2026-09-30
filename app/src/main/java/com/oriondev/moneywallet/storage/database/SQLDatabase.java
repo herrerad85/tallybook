@@ -859,8 +859,14 @@ import java.util.function.Supplier;
      * @param walletId id of the wallet to update.
      * @param contentValues bundle that contains the data from the content provider.
      * @return the number of row updated inside the database.
+     * @throws SQLiteDataException if the currency changes and checkSplitDebtPaymentWallet refuses
+     *                             the wallet.
      */
     /*package-local*/ int updateWallet(long walletId, ContentValues contentValues) {
+        if (contentValues.containsKey(Contract.Wallet.CURRENCY) && !TextUtils.equals(
+                contentValues.getAsString(Contract.Wallet.CURRENCY), walletCurrency(walletId))) {
+            checkSplitDebtPaymentWallet(walletId);
+        }
         ContentValues cv = new ContentValues();
         if (contentValues.containsKey(Contract.Wallet.NAME)) {
             cv.put(Schema.Wallet.NAME, contentValues.getAsString(Contract.Wallet.NAME));
@@ -1074,8 +1080,13 @@ import java.util.function.Supplier;
      *
      * @param contentValues object which contains all the column values.
      * @return the id of the created transaction if success, -1 if failure.
+     * @throws SQLiteDataException if it is a debt payment in a wallet of another currency than the
+     *                             debt's.
      */
     /*package-local*/ long insertTransaction(ContentValues contentValues) {
+        checkDebtPaymentWalletCurrency(contentValues.getAsLong(Contract.Transaction.DEBT_ID),
+                contentValues.getAsLong(Contract.Transaction.CATEGORY_ID),
+                contentValues.getAsLong(Contract.Transaction.WALLET_ID));
         // if this is a transaction linked to a recurrence, we need to correctly calculate
         // the uuid of the transaction to be uniquely identified across different devices
         String transactionUUID = UUID.randomUUID().toString();
@@ -1209,11 +1220,14 @@ import java.util.function.Supplier;
      * @param transactionId id of the transaction to update.
      * @param contentValues set of column values to update.
      * @return the number of rows affected by the update.
-     * @throws SQLiteDataException if the transaction is part of a transfer, or if it is a debt's
-     *                             master transaction and checkStrandedCurrency refuses the wallet.
+     * @throws SQLiteDataException if the transaction is part of a transfer, if it is a debt's
+     *                             master transaction and checkStrandedCurrency refuses the wallet,
+     *                             or if it is a debt payment moved to a wallet of another currency
+     *                             than the debt's.
      */
     /*package-local*/ int updateTransaction(long transactionId, ContentValues contentValues) {
         checkDebtOfMasterTransactionWallet(transactionId, contentValues);
+        checkDebtPaymentOfTransactionWallet(transactionId, contentValues);
         int rows = updateTransactionRow(transactionId, contentValues);
         if (rows > 0) {
             syncDebtOfMasterTransaction(transactionId, contentValues);
@@ -2784,6 +2798,56 @@ import java.util.function.Supplier;
     }
 
     /**
+     * The payment half of the check, asked only when the update moves the row to another wallet.
+     * A ledger from before this check can hold a payment already in another currency than its
+     * debt, and a save that keeps that wallet has to go through, or its note or its date could
+     * never be edited again. The debt and the category are the ones the update names, or the
+     * stored ones when it names none.
+     *
+     * @param transactionId id of the transaction being updated.
+     * @param contentValues set of column values to update.
+     * @throws SQLiteDataException if checkDebtPaymentWalletCurrency refuses the wallet.
+     */
+    private void checkDebtPaymentOfTransactionWallet(long transactionId, ContentValues contentValues) {
+        if (!contentValues.containsKey(Contract.Transaction.WALLET_ID)) {
+            return;
+        }
+        Long walletId = contentValues.getAsLong(Contract.Transaction.WALLET_ID);
+        String[] projection = new String[] {
+                Schema.Transaction.WALLET,
+                Schema.Transaction.DEBT,
+                Schema.Transaction.CATEGORY
+        };
+        String selection = Schema.Transaction.ID + " = ?";
+        String[] selectionArgs = new String[] {String.valueOf(transactionId)};
+        Cursor cursor = getReadableDatabase().query(Schema.Transaction.TABLE, projection, selection,
+                selectionArgs, null, null, null);
+        Long storedWalletId = null;
+        Long storedDebtId = null;
+        Long storedCategoryId = null;
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    storedWalletId = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.Transaction.WALLET));
+                    int debtIndex = cursor.getColumnIndexOrThrow(Schema.Transaction.DEBT);
+                    storedDebtId = cursor.isNull(debtIndex) ? null : cursor.getLong(debtIndex);
+                    storedCategoryId = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.Transaction.CATEGORY));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (storedWalletId == null || storedWalletId.equals(walletId)) {
+            return;
+        }
+        Long debtId = contentValues.containsKey(Contract.Transaction.DEBT_ID)
+                ? contentValues.getAsLong(Contract.Transaction.DEBT_ID) : storedDebtId;
+        Long categoryId = contentValues.containsKey(Contract.Transaction.CATEGORY_ID)
+                ? contentValues.getAsLong(Contract.Transaction.CATEGORY_ID) : storedCategoryId;
+        checkDebtPaymentWalletCurrency(debtId, categoryId, walletId);
+    }
+
+    /**
      * A debt and its master transaction are the same event, so an edit to that transaction has to
      * move the debt with it. updateDebt has done this in the other direction since the app was
      * written and nothing did it in this one, so the transaction list could move or re price a
@@ -3979,6 +4043,94 @@ import java.util.function.Supplier;
                 String.valueOf(creditCategoryId)
         };
         checkStrandedCurrency(storedWalletId, walletId, selection, selectionArgs);
+    }
+
+    /**
+     * A debt payment has to sit in a wallet of the debt's own currency. A debt is read in the
+     * currency of its wallet and its progress is its payments added up with no currency in the
+     * sum, so a payment in another currency would be counted at face value and 500 euros would
+     * settle 500 dollars. A master transaction is not a payment and is not asked about here, it
+     * is held by checkDebtOfMasterTransactionWallet.
+     *
+     * Nothing is refused when an id is missing or a currency cannot be read, the way
+     * checkDebtWalletCurrency lets such a row through.
+     *
+     * @param debtId id of the debt the row is filed against, or null.
+     * @param categoryId id of the category the row is filed under, or null.
+     * @param walletId id of the wallet the row names, or null.
+     * @throws SQLiteDataException if the row is a payment and its wallet is in a currency other
+     *                             than the one the debt's wallet is in.
+     */
+    private void checkDebtPaymentWalletCurrency(Long debtId, Long categoryId, Long walletId) {
+        if (debtId == null || categoryId == null || walletId == null) {
+            return;
+        }
+        Long paidDebtCategoryId = getSystemCategoryId(Schema.CategoryTag.PAID_DEBT);
+        Long paidCreditCategoryId = getSystemCategoryId(Schema.CategoryTag.PAID_CREDIT);
+        if (!categoryId.equals(paidDebtCategoryId) && !categoryId.equals(paidCreditCategoryId)) {
+            return;
+        }
+        Long debtWalletId = storedWallet(Schema.Debt.TABLE, Schema.Debt.ID, Schema.Debt.WALLET,
+                debtId);
+        if (debtWalletId == null) {
+            return;
+        }
+        String walletCurrency = walletCurrency(walletId);
+        String debtCurrency = walletCurrency(debtWalletId);
+        if (walletCurrency == null || debtCurrency == null
+                || TextUtils.equals(walletCurrency, debtCurrency)) {
+            return;
+        }
+        String message = String.format(Locale.ENGLISH,
+                "Wallet (id: %d) is in %s and the debt (id: %d) it pays is in %s",
+                walletId, walletCurrency, debtId, debtCurrency);
+        throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
+    }
+
+    /**
+     * A wallet cannot change currency while a debt payment and its debt sit in two wallets and it
+     * is one of them. The payment was let into the other wallet because both were in one currency,
+     * and a debt adds its payments up with no currency in the sum, so a change on either side would
+     * count one currency at face value as the other. Pending and future payments are asked about
+     * too, since they join the sum once they are confirmed.
+     *
+     * A system category that cannot be found binds as the text null and matches no row.
+     *
+     * @param walletId id of the wallet whose currency is changing.
+     * @throws SQLiteDataException if the wallet holds a payment whose debt is in another wallet,
+     *                             or a debt with a payment in another wallet.
+     */
+    private void checkSplitDebtPaymentWallet(long walletId) {
+        String query = "SELECT 1 FROM " + Schema.Transaction.TABLE + " AS t JOIN " +
+                Schema.Debt.TABLE + " AS d ON t." + Schema.Transaction.DEBT + " = d." +
+                Schema.Debt.ID + " JOIN " + Schema.Wallet.TABLE + " AS w ON d." +
+                Schema.Debt.WALLET + " = w." + Schema.Wallet.ID + " WHERE t." +
+                Schema.Transaction.DELETED + " = 0 AND d." + Schema.Debt.DELETED + " = 0 AND w." +
+                Schema.Wallet.DELETED + " = 0 AND t." + Schema.Transaction.CATEGORY +
+                " IN (?, ?) AND t." + Schema.Transaction.WALLET + " != d." + Schema.Debt.WALLET +
+                " AND (t." + Schema.Transaction.WALLET + " = ? OR d." + Schema.Debt.WALLET +
+                " = ?) LIMIT 1";
+        String[] args = new String[] {
+                String.valueOf(getSystemCategoryId(Schema.CategoryTag.PAID_DEBT)),
+                String.valueOf(getSystemCategoryId(Schema.CategoryTag.PAID_CREDIT)),
+                String.valueOf(walletId),
+                String.valueOf(walletId)
+        };
+        Cursor cursor = getReadableDatabase().rawQuery(query, args);
+        boolean split = false;
+        if (cursor != null) {
+            try {
+                split = cursor.moveToFirst();
+            } finally {
+                cursor.close();
+            }
+        }
+        if (split) {
+            String message = String.format(Locale.ENGLISH,
+                    "Wallet (id: %d) holds a debt or a debt payment whose other half is in another wallet",
+                    walletId);
+            throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
+        }
     }
 
     /**

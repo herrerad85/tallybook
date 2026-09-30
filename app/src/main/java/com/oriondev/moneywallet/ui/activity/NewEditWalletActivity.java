@@ -46,6 +46,7 @@ import com.oriondev.moneywallet.picker.IconPicker;
 import com.oriondev.moneywallet.picker.MoneyPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SQLiteDataException;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
 import com.oriondev.moneywallet.ui.view.text.NonEmptyTextValidator;
 import com.oriondev.moneywallet.ui.view.text.Validator;
@@ -358,14 +359,26 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
             String group = mGroupEditText.getTextAsString();
             contentValues.put(Contract.Wallet.GROUP, TextUtils.isEmpty(group) ? null : group);
             ContentResolver contentResolver = getContentResolver();
-            switch (mode) {
-                case NEW_ITEM:
-                    contentResolver.insert(DataContentProvider.CONTENT_WALLETS, contentValues);
-                    break;
-                case EDIT_ITEM:
-                    Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, getItemId());
-                    contentResolver.update(uri, contentValues, null, null);
-                    break;
+            try {
+                switch (mode) {
+                    case NEW_ITEM:
+                        contentResolver.insert(DataContentProvider.CONTENT_WALLETS, contentValues);
+                        break;
+                    case EDIT_ITEM:
+                        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, getItemId());
+                        contentResolver.update(uri, contentValues, null, null);
+                        break;
+                }
+            } catch (SQLiteDataException e) {
+                if (e.getErrorCode() != Contract.ErrorCode.WALLETS_NOT_CONSISTENT) {
+                    throw e;
+                }
+                ThemedDialog.buildMaterialDialog(this)
+                        .setTitle(R.string.title_error)
+                        .setMessage(R.string.error_wallet_currency_has_split_repayment)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
+                return;
             }
             setResult(RESULT_OK);
             finish();

@@ -318,6 +318,7 @@
     <string name="error_input_missing_multiple_wallets">"Select at least one wallet"</string>
     <string name="error_input_invalid_multiple_wallets">"Wallets must have the same currency"</string>
     <string name="error_wallet_currency_not_consistent">"You can only move this to a wallet in the currency it uses now, or one its transactions are in."</string>
+    <string name="error_wallet_currency_has_split_repayment">"A debt or credit and one of its repayments sit in different wallets, and one of them is this wallet. Move the repayment into the debt's wallet or delete it, then change the currency."</string>
     <string name="error_debt_wallet_currency_not_consistent">"This would move the debt to a wallet in a different currency from its payments."</string>
     <string name="error_input_missing_date">"Select a date"</string>
     <string name="error_input_missing_start_date">"Select a start date"</string>

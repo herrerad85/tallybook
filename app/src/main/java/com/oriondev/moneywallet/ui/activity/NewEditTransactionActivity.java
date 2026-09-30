@@ -300,7 +300,11 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
 
             @Override
             public void onClick(View v) {
-                mWalletPicker.showSingleWalletPicker();
+                if (mRules.limitsWalletsToDebtCurrency() && mRules.getDebtId() != null) {
+                    mWalletPicker.showSingleWalletPicker(readDebtWalletCurrency(getContentResolver(), mRules.getDebtId()));
+                } else {
+                    mWalletPicker.showSingleWalletPicker();
+                }
             }
 
         });
@@ -1052,6 +1056,26 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
             cursor.close();
         }
         return category;
+    }
+
+    /**
+     * The currency of the wallet a debt is held in, which is the currency the debt is read in.
+     *
+     * @param contentResolver resolver to read through.
+     * @param debtId id of the debt.
+     * @return the currency iso, or null when the debt is not found.
+     */
+    private static String readDebtWalletCurrency(ContentResolver contentResolver, long debtId) {
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_DEBTS, debtId);
+        String currencyIso = null;
+        Cursor cursor = contentResolver.query(uri, new String[] {Contract.Debt.WALLET_CURRENCY}, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                currencyIso = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Debt.WALLET_CURRENCY));
+            }
+            cursor.close();
+        }
+        return currencyIso;
     }
 
     private void fillFieldsFromIntent(Intent intent) {
