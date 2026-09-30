@@ -423,6 +423,28 @@ public class Contract {
         return lowest;
     }
 
+    /**
+     * Selection over the rows {@link Transaction} describes naming every side of a transfer, tax
+     * side included, that links any of the given people. A transfer keeps its people only in the
+     * transfer people table, so the people ids column of its rows is always empty.
+     *
+     * @param people number of person id arguments the selection takes.
+     * @return the selection, with one placeholder per person.
+     */
+    public static String transferSideWithPeopleSelection(int people) {
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < people; i++) {
+            placeholders.append(i == 0 ? "?" : ", ?");
+        }
+        return "EXISTS (SELECT 1 FROM " + Schema.Transfer.TABLE + " AS tr JOIN " +
+                Schema.TransferPeople.TABLE + " AS tp ON tp." + Schema.TransferPeople.TRANSFER +
+                " = tr." + Schema.Transfer.ID + " WHERE tr." + Schema.Transfer.DELETED +
+                " = 0 AND tp." + Schema.TransferPeople.DELETED + " = 0 AND tp." +
+                Schema.TransferPeople.PERSON + " IN (" + placeholders + ") AND " + Transaction.ID +
+                " IN (tr." + Schema.Transfer.TRANSACTION_FROM + ", tr." + Schema.Transfer.TRANSACTION_TO +
+                ", tr." + Schema.Transfer.TRANSACTION_TAX + "))";
+    }
+
     public static final class Saving {
         public static final String ID = Schema.Saving.ID;
         public static final String DESCRIPTION = Schema.Saving.DESCRIPTION;
