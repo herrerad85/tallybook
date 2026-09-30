@@ -162,14 +162,18 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
             String selection;
             String[] selectionArgs;
             long currentWallet = PreferenceManager.getCurrentWallet();
-            if (currentWallet == PreferenceManager.TOTAL_WALLET_ID) {
+            if (!filtersByCurrentWallet()) {
+                selection = null;
+                selectionArgs = null;
+            } else if (currentWallet == PreferenceManager.TOTAL_WALLET_ID) {
                 selection = Contract.Transaction.WALLET_COUNT_IN_TOTAL + " = 1";
                 selectionArgs = null;
             } else {
                 selection = Contract.Transaction.WALLET_ID + " = ?";
                 selectionArgs = new String[] {String.valueOf(currentWallet)};
             }
-            selection += " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')";
+            String notFuture = "DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')";
+            selection = selection != null ? selection + " AND " + notFuture : notFuture;
             String dateRange = buildDateRangeSelection(startDate, endDate);
             if (dateRange != null) {
                 selection += " AND " + dateRange;
@@ -313,9 +317,9 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
             int indexDate = cursor.getColumnIndex(Contract.Transaction.DATE);
             for (int i = 0; i < cursor.getCount() && !(otherWallets && future); i++) {
                 cursor.moveToPosition(i);
-                boolean inSelectedWallet = currentWallet == PreferenceManager.TOTAL_WALLET_ID
+                boolean inSelectedWallet = !filtersByCurrentWallet() || (currentWallet == PreferenceManager.TOTAL_WALLET_ID
                         ? cursor.getInt(indexCountInTotal) == 1
-                        : cursor.getLong(indexWalletId) == currentWallet;
+                        : cursor.getLong(indexWalletId) == currentWallet);
                 if (!inSelectedWallet) {
                     otherWallets = true;
                 } else {
@@ -343,7 +347,16 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
 
     @Override
     protected boolean showsCurrentWallet() {
-        return true;
+        return filtersByCurrentWallet();
+    }
+
+    /**
+     * False for a debt, whose repayments may sit in any wallet of its currency and all count
+     * toward its progress, so hiding the ones outside the selected wallet would contradict it.
+     */
+    private boolean filtersByCurrentWallet() {
+        Bundle arguments = getArguments();
+        return arguments == null || arguments.getSerializable(FILTER_TYPE) != FilterType.DEBT;
     }
 
     @Override

@@ -7,12 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.Lifecycle;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
@@ -26,10 +29,12 @@ import com.oriondev.moneywallet.picker.CategoryPicker;
 import com.oriondev.moneywallet.picker.DateTimePicker;
 import com.oriondev.moneywallet.picker.MoneyPicker;
 import com.oriondev.moneywallet.picker.PersonPicker;
+import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.ui.fragment.dialog.WalletPickerDialog;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateUtils;
@@ -42,7 +47,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDialog;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -71,6 +78,7 @@ public class NewEditTransactionActivityTest {
     private static final String CATEGORY_PICKER = "NewEditTransactionActivity::Tag::CategoryPicker";
     private static final String PERSON_PICKER = "NewEditTransactionActivity::Tag::PersonPicker";
     private static final String ATTACHMENT_PICKER = "NewEditTransactionActivity::Tag::AttachmentPicker";
+    private static final String WALLET_PICKER = "NewEditTransactionActivity::Tag::WalletPicker";
 
     private ContentResolver mResolver;
     private long mEuroWallet;
@@ -316,19 +324,19 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
-    public void aDebtPaymentHidesTheWalletFieldAndKeepsItHiddenAcrossARecreate() {
+    public void aDebtPaymentOffersTheWalletFieldAndKeepsItAcrossARecreate() {
         long debt = insertDebt(mEuroWallet);
         Intent intent = newItemIntent();
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
         intent.putExtra(NewEditTransactionActivity.DEBT_ID, debt);
         try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
-                assertEquals(View.GONE, activity.findViewById(R.id.wallet_edit_text).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.wallet_edit_text).getVisibility());
                 assertEquals(View.GONE, activity.findViewById(R.id.category_edit_text).getVisibility());
             });
             scenario.recreate();
             scenario.onActivity(activity -> {
-                assertEquals(View.GONE, activity.findViewById(R.id.wallet_edit_text).getVisibility());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.wallet_edit_text).getVisibility());
                 moneyPicker(activity).setMoney(700L);
                 save(activity);
                 assertTrue(activity.isFinishing());
@@ -340,6 +348,25 @@ public class NewEditTransactionActivityTest {
         assertEquals(NewEditTransactionActivity.TYPE_DEBT, row.getInt(row.getColumnIndex(Contract.Transaction.TYPE)));
         assertEquals(Contract.CategoryTag.PAID_DEBT, row.getString(row.getColumnIndex(Contract.Transaction.CATEGORY_TAG)));
         row.close();
+    }
+
+    @Test
+    public void aDebtPaymentsWalletPickerListsOnlyTheWalletsOfTheDebtsCurrency() {
+        long debt = insertDebt(mEuroWallet);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ID, debt);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                activity.findViewById(R.id.wallet_edit_text).performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                List<String> names = walletPickerNames(activity);
+                assertEquals(2, names.size());
+                assertTrue(names.contains("Cash"));
+                assertTrue(names.contains("Unused"));
+                assertFalse(names.contains("Bank"));
+            });
+        }
     }
 
     @Test
@@ -451,11 +478,9 @@ public class NewEditTransactionActivityTest {
         intent.putExtra(NewEditTransactionActivity.DEBT_ID, 999L);
         intent.putExtra(NewEditTransactionActivity.DEBT_ACTION, NewEditTransactionActivity.DEBT_RECEIVE);
         try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
-            // the action picks the paid credit category, which makes this a payment and hides
-            // the wallet field; a debt row would have named the kind itself. Both debt tags
-            // hide the field, so the category is what tells the two actions apart
+            // the action picks the paid credit category, which makes this a payment; a debt row
+            // would have named the kind itself
             scenario.onActivity(activity -> {
-                assertEquals(View.GONE, activity.findViewById(R.id.wallet_edit_text).getVisibility());
                 assertEquals(Contract.CategoryTag.PAID_CREDIT,
                         categoryPicker(activity).getCurrentCategory().getTag());
             });
@@ -1045,6 +1070,35 @@ public class NewEditTransactionActivityTest {
 
     private static AttachmentPicker attachmentPicker(NewEditTransactionActivity activity) {
         return (AttachmentPicker) activity.getSupportFragmentManager().findFragmentByTag(ATTACHMENT_PICKER);
+    }
+
+    /** The wallet names the open picker dialog lists, read off its rows once the loader lands. */
+    private static List<String> walletPickerNames(NewEditTransactionActivity activity) {
+        WalletPicker picker = (WalletPicker) activity.getSupportFragmentManager().findFragmentByTag(WALLET_PICKER);
+        WalletPickerDialog dialog = (WalletPickerDialog) picker.getChildFragmentManager()
+                .findFragmentByTag(WALLET_PICKER + "::DialogFragment");
+        RecyclerView list = dialog.getDialog().findViewById(R.id.recycler_view);
+        // the wallets arrive through a cursor loader on a background thread
+        for (int i = 0; i < 200 && list.getVisibility() != View.VISIBLE; i++) {
+            shadowOf(Looper.getMainLooper()).idle();
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+        assertEquals("the wallets never loaded", View.VISIBLE, list.getVisibility());
+        View decor = dialog.getDialog().getWindow().getDecorView();
+        DisplayMetrics metrics = decor.getResources().getDisplayMetrics();
+        decor.measure(View.MeasureSpec.makeMeasureSpec(metrics.widthPixels, View.MeasureSpec.AT_MOST),
+                View.MeasureSpec.makeMeasureSpec(metrics.heightPixels, View.MeasureSpec.AT_MOST));
+        decor.layout(0, 0, decor.getMeasuredWidth(), decor.getMeasuredHeight());
+        assertEquals(list.getAdapter().getItemCount(), list.getChildCount());
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < list.getChildCount(); i++) {
+            names.add(((TextView) list.getChildAt(i).findViewById(R.id.name_text_view)).getText().toString());
+        }
+        return names;
     }
 
     private static String walletField(NewEditTransactionActivity activity) {

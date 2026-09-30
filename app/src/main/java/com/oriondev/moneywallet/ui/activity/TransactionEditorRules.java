@@ -112,16 +112,24 @@ public class TransactionEditorRules implements Serializable {
     }
 
     /**
-     * A saving's progress and a debt's progress are each summed over the transactions filed
-     * against them with no currency anywhere in that sum, so a row moved onto a wallet held in
-     * another currency is added at face value and 500 euros count as 500 dollars.
+     * A saving's progress is summed over the transactions filed against it with no currency
+     * anywhere in that sum, so a row moved onto a wallet held in another currency is added at face
+     * value and 500 euros count as 500 dollars.
      *
-     * A debt's master transaction is not one of those rows. It carries the same TYPE_DEBT as a
-     * payment and is told apart only by its category, and editing its wallet moves the debt
-     * itself through syncDebtOfMasterTransaction, so it keeps the field.
+     * A debt's progress is summed the same way, but a payment keeps the field and is offered only
+     * the wallets in the debt's currency instead, see limitsWalletsToDebtCurrency.
      */
     public boolean hidesWalletField() {
-        return mType == TYPE_SAVING || (mType == TYPE_DEBT && mDebtPayment);
+        return mType == TYPE_SAVING;
+    }
+
+    /**
+     * A payment may go to any wallet held in the currency of the debt it pays. A debt's master
+     * transaction carries the same TYPE_DEBT and is told apart only by its category, and editing
+     * its wallet moves the debt itself through syncDebtOfMasterTransaction, so it is not limited.
+     */
+    public boolean limitsWalletsToDebtCurrency() {
+        return mType == TYPE_DEBT && mDebtPayment;
     }
 
     /** Whether a category this row is filed under makes it a payment and not a debt's own row. */

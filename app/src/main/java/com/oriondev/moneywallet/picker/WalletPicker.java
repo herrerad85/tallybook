@@ -176,7 +176,11 @@ public class WalletPicker extends Fragment implements WalletPickerDialog.Callbac
     }
 
     public void showSingleWalletPicker() {
-        mWalletPickerDialog.showSinglePicker(getChildFragmentManager(), getDialogTag(), mCurrentWallet);
+        showSingleWalletPicker(null);
+    }
+
+    public void showSingleWalletPicker(String currencyIso) {
+        mWalletPickerDialog.showSinglePicker(getChildFragmentManager(), getDialogTag(), mCurrentWallet, currencyIso);
     }
 
     public void showMultiWalletPicker() {

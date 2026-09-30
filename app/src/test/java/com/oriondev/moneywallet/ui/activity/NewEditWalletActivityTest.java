@@ -1,5 +1,6 @@
 package com.oriondev.moneywallet.ui.activity;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -11,6 +12,7 @@ import android.net.Uri;
 import android.os.Looper;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
@@ -18,10 +20,12 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
+import com.oriondev.moneywallet.utils.CurrencyManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
@@ -214,6 +220,36 @@ public class NewEditWalletActivityTest {
         }
     }
 
+    /**
+     * A repayment in another wallet of the debt's currency holds that wallet to it, so the
+     * database refuses the save. The editor has to say why and stay open on the edit.
+     */
+    @Test
+    public void changingTheCurrencyOfAWalletHoldingASplitRepaymentShowsWhyAndStaysOpen() {
+        long debtWallet = insertWallet("Cash", null);
+        long wallet = insertWallet("Bank", null);
+        insertRepayment(insertDebt(debtWallet), wallet);
+        try (ActivityScenario<NewEditWalletActivity> scenario = ActivityScenario.launch(editIntent(wallet))) {
+            scenario.onActivity(activity -> {
+                activity.<MaterialEditText>findViewById(R.id.currency_edit_text).performClick();
+                idle();
+                Intent picker = shadowOf(activity).getNextStartedActivity();
+                assertEquals(CurrencyListActivity.class.getName(), picker.getComponent().getClassName());
+                CurrencyUnit dollar = CurrencyManager.getCurrency("USD");
+                assertNotNull(dollar);
+                shadowOf(activity).receiveResult(picker, Activity.RESULT_OK,
+                        new Intent().putExtra(CurrencyListActivity.RESULT_CURRENCY, dollar));
+                idle();
+                save(activity);
+                TextView message = latestPicker().findViewById(android.R.id.message);
+                assertEquals(activity.getString(R.string.error_wallet_currency_has_split_repayment),
+                        String.valueOf(message.getText()));
+                assertFalse(activity.isFinishing());
+                assertEquals("EUR", storedCurrency(wallet));
+            });
+        }
+    }
+
     private static void pick(ListView list, int position) {
         list.performItemClick(list, position, list.getAdapter().getItemId(position));
         idle();
@@ -233,6 +269,15 @@ public class NewEditWalletActivityTest {
                 new String[] {Contract.Wallet.GROUP}, null, null, null)) {
             assertTrue("the wallet row is gone", cursor != null && cursor.moveToFirst());
             return cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.GROUP));
+        }
+    }
+
+    private String storedCurrency(long wallet) {
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, wallet);
+        try (Cursor cursor = mResolver.query(uri,
+                new String[] {Contract.Wallet.CURRENCY}, null, null, null)) {
+            assertTrue("the wallet row is gone", cursor != null && cursor.moveToFirst());
+            return cursor.getString(cursor.getColumnIndexOrThrow(Contract.Wallet.CURRENCY));
         }
     }
 
@@ -301,5 +346,42 @@ public class NewEditWalletActivityTest {
         values.put(Contract.Wallet.ARCHIVED, false);
         values.put(Contract.Wallet.GROUP, group);
         return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_WALLETS, values));
+    }
+
+    private long insertDebt(long wallet) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Debt.TYPE, Contract.DebtType.DEBT.getValue());
+        values.put(Contract.Debt.ICON, ICON);
+        values.put(Contract.Debt.DESCRIPTION, "Loan");
+        values.put(Contract.Debt.DATE, "2026-07-01");
+        values.put(Contract.Debt.WALLET_ID, wallet);
+        values.put(Contract.Debt.MONEY, 2000L);
+        values.put(Contract.Debt.ARCHIVED, false);
+        values.put(Contract.Debt.INSERT_MASTER_TRANSACTION, false);
+        return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_DEBTS, values));
+    }
+
+    private void insertRepayment(long debt, long wallet) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Transaction.MONEY, 500L);
+        values.put(Contract.Transaction.DATE, "2026-07-01 10:00:00");
+        values.put(Contract.Transaction.DESCRIPTION, "Loan");
+        values.put(Contract.Transaction.CATEGORY_ID, systemCategory(Contract.CategoryTag.PAID_DEBT));
+        values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+        values.put(Contract.Transaction.TYPE, Contract.TransactionType.DEBT);
+        values.put(Contract.Transaction.WALLET_ID, wallet);
+        values.put(Contract.Transaction.DEBT_ID, debt);
+        values.put(Contract.Transaction.CONFIRMED, true);
+        values.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        assertTrue(ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values)) > 0);
+    }
+
+    private long systemCategory(String tag) {
+        try (Cursor cursor = mResolver.query(DataContentProvider.CONTENT_CATEGORIES,
+                new String[] {Contract.Category.ID}, Contract.Category.TAG + " = ?",
+                new String[] {tag}, null)) {
+            assertTrue("no system category tagged " + tag, cursor != null && cursor.moveToFirst());
+            return cursor.getLong(0);
+        }
     }
 }

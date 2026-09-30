@@ -78,11 +78,36 @@ public class TransactionEditorRulesTest {
     }
 
     @Test
-    public void aDebtPaymentHidesBothFields() {
+    public void aDebtPaymentHidesItsCategoryAndOffersItsWallet() {
         TransactionEditorRules rules = rules(TransactionEditorRules.TYPE_DEBT, true);
         assertTrue(rules.hidesCategoryField());
-        assertTrue("a debt's progress is summed with no currency in it either",
+        assertFalse("a payment may go to another wallet of the debt's currency",
                 rules.hidesWalletField());
+    }
+
+    @Test
+    public void aDebtPaymentIsOfferedOnlyTheWalletsInTheDebtsCurrency() {
+        assertTrue("a debt's progress is summed with no currency in it",
+                rules(TransactionEditorRules.TYPE_DEBT, true).limitsWalletsToDebtCurrency());
+    }
+
+    @Test
+    public void aDebtsMasterTransactionIsOfferedEveryWallet() {
+        assertFalse("editing a master transaction's wallet moves the debt itself",
+                rules(TransactionEditorRules.TYPE_DEBT, false).limitsWalletsToDebtCurrency());
+    }
+
+    @Test
+    public void anOrdinaryTransactionIsOfferedEveryWallet() {
+        assertFalse(rules(TransactionEditorRules.TYPE_STANDARD, false).limitsWalletsToDebtCurrency());
+        assertFalse("only a debt row reads the flag",
+                rules(TransactionEditorRules.TYPE_STANDARD, true).limitsWalletsToDebtCurrency());
+    }
+
+    @Test
+    public void aSavingTransactionIsNotLimitedToADebtsCurrency() {
+        assertFalse("a saving row hides its wallet field and has no debt",
+                rules(TransactionEditorRules.TYPE_SAVING, true).limitsWalletsToDebtCurrency());
     }
 
     @Test
