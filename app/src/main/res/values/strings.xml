@@ -569,7 +569,6 @@
     <string name="setting_title_ui_drawer_entries">"Drawer entries"</string>
     <string name="setting_title_ui_theme_color_primary">"Color primary"</string>
     <string name="setting_title_ui_theme_color_accent">"Color accent"</string>
-    <string name="setting_title_ui_theme_type">"Type"</string>
 
     <string name="setting_category_utility_notification">"Notification"</string>
     <string name="setting_category_utility_security">"Security"</string>

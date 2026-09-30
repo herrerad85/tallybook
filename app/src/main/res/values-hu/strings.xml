@@ -495,7 +495,6 @@
     <string name="setting_title_ui_income_color">Bevétel színe</string>
     <string name="setting_title_ui_theme_color_accent">Kiemelt szín</string>
     <string name="setting_title_ui_theme_color_primary">Elsődleges szín</string>
-    <string name="setting_title_ui_theme_type">Típus</string>
     <string name="setting_title_user_interface">Felhasználói felület</string>
     <string name="setting_title_utility">Használhatóság</string>
     <string name="snackbar_message_model_transaction_added">Tranzakció hozzáadva</string>

@@ -16838,17 +16838,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;setting_title_ui_theme_type&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
-        errorLine1="    &lt;string name=&quot;setting_title_ui_theme_type&quot;>&quot;Type&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="508"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;setting_category_utility_notification&quot; is not translated in &quot;ru&quot; (Russian), &quot;hr&quot; (Croatian), &quot;es&quot; (Spanish), &quot;zh&quot; (Chinese), &quot;sk&quot; (Slovak), &quot;ro&quot; (Romanian), &quot;ca&quot; (Catalan)"
         errorLine1="    &lt;string name=&quot;setting_category_utility_notification&quot;>&quot;Notification&quot;&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
