@@ -62,6 +62,13 @@ public class MultiCategoryPickerDialog extends DialogFragment implements ParentC
 
     private static final int DEFAULT_LOADER_ID = 1;
 
+    /**
+     * By type, then each parent followed by its children.
+     */
+    public static final String SORT_ORDER = Contract.Category.TYPE + " ASC, " + Contract.Category.GROUP_INDEX +
+            " ASC, " + Contract.Category.GROUP_NAME + " ASC, " + Contract.Category.GROUP_ID +
+            " ASC, " + Contract.Category.PARENT + " IS NULL DESC, " + Contract.Category.NAME + " ASC";
+
     public static MultiCategoryPickerDialog newInstance() {
         return new MultiCategoryPickerDialog();
     }
@@ -179,10 +186,7 @@ public class MultiCategoryPickerDialog extends DialogFragment implements ParentC
                 selection = Contract.Category.TYPE + " != ?";
                 selectionArgs = new String[] {String.valueOf(Contract.CategoryType.SYSTEM.getValue())};
             }
-            String sortOrder = Contract.Category.TYPE + " ASC, " + Contract.Category.GROUP_INDEX +
-                    " ASC, " + Contract.Category.GROUP_NAME + " ASC, " + Contract.Category.GROUP_ID +
-                    " ASC, " + Contract.Category.PARENT + " IS NULL DESC, " + Contract.Category.NAME + " ASC";
-            return new CursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
+            return new CursorLoader(activity, uri, projection, selection, selectionArgs, SORT_ORDER);
         }
         throw new RuntimeException("Activity is null");
     }

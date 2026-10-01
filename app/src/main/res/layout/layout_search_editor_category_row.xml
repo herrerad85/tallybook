@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2026.
+  ~
+  ~ This file is part of MoneyWallet.
+  ~
+  ~ MoneyWallet is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ MoneyWallet is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:minHeight="48dp"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="4dp" >
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/search_row_check_box"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:button="@drawable/mtrl_checkbox_button"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:saveEnabled="false"
+        app:buttonIcon="@drawable/mtrl_checkbox_button_icon" />
+
+    <ImageView
+        android:id="@+id/search_row_icon_image_view"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp"
+        android:importantForAccessibility="no" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+        android:id="@+id/search_row_name_text_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="16sp"
+        app:theme_textColor="textColorPrimary" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+        android:id="@+id/search_row_count_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textSize="14sp"
+        app:theme_textColor="textColorSecondary" />
+
+    <ImageView
+        android:id="@+id/search_row_expand_image_view"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:scaleType="center"
+        android:src="@drawable/ic_expand_more_black_24dp"
+        android:visibility="invisible"
+        tools:ignore="ContentDescription" />
+
+</LinearLayout>

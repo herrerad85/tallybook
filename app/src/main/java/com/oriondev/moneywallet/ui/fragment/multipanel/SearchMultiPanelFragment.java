@@ -25,6 +25,7 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -53,9 +54,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.background.SearchCategoryLoader;
 import com.oriondev.moneywallet.background.SearchCursorLoader;
 import com.oriondev.moneywallet.background.SearchRailLoader;
 import com.oriondev.moneywallet.model.Category;
+import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.model.Money;
 import com.oriondev.moneywallet.model.SearchFilter;
 import com.oriondev.moneywallet.model.Wallet;
@@ -70,6 +73,7 @@ import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.SystemBars;
 
@@ -119,12 +123,42 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         @Nullable
         abstract CharSequence getValue(Fragment fragment, SearchFilter filter);
 
+        /**
+         * @return the icon of the set value, or null for the type's own symbol.
+         */
+        @Nullable
+        Drawable getValueIcon(Fragment fragment, SearchFilter filter) {
+            return null;
+        }
+
         boolean isRuledOut(SearchRailLoader.Result result) {
             return false;
         }
     }
 
     private final List<Slot> mSlots = Arrays.asList(
+            new Slot(R.string.search_type_category, R.drawable.ic_table_large_24dp, CategorySearchEditorFragment.class) {
+
+                @Override
+                CharSequence getValue(Fragment fragment, SearchFilter filter) {
+                    if (filter.getCategoryIds().isEmpty()) {
+                        return null;
+                    }
+                    List<String> names = new ArrayList<>();
+                    for (SearchCategoryLoader.Entry category : getTickedCategories(filter.getCategoryIds())) {
+                        names.add(category.getName());
+                    }
+                    return names.isEmpty() ? fragment.getString(R.string.search_type_category) : TextUtils.join(", ", names);
+                }
+
+                @Override
+                Drawable getValueIcon(Fragment fragment, SearchFilter filter) {
+                    List<SearchCategoryLoader.Entry> ticked = getTickedCategories(filter.getCategoryIds());
+                    Icon icon = ticked.isEmpty() ? null : IconLoader.parse(ticked.get(0).getIcon());
+                    return icon != null ? icon.getDrawable(fragment.requireContext()) : null;
+                }
+
+            },
             new Slot(R.string.search_type_text, R.drawable.ic_search_black_24dp, TextSearchEditorFragment.class) {
 
                 @Override
@@ -283,7 +317,6 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         });
         for (Slot slot : mSlots) {
             slot.mChip = addChip();
-            slot.mChip.setChipIconResource(slot.mIcon);
             slot.mChip.setOnClickListener(v -> onSlotClick(slot));
         }
         mRail.setOnClickListener(v -> closeEditor(true));
@@ -309,6 +342,14 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
             slot.mChip.setText(value != null ? value : title);
             slot.mChip.setContentDescription(value != null ? title + ", " + value : null);
             styleChip(slot.mChip, value != null);
+            Drawable icon = slot.getValueIcon(this, mFilter);
+            if (icon != null) {
+                slot.mChip.setChipIcon(icon);
+                // keeps the category's own colors
+                slot.mChip.setChipIconTint(null);
+            } else {
+                slot.mChip.setChipIconResource(slot.mIcon);
+            }
         }
     }
 
@@ -467,6 +508,32 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
             }
 
         });
+    }
+
+    /**
+     * The ticked categories in the editor's order, a parent ticked with every child standing in
+     * for them all. Empty until the names load.
+     */
+    private List<SearchCategoryLoader.Entry> getTickedCategories(Set<Long> ids) {
+        List<SearchCategoryLoader.Entry> ticked = new ArrayList<>();
+        if (mRailResult == null) {
+            return ticked;
+        }
+        for (SearchCategoryLoader.Entry parent : mRailResult.getCategories()) {
+            if (ids.containsAll(parent.getIds())) {
+                ticked.add(parent);
+                continue;
+            }
+            if (ids.contains(parent.getId())) {
+                ticked.add(parent);
+            }
+            for (SearchCategoryLoader.Entry child : parent.getChildren()) {
+                if (ids.contains(child.getId())) {
+                    ticked.add(child);
+                }
+            }
+        }
+        return ticked;
     }
 
     /**

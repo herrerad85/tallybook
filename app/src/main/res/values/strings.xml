@@ -832,5 +832,13 @@
         <item quantity="one">"%1$s, %2$d transaction"</item>
         <item quantity="other">"%1$s, %2$d transactions"</item>
     </plurals>
+    <string name="search_type_category">"Category"</string>
+    <plurals name="search_category_description">
+        <item quantity="one">"%1$s, %2$d transaction"</item>
+        <item quantity="other">"%1$s, %2$d transactions"</item>
+    </plurals>
+    <string name="search_partly_checked">"Partly checked"</string>
+    <string name="search_show_subcategories">"Show the subcategories of %1$s"</string>
+    <string name="search_hide_subcategories">"Hide the subcategories of %1$s"</string>
 
 </resources>
