@@ -24,12 +24,15 @@ import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
@@ -40,8 +43,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.os.BundleCompat;
+import androidx.core.view.OneShotPreDrawListener;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -49,6 +54,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.background.SearchCursorLoader;
+import com.oriondev.moneywallet.background.SearchRailLoader;
 import com.oriondev.moneywallet.model.Category;
 import com.oriondev.moneywallet.model.Money;
 import com.oriondev.moneywallet.model.SearchFilter;
@@ -67,9 +73,12 @@ import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.SystemBars;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The search screen. A result opens in the same transaction panel the transaction list and the
@@ -84,6 +93,9 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     private static final String SUMMARY_SEPARATOR = "  \u00B7  ";
 
     private static final float CHIP_ICON_SIZE_DP = 18f;
+
+    // 24 and 60001 are taken by the list and the current wallet
+    private static final int RAIL_LOADER_ID = 60002;
 
     /**
      * A chip on the rail after the All and Any toggle, which opens its type's editor.
@@ -106,9 +118,13 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
          */
         @Nullable
         abstract CharSequence getValue(Fragment fragment, SearchFilter filter);
+
+        boolean isRuledOut(SearchRailLoader.Result result) {
+            return false;
+        }
     }
 
-    private final List<Slot> mSlots = Collections.singletonList(
+    private final List<Slot> mSlots = Arrays.asList(
             new Slot(R.string.search_type_text, R.drawable.ic_search_black_24dp, TextSearchEditorFragment.class) {
 
                 @Override
@@ -117,10 +133,102 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
                     return text != null ? fragment.getString(R.string.search_value_text, text) : null;
                 }
 
+            },
+            new Slot(R.string.search_type_people, R.drawable.ic_people_black_24dp, PeopleSearchEditorFragment.class) {
+
+                @Override
+                CharSequence getValue(Fragment fragment, SearchFilter filter) {
+                    Set<Long> ids = filter.getPeopleIds();
+                    return ids.isEmpty() ? null : joinNames(fragment, mRailResult != null ? mRailResult.getPeople() : null, ids, R.string.search_type_people);
+                }
+
+                @Override
+                boolean isRuledOut(SearchRailLoader.Result result) {
+                    return !result.hasPersonLinks();
+                }
+
+            },
+            new Slot(R.string.search_type_status, R.drawable.ic_check_black_24dp, StatusSearchEditorFragment.class) {
+
+                @Override
+                CharSequence getValue(Fragment fragment, SearchFilter filter) {
+                    SearchFilter.Status status = filter.getStatus();
+                    if (status == null) {
+                        return null;
+                    }
+                    return fragment.getString(status == SearchFilter.Status.UNCONFIRMED
+                            ? R.string.search_value_unconfirmed : R.string.search_value_confirmed);
+                }
+
+                @Override
+                boolean isRuledOut(SearchRailLoader.Result result) {
+                    return !result.hasUnconfirmed();
+                }
+
+            },
+            new Slot(R.string.search_type_wallet, R.drawable.ic_cash_multiple_24dp, WalletSearchEditorFragment.class) {
+
+                @Override
+                CharSequence getValue(Fragment fragment, SearchFilter filter) {
+                    Set<Long> ids = filter.getWalletIds();
+                    if (ids.isEmpty()) {
+                        return filter.isTransfersOnly() ? fragment.getString(R.string.search_value_transfers) : null;
+                    }
+                    String names = joinNames(fragment, mRailResult != null ? mRailResult.getWallets() : null, ids, R.string.search_type_wallet);
+                    return filter.isTransfersOnly() ? fragment.getString(R.string.search_value_wallet_transfers, names) : names;
+                }
+
+                @Override
+                boolean isRuledOut(SearchRailLoader.Result result) {
+                    return !result.hasWalletChoice();
+                }
+
             }
     );
 
+    private final LoaderManager.LoaderCallbacks<SearchRailLoader.Result> mRailCallbacks = new LoaderManager.LoaderCallbacks<SearchRailLoader.Result>() {
+
+        @NonNull
+        @Override
+        public Loader<SearchRailLoader.Result> onCreateLoader(int id, @Nullable Bundle args) {
+            return new SearchRailLoader(requireContext());
+        }
+
+        @Override
+        public void onLoadFinished(@NonNull Loader<SearchRailLoader.Result> loader, SearchRailLoader.Result result) {
+            mRailResult = result;
+            bindRail();
+            // with an editor open the rule waits for the close, so no chip goes away under a
+            // finger, and no finger can be on a rail not laid out yet
+            if (getEditor() == null || !mRail.isLaidOut()) {
+                applyRailVisibility();
+            }
+            // names landing after the layout change the width of the chips ahead of the open one
+            if (!mRailDelivered) {
+                mRailDelivered = true;
+                if (mRail.isLaidOut()) {
+                    showOpenChip();
+                }
+            }
+        }
+
+        @Override
+        public void onLoaderReset(@NonNull Loader<SearchRailLoader.Result> loader) {
+        }
+
+    };
+
     private SearchFilter mFilter;
+
+    /**
+     * What the database holds for the rail, or null until its first load lands.
+     */
+    private SearchRailLoader.Result mRailResult;
+
+    /**
+     * Whether the rail's load has landed since this view was built.
+     */
+    private boolean mRailDelivered;
 
     private HorizontalScrollView mRailScrollView;
     private ChipGroup mRail;
@@ -160,7 +268,9 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         SystemBars.pad(mEditorPanel, false, sides, true);
         // a touch no child takes would otherwise reach the list row under the panel
         mEditorPanel.setOnTouchListener((v, event) -> true);
+        mRailDelivered = false;
         buildRail();
+        LoaderManager.getInstance(this).initLoader(RAIL_LOADER_ID, null, mRailCallbacks);
     }
 
     private void buildRail() {
@@ -176,9 +286,10 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
             slot.mChip.setChipIconResource(slot.mIcon);
             slot.mChip.setOnClickListener(v -> onSlotClick(slot));
         }
-        mRail.setOnClickListener(v -> closeEditor());
+        mRail.setOnClickListener(v -> closeEditor(true));
         mRail.setFocusable(false);
         bindRail();
+        reorderRail();
     }
 
     private Chip addChip() {
@@ -226,7 +337,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     private void onSlotClick(Slot slot) {
         SearchEditorFragment editor = getEditor();
         if (editor != null && editor.getClass() == slot.mEditor) {
-            closeEditor();
+            closeEditor(true);
         } else {
             openEditor(slot);
         }
@@ -241,10 +352,20 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         }
         fragmentManager.beginTransaction().replace(R.id.search_editor_container, editor).commitNow();
         applyEditorState();
+        // a chip hidden under a finger still gets its click on the lift
+        slot.mChip.setVisibility(View.VISIBLE);
         editor.onOpenedFromChip();
     }
 
     public void closeEditor() {
+        closeEditor(false);
+    }
+
+    /**
+     * @param fromRail true for a tap on a chip or on the rail, which leaves the chips where they
+     *                 are, so none moves out from under the finger.
+     */
+    private void closeEditor(boolean fromRail) {
         SearchEditorFragment editor = getEditor();
         if (editor == null) {
             return;
@@ -252,6 +373,112 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         hideKeyboard();
         getChildFragmentManager().beginTransaction().remove(editor).commitNow();
         applyEditorState();
+        if (!fromRail) {
+            applyRailVisibility();
+            if (reorderRail()) {
+                scrollRailToStart();
+            }
+        }
+    }
+
+    /**
+     * Every type shows until the rail's load lands. After that a type is hidden when the database
+     * rules it out, unless it is set or its editor is open.
+     */
+    private void applyRailVisibility() {
+        if (mRailResult == null) {
+            return;
+        }
+        SearchEditorFragment editor = getEditor();
+        for (Slot slot : mSlots) {
+            boolean hidden = slot.isRuledOut(mRailResult) && slot.getValue(this, mFilter) == null
+                    && (editor == null || editor.getClass() != slot.mEditor);
+            slot.mChip.setVisibility(hidden ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    /**
+     * Moves the set chips, in type order, right after the All and Any toggle, each by a remove and
+     * an add, which cancels a touch resting on it. Returns true when a chip moved.
+     */
+    private boolean reorderRail() {
+        List<Chip> order = new ArrayList<>();
+        for (Slot slot : mSlots) {
+            if (slot.getValue(this, mFilter) != null) {
+                order.add(slot.mChip);
+            }
+        }
+        for (Slot slot : mSlots) {
+            if (slot.getValue(this, mFilter) == null) {
+                order.add(slot.mChip);
+            }
+        }
+        boolean moved = false;
+        for (int i = 0; i < order.size(); i++) {
+            Chip chip = order.get(i);
+            if (mRail.getChildAt(i + 1) == chip) {
+                continue;
+            }
+            boolean focused = chip.isFocused();
+            boolean accessibilityFocused = chip.createAccessibilityNodeInfo().isAccessibilityFocused();
+            mRail.removeView(chip);
+            mRail.addView(chip, i + 1);
+            // the remove cleared both
+            if (focused) {
+                chip.requestFocus();
+            }
+            if (accessibilityFocused) {
+                chip.performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
+            }
+            moved = true;
+        }
+        return moved;
+    }
+
+    /**
+     * After the next layout, and over a fling still running. Under a right to left layout the start
+     * is the right edge, which the scroll clamps the rail's width to.
+     */
+    private void scrollRailToStart() {
+        HorizontalScrollView scrollView = mRailScrollView;
+        View rail = mRail;
+        OneShotPreDrawListener.add(scrollView, () -> scrollView.smoothScrollTo(
+                scrollView.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL ? rail.getWidth() : 0, 0));
+    }
+
+    /**
+     * Brings the chip into view on the scroll view's next layout with a width. A posted scroll
+     * would move nothing while a result keeps the rail in a hidden panel, never laid out.
+     */
+    private static void showChipOnNextLayout(HorizontalScrollView scrollView, Chip chip) {
+        scrollView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+
+            @Override
+            public void onLayoutChange(View view, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (right - left <= 0) {
+                    return;
+                }
+                view.removeOnLayoutChangeListener(this);
+                Rect bounds = new Rect(chip.getLeft(), chip.getTop(), chip.getRight(), chip.getBottom());
+                scrollView.requestChildRectangleOnScreen((View) chip.getParent(), bounds, true);
+            }
+
+        });
+    }
+
+    /**
+     * The names of the ids in list order, or the type's title until the names load.
+     */
+    private static String joinNames(Fragment fragment, @Nullable Map<Long, String> names, Set<Long> ids, @StringRes int title) {
+        List<String> picked = new ArrayList<>();
+        if (names != null) {
+            for (Map.Entry<Long, String> entry : names.entrySet()) {
+                if (ids.contains(entry.getKey())) {
+                    picked.add(entry.getValue());
+                }
+            }
+        }
+        return picked.isEmpty() ? fragment.getString(title) : TextUtils.join(", ", picked);
     }
 
     @Nullable
@@ -300,6 +527,11 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         return mFilter;
     }
 
+    @Nullable
+    /*package-local*/ SearchRailLoader.Result getRailResult() {
+        return mRailResult;
+    }
+
     /*package-local*/ void onFilterChanged() {
         bindRail();
         restartLoader();
@@ -324,6 +556,21 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         mSelectionMode.onRestoreInstanceState(savedInstanceState);
         // after the rail's click listener, which makes it clickable again
         applyEditorState();
+        showOpenChip();
+    }
+
+    /**
+     * Brings the open editor's chip, if any, into view.
+     */
+    private void showOpenChip() {
+        SearchEditorFragment editor = getEditor();
+        if (editor != null) {
+            for (Slot slot : mSlots) {
+                if (slot.mEditor == editor.getClass()) {
+                    showChipOnNextLayout(mRailScrollView, slot.mChip);
+                }
+            }
+        }
     }
 
     @Override

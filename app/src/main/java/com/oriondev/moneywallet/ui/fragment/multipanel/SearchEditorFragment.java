@@ -19,15 +19,33 @@
 
 package com.oriondev.moneywallet.ui.fragment.multipanel;
 
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 
+import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.SearchFilter;
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
+import com.oriondev.moneywallet.utils.IconLoader;
 
 /**
  * One type's editor in the search screen's editor panel. Every change applies at once, so the
  * results follow the value while it is adjusted.
  */
 public abstract class SearchEditorFragment extends Fragment {
+
+    private static final float DIMMED_ALPHA = 0.5f;
 
     /**
      * Read in onCreateView or later, since on a restore this fragment is created before the
@@ -57,6 +75,48 @@ public abstract class SearchEditorFragment extends Fragment {
      * Called after a chip tap opened this editor, never on a restore.
      */
     protected void onOpenedFromChip() {
+    }
+
+    protected void bindClear(View view, Runnable unset) {
+        Button clearButton = view.findViewById(R.id.search_clear_button);
+        clearButton.setTextColor(ThemedDialog.getAccentColor());
+        clearButton.setOnClickListener(v -> {
+            unset.run();
+            onFilterChanged();
+            close();
+        });
+    }
+
+    protected void addCheckRow(ViewGroup list, String icon, String name, @Nullable String count,
+                               @Nullable String description, boolean dimmed, boolean checked,
+                               CompoundButton.OnCheckedChangeListener listener) {
+        View row = getLayoutInflater().inflate(R.layout.layout_search_editor_row, list, false);
+        CheckBox checkBox = row.findViewById(R.id.search_row_check_box);
+        ImageView iconView = row.findViewById(R.id.search_row_icon_image_view);
+        TextView nameView = row.findViewById(R.id.search_row_name_text_view);
+        IconLoader.parseAndLoad(icon, iconView);
+        nameView.setText(name);
+        ((TextView) row.findViewById(R.id.search_row_count_text_view)).setText(count);
+        if (dimmed) {
+            iconView.setAlpha(DIMMED_ALPHA);
+            nameView.setAlpha(DIMMED_ALPHA);
+        }
+        checkBox.setChecked(checked);
+        checkBox.setOnCheckedChangeListener(listener);
+        row.setOnClickListener(v -> checkBox.toggle());
+        row.setContentDescription(description);
+        ViewCompat.setAccessibilityDelegate(row, new AccessibilityDelegateCompat() {
+
+            @Override
+            public void onInitializeAccessibilityNodeInfo(@NonNull View host, @NonNull AccessibilityNodeInfoCompat info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(CheckBox.class.getName());
+                info.setCheckable(true);
+                info.setChecked(checkBox.isChecked());
+            }
+
+        });
+        list.addView(row);
     }
 
     private SearchMultiPanelFragment getSearch() {

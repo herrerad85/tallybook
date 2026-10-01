@@ -820,5 +820,17 @@
         <item quantity="one">"%d result"</item>
         <item quantity="other">"%d results"</item>
     </plurals>
+    <string name="search_type_people">"People"</string>
+    <string name="search_type_status">"Status"</string>
+    <string name="search_type_wallet">"Wallet"</string>
+    <string name="search_value_unconfirmed">"Unconfirmed"</string>
+    <string name="search_value_confirmed">"Confirmed"</string>
+    <string name="search_value_transfers">"Transfers"</string>
+    <string name="search_value_wallet_transfers">"%1$s (transfers)"</string>
+    <string name="search_transfers_only">"Transfers only"</string>
+    <plurals name="search_person_description">
+        <item quantity="one">"%1$s, %2$d transaction"</item>
+        <item quantity="other">"%1$s, %2$d transactions"</item>
+    </plurals>
 
 </resources>
