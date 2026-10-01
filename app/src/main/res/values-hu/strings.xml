@@ -20,7 +20,6 @@
     <string name="action_add">Hozzáadás</string>
     <string name="action_deposit">Betét</string>
     <string name="action_edit">Szerkesztés</string>
-    <string name="action_filter">Szűrő</string>
     <string name="action_manage_wallets">Pénztárcák szerkesztése</string>
     <string name="action_new">Új</string>
     <string name="action_new_wallet">Új pénztárca</string>
@@ -90,7 +89,6 @@
     <string name="dialog_data_format_picker_title">Adat formátum</string>
     <string name="dialog_event_picker_title">Események</string>
     <string name="dialog_export_optional_columns_title">Extra oszlopok</string>
-    <string name="dialog_filter_search_title">Szűrő</string>
     <string name="dialog_overview_setting_title">További beállítások</string>
     <string name="dialog_people_picker_title">Emberek</string>
     <string name="dialog_place_picker_title">Helyek</string>

@@ -76,7 +76,6 @@
     <string name="action_new">"Νέο"</string>
     <string name="action_edit">"Επεξεργασία"</string>
     <string name="action_search">"Αναζήτηση"</string>
-    <string name="action_filter">"Φίλτρο"</string>
     <string name="action_remove">"Αφαίρεση"</string>
     <string name="action_open">"Άνοιγμα"</string>
     <string name="action_undo">"Αναίρεση"</string>
@@ -244,7 +243,6 @@
     <string name="dialog_budget_type_picker_title">"Είδη προϋπολογισμών"</string>
     <string name="dialog_place_picker_title">"Τοποθεσίες"</string>
     <string name="dialog_people_picker_title">"Άτομα"</string>
-    <string name="dialog_filter_search_title">"Φίλτρα"</string>
     <string name="dialog_change_log_title">"Ιστορικό αλλαγών"</string>
     <string name="dialog_overview_setting_title">"Ρυθμίσεις για προχωρημένους"</string>
     <string name="dialog_recurrence_title">"Επανάληψη ενέργειας"</string>

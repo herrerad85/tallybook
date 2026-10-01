@@ -76,7 +76,6 @@
     <string name="action_new">"Nuovo"</string>
     <string name="action_edit">"Modifica"</string>
     <string name="action_search">"Cerca"</string>
-    <string name="action_filter">"Filtra"</string>
     <string name="action_remove">"Rimuovi"</string>
     <string name="action_open">"Apri"</string>
     <string name="action_undo">"Annulla"</string>
@@ -244,7 +243,6 @@
     <string name="dialog_budget_type_picker_title">"Tipi di budget"</string>
     <string name="dialog_place_picker_title">"Luoghi"</string>
     <string name="dialog_people_picker_title">"Persone"</string>
-    <string name="dialog_filter_search_title">"Filtra"</string>
     <string name="dialog_change_log_title">"Change Log"</string>
     <string name="dialog_overview_setting_title">"Impostazioni avanzate"</string>
     <string name="dialog_recurrence_title">"Ripeti"</string>

@@ -76,7 +76,6 @@
     <string name="action_new">"جدید"</string>
     <string name="action_edit">"ویرایش"</string>
     <string name="action_search">"جستجو"</string>
-    <string name="action_filter">"فیلتر"</string>
     <string name="action_remove">"حذف"</string>
     <string name="action_open">"باز"</string>
     <string name="action_undo">"لغو"</string>
@@ -224,7 +223,6 @@
     <string name="dialog_budget_type_picker_title">"انواع بودجه"</string>
     <string name="dialog_place_picker_title">"مکان‌ها"</string>
     <string name="dialog_people_picker_title">"شخص"</string>
-    <string name="dialog_filter_search_title">"فیلتر"</string>
     <string name="dialog_change_log_title">"گزارش تغییرات"</string>
     <string name="dialog_overview_setting_title">"تنظیمات پیشرفته"</string>
     <string name="dialog_recurrence_title">"تکرار"</string>

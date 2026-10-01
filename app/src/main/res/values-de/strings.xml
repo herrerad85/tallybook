@@ -63,7 +63,6 @@
     <string name="action_new">"Neu"</string>
     <string name="action_edit">"Bearbeiten"</string>
     <string name="action_search">"Suchen"</string>
-    <string name="action_filter">"Filtern"</string>
     <string name="action_remove">"Entfernen"</string>
     <string name="action_open">"Öffnen"</string>
     <string name="action_undo">"Rückgängig"</string>
@@ -260,7 +259,6 @@
     <string name="dialog_data_format_picker_title">Datumsformat</string>
     <string name="dialog_event_picker_title">Ereignisse</string>
     <string name="dialog_export_optional_columns_title">Optionale Spalten</string>
-    <string name="dialog_filter_search_title">Filter</string>
     <string name="dialog_overview_setting_title">Erweiterte Einstellungen</string>
     <string name="dialog_people_picker_title">Personen</string>
     <string name="dialog_place_picker_title">Orte</string>
