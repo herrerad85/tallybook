@@ -60,7 +60,6 @@
     <string name="action_new">"പുതിയത്"</string>
     <string name="action_edit">"എഡിറ്റുചെയ്യുക"</string>
     <string name="action_search">"തിരയുക"</string>
-    <string name="action_filter">"ഫിൽട്ടർ"</string>
     <string name="action_remove">"നീക്കംചെയ്യുക"</string>
     <string name="action_open">"തുറക്കുക"</string>
     <string name="action_undo">"പഴയപടിയാക്കുക"</string>
@@ -231,7 +230,6 @@
     <string name="dialog_budget_type_picker_title">"ബജറ്റ് തരങ്ങൾ"</string>
     <string name="dialog_place_picker_title">"സ്ഥലങ്ങൾ"</string>
     <string name="dialog_people_picker_title">"ആളുകൾ"</string>
-    <string name="dialog_filter_search_title">"ഫിൽട്ടർ"</string>
     <string name="dialog_change_log_title">"ലോഗ് മാറ്റുക"</string>
     <string name="dialog_overview_setting_title">"വിപുലമായ ക്രമീകരണങ്ങൾ"</string>
     <string name="dialog_recurrence_title">"ആവർത്തിച്ച്"</string>

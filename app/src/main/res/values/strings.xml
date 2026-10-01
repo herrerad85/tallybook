@@ -80,7 +80,6 @@
     <string name="action_new">"New"</string>
     <string name="action_edit">"Edit"</string>
     <string name="action_search">"Search"</string>
-    <string name="action_filter">"Filter"</string>
     <string name="action_remove">"Remove"</string>
     <string name="action_open">"Open"</string>
     <string name="action_undo">"Undo"</string>
@@ -300,7 +299,6 @@
     <string name="dialog_budget_type_picker_title">"Budget types"</string>
     <string name="dialog_place_picker_title">"Places"</string>
     <string name="dialog_people_picker_title">"People"</string>
-    <string name="dialog_filter_search_title">"Filter"</string>
     <string name="dialog_change_log_title">"Change Log"</string>
     <string name="dialog_overview_setting_title">"Advanced settings"</string>
     <string name="dialog_recurrence_title">"Repeat"</string>
@@ -807,5 +805,20 @@
     <string name="widget_message_wallet_missing">"This wallet is gone. Add the widget again to pick another one."</string>
     <string name="title_activity_widget_configure">"Wallet balance"</string>
     <string name="hint_widget_show_when_locked">"Show the balance even when the app is locked"</string>
+
+    <string name="search_match_all">"All"</string>
+    <string name="search_match_any">"Any"</string>
+    <string name="search_match_all_description">"Match all criteria, tap for any"</string>
+    <string name="search_match_any_description">"Match any criterion, tap for all"</string>
+    <string name="search_type_text">"Text"</string>
+    <string name="search_value_text">"“%1$s”"</string>
+    <string name="search_close_editor">"Close editor"</string>
+    <string name="search_clear">"Clear"</string>
+    <string name="hint_search_text">"Text to find"</string>
+    <string name="search_text_fields">"Looks in the description, note, event and place"</string>
+    <plurals name="search_result_count">
+        <item quantity="one">"%d result"</item>
+        <item quantity="other">"%d results"</item>
+    </plurals>
 
 </resources>

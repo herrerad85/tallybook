@@ -94,7 +94,9 @@
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity android:name=".ui.activity.CurrencyConverterActivity" />
         <activity android:name=".ui.activity.AboutActivity" />
-        <activity android:name=".ui.activity.SearchActivity" />
+        <activity
+            android:name=".ui.activity.SearchActivity"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.activity.CalendarActivity" />
         <activity android:name=".ui.activity.MapActivity" />
         <activity android:name=".ui.activity.PeriodDetailActivity" />

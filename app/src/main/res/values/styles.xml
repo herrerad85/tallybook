@@ -122,4 +122,16 @@
         <item name="spinBars">false</item>
     </style>
 
+    <!-- A chip paints chipSurfaceColor under its background, and the default chip style takes it
+         from colorSurface, which the light app theme keeps white in every mode. The search rail
+         gives an unset chip a transparent background, so in dark mode the chip drew as a white
+         pill. Code cannot set the surface color, only a style can. -->
+    <style name="SearchRailChip" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipSurfaceColor">@android:color/transparent</item>
+    </style>
+
+    <style name="ThemeOverlay.SearchRailChip" parent="">
+        <item name="chipStyle">@style/SearchRailChip</item>
+    </style>
+
 </resources>

@@ -76,7 +76,6 @@
     <string name="action_new"> "Yeni" </string>
     <string name="action_edit"> "Düzenle" </string>
     <string name="action_search"> "Ara" </string>
-    <string name="action_filter"> "Filtre" </string>
     <string name="action_remove"> "Kaldır" </string>
     <string name="action_open"> "Aç" </string>
     <string name="action_undo"> "Geri Al" </string>
@@ -238,7 +237,6 @@
     <string name="dialog_budget_type_picker_title"> "Bütçe türleri" </string>
     <string name="dialog_place_picker_title"> "Yerler" </string>
     <string name="dialog_people_picker_title"> "Kişiler" </string>
-    <string name="dialog_filter_search_title"> "Filtre" </string>
     <string name="dialog_change_log_title"> "Günlüğü Değiştir" </string>
     <string name="dialog_overview_setting_title"> "Gelişmiş ayarlar" </string>
     <string name="dialog_recurrence_title"> "Tekrarla" </string>

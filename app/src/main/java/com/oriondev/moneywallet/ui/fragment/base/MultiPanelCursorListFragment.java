@@ -97,4 +97,12 @@ public abstract class MultiPanelCursorListFragment extends MultiPanelFragment im
         LoaderManager.getInstance(this).restartLoader(DEFAULT_LOADER_ID, null, this);
         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.LOADING);
     }
+
+    /**
+     * Restarts the loader and keeps the list on screen until the new cursor lands, for a query
+     * that changes on every tap or keystroke.
+     */
+    protected void restartLoader() {
+        LoaderManager.getInstance(this).restartLoader(DEFAULT_LOADER_ID, null, this);
+    }
 }
