@@ -32,14 +32,18 @@ import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.HorizontalScrollView;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.tabs.TabLayout;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.background.SearchRailLoader;
 import com.oriondev.moneywallet.model.SearchFilter;
@@ -55,14 +59,20 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
@@ -76,10 +86,10 @@ public class SearchScreenTest {
     private static final String ICON = "{\"type\":\"color\",\"color\":\"#000000\",\"name\":\"T\"}";
 
     @Test
-    public void theRailHoldsTheMatchToggleThenTheTextChip() {
+    public void theRailHoldsTheMatchToggleThenTheCategoryChip() {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
-                assertEquals(Arrays.asList("All", "Text", "People", "Status", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Status", "Wallet"), railTexts(activity));
                 assertFalse(activity.findViewById(R.id.search_rail_scroll_view).isSaveEnabled());
             });
         }
@@ -281,7 +291,7 @@ public class SearchScreenTest {
                 assertTrue(activity.findViewById(R.id.search_rail_chip_group).isClickable());
                 assertEquals("coffee", search(activity).getFilter().getText());
                 assertEquals("coffee", ((EditText) activity.findViewById(R.id.search_text_edit_text)).getText().toString());
-                assertEquals(5, ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildCount());
+                assertEquals(6, ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildCount());
             });
         }
     }
@@ -512,9 +522,9 @@ public class SearchScreenTest {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
                 setStatusConfirmed(activity);
-                assertEquals(Arrays.asList("All", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
                 activity.onBackPressed();
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -528,7 +538,7 @@ public class SearchScreenTest {
                 activity.dispatchTouchEvent(event(MotionEvent.ACTION_DOWN, at));
                 activity.dispatchTouchEvent(event(MotionEvent.ACTION_UP, at));
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -541,7 +551,7 @@ public class SearchScreenTest {
                 chip(activity, "Text").performClick();
                 ((EditText) activity.findViewById(R.id.search_text_edit_text)).setText("coffee");
                 activity.findViewById(R.id.search_clear_button).performClick();
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -553,10 +563,10 @@ public class SearchScreenTest {
                 Chip status = setStatusConfirmed(activity);
                 status.performClick();
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
                 chip(activity, "Wallet").performClick();
                 activity.onBackPressed();
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -568,10 +578,10 @@ public class SearchScreenTest {
                 setStatusConfirmed(activity);
                 activity.findViewById(R.id.search_rail_chip_group).performClick();
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
                 chip(activity, "Text").performClick();
                 activity.onBackPressed();
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -583,7 +593,7 @@ public class SearchScreenTest {
                 setStatusConfirmed(activity);
                 chip(activity, "Wallet").performClick();
                 assertTrue(editor(activity) instanceof WalletSearchEditorFragment);
-                assertEquals(Arrays.asList("All", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -593,12 +603,12 @@ public class SearchScreenTest {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
                 setStatusConfirmed(activity).performClick();
-                assertEquals(Arrays.asList("All", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
             });
             scenario.recreate();
             scenario.onActivity(activity -> {
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
             });
         }
     }
@@ -610,12 +620,12 @@ public class SearchScreenTest {
                 setStatusConfirmed(activity);
                 chip(activity, "Wallet").performClick();
                 activity.findViewById(R.id.search_transfers_only_switch).performClick();
-                assertEquals(Arrays.asList("All", "Text", "People", "Confirmed", "Transfers"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Transfers"), railTexts(activity));
             });
             scenario.recreate();
             scenario.onActivity(activity -> {
                 assertTrue(editor(activity) instanceof WalletSearchEditorFragment);
-                assertEquals(Arrays.asList("All", "Confirmed", "Transfers", "Text", "People"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Transfers", "Category", "Text", "People"), railTexts(activity));
             });
         }
     }
@@ -746,7 +756,7 @@ public class SearchScreenTest {
                     TestDatabases.release(context);
                 }
                 awaitRail(activity);
-                assertEquals(Arrays.asList("All", "Confirmed", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
                 assertEquals(View.VISIBLE, chip(activity, "Confirmed").getVisibility());
                 assertEquals(View.GONE, chip(activity, "People").getVisibility());
                 assertEquals(View.GONE, chip(activity, "Wallet").getVisibility());
@@ -845,6 +855,387 @@ public class SearchScreenTest {
         }
     }
 
+    @Test
+    public void theCategoryChipShowsWhenEveryOtherRuleHides() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        fixtureWithNothingToPick();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitRail(activity);
+                assertEquals(Arrays.asList(true, false, false, false), visibleTypes(activity));
+                assertEquals(View.VISIBLE, chip(activity, "Category").getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void theCategoryEditorTicksAParentWithEveryChildAndClearUnsetsItAndCloses() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Map<String, Long> ids = categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "8 results");
+                Chip category = openCategoryEditor(activity);
+                assertTrue(editor(activity) instanceof CategorySearchEditorFragment);
+                assertEquals("Expenses", tabs(activity).getTabAt(0).getText().toString());
+                assertEquals("Incomes", tabs(activity).getTabAt(1).getText().toString());
+                assertEquals(0, tabs(activity).getSelectedTabPosition());
+                assertEquals(withSystem("Food", "Misc"), rowNames(activity));
+                // its own row and its children's three
+                assertEquals("4", rowCount(row(activity, "Food")));
+                assertEquals("1", rowCount(row(activity, "Misc")));
+                assertEquals("0", rowCount(row(activity, "Debt")));
+                row(activity, "Food").performClick();
+                assertEquals(idsOf(ids, "Food", "Groceries", "Dining"), search(activity).getFilter().getCategoryIds());
+                assertEquals("Food", category.getText().toString());
+                assertEquals("Category, Food", category.getContentDescription().toString());
+                awaitSummary(activity, "4 results");
+                activity.findViewById(R.id.search_clear_button).performClick();
+                assertTrue(search(activity).getFilter().getCategoryIds().isEmpty());
+                assertNull(editor(activity));
+                assertEquals("Category", category.getText().toString());
+                awaitSummary(activity, "8 results");
+            });
+        }
+    }
+
+    @Test
+    public void untickingOneChildLeavesTheParentDashedAndTappingTheDashTicksTheRest() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Map<String, Long> ids = categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip category = openCategoryEditor(activity);
+                row(activity, "Food").performClick();
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Food"));
+                expand(activity, "Food");
+                assertEquals(Arrays.asList("Food", "Dining", "Groceries", "Misc"), rowNames(activity).subList(0, 4));
+                assertEquals("1", rowCount(row(activity, "Dining")));
+                assertEquals("2", rowCount(row(activity, "Groceries")));
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Groceries"));
+                row(activity, "Groceries").performClick();
+                assertEquals(idsOf(ids, "Food", "Dining"), search(activity).getFilter().getCategoryIds());
+                assertEquals(MaterialCheckBox.STATE_INDETERMINATE, checkedState(activity, "Food"));
+                assertDashDrawn(activity, "Food");
+                assertEquals("Partly checked", AccessibilityNodeInfoCompat.wrap(row(activity, "Food")
+                        .createAccessibilityNodeInfo()).getStateDescription().toString());
+                assertEquals(MaterialCheckBox.STATE_UNCHECKED, checkedState(activity, "Groceries"));
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Dining"));
+                assertEquals("Food, Dining", category.getText().toString());
+                awaitSummary(activity, "2 results");
+                row(activity, "Food").performClick();
+                assertEquals(idsOf(ids, "Food", "Groceries", "Dining"), search(activity).getFilter().getCategoryIds());
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Food"));
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Groceries"));
+                assertEquals("Food", category.getText().toString());
+                row(activity, "Food").performClick();
+                assertTrue(search(activity).getFilter().getCategoryIds().isEmpty());
+                assertEquals(MaterialCheckBox.STATE_UNCHECKED, checkedState(activity, "Food"));
+                assertEquals(MaterialCheckBox.STATE_UNCHECKED, checkedState(activity, "Dining"));
+                assertEquals("Category", category.getText().toString());
+            });
+        }
+    }
+
+    @Test
+    @Config(sdk = 24)
+    public void aPartlyTickedParentDrawsTheDashOnApi24() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                openCategoryEditor(activity);
+                row(activity, "Food").performClick();
+                expand(activity, "Food");
+                row(activity, "Groceries").performClick();
+                assertEquals(MaterialCheckBox.STATE_INDETERMINATE, checkedState(activity, "Food"));
+                assertDashDrawn(activity, "Food");
+            });
+        }
+    }
+
+    @Test
+    public void theSystemGroupSitsUnderBothTabsWithOneTickAndFindsBothSidesOfATransfer() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip category = openCategoryEditor(activity);
+                assertEquals(Collections.singletonList("System"), headings(activity));
+                row(activity, "Transfer").performClick();
+                assertEquals(1, search(activity).getFilter().getCategoryIds().size());
+                awaitSummary(activity, "2 results");
+                tabs(activity).getTabAt(1).select();
+                assertEquals(withSystem("Salary"), rowNames(activity));
+                assertEquals(Collections.singletonList("System"), headings(activity));
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Transfer"));
+                assertEquals("Transfer", category.getText().toString());
+            });
+        }
+    }
+
+    @Test
+    public void theCategoryChipNamesTheTicksInEditorOrderWithTheFirstOnesIcon() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip category = openCategoryEditor(activity);
+                assertNotNull("the unset symbol takes the chip's tint", category.getChipIconTint());
+                expand(activity, "Food");
+                row(activity, "Transfer").performClick();
+                tabs(activity).getTabAt(1).select();
+                row(activity, "Salary").performClick();
+                tabs(activity).getTabAt(0).select();
+                row(activity, "Groceries").performClick();
+                assertEquals("Groceries, Salary, Transfer", category.getText().toString());
+                assertEquals("Category, Groceries, Salary, Transfer", category.getContentDescription().toString());
+                assertNotNull(category.getChipIcon());
+                assertNull("a category icon keeps its own colors", category.getChipIconTint());
+                awaitSummary(activity, "5 results");
+            });
+        }
+    }
+
+    @Test
+    public void aCategoryIconTheChipCannotDrawFallsBackToTheTypeSymbol() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        long lost = fixture.category("Lost", Contract.CategoryType.EXPENSE, null, "{\"type\":\"resource\",\"resource\":\"no_such_icon\"}");
+        fixture.transaction(euro, lost, null, true);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip category = openCategoryEditor(activity);
+                row(activity, "Lost").performClick();
+                assertEquals("Lost", category.getText().toString());
+                assertNotNull(category.getChipIcon());
+                assertNotNull(category.getChipIconTint());
+            });
+        }
+    }
+
+    @Test
+    public void anUnsetChipShowsItsTypeSymbolBeforeAndAfterATick() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip category = openCategoryEditor(activity);
+                assertEquals(R.drawable.ic_table_large_24dp, iconResource(category));
+                assertEquals(R.drawable.ic_search_black_24dp, iconResource(chip(activity, "Text")));
+                row(activity, "Food").performClick();
+                row(activity, "Food").performClick();
+                assertEquals("Category", category.getText().toString());
+                assertEquals(R.drawable.ic_table_large_24dp, iconResource(category));
+            });
+        }
+    }
+
+    @Test
+    public void theCategoryChipShowsTheIconOfTheFirstTickInEditorOrder() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        long aaa = fixture.category("Aaa", Contract.CategoryType.INCOME, null, "{\"type\":\"resource\",\"resource\":\"ic_animals_02\"}");
+        long mid = fixture.category("Mid", Contract.CategoryType.EXPENSE, null, "{\"type\":\"resource\",\"resource\":\"ic_animals_01\"}");
+        long zzz = fixture.category("Zzz", Contract.CategoryType.INCOME, null, "{\"type\":\"resource\",\"resource\":\"ic_bank_transfer_in_24dp\"}");
+        fixture.transaction(euro, aaa, null, true);
+        fixture.transaction(euro, mid, null, true);
+        fixture.transaction(euro, zzz, null, true);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip category = openCategoryEditor(activity);
+                tabs(activity).getTabAt(1).select();
+                row(activity, "Aaa").performClick();
+                tabs(activity).getTabAt(0).select();
+                row(activity, "Mid").performClick();
+                tabs(activity).getTabAt(1).select();
+                row(activity, "Zzz").performClick();
+                assertEquals("Mid, Aaa, Zzz", category.getText().toString());
+                assertEquals(R.drawable.ic_animals_01, iconResource(category));
+            });
+        }
+    }
+
+    @Test
+    public void aTabSwitchOpensTheOtherListAtItsTop() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                openCategoryEditor(activity);
+                shadowOf(Looper.getMainLooper()).idle();
+                ScrollView list = activity.findViewById(R.id.search_list_scroll_view);
+                list.scrollTo(0, list.getChildAt(0).getHeight());
+                assertTrue("the expense list scrolled down", list.getScrollY() > 0);
+                tabs(activity).getTabAt(1).select();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(0, list.getScrollY());
+            });
+        }
+    }
+
+    @Test
+    public void aTabSwitchStopsAFlingStillRunningOnTheOldList() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                openCategoryEditor(activity);
+                shadowOf(Looper.getMainLooper()).idle();
+                ScrollView list = activity.findViewById(R.id.search_list_scroll_view);
+                list.fling(4000);
+                shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(16));
+                list.computeScroll();
+                assertTrue("the expense list is flinging", list.getScrollY() > 0);
+                tabs(activity).getTabAt(1).select();
+                shadowOf(Looper.getMainLooper()).idle();
+                for (int frame = 0; frame < 10; frame++) {
+                    shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(16));
+                    list.computeScroll();
+                }
+                assertEquals(0, list.getScrollY());
+            });
+        }
+    }
+
+    @Test
+    public void anOpenCategoryEditorKeepsItsTabItsExpandedParentsAndTheFilterThroughARecreate() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Map<String, Long> ids = categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                openCategoryEditor(activity);
+                expand(activity, "Food");
+                row(activity, "Groceries").performClick();
+                tabs(activity).getTabAt(1).select();
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(editor(activity) instanceof CategorySearchEditorFragment);
+                assertEquals(1, tabs(activity).getSelectedTabPosition());
+                await("the category rows", () -> !rowNames(activity).isEmpty());
+                assertEquals(withSystem("Salary"), rowNames(activity));
+                assertEquals(idsOf(ids, "Groceries"), search(activity).getFilter().getCategoryIds());
+                awaitRail(activity);
+                assertEquals("Groceries", chip(activity, "Groceries").getText().toString());
+                tabs(activity).getTabAt(0).select();
+                assertEquals(Arrays.asList("Food", "Dining", "Groceries", "Misc"), rowNames(activity).subList(0, 4));
+                assertEquals(MaterialCheckBox.STATE_CHECKED, checkedState(activity, "Groceries"));
+                assertEquals(MaterialCheckBox.STATE_INDETERMINATE, checkedState(activity, "Food"));
+            });
+        }
+    }
+
+    @Test
+    public void aLongCategoryListScrollsInsideThePanelWithTheTabsAndClearInIt() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        categoryFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                openCategoryEditor(activity);
+                shadowOf(Looper.getMainLooper()).idle();
+                ScrollView list = activity.findViewById(R.id.search_list_scroll_view);
+                View panel = activity.findViewById(R.id.search_editor_panel);
+                View strip = activity.findViewById(R.id.search_strip);
+                assertTrue("the list is taller than its room", list.getChildAt(0).getHeight() > list.getHeight());
+                int[] panelAt = centerOf(panel);
+                int panelTop = panelAt[1] - panel.getHeight() / 2;
+                int panelBottom = panelTop + panel.getHeight();
+                assertTrue("the panel stays under the strip", panelTop >= centerOf(strip)[1] + strip.getHeight() / 2);
+                for (View view : new View[] {tabs(activity), activity.findViewById(R.id.search_clear_button)}) {
+                    int[] at = centerOf(view);
+                    assertTrue(at[1] - view.getHeight() / 2 >= panelTop);
+                    assertTrue(at[1] + view.getHeight() / 2 <= panelBottom);
+                }
+            });
+        }
+    }
+
+    /**
+     * Food with one row, Groceries under it with two and Dining under it with one, Salary with
+     * one, the fixture's own Misc with one, and an untaxed transfer between two wallets.
+     */
+    private static Map<String, Long> categoryFixture() {
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        long savings = fixture.wallet("Savings", false);
+        Map<String, Long> ids = new HashMap<>();
+        ids.put("Food", fixture.category("Food", Contract.CategoryType.EXPENSE, null, ICON));
+        ids.put("Groceries", fixture.category("Groceries", Contract.CategoryType.EXPENSE, ids.get("Food"), ICON));
+        ids.put("Dining", fixture.category("Dining", Contract.CategoryType.EXPENSE, ids.get("Food"), ICON));
+        ids.put("Salary", fixture.category("Salary", Contract.CategoryType.INCOME, null, ICON));
+        for (String name : new String[] {"Food", "Groceries", "Groceries", "Dining", "Salary"}) {
+            fixture.transaction(euro, ids.get(name), null, true);
+        }
+        fixture.transaction(euro, null, true);
+        fixture.transfer(euro, savings, 0L, null);
+        return ids;
+    }
+
+    private static Set<Long> idsOf(Map<String, Long> ids, String... names) {
+        Set<Long> picked = new HashSet<>();
+        for (String name : names) {
+            picked.add(ids.get(name));
+        }
+        return picked;
+    }
+
+    /**
+     * The names, then the nine system categories, which every fresh database holds.
+     */
+    private static List<String> withSystem(String... names) {
+        List<String> all = new ArrayList<>(Arrays.asList(names));
+        all.addAll(Arrays.asList("Credit", "Credit paid", "Debt", "Debt paid", "Deposit", "Tax",
+                "Transfer", "Transfer tax", "Withdraw"));
+        return all;
+    }
+
+    private static Chip openCategoryEditor(SearchActivity activity) {
+        awaitRail(activity);
+        Chip category = chip(activity, "Category");
+        category.performClick();
+        await("the category rows", () -> !rowNames(activity).isEmpty());
+        return category;
+    }
+
+    private static int iconResource(Chip chip) {
+        return shadowOf(chip.getChipIcon()).getCreatedFromResId();
+    }
+
+    private static TabLayout tabs(SearchActivity activity) {
+        return activity.findViewById(R.id.search_category_tab_layout);
+    }
+
+    private static void expand(SearchActivity activity, String name) {
+        row(activity, name).findViewById(R.id.search_row_expand_image_view).performClick();
+    }
+
+    private static int checkedState(SearchActivity activity, String name) {
+        return ((MaterialCheckBox) row(activity, name).findViewById(R.id.search_row_check_box)).getCheckedState();
+    }
+
+    // the app theme is not Material 3, so the dash needs the row layout's own button and icon
+    private static void assertDashDrawn(SearchActivity activity, String name) {
+        MaterialCheckBox box = row(activity, name).findViewById(R.id.search_row_check_box);
+        assertEquals(com.google.android.material.R.drawable.mtrl_checkbox_button,
+                shadowOf(box.getButtonDrawable()).getCreatedFromResId());
+        assertEquals(com.google.android.material.R.drawable.mtrl_checkbox_button_icon,
+                shadowOf(box.getButtonIconDrawable()).getCreatedFromResId());
+    }
+
+    private static List<String> headings(SearchActivity activity) {
+        ViewGroup rows = listRows(activity);
+        List<String> headings = new ArrayList<>();
+        for (int i = 0; i < rows.getChildCount(); i++) {
+            if (rows.getChildAt(i) instanceof TextView) {
+                headings.add(((TextView) rows.getChildAt(i)).getText().toString());
+            }
+        }
+        return headings;
+    }
+
     /**
      * One wallet, no transfer, no person on anything and every row confirmed.
      */
@@ -916,7 +1307,10 @@ public class SearchScreenTest {
         ViewGroup rows = listRows(activity);
         List<String> names = new ArrayList<>();
         for (int i = 0; i < rows.getChildCount(); i++) {
-            names.add(((TextView) rows.getChildAt(i).findViewById(R.id.search_row_name_text_view)).getText().toString());
+            TextView name = rows.getChildAt(i).findViewById(R.id.search_row_name_text_view);
+            if (name != null) {
+                names.add(name.getText().toString());
+            }
         }
         return names;
     }
@@ -925,7 +1319,8 @@ public class SearchScreenTest {
         ViewGroup rows = listRows(activity);
         for (int i = 0; i < rows.getChildCount(); i++) {
             View row = rows.getChildAt(i);
-            if (((TextView) row.findViewById(R.id.search_row_name_text_view)).getText().toString().equals(name)) {
+            TextView nameView = row.findViewById(R.id.search_row_name_text_view);
+            if (nameView != null && nameView.getText().toString().equals(name)) {
                 return row;
             }
         }
@@ -992,12 +1387,26 @@ public class SearchScreenTest {
             return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_PEOPLE, values));
         }
 
+        private long category(String name, Contract.CategoryType type, Long parent, String icon) {
+            ContentValues values = new ContentValues();
+            values.put(Contract.Category.NAME, name);
+            values.put(Contract.Category.ICON, icon);
+            values.put(Contract.Category.TYPE, type.getValue());
+            values.put(Contract.Category.SHOW_REPORT, true);
+            values.put(Contract.Category.PARENT, parent);
+            return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_CATEGORIES, values));
+        }
+
         private void transaction(long wallet, String people, boolean confirmed) {
+            transaction(wallet, mCategory, people, confirmed);
+        }
+
+        private void transaction(long wallet, long category, String people, boolean confirmed) {
             ContentValues values = new ContentValues();
             values.put(Contract.Transaction.MONEY, 200L);
             values.put(Contract.Transaction.DATE, "2026-01-15 12:00:00");
             values.put(Contract.Transaction.DESCRIPTION, "Row");
-            values.put(Contract.Transaction.CATEGORY_ID, mCategory);
+            values.put(Contract.Transaction.CATEGORY_ID, category);
             values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
             values.put(Contract.Transaction.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
             values.put(Contract.Transaction.WALLET_ID, wallet);
@@ -1043,7 +1452,7 @@ public class SearchScreenTest {
     }
 
     private static Chip textChip(SearchActivity activity) {
-        return (Chip) ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildAt(1);
+        return (Chip) ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildAt(2);
     }
 
     /**

@@ -31,12 +31,13 @@ import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * What the search rail reads from the database: whether a transaction or a side of a transfer
  * links a person, whether there is more than one wallet or any transfer, whether any row is
- * unconfirmed, and the names the People and Wallet chips show, in their editors' order.
+ * unconfirmed, and the names the Category, People and Wallet chips show, in their editors' order.
  */
 public class SearchRailLoader extends AbstractGenericLoader<SearchRailLoader.Result> {
 
@@ -47,19 +48,26 @@ public class SearchRailLoader extends AbstractGenericLoader<SearchRailLoader.Res
 
     public static class Result {
 
+        private final List<SearchCategoryLoader.Entry> mCategories;
         private final Map<Long, String> mPeople;
         private final Map<Long, String> mWallets;
         private final boolean mHasPersonLinks;
         private final boolean mHasWalletChoice;
         private final boolean mHasUnconfirmed;
 
-        private Result(Map<Long, String> people, Map<Long, String> wallets, boolean hasPersonLinks,
-                       boolean hasWalletChoice, boolean hasUnconfirmed) {
+        private Result(List<SearchCategoryLoader.Entry> categories, Map<Long, String> people,
+                       Map<Long, String> wallets, boolean hasPersonLinks, boolean hasWalletChoice,
+                       boolean hasUnconfirmed) {
+            mCategories = categories;
             mPeople = people;
             mWallets = wallets;
             mHasPersonLinks = hasPersonLinks;
             mHasWalletChoice = hasWalletChoice;
             mHasUnconfirmed = hasUnconfirmed;
+        }
+
+        public List<SearchCategoryLoader.Entry> getCategories() {
+            return mCategories;
         }
 
         public Map<Long, String> getPeople() {
@@ -105,7 +113,8 @@ public class SearchRailLoader extends AbstractGenericLoader<SearchRailLoader.Res
         boolean hasWalletChoice = wallets.size() > 1 || countTransactions(context,
                 Contract.Transaction.TYPE + " = ?", String.valueOf(Contract.TransactionType.TRANSFER)) > 0;
         boolean hasUnconfirmed = countTransactions(context, Contract.Transaction.CONFIRMED + " = 0") > 0;
-        return new Result(people, wallets, hasPersonLinks, hasWalletChoice, hasUnconfirmed);
+        return new Result(SearchCategoryLoader.loadCategories(context, null), people, wallets,
+                hasPersonLinks, hasWalletChoice, hasUnconfirmed);
     }
 
     /*package-local*/ static int countMatches(Context context, @NonNull SearchFilter filter) {
