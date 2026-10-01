@@ -26,4 +26,17 @@ public final class TestDatabases {
         CurrencyManager.invalidateCache(context);
     }
 
+    /**
+     * Opens a transaction on the shared database from this thread. The database has one
+     * connection and the transaction keeps it, so a query from any other thread waits for
+     * {@link #release}.
+     */
+    public static void hold(Context context) {
+        SQLDatabase.getShared(context).getWritableDatabase().beginTransaction();
+    }
+
+    public static void release(Context context) {
+        SQLDatabase.getShared(context).getWritableDatabase().endTransaction();
+    }
+
 }
