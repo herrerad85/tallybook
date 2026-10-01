@@ -643,6 +643,30 @@ public class SearchScreenTest {
 
     @Test
     @Config(qualifiers = "w180dp")
+    public void tappingAChipPartOffTheEdgeBringsItIntoView() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        fixtureThatHidesNothing();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitRail(activity);
+                shadowOf(Looper.getMainLooper()).idle();
+                HorizontalScrollView scrollView = activity.findViewById(R.id.search_rail_scroll_view);
+                Chip wallet = chip(activity, "Wallet");
+                // the chip's middle on the right edge
+                scrollView.scrollTo((wallet.getLeft() + wallet.getRight()) / 2 - scrollView.getWidth(), 0);
+                assertTrue("wallet starts in view", wallet.getLeft() < scrollView.getScrollX() + scrollView.getWidth());
+                assertTrue("wallet ends off the edge", wallet.getRight() > scrollView.getScrollX() + scrollView.getWidth());
+                wallet.performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(editor(activity) instanceof WalletSearchEditorFragment);
+                assertTrue("wallet right " + wallet.getRight() + ", view ends at " + (scrollView.getScrollX() + scrollView.getWidth()),
+                        wallet.getRight() <= scrollView.getScrollX() + scrollView.getWidth());
+            });
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w180dp")
     public void namesThatLandAfterARecreateLeaveTheOpenChipInView() {
         Context context = ApplicationProvider.getApplicationContext();
         TestDatabases.useFreshDatabase(context);
