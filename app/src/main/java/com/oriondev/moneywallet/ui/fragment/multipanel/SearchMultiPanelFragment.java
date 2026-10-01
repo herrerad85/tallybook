@@ -354,6 +354,9 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         applyEditorState();
         // a chip hidden under a finger still gets its click on the lift
         slot.mChip.setVisibility(View.VISIBLE);
+        // a tapped chip part off the edge comes into view, as a focused one already does
+        showChipOnNextLayout(mRailScrollView, slot.mChip);
+        mRailScrollView.requestLayout();
         editor.onOpenedFromChip();
     }
 
