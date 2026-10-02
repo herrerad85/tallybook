@@ -23,6 +23,8 @@ import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.util.Log;
 
@@ -49,7 +51,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Runs the auto backup from the job scheduler.
@@ -295,8 +300,50 @@ public class AutoBackupJobService extends JobService {
         if (connectivityManager == null) {
             return false;
         }
-        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        return networkInfo != null && networkInfo.isConnected();
+        // Not getNetworkInfo, which reports WiFi as not connected while this app's network
+        // access is blocked, and a job can start before that block lifts. The default network
+        // callback still arrives while blocked, and it names the network this app's traffic
+        // uses, so WiFi that is connected but not in use does not count.
+        final AtomicReference<Network> defaultNetwork = new AtomicReference<>();
+        final CountDownLatch answered = new CountDownLatch(1);
+        ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
+
+            @Override
+            public void onAvailable(Network network) {
+                defaultNetwork.set(network);
+                answered.countDown();
+            }
+
+        };
+        connectivityManager.registerDefaultNetworkCallback(callback);
+        try {
+            answered.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            connectivityManager.unregisterNetworkCallback(callback);
+        }
+        Network network = defaultNetwork.get();
+        if (network == null) {
+            // with no default network nothing arrives, which is not WiFi
+            return false;
+        }
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+        if (capabilities == null) {
+            return false;
+        }
+        if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                && !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+            return true;
+        }
+        if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+            // On Android 9 a VPN that does not declare the networks under it reports only the
+            // VPN transport, even over WiFi, so ask the old way. A VPN that declares several
+            // networks reports the transports of all of them, so WiFi with cellular asks too.
+            NetworkInfo networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            return networkInfo != null && networkInfo.isConnected();
+        }
+        return false;
     }
 
     /**
