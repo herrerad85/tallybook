@@ -840,5 +840,24 @@
     <string name="search_partly_checked">"Partly checked"</string>
     <string name="search_show_subcategories">"Show the subcategories of %1$s"</string>
     <string name="search_hide_subcategories">"Hide the subcategories of %1$s"</string>
+    <string name="search_type_amount">"Amount"</string>
+    <string name="search_amount_exactly">"Exactly"</string>
+    <string name="search_amount_at_least">"At least"</string>
+    <string name="search_amount_at_most">"At most"</string>
+    <string name="search_amount_between">"Between (inclusive)"</string>
+    <string name="search_amount_between_short">"Between"</string>
+    <string name="search_amount_op_description">"Amount condition, %1$s"</string>
+    <string name="search_amount_either">"Either"</string>
+    <string name="search_amount_out">"Out"</string>
+    <string name="search_amount_in">"In"</string>
+    <string name="search_amount_and">"and"</string>
+    <string name="hint_search_amount">"Amount"</string>
+    <string name="hint_search_amount_to">"Other amount"</string>
+    <string name="search_value_amount_exactly">"= %1$s"</string>
+    <string name="search_value_amount_at_least">"≥ %1$s"</string>
+    <string name="search_value_amount_at_most">"≤ %1$s"</string>
+    <string name="search_value_amount_between">"%1$s to %2$s"</string>
+    <string name="search_value_amount_out">"Out %1$s"</string>
+    <string name="search_value_amount_in">"In %1$s"</string>
 
 </resources>

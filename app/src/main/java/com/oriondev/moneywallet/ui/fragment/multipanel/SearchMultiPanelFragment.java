@@ -64,6 +64,7 @@ import com.oriondev.moneywallet.model.SearchFilter;
 import com.oriondev.moneywallet.model.Wallet;
 import com.oriondev.moneywallet.picker.CategoryPicker;
 import com.oriondev.moneywallet.picker.WalletPicker;
+import com.oriondev.moneywallet.ui.activity.SearchActivity;
 import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
 import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelCursorListItemFragment;
@@ -77,6 +78,8 @@ import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.SystemBars;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -215,6 +218,41 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
                 @Override
                 boolean isRuledOut(SearchRailLoader.Result result) {
                     return !result.hasWalletChoice();
+                }
+
+            },
+            new Slot(R.string.search_type_amount, R.drawable.ic_coin_24dp, AmountSearchEditorFragment.class) {
+
+                @Override
+                CharSequence getValue(Fragment fragment, SearchFilter filter) {
+                    if (!filter.isAmountSet()) {
+                        return null;
+                    }
+                    BigDecimal amount = filter.getAmount();
+                    String value;
+                    switch (filter.getAmountOp()) {
+                        case EXACTLY:
+                            value = fragment.getString(R.string.search_value_amount_exactly, formatAmount(amount));
+                            break;
+                        case AT_LEAST:
+                            value = fragment.getString(R.string.search_value_amount_at_least, formatAmount(amount));
+                            break;
+                        case AT_MOST:
+                            value = fragment.getString(R.string.search_value_amount_at_most, formatAmount(amount));
+                            break;
+                        default:
+                            BigDecimal to = filter.getAmountTo();
+                            value = fragment.getString(R.string.search_value_amount_between,
+                                    formatAmount(amount.min(to)), formatAmount(amount.max(to)));
+                            break;
+                    }
+                    if (filter.getAmountSide() == SearchFilter.AmountSide.OUT) {
+                        return fragment.getString(R.string.search_value_amount_out, value);
+                    }
+                    if (filter.getAmountSide() == SearchFilter.AmountSide.IN) {
+                        return fragment.getString(R.string.search_value_amount_in, value);
+                    }
+                    return value;
                 }
 
             }
@@ -388,7 +426,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         FragmentManager fragmentManager = getChildFragmentManager();
         SearchEditorFragment editor = (SearchEditorFragment) fragmentManager.getFragmentFactory()
                 .instantiate(requireContext().getClassLoader(), slot.mEditor.getName());
-        if (!editor.showsKeyboardOnOpen()) {
+        if (!editor.showsKeyboardOnOpen((SearchActivity) requireActivity())) {
             hideKeyboard();
         }
         fragmentManager.beginTransaction().replace(R.id.search_editor_container, editor).commitNow();
@@ -534,6 +572,12 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
             }
         }
         return ticked;
+    }
+
+    private static String formatAmount(BigDecimal amount) {
+        NumberFormat format = NumberFormat.getNumberInstance();
+        format.setMaximumFractionDigits(Math.max(0, amount.scale()));
+        return format.format(amount);
     }
 
     /**

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2026.
+  ~
+  ~ This file is part of MoneyWallet.
+  ~
+  ~ MoneyWallet is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ MoneyWallet is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp" >
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedScrollView
+        android:id="@+id/search_amount_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp" >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" >
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/search_amount_op_chip"
+                    style="@style/Widget.MaterialComponents.Chip.Action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:closeIcon="@drawable/ic_expand_more_black_24dp"
+                    app:closeIconVisible="true" />
+
+                <EditText
+                    android:id="@+id/search_amount_edit_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:digits="0123456789.,٫۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
+                    android:hint="@string/hint_search_amount"
+                    android:importantForAutofill="no"
+                    android:inputType="numberDecimal"
+                    android:singleLine="true" />
+
+                <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+                    android:id="@+id/search_amount_and_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/search_amount_and"
+                    app:theme_textColor="textColorSecondary" />
+
+                <EditText
+                    android:id="@+id/search_amount_to_edit_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:digits="0123456789.,٫۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
+                    android:hint="@string/hint_search_amount_to"
+                    android:importantForAutofill="no"
+                    android:inputType="numberDecimal"
+                    android:singleLine="true" />
+
+            </LinearLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/search_amount_side_chip_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleSelection="true" >
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/search_amount_either_chip"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:saveEnabled="false"
+                    android:text="@string/search_amount_either"
+                    app:chipSurfaceColor="@android:color/transparent" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/search_amount_out_chip"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:saveEnabled="false"
+                    android:text="@string/search_amount_out"
+                    app:chipSurfaceColor="@android:color/transparent" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/search_amount_in_chip"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:saveEnabled="false"
+                    android:text="@string/search_amount_in"
+                    app:chipSurfaceColor="@android:color/transparent" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+        </LinearLayout>
+
+    </com.oriondev.moneywallet.ui.view.theme.ThemedScrollView>
+
+    <Button
+        android:id="@+id/search_clear_button"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/search_clear" />
+
+</LinearLayout>
