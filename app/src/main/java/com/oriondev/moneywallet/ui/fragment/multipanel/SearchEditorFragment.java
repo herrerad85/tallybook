@@ -21,14 +21,17 @@ package com.oriondev.moneywallet.ui.fragment.multipanel;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
@@ -36,6 +39,7 @@ import androidx.fragment.app.Fragment;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.SearchFilter;
+import com.oriondev.moneywallet.ui.activity.SearchActivity;
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.IconLoader;
 
@@ -65,9 +69,9 @@ public abstract class SearchEditorFragment extends Fragment {
 
     /**
      * @return true when {@link #onOpenedFromChip()} raises the keyboard, so the switch to this
-     *         editor leaves it up.
+     *         editor leaves it up. Asked before this editor is added.
      */
-    protected boolean showsKeyboardOnOpen() {
+    protected boolean showsKeyboardOnOpen(SearchActivity activity) {
         return false;
     }
 
@@ -75,6 +79,18 @@ public abstract class SearchEditorFragment extends Fragment {
      * Called after a chip tap opened this editor, never on a restore.
      */
     protected void onOpenedFromChip() {
+    }
+
+    protected static void focus(EditText editText, boolean showKeyboard) {
+        editText.requestFocus();
+        if (showKeyboard) {
+            editText.post(() -> {
+                InputMethodManager manager = ContextCompat.getSystemService(editText.getContext(), InputMethodManager.class);
+                if (manager != null) {
+                    manager.showSoftInput(editText, 0);
+                }
+            });
+        }
     }
 
     protected void bindClear(View view, Runnable unset) {

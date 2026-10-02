@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.fragment.multipanel;
 
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -29,12 +30,15 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.HorizontalScrollView;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 import androidx.test.core.app.ActivityScenario;
@@ -58,7 +62,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
+import org.robolectric.shadows.ShadowDialog;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +73,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -89,7 +97,7 @@ public class SearchScreenTest {
     public void theRailHoldsTheMatchToggleThenTheCategoryChip() {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Status", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Status", "Wallet", "Amount"), railTexts(activity));
                 assertFalse(activity.findViewById(R.id.search_rail_scroll_view).isSaveEnabled());
             });
         }
@@ -291,7 +299,7 @@ public class SearchScreenTest {
                 assertTrue(activity.findViewById(R.id.search_rail_chip_group).isClickable());
                 assertEquals("coffee", search(activity).getFilter().getText());
                 assertEquals("coffee", ((EditText) activity.findViewById(R.id.search_text_edit_text)).getText().toString());
-                assertEquals(6, ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildCount());
+                assertEquals(7, ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildCount());
             });
         }
     }
@@ -522,9 +530,9 @@ public class SearchScreenTest {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
                 setStatusConfirmed(activity);
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet", "Amount"), railTexts(activity));
                 activity.onBackPressed();
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -538,7 +546,7 @@ public class SearchScreenTest {
                 activity.dispatchTouchEvent(event(MotionEvent.ACTION_DOWN, at));
                 activity.dispatchTouchEvent(event(MotionEvent.ACTION_UP, at));
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -551,7 +559,7 @@ public class SearchScreenTest {
                 chip(activity, "Text").performClick();
                 ((EditText) activity.findViewById(R.id.search_text_edit_text)).setText("coffee");
                 activity.findViewById(R.id.search_clear_button).performClick();
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -563,10 +571,10 @@ public class SearchScreenTest {
                 Chip status = setStatusConfirmed(activity);
                 status.performClick();
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet", "Amount"), railTexts(activity));
                 chip(activity, "Wallet").performClick();
                 activity.onBackPressed();
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -578,10 +586,10 @@ public class SearchScreenTest {
                 setStatusConfirmed(activity);
                 activity.findViewById(R.id.search_rail_chip_group).performClick();
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet", "Amount"), railTexts(activity));
                 chip(activity, "Text").performClick();
                 activity.onBackPressed();
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -593,7 +601,7 @@ public class SearchScreenTest {
                 setStatusConfirmed(activity);
                 chip(activity, "Wallet").performClick();
                 assertTrue(editor(activity) instanceof WalletSearchEditorFragment);
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -603,12 +611,12 @@ public class SearchScreenTest {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
                 setStatusConfirmed(activity).performClick();
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Wallet", "Amount"), railTexts(activity));
             });
             scenario.recreate();
             scenario.onActivity(activity -> {
                 assertNull(editor(activity));
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
             });
         }
     }
@@ -620,12 +628,12 @@ public class SearchScreenTest {
                 setStatusConfirmed(activity);
                 chip(activity, "Wallet").performClick();
                 activity.findViewById(R.id.search_transfers_only_switch).performClick();
-                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Transfers"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Confirmed", "Transfers", "Amount"), railTexts(activity));
             });
             scenario.recreate();
             scenario.onActivity(activity -> {
                 assertTrue(editor(activity) instanceof WalletSearchEditorFragment);
-                assertEquals(Arrays.asList("All", "Confirmed", "Transfers", "Category", "Text", "People"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Transfers", "Category", "Text", "People", "Amount"), railTexts(activity));
             });
         }
     }
@@ -756,7 +764,7 @@ public class SearchScreenTest {
                     TestDatabases.release(context);
                 }
                 awaitRail(activity);
-                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet"), railTexts(activity));
+                assertEquals(Arrays.asList("All", "Confirmed", "Category", "Text", "People", "Wallet", "Amount"), railTexts(activity));
                 assertEquals(View.VISIBLE, chip(activity, "Confirmed").getVisibility());
                 assertEquals(View.GONE, chip(activity, "People").getVisibility());
                 assertEquals(View.GONE, chip(activity, "Wallet").getVisibility());
@@ -1153,6 +1161,542 @@ public class SearchScreenTest {
         }
     }
 
+    @Test
+    public void eachAmountOpSetsTheFilterAndTheStripCountsItsRows() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        amountFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "6 results");
+                chip(activity, "Amount").performClick();
+                assertTrue(editor(activity) instanceof AmountSearchEditorFragment);
+                amountField(activity).setText("25.5");
+                assertAmount(activity, SearchFilter.AmountOp.EXACTLY, SearchFilter.AmountSide.EITHER, "25.5", null);
+                // out 25.50 and in 25.50
+                awaitSummary(activity, "2 results");
+                pickAmountOp(activity, "At most");
+                assertAmount(activity, SearchFilter.AmountOp.AT_MOST, SearchFilter.AmountSide.EITHER, "25.5", null);
+                // out 10, out 25.50, in 25.50
+                awaitSummary(activity, "3 results");
+                pickAmountOp(activity, "At least");
+                assertAmount(activity, SearchFilter.AmountOp.AT_LEAST, SearchFilter.AmountSide.EITHER, "25.5", null);
+                // every row but out 10
+                awaitSummary(activity, "5 results");
+                amountField(activity).setText("40");
+                // out 40, in 50, in 100
+                awaitSummary(activity, "3 results");
+                pickAmountOp(activity, "Between (inclusive)");
+                assertEquals(View.VISIBLE, amountToField(activity).getVisibility());
+                assertFalse("one end typed", search(activity).getFilter().isAmountSet());
+                awaitSummary(activity, "6 results");
+                amountToField(activity).setText("10");
+                assertAmount(activity, SearchFilter.AmountOp.BETWEEN, SearchFilter.AmountSide.EITHER, "40", "10");
+                // out 10, out 25.50, out 40, in 25.50
+                awaitSummary(activity, "4 results");
+            });
+        }
+    }
+
+    @Test
+    public void outAndInNarrowTheAmountByDirectionAndEitherDoesNot() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        amountFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                pickAmountOp(activity, "At least");
+                amountField(activity).setText("25.5");
+                awaitSummary(activity, "5 results");
+                activity.findViewById(R.id.search_amount_out_chip).performClick();
+                assertAmount(activity, SearchFilter.AmountOp.AT_LEAST, SearchFilter.AmountSide.OUT, "25.5", null);
+                // out 25.50, out 40
+                awaitSummary(activity, "2 results");
+                activity.findViewById(R.id.search_amount_in_chip).performClick();
+                assertAmount(activity, SearchFilter.AmountOp.AT_LEAST, SearchFilter.AmountSide.IN, "25.5", null);
+                // in 25.50, in 50, in 100
+                awaitSummary(activity, "3 results");
+                activity.findViewById(R.id.search_amount_either_chip).performClick();
+                assertAmount(activity, SearchFilter.AmountOp.AT_LEAST, SearchFilter.AmountSide.EITHER, "25.5", null);
+                awaitSummary(activity, "5 results");
+            });
+        }
+    }
+
+    @Test
+    public void aCommaAndTheArabicSeparatorAreTheDecimalPointAndEveryDigitReadsAsAscii() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        amountFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                amountField(activity).setText("25,5");
+                assertAmount(activity, SearchFilter.AmountOp.EXACTLY, SearchFilter.AmountSide.EITHER, "25.5", null);
+                awaitSummary(activity, "2 results");
+                amountField(activity).setText("25\u066B5");
+                assertAmount(activity, SearchFilter.AmountOp.EXACTLY, SearchFilter.AmountSide.EITHER, "25.5", null);
+                amountField(activity).setText("\u06F2\u06F5\u066B\u06F5");
+                assertAmount(activity, SearchFilter.AmountOp.EXACTLY, SearchFilter.AmountSide.EITHER, "25.5", null);
+                amountField(activity).setText("\u0664\u0660");
+                assertAmount(activity, SearchFilter.AmountOp.EXACTLY, SearchFilter.AmountSide.EITHER, "40", null);
+                awaitSummary(activity, "1 result");
+            });
+        }
+    }
+
+    @Test
+    public void textThatIsNotANumberAndBetweenWithOneEndEmptyLeaveTheAmountUnset() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        amountFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip amount = chip(activity, "Amount");
+                amount.performClick();
+                for (String text : new String[] {".", "1.2.3", ""}) {
+                    amountField(activity).setText("25.5");
+                    assertTrue(search(activity).getFilter().isAmountSet());
+                    awaitSummary(activity, "2 results");
+                    amountField(activity).setText(text);
+                    assertFalse("\"" + text + "\" sets no amount", search(activity).getFilter().isAmountSet());
+                    assertEquals("Amount", amount.getText().toString());
+                    awaitSummary(activity, "6 results");
+                }
+                pickAmountOp(activity, "Between (inclusive)");
+                amountField(activity).setText("40");
+                assertFalse("only the first end", search(activity).getFilter().isAmountSet());
+                amountToField(activity).setText("10");
+                assertTrue(search(activity).getFilter().isAmountSet());
+                awaitSummary(activity, "4 results");
+                amountField(activity).setText("");
+                assertFalse("only the second end", search(activity).getFilter().isAmountSet());
+                assertEquals("Amount", amount.getText().toString());
+                awaitSummary(activity, "6 results");
+            });
+        }
+    }
+
+    @Test
+    public void clearUnsetsTheAmountAndCloses() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip amount = chip(activity, "Amount");
+                amount.performClick();
+                amountField(activity).setText("25.5");
+                assertTrue(search(activity).getFilter().isAmountSet());
+                activity.findViewById(R.id.search_clear_button).performClick();
+                assertFalse(search(activity).getFilter().isAmountSet());
+                assertNull(search(activity).getFilter().getAmountSide());
+                assertNull(editor(activity));
+                assertEquals("Amount", amount.getText().toString());
+                assertNull(amount.getContentDescription());
+            });
+        }
+    }
+
+    @Test
+    public void theAmountChipReadsTheOpTheValuesAndASideOtherThanEither() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip amount = chip(activity, "Amount");
+                amount.performClick();
+                amountField(activity).setText("25.5");
+                assertEquals("= 25.5", amount.getText().toString());
+                assertEquals("Amount, = 25.5", amount.getContentDescription().toString());
+                pickAmountOp(activity, "At least");
+                assertEquals("\u2265 25.5", amount.getText().toString());
+                pickAmountOp(activity, "At most");
+                assertEquals("\u2264 25.5", amount.getText().toString());
+                pickAmountOp(activity, "Between (inclusive)");
+                amountField(activity).setText("1250");
+                amountToField(activity).setText("25.5");
+                // low end first, whatever order they were typed in
+                assertEquals("25.5 to 1,250", amount.getText().toString());
+                activity.findViewById(R.id.search_amount_out_chip).performClick();
+                assertEquals("Out 25.5 to 1,250", amount.getText().toString());
+                amountToField(activity).setText("4000");
+                assertEquals("Out 1,250 to 4,000", amount.getText().toString());
+                pickAmountOp(activity, "Exactly");
+                activity.findViewById(R.id.search_amount_in_chip).performClick();
+                assertEquals("In = 1,250", amount.getText().toString());
+                assertEquals("Amount, In = 1,250", amount.getContentDescription().toString());
+                amountField(activity).setText("25.1234");
+                assertEquals("In = 25.1234", amount.getText().toString());
+            });
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "fa")
+    public void theAmountChipShowsPersianDigitsUnderPersian() {
+        Locale before = Locale.getDefault();
+        Locale.setDefault(new Locale("fa"));
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                search(activity).getFilter().setAmount(SearchFilter.AmountOp.AT_LEAST, SearchFilter.AmountSide.EITHER, new BigDecimal("25.5"), null);
+                search(activity).onFilterChanged();
+                assertTrue(railTexts(activity).contains("\u2265 \u06F2\u06F5\u066B\u06F5"));
+            });
+        } finally {
+            Locale.setDefault(before);
+        }
+    }
+
+    @Test
+    public void anOpenAmountEditorKeepsItsOpSideTextAndTheFilterThroughARecreate() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                pickAmountOp(activity, "Between (inclusive)");
+                activity.findViewById(R.id.search_amount_out_chip).performClick();
+                amountField(activity).setText("40");
+                assertFalse(search(activity).getFilter().isAmountSet());
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(editor(activity) instanceof AmountSearchEditorFragment);
+                assertEquals("Between", amountOpChip(activity).getText().toString());
+                assertTrue(((Chip) activity.findViewById(R.id.search_amount_out_chip)).isChecked());
+                assertFalse(((Chip) activity.findViewById(R.id.search_amount_either_chip)).isChecked());
+                assertEquals("40", amountField(activity).getText().toString());
+                assertEquals(View.VISIBLE, amountToField(activity).getVisibility());
+                assertFalse(search(activity).getFilter().isAmountSet());
+                amountToField(activity).setText("10");
+                assertAmount(activity, SearchFilter.AmountOp.BETWEEN, SearchFilter.AmountSide.OUT, "40", "10");
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(editor(activity) instanceof AmountSearchEditorFragment);
+                assertEquals("Between", amountOpChip(activity).getText().toString());
+                assertTrue(((Chip) activity.findViewById(R.id.search_amount_out_chip)).isChecked());
+                assertEquals("40", amountField(activity).getText().toString());
+                assertEquals("10", amountToField(activity).getText().toString());
+                assertAmount(activity, SearchFilter.AmountOp.BETWEEN, SearchFilter.AmountSide.OUT, "40", "10");
+                assertTrue(railTexts(activity).contains("Out 10 to 40"));
+            });
+        }
+    }
+
+    @Test
+    public void reopeningTheAmountEditorShowsTheSetAmount() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                Chip amount = chip(activity, "Amount");
+                amount.performClick();
+                pickAmountOp(activity, "Between (inclusive)");
+                activity.findViewById(R.id.search_amount_in_chip).performClick();
+                amountField(activity).setText("12,5");
+                amountToField(activity).setText("3");
+                amount.performClick();
+                assertNull(editor(activity));
+                amount.performClick();
+                assertEquals("Between", amountOpChip(activity).getText().toString());
+                assertTrue(((Chip) activity.findViewById(R.id.search_amount_in_chip)).isChecked());
+                assertEquals("12.5", amountField(activity).getText().toString());
+                assertEquals("3", amountToField(activity).getText().toString());
+                assertAmount(activity, SearchFilter.AmountOp.BETWEEN, SearchFilter.AmountSide.IN, "12.5", "3");
+            });
+        }
+    }
+
+    @Test
+    public void theOpChipReadsTheOpWithBetweenShortened() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                assertEquals("Exactly", amountOpChip(activity).getText().toString());
+                pickAmountOp(activity, "At least");
+                assertEquals("At least", amountOpChip(activity).getText().toString());
+                pickAmountOp(activity, "At most");
+                assertEquals("At most", amountOpChip(activity).getText().toString());
+                pickAmountOp(activity, "Between (inclusive)");
+                assertEquals("Between", amountOpChip(activity).getText().toString());
+                pickAmountOp(activity, "Exactly");
+                assertEquals("Exactly", amountOpChip(activity).getText().toString());
+            });
+        }
+    }
+
+    @Test
+    public void onlyBetweenShowsTheSecondFieldAndTheAnd() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                View and = activity.findViewById(R.id.search_amount_and_text_view);
+                assertEquals(View.GONE, and.getVisibility());
+                assertEquals(View.GONE, amountToField(activity).getVisibility());
+                pickAmountOp(activity, "Between (inclusive)");
+                assertEquals(View.VISIBLE, and.getVisibility());
+                assertEquals(View.VISIBLE, amountToField(activity).getVisibility());
+                pickAmountOp(activity, "At least");
+                assertEquals(View.GONE, and.getVisibility());
+                assertEquals(View.GONE, amountToField(activity).getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void theOpListNamesTheFourOpsInFullAndChecksTheCurrentOne() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                AlertDialog dialog = openOpList(activity);
+                ListView list = dialog.getListView();
+                assertEquals(Arrays.asList("Exactly", "At least", "At most", "Between (inclusive)"), items(list));
+                assertEquals("Exactly", items(list).get(list.getCheckedItemPosition()));
+                dialog.cancel();
+                pickAmountOp(activity, "At most");
+                assertFalse("a pick closes the list", latestDialog().isShowing());
+                list = openOpList(activity).getListView();
+                assertEquals("At most", items(list).get(list.getCheckedItemPosition()));
+                latestDialog().cancel();
+                pickAmountOp(activity, "Between (inclusive)");
+                list = openOpList(activity).getListView();
+                assertEquals("Between (inclusive)", items(list).get(list.getCheckedItemPosition()));
+            });
+        }
+    }
+
+    @Test
+    public void pickingAnOpFromTheListSetsTheFilterAndTheStripCount() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        amountFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "6 results");
+                chip(activity, "Amount").performClick();
+                amountField(activity).setText("40");
+                // out 40
+                awaitSummary(activity, "1 result");
+                pickAmountOp(activity, "At least");
+                assertAmount(activity, SearchFilter.AmountOp.AT_LEAST, SearchFilter.AmountSide.EITHER, "40", null);
+                // out 40, in 50, in 100
+                awaitSummary(activity, "3 results");
+            });
+        }
+    }
+
+    @Test
+    public void thePickedOpAndItsChipTextSurviveARecreate() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                pickAmountOp(activity, "At most");
+                amountField(activity).setText("25.5");
+                assertFalse(latestDialog().isShowing());
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(editor(activity) instanceof AmountSearchEditorFragment);
+                assertEquals("At most", amountOpChip(activity).getText().toString());
+                assertAmount(activity, SearchFilter.AmountOp.AT_MOST, SearchFilter.AmountSide.EITHER, "25.5", null);
+                amountField(activity).setText("40");
+                assertAmount(activity, SearchFilter.AmountOp.AT_MOST, SearchFilter.AmountSide.EITHER, "40", null);
+            });
+        }
+    }
+
+    @Test
+    public void theOpChipDescriptionNamesTheAmountConditionAndTheOp() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                assertEquals("Amount condition, Exactly", amountOpChip(activity).getContentDescription().toString());
+                pickAmountOp(activity, "At least");
+                assertEquals("Amount condition, At least", amountOpChip(activity).getContentDescription().toString());
+                pickAmountOp(activity, "Between (inclusive)");
+                assertEquals("Amount condition, Between (inclusive)", amountOpChip(activity).getContentDescription().toString());
+            });
+        }
+    }
+
+    @Test
+    public void aTypedAmountMatchesEachWalletInItsOwnMinorUnits() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", "EUR", false);
+        long yen = fixture.wallet("Yen", "JPY", false);
+        // 12.50 and 12.00 euro, 12 and 1250 yen
+        fixture.money(euro, Contract.Direction.EXPENSE, 1250L);
+        fixture.money(euro, Contract.Direction.EXPENSE, 1200L);
+        fixture.money(yen, Contract.Direction.EXPENSE, 12L);
+        fixture.money(yen, Contract.Direction.EXPENSE, 1250L);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "4 results");
+                chip(activity, "Amount").performClick();
+                // no yen amount has a fraction
+                amountField(activity).setText("12.5");
+                awaitSummary(activity, "1 result");
+                amountField(activity).setText("12");
+                awaitSummary(activity, "2 results");
+                amountField(activity).setText("1250");
+                awaitSummary(activity, "1 result");
+                assertEquals("list rows", 1, listItemCount(activity));
+            });
+        }
+    }
+
+    @Test
+    public void theAmountChipShowsWhenEveryOtherRuleHides() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        fixtureWithNothingToPick();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitRail(activity);
+                assertEquals(Arrays.asList(true, false, false, false), visibleTypes(activity));
+                Chip amount = chip(activity, "Amount");
+                assertEquals(View.VISIBLE, amount.getVisibility());
+                assertEquals(R.drawable.ic_coin_24dp, iconResource(amount));
+            });
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "port")
+    public void inPortraitTheAmountChipFocusesTheFieldAndRaisesTheKeyboard() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(amountField(activity).hasFocus());
+                assertTrue(shadowOf(inputMethodManager(activity)).isSoftInputVisible());
+                activity.onBackPressed();
+                assertFalse(shadowOf(inputMethodManager(activity)).isSoftInputVisible());
+            });
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "land")
+    public void inLandscapeTheAmountChipFocusesTheFieldWithNoKeyboard() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Text").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(shadowOf(inputMethodManager(activity)).isSoftInputVisible());
+                chip(activity, "Amount").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertTrue(amountField(activity).hasFocus());
+                assertFalse(shadowOf(inputMethodManager(activity)).isSoftInputVisible());
+            });
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "land")
+    public void aTallAmountEditorScrollsInsideThePanelWithClearInIt() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                pickAmountOp(activity, "Between (inclusive)");
+                shadowOf(Looper.getMainLooper()).idle();
+                ScrollView scrollView = activity.findViewById(R.id.search_amount_scroll_view);
+                View panel = activity.findViewById(R.id.search_editor_panel);
+                View strip = activity.findViewById(R.id.search_strip);
+                assertTrue("the editor is taller than its room", scrollView.getChildAt(0).getHeight() > scrollView.getHeight());
+                int[] panelAt = centerOf(panel);
+                int panelTop = panelAt[1] - panel.getHeight() / 2;
+                int panelBottom = panelTop + panel.getHeight();
+                assertTrue("the panel stays under the strip", panelTop >= centerOf(strip)[1] + strip.getHeight() / 2);
+                View clear = activity.findViewById(R.id.search_clear_button);
+                int[] at = centerOf(clear);
+                assertTrue(at[1] - clear.getHeight() / 2 >= panelTop);
+                assertTrue(at[1] + clear.getHeight() / 2 <= panelBottom);
+            });
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "w914dp-h411dp-land", fontScale = 1.3f)
+    public void betweenKeepsBothAmountFieldsOneLineHigh() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Amount").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                // alone in the row the hint fits on one line
+                int oneLine = amountField(activity).getHeight();
+                pickAmountOp(activity, "Between (inclusive)");
+                assertEquals(oneLine, amountField(activity).getHeight());
+                assertEquals(oneLine, amountToField(activity).getHeight());
+            });
+        }
+    }
+
+    /**
+     * Euro rows out 10, 25.50 and 40, and in 25.50, 50 and 100.
+     */
+    private static void amountFixture() {
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        for (long money : new long[] {1000L, 2550L, 4000L}) {
+            fixture.money(euro, Contract.Direction.EXPENSE, money);
+        }
+        for (long money : new long[] {2550L, 5000L, 10000L}) {
+            fixture.money(euro, Contract.Direction.INCOME, money);
+        }
+    }
+
+    private static void assertAmount(SearchActivity activity, SearchFilter.AmountOp op, SearchFilter.AmountSide side, String amount, String amountTo) {
+        SearchFilter filter = search(activity).getFilter();
+        assertEquals(op, filter.getAmountOp());
+        assertEquals(side, filter.getAmountSide());
+        assertEquals(new BigDecimal(amount), filter.getAmount());
+        assertEquals(amountTo != null ? new BigDecimal(amountTo) : null, filter.getAmountTo());
+    }
+
+    private static EditText amountField(SearchActivity activity) {
+        return activity.findViewById(R.id.search_amount_edit_text);
+    }
+
+    private static EditText amountToField(SearchActivity activity) {
+        return activity.findViewById(R.id.search_amount_to_edit_text);
+    }
+
+    private static Chip amountOpChip(SearchActivity activity) {
+        return activity.findViewById(R.id.search_amount_op_chip);
+    }
+
+    private static AlertDialog latestDialog() {
+        Dialog dialog = ShadowDialog.getLatestDialog();
+        assertTrue("the last dialog shown is not the op list", dialog instanceof AlertDialog);
+        return (AlertDialog) dialog;
+    }
+
+    private static List<String> items(ListView list) {
+        List<String> items = new ArrayList<>();
+        for (int i = 0; i < list.getAdapter().getCount(); i++) {
+            items.add(list.getAdapter().getItem(i).toString());
+        }
+        return items;
+    }
+
+    /**
+     * Taps the op chip and returns the list it opened, failing if no list showed.
+     */
+    private static AlertDialog openOpList(SearchActivity activity) {
+        Dialog before = ShadowDialog.getLatestDialog();
+        assertTrue("no list is open before the tap", before == null || !before.isShowing());
+        amountOpChip(activity).performClick();
+        AlertDialog dialog = latestDialog();
+        assertTrue(dialog.isShowing());
+        return dialog;
+    }
+
+    /**
+     * Opens the op list from the op chip and taps the row that reads name.
+     */
+    private static void pickAmountOp(SearchActivity activity, String name) {
+        ListView list = openOpList(activity).getListView();
+        int position = items(list).indexOf(name);
+        assertTrue(name + " is in the op list", position >= 0);
+        list.performItemClick(list, position, list.getAdapter().getItemId(position));
+        shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    private static InputMethodManager inputMethodManager(SearchActivity activity) {
+        return (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+    }
+
     /**
      * Food with one row, Groceries under it with two and Dining under it with one, Salary with
      * one, the fixture's own Misc with one, and an untaxed transfer between two wallets.
@@ -1370,10 +1914,14 @@ public class SearchScreenTest {
         }
 
         private long wallet(String name, boolean archived) {
+            return wallet(name, "EUR", archived);
+        }
+
+        private long wallet(String name, String currency, boolean archived) {
             ContentValues values = new ContentValues();
             values.put(Contract.Wallet.NAME, name);
             values.put(Contract.Wallet.ICON, ICON);
-            values.put(Contract.Wallet.CURRENCY, "EUR");
+            values.put(Contract.Wallet.CURRENCY, currency);
             values.put(Contract.Wallet.START_MONEY, 0L);
             values.put(Contract.Wallet.COUNT_IN_TOTAL, true);
             values.put(Contract.Wallet.ARCHIVED, archived);
@@ -1402,12 +1950,20 @@ public class SearchScreenTest {
         }
 
         private void transaction(long wallet, long category, String people, boolean confirmed) {
+            insert(wallet, category, people, confirmed, Contract.Direction.EXPENSE, 200L);
+        }
+
+        private void money(long wallet, int direction, long money) {
+            insert(wallet, mCategory, null, true, direction, money);
+        }
+
+        private void insert(long wallet, long category, String people, boolean confirmed, int direction, long money) {
             ContentValues values = new ContentValues();
-            values.put(Contract.Transaction.MONEY, 200L);
+            values.put(Contract.Transaction.MONEY, money);
             values.put(Contract.Transaction.DATE, "2026-01-15 12:00:00");
             values.put(Contract.Transaction.DESCRIPTION, "Row");
             values.put(Contract.Transaction.CATEGORY_ID, category);
-            values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+            values.put(Contract.Transaction.DIRECTION, direction);
             values.put(Contract.Transaction.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
             values.put(Contract.Transaction.WALLET_ID, wallet);
             values.put(Contract.Transaction.CONFIRMED, confirmed);

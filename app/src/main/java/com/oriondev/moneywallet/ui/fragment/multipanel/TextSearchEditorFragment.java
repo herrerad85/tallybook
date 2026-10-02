@@ -26,15 +26,14 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.ui.activity.SearchActivity;
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 
 /**
@@ -97,19 +96,12 @@ public class TextSearchEditorFragment extends SearchEditorFragment {
     }
 
     @Override
-    protected boolean showsKeyboardOnOpen() {
+    protected boolean showsKeyboardOnOpen(SearchActivity activity) {
         return true;
     }
 
     @Override
     protected void onOpenedFromChip() {
-        final EditText editText = mEditText;
-        editText.requestFocus();
-        editText.post(() -> {
-            InputMethodManager manager = ContextCompat.getSystemService(editText.getContext(), InputMethodManager.class);
-            if (manager != null) {
-                manager.showSoftInput(editText, 0);
-            }
-        });
+        focus(mEditText, true);
     }
 }
