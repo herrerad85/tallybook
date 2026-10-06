@@ -255,6 +255,14 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
                     return value;
                 }
 
+            },
+            new Slot(R.string.search_type_date, R.drawable.ic_date_range_black_24dp, DateSearchEditorFragment.class) {
+
+                @Override
+                CharSequence getValue(Fragment fragment, SearchFilter filter) {
+                    return DateSearchEditorFragment.getValue(fragment.requireContext(), filter.getDateFrom(), filter.getDateTo());
+                }
+
             }
     );
 

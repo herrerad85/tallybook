@@ -31,12 +31,12 @@ import java.util.Date;
 /**
  * Created by andrea on 16/08/18.
  */
-/*package-local*/ class DateRangeHeader {
+public class DateRangeHeader {
 
     private Date mStartDate;
     private Date mEndDate;
 
-    /*package-local*/ DateRangeHeader(Group group, Date lowerBound, Date upperBound, Date date) {
+    public DateRangeHeader(Group group, Date lowerBound, Date upperBound, Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         switch (group) {
@@ -98,11 +98,11 @@ import java.util.Date;
         }
     }
 
-    /*package-local*/ Date getStartDate() {
+    public Date getStartDate() {
         return mStartDate;
     }
 
-    /*package-local*/ Date getEndDate() {
+    public Date getEndDate() {
         return mEndDate;
     }
 
