@@ -20,7 +20,6 @@
 package com.oriondev.moneywallet.ui.fragment.multipanel;
 
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -201,22 +200,6 @@ public class AmountSearchEditorFragment extends SearchEditorFragment {
         String number = ascii.toString();
         // BigDecimal alone would also take a sign, an exponent and the digits of other scripts
         return number.matches("[0-9]+[.]?[0-9]*|[.][0-9]+") ? new BigDecimal(number) : null;
-    }
-
-    // the XML theme is always the light one
-    private void styleChoices(ChipGroup group) {
-        ITheme theme = ThemeEngine.getTheme();
-        int accent = ThemedDialog.getAccentColor();
-        int idle = theme.getBestHintColor(theme.getColorWindowForeground());
-        int[][] states = new int[][] {new int[] {android.R.attr.state_checked}, new int[] {}};
-        for (int i = 0; i < group.getChildCount(); i++) {
-            Chip chip = (Chip) group.getChildAt(i);
-            chip.setChipBackgroundColor(new ColorStateList(states, new int[] {accent, Color.TRANSPARENT}));
-            chip.setChipStrokeColor(new ColorStateList(states, new int[] {accent, idle}));
-            chip.setChipStrokeWidth(getResources().getDisplayMetrics().density);
-            chip.setTextColor(new ColorStateList(states, new int[] {theme.getBestTextColor(accent), theme.getTextColorSecondary()}));
-            chip.setRippleColor(ColorStateList.valueOf(theme.getColorRipple()));
-        }
     }
 
     private void styleOpChip() {

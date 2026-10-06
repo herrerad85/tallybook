@@ -19,6 +19,8 @@
 
 package com.oriondev.moneywallet.ui.fragment.multipanel;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -37,9 +39,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.SearchFilter;
 import com.oriondev.moneywallet.ui.activity.SearchActivity;
+import com.oriondev.moneywallet.ui.view.theme.ITheme;
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.IconLoader;
 
@@ -101,6 +107,22 @@ public abstract class SearchEditorFragment extends Fragment {
             onFilterChanged();
             close();
         });
+    }
+
+    // the XML theme is always the light one
+    protected void styleChoices(ChipGroup group) {
+        ITheme theme = ThemeEngine.getTheme();
+        int accent = ThemedDialog.getAccentColor();
+        int idle = theme.getBestHintColor(theme.getColorWindowForeground());
+        int[][] states = new int[][] {new int[] {android.R.attr.state_checked}, new int[] {}};
+        for (int i = 0; i < group.getChildCount(); i++) {
+            Chip chip = (Chip) group.getChildAt(i);
+            chip.setChipBackgroundColor(new ColorStateList(states, new int[] {accent, Color.TRANSPARENT}));
+            chip.setChipStrokeColor(new ColorStateList(states, new int[] {accent, idle}));
+            chip.setChipStrokeWidth(getResources().getDisplayMetrics().density);
+            chip.setTextColor(new ColorStateList(states, new int[] {theme.getBestTextColor(accent), theme.getTextColorSecondary()}));
+            chip.setRippleColor(ColorStateList.valueOf(theme.getColorRipple()));
+        }
     }
 
     protected void addCheckRow(ViewGroup list, String icon, String name, @Nullable String count,

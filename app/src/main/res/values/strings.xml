@@ -859,5 +859,23 @@
     <string name="search_value_amount_between">"%1$s to %2$s"</string>
     <string name="search_value_amount_out">"Out %1$s"</string>
     <string name="search_value_amount_in">"In %1$s"</string>
+    <string name="search_type_date">"Date"</string>
+    <string name="search_date_on_or_after">"On or after"</string>
+    <string name="search_date_on_or_before">"On or before"</string>
+    <string name="search_date_between">"Between"</string>
+    <string name="search_date_this_month">"This month"</string>
+    <string name="search_date_last_month">"Last month"</string>
+    <string name="search_date_last_30_days">"Last 30 days"</string>
+    <string name="search_date_this_year">"This year"</string>
+    <string name="search_date_from">"From"</string>
+    <string name="search_date_to">"To"</string>
+    <string name="hint_search_date">"Pick a date"</string>
+    <string name="search_date_previous_month">"Previous month"</string>
+    <string name="search_date_next_month">"Next month"</string>
+    <string name="search_date_pick_year">"%1$s, pick a year"</string>
+    <string name="search_done">"Done"</string>
+    <string name="search_value_date_after">"%1$s or later"</string>
+    <string name="search_value_date_before">"%1$s or earlier"</string>
+    <string name="search_value_date_between">"%1$s to %2$s"</string>
 
 </resources>
