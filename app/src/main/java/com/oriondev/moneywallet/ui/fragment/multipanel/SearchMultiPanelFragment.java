@@ -25,7 +25,9 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.RippleDrawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -45,11 +47,13 @@ import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.os.BundleCompat;
 import androidx.core.view.OneShotPreDrawListener;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -74,6 +78,7 @@ import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.SystemBars;
@@ -100,6 +105,11 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     private static final String SUMMARY_SEPARATOR = "  \u00B7  ";
 
     private static final float CHIP_ICON_SIZE_DP = 18f;
+
+    // in the order of SearchFilter.Sort
+    private static final int[] SORT_NAMES = new int[] {R.string.search_sort_newest,
+            R.string.search_sort_oldest, R.string.search_sort_category,
+            R.string.search_sort_largest, R.string.search_sort_smallest};
 
     // 24 and 60001 are taken by the list and the current wallet
     private static final int RAIL_LOADER_ID = 60002;
@@ -314,6 +324,8 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     private ChipGroup mRail;
     private Chip mMatchChip;
     private TextView mSummaryTextView;
+    private TextView mSortTextView;
+    private RecyclerView mRecyclerView;
     private View mEditorPanel;
     private TransactionSelectionMode mSelectionMode;
 
@@ -341,6 +353,10 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         SystemBars.pad(mRail, false, sides, false);
         SystemBars.pad(primaryPanel.findViewById(R.id.search_strip), false, sides, false);
         mSummaryTextView = primaryPanel.findViewById(R.id.search_summary_text_view);
+        mSortTextView = primaryPanel.findViewById(R.id.search_sort_text_view);
+        styleSortLabel();
+        bindSort();
+        mSortTextView.setOnClickListener(v -> showSorts());
         ViewGroup body = primaryPanel.findViewById(R.id.search_body_frame_layout);
         super.onCreatePrimaryPanel(inflater, body, savedInstanceState);
         mEditorPanel = inflater.inflate(R.layout.layout_search_editor_panel, body, false);
@@ -419,6 +435,37 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         chip.setTextColor(foreground);
         chip.setChipIconTint(ColorStateList.valueOf(foreground));
         chip.setRippleColor(ColorStateList.valueOf(theme.getColorRipple()));
+    }
+
+    /**
+     * The arrow and the ripple take the theme engine's colors, as the text does.
+     */
+    private void styleSortLabel() {
+        ITheme theme = ThemeEngine.getTheme();
+        TextViewCompat.setCompoundDrawableTintList(mSortTextView, ColorStateList.valueOf(theme.getTextColorSecondary()));
+        mSortTextView.setBackground(new RippleDrawable(ColorStateList.valueOf(theme.getColorRipple()), null, new ColorDrawable(Color.WHITE)));
+    }
+
+    private void bindSort() {
+        String name = getString(SORT_NAMES[mFilter.getSort().ordinal()]);
+        mSortTextView.setText(name);
+        mSortTextView.setContentDescription(getString(R.string.search_sort_description, name));
+    }
+
+    private void showSorts() {
+        String[] names = new String[SORT_NAMES.length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = getString(SORT_NAMES[i]);
+        }
+        ThemedDialog.buildMaterialDialog(requireContext())
+                .setSingleChoiceItems(names, mFilter.getSort().ordinal(), (dialog, which) -> {
+                    dialog.dismiss();
+                    mFilter.setSort(SearchFilter.Sort.values()[which]);
+                    bindSort();
+                    mRecyclerView.scrollToPosition(0);
+                    restartLoader();
+                })
+                .show();
     }
 
     private void onSlotClick(Slot slot) {
@@ -663,6 +710,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     protected void onPrepareRecyclerView(AdvancedRecyclerView recyclerView) {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setEmptyText(R.string.message_no_transaction_found);
+        mRecyclerView = recyclerView.getRecyclerView();
     }
 
     @Override

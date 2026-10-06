@@ -33,14 +33,15 @@ import com.oriondev.moneywallet.model.Pair;
 import com.oriondev.moneywallet.model.SearchFilter;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.wrapper.CurrencyHeaderCursor;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The transactions a {@link SearchFilter} matches, with their count and totals. The selection is
- * built here and not by the caller, since an amount needs the currencies in use.
+ * The transactions a {@link SearchFilter} matches, in its sort, with their count and totals. The
+ * selection is built here and not by the caller, since an amount needs the currencies in use.
  */
 public class SearchCursorLoader extends CursorLoader {
 
@@ -76,8 +77,7 @@ public class SearchCursorLoader extends CursorLoader {
     private final SearchFilter mFilter;
 
     public SearchCursorLoader(@NonNull Context context, @NonNull SearchFilter filter) {
-        super(context, DataContentProvider.CONTENT_TRANSACTIONS, null, null, null,
-                Contract.Transaction.DATE + " DESC");
+        super(context, DataContentProvider.CONTENT_TRANSACTIONS, null, null, null, null);
         mFilter = filter.copy();
     }
 
@@ -88,8 +88,31 @@ public class SearchCursorLoader extends CursorLoader {
         Pair<String, String[]> selection = mFilter.toSelection(decimals);
         setSelection(selection.getL());
         setSelectionArgs(selection.getR());
+        setSortOrder(mFilter.getSort().getOrderBy());
         Cursor cursor = super.loadInBackground();
-        return cursor != null ? new SummaryCursor(cursor) : null;
+        if (cursor == null) {
+            return null;
+        }
+        if (mFilter.getSort().isByAmount() && mixesCurrencies(cursor)) {
+            return new CurrencyHeaderCursor(cursor);
+        }
+        return new SummaryCursor(cursor);
+    }
+
+    /**
+     * Read from the first and the last row alone, which holds for rows ordered by currency first,
+     * as the amount sorts are, and leaves the one walk to the cursor built after it.
+     */
+    private static boolean mixesCurrencies(Cursor cursor) {
+        int indexCurrency = cursor.getColumnIndexOrThrow(Contract.Transaction.WALLET_CURRENCY);
+        boolean mixed = false;
+        if (cursor.moveToFirst()) {
+            String first = cursor.getString(indexCurrency);
+            cursor.moveToLast();
+            mixed = !TextUtils.equals(first, cursor.getString(indexCurrency));
+        }
+        cursor.moveToPosition(-1);
+        return mixed;
     }
 
     /**

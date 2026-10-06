@@ -31,6 +31,8 @@ import com.oriondev.moneywallet.model.SearchFilter;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
+import com.oriondev.moneywallet.storage.wrapper.CurrencyHeaderCursor;
+import com.oriondev.moneywallet.storage.wrapper.TransactionHeaderCursor;
 import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity;
 
 import org.junit.After;
@@ -39,11 +41,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The count and totals the search loader hands the strip, over rows inserted through the
@@ -220,6 +227,212 @@ public class SearchCursorLoaderTest {
         expected.put("EUR", 2);
         expected.put("JPY", 0);
         assertEquals(expected, SearchCursorLoader.loadDecimals(mContext));
+    }
+
+    @Test
+    public void newestRunsByDateDownAndAnEqualDateByTheLaterRowFirst() {
+        sortFixture();
+        assertEquals(Arrays.asList("f2", "f3", "b1", "f1", "f4", "r1", "b2"), descriptions(SearchFilter.Sort.NEWEST));
+    }
+
+    @Test
+    public void oldestRunsByDateUpAndAnEqualDateByTheEarlierRowFirst() {
+        sortFixture();
+        assertEquals(Arrays.asList("b2", "r1", "f4", "f1", "b1", "f3", "f2"), descriptions(SearchFilter.Sort.OLDEST));
+    }
+
+    @Test
+    public void categoryRunsByTheRowsOwnCategoryNameThenNewestFirst() {
+        sortFixture();
+        // Epicerie sits under food, and sorts under its own name ahead of it
+        assertEquals(Arrays.asList("b1", "b2", "f2", "f3", "f1", "f4", "r1"), descriptions(SearchFilter.Sort.CATEGORY));
+    }
+
+    @Test
+    public void largestRunsByAmountDownThenNewestThenTheLaterRowFirst() {
+        sortFixture();
+        assertEquals(Arrays.asList("r1", "f3", "b1", "f1", "f4", "b2", "f2"), descriptions(SearchFilter.Sort.LARGEST));
+    }
+
+    @Test
+    public void smallestRunsByAmountUpThenNewestThenTheLaterRowFirst() {
+        sortFixture();
+        assertEquals(Arrays.asList("f2", "b2", "f3", "b1", "f1", "f4", "r1"), descriptions(SearchFilter.Sort.SMALLEST));
+    }
+
+    @Test
+    public void anAmountSortOnOneCurrencyAddsNoHeaderAndKeepsTheTotals() {
+        long euro = insertWallet("Euro", "EUR", false);
+        insertTransaction(euro, Contract.Direction.EXPENSE, 1250L, "Groceries");
+        insertTransaction(euro, Contract.Direction.INCOME, 5000L, "Salary");
+        for (SearchFilter.Sort sort : new SearchFilter.Sort[] {SearchFilter.Sort.LARGEST, SearchFilter.Sort.SMALLEST}) {
+            SearchCursorLoader.Summary summary = load(sorted(sort));
+            assertEquals(-1, mCursor.getColumnIndex(TransactionHeaderCursor.COLUMN_ITEM_TYPE));
+            assertEquals(2, mCursor.getCount());
+            assertEquals(2, summary.getMatchCount());
+            assertEquals("EUR", summary.getCurrency());
+            assertEquals(Long.valueOf(1250L), summary.getOut());
+            assertEquals(Long.valueOf(5000L), summary.getIn());
+            mCursor.close();
+        }
+        mCursor = null;
+    }
+
+    @Test
+    public void largestOnTwoCurrenciesPutsAHeaderBeforeEachCurrencyInCodeOrder() {
+        long yen = insertWallet("Yen", "JPY", false);
+        long euro = insertWallet("Euro", "EUR", false);
+        insertTransaction(yen, Contract.Direction.EXPENSE, 800L, "Ramen");
+        insertTransaction(euro, Contract.Direction.EXPENSE, 1250L, "Groceries");
+        insertTransaction(yen, Contract.Direction.INCOME, 90000L, "Gift");
+        insertTransaction(euro, Contract.Direction.INCOME, 5000L, "Salary");
+        SearchCursorLoader.Summary summary = load(sorted(SearchFilter.Sort.LARGEST));
+        assertEquals(Arrays.asList("EUR", "Salary", "Groceries", "JPY", "Gift", "Ramen"), rowsAndHeaders());
+        assertEquals(4, summary.getMatchCount());
+        assertNull(summary.getCurrency());
+        assertNull(summary.getOut());
+        assertNull(summary.getIn());
+    }
+
+    @Test
+    public void smallestOnThreeCurrenciesPutsAHeaderBeforeEachCurrencyInCodeOrder() {
+        long usd = insertWallet("Dollar", "USD", false);
+        long yen = insertWallet("Yen", "JPY", false);
+        long euro = insertWallet("Euro", "EUR", false);
+        insertTransaction(usd, Contract.Direction.EXPENSE, 100L, "Gum");
+        insertTransaction(yen, Contract.Direction.EXPENSE, 800L, "Ramen");
+        insertTransaction(euro, Contract.Direction.EXPENSE, 1250L, "Groceries");
+        insertTransaction(usd, Contract.Direction.INCOME, 20L, "Change");
+        insertTransaction(euro, Contract.Direction.INCOME, 5000L, "Salary");
+        SearchCursorLoader.Summary summary = load(sorted(SearchFilter.Sort.SMALLEST));
+        assertEquals(Arrays.asList("EUR", "Groceries", "Salary", "JPY", "Ramen", "USD", "Change", "Gum"), rowsAndHeaders());
+        assertEquals(5, summary.getMatchCount());
+        assertEquals(8, mCursor.getCount());
+        assertNull(summary.getOut());
+        assertNull(summary.getIn());
+    }
+
+    @Test
+    public void theOtherSortsOnMixedCurrenciesAddNoHeader() {
+        long yen = insertWallet("Yen", "JPY", false);
+        long euro = insertWallet("Euro", "EUR", false);
+        insertTransaction(yen, Contract.Direction.EXPENSE, 800L, "Ramen");
+        insertTransaction(euro, Contract.Direction.EXPENSE, 1250L, "Groceries");
+        for (SearchFilter.Sort sort : new SearchFilter.Sort[] {SearchFilter.Sort.NEWEST, SearchFilter.Sort.OLDEST, SearchFilter.Sort.CATEGORY}) {
+            SearchCursorLoader.Summary summary = load(sorted(sort));
+            assertEquals(sort.name(), -1, mCursor.getColumnIndex(TransactionHeaderCursor.COLUMN_ITEM_TYPE));
+            assertEquals(2, mCursor.getCount());
+            assertEquals(2, summary.getMatchCount());
+            assertNull(summary.getCurrency());
+            mCursor.close();
+        }
+        mCursor = null;
+    }
+
+    @Test
+    public void anAmountSortWithNothingMatchedAddsNoHeader() {
+        long euro = insertWallet("Euro", "EUR", false);
+        insertTransaction(euro, Contract.Direction.EXPENSE, 200L, "Coffee");
+        SearchFilter filter = sorted(SearchFilter.Sort.LARGEST);
+        filter.setText("nothing like it");
+        SearchCursorLoader.Summary summary = load(filter);
+        assertEquals(-1, mCursor.getColumnIndex(TransactionHeaderCursor.COLUMN_ITEM_TYPE));
+        assertEquals(0, summary.getMatchCount());
+    }
+
+    @Test
+    public void aSortPickedAfterTheLoaderIsBuiltDoesNotReachIt() {
+        long euro = insertWallet("Euro", "EUR", false);
+        insertTransaction(euro, Contract.Direction.EXPENSE, 200L, "Coffee");
+        insertTransaction(euro, Contract.Direction.EXPENSE, 900L, "Rent");
+        SearchFilter filter = new SearchFilter();
+        SearchCursorLoader loader = new SearchCursorLoader(mContext, filter);
+        filter.setSort(SearchFilter.Sort.OLDEST);
+        mCursor = loader.loadInBackground();
+        // same date and time, so Newest puts the later row first
+        assertEquals(Arrays.asList("Rent", "Coffee"), rowsAndHeaders());
+    }
+
+    @Test
+    public void theSortIsNotACriterionAndSurvivesACopy() {
+        SearchFilter filter = sorted(SearchFilter.Sort.SMALLEST);
+        assertNull(filter.toSelection(null).getL());
+        assertNull(filter.toSelection(null).getR());
+        assertEquals(SearchFilter.Sort.SMALLEST, filter.copy().getSort());
+        assertEquals(SearchFilter.Sort.NEWEST, new SearchFilter().getSort());
+    }
+
+    private void sortFixture() {
+        long euro = insertWallet("Euro", "EUR", false);
+        long rent = insertCategory("Rent", null);
+        // lower case, so a binary sort would put it after Rent
+        long food = insertCategory("food", null);
+        // accented, so a binary or NOCASE sort would put it last
+        long bakery = insertCategory("\u00c9picerie", food);
+        insertRow(euro, rent, 90000L, "2026-01-10 09:00:00", "r1");
+        insertRow(euro, food, 1500L, "2026-01-12 12:00:00", "f1");
+        insertRow(euro, bakery, 1500L, "2026-01-12 12:00:00", "b1");
+        insertRow(euro, food, 300L, "2026-01-15 08:00:00", "f2");
+        insertRow(euro, bakery, 700L, "2026-01-05 18:00:00", "b2");
+        insertRow(euro, food, 1500L, "2026-01-12 12:00:00", "f3");
+        // an equal amount, older than f1, b1 and f3 and inserted after them
+        insertRow(euro, food, 1500L, "2026-01-11 10:00:00", "f4");
+    }
+
+    private static SearchFilter sorted(SearchFilter.Sort sort) {
+        SearchFilter filter = new SearchFilter();
+        filter.setSort(sort);
+        return filter;
+    }
+
+    private List<String> descriptions(SearchFilter.Sort sort) {
+        load(sorted(sort));
+        return rowsAndHeaders();
+    }
+
+    /**
+     * Each row's description, and each header's currency in its place.
+     */
+    private List<String> rowsAndHeaders() {
+        int indexType = mCursor.getColumnIndex(TransactionHeaderCursor.COLUMN_ITEM_TYPE);
+        int indexCurrency = mCursor.getColumnIndex(CurrencyHeaderCursor.COLUMN_HEADER_CURRENCY);
+        int indexDescription = mCursor.getColumnIndexOrThrow(Contract.Transaction.DESCRIPTION);
+        List<String> rows = new ArrayList<>();
+        mCursor.moveToPosition(-1);
+        while (mCursor.moveToNext()) {
+            boolean header = indexType != -1 && mCursor.getInt(indexType) == TransactionHeaderCursor.TYPE_HEADER;
+            if (header) {
+                assertFalse(mCursor.isNull(indexCurrency));
+            } else if (indexCurrency != -1) {
+                assertTrue(mCursor.isNull(indexCurrency));
+            }
+            rows.add(mCursor.getString(header ? indexCurrency : indexDescription));
+        }
+        return rows;
+    }
+
+    private long insertCategory(String name, Long parent) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Category.NAME, name);
+        values.put(Contract.Category.ICON, ICON);
+        values.put(Contract.Category.TYPE, Contract.CategoryType.EXPENSE.getValue());
+        values.put(Contract.Category.SHOW_REPORT, true);
+        values.put(Contract.Category.PARENT, parent);
+        return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_CATEGORIES, values));
+    }
+
+    private void insertRow(long wallet, long category, long money, String date, String description) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Transaction.MONEY, money);
+        values.put(Contract.Transaction.DATE, date);
+        values.put(Contract.Transaction.DESCRIPTION, description);
+        values.put(Contract.Transaction.CATEGORY_ID, category);
+        values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+        values.put(Contract.Transaction.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        values.put(Contract.Transaction.WALLET_ID, wallet);
+        values.put(Contract.Transaction.CONFIRMED, true);
+        values.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values);
     }
 
     private SearchCursorLoader.Summary load(SearchFilter filter) {
