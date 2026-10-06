@@ -44,7 +44,7 @@ import java.util.TreeSet;
 /**
  * The state of the search screen: one criterion per type, each unset when null or empty, and
  * whether a transaction has to meet all of the set ones or any of them. It turns into a
- * selection over the columns of {@link Contract.Transaction}.
+ * selection over the columns of {@link Contract.Transaction}, and the sort into its order.
  */
 public class SearchFilter implements Parcelable {
 
@@ -64,6 +64,35 @@ public class SearchFilter implements Parcelable {
         UNCONFIRMED, CONFIRMED
     }
 
+    /**
+     * The order of the results, each tied on the id so rows with equal keys hold still across
+     * reloads. The amount sorts lead with the currency, so each currency's rows run together.
+     */
+    public enum Sort {
+        NEWEST(Contract.Transaction.DATE + " DESC, " + Contract.Transaction.ID + " DESC"),
+        OLDEST(Contract.Transaction.DATE + " ASC, " + Contract.Transaction.ID + " ASC"),
+        CATEGORY(Contract.Transaction.CATEGORY_NAME + " COLLATE LOCALIZED ASC, "
+                + Contract.Transaction.DATE + " DESC, " + Contract.Transaction.ID + " DESC"),
+        LARGEST(Contract.Transaction.WALLET_CURRENCY + " ASC, " + Contract.Transaction.MONEY + " DESC, "
+                + Contract.Transaction.DATE + " DESC, " + Contract.Transaction.ID + " DESC"),
+        SMALLEST(Contract.Transaction.WALLET_CURRENCY + " ASC, " + Contract.Transaction.MONEY + " ASC, "
+                + Contract.Transaction.DATE + " DESC, " + Contract.Transaction.ID + " DESC");
+
+        private final String mOrderBy;
+
+        Sort(String orderBy) {
+            mOrderBy = orderBy;
+        }
+
+        public String getOrderBy() {
+            return mOrderBy;
+        }
+
+        public boolean isByAmount() {
+            return this == LARGEST || this == SMALLEST;
+        }
+    }
+
     private static final BigDecimal LONG_MIN = BigDecimal.valueOf(Long.MIN_VALUE);
     private static final BigDecimal LONG_MAX = BigDecimal.valueOf(Long.MAX_VALUE);
 
@@ -80,6 +109,7 @@ public class SearchFilter implements Parcelable {
     private Status mStatus;
     private final TreeSet<Long> mWalletIds = new TreeSet<>();
     private boolean mTransfersOnly;
+    private Sort mSort = Sort.NEWEST;
 
     public SearchFilter() {
     }
@@ -98,6 +128,7 @@ public class SearchFilter implements Parcelable {
         mStatus = (Status) in.readSerializable();
         readIds(in, mWalletIds);
         mTransfersOnly = in.readByte() != 0;
+        mSort = (Sort) in.readSerializable();
     }
 
     public static final Creator<SearchFilter> CREATOR = new Creator<SearchFilter>() {
@@ -220,6 +251,14 @@ public class SearchFilter implements Parcelable {
         mWalletIds.clear();
         mWalletIds.addAll(ids);
         mTransfersOnly = transfersOnly;
+    }
+
+    public Sort getSort() {
+        return mSort;
+    }
+
+    public void setSort(Sort sort) {
+        mSort = sort;
     }
 
     public SearchFilter copy() {
@@ -431,5 +470,6 @@ public class SearchFilter implements Parcelable {
         dest.writeSerializable(mStatus);
         dest.writeLongArray(toArray(mWalletIds));
         dest.writeByte((byte) (mTransfersOnly ? 1 : 0));
+        dest.writeSerializable(mSort);
     }
 }

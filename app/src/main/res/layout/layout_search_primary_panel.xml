@@ -56,7 +56,20 @@
             android:id="@+id/search_summary_text_view"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
             android:layout_weight="1"
+            android:textSize="14sp"
+            app:theme_textColor="textColorSecondary" />
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+            android:id="@+id/search_sort_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:minHeight="48dp"
+            android:drawableEnd="@drawable/ic_expand_more_black_24dp"
+            android:gravity="center_vertical"
+            android:maxLines="1"
             android:textSize="14sp"
             app:theme_textColor="textColorSecondary" />
 

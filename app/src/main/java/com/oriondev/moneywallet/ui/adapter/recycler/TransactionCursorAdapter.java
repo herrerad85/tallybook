@@ -27,6 +27,7 @@ import android.graphics.drawable.StateListDrawable;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.helper.widget.Flow;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +42,7 @@ import com.oriondev.moneywallet.model.Money;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.storage.wrapper.AbstractHeaderCursor;
+import com.oriondev.moneywallet.storage.wrapper.CurrencyHeaderCursor;
 import com.oriondev.moneywallet.storage.wrapper.TransactionHeaderCursor;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.CurrencyManager;
@@ -60,6 +62,9 @@ import java.util.Set;
  */
 public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView.ViewHolder> {
 
+    // after the two values the cursors carry in their item type column
+    private static final int TYPE_CURRENCY_HEADER = 2;
+
     private final ActionListener mActionListener;
     private final boolean mHeaderOpensReport;
 
@@ -71,6 +76,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private int mIndexHeaderExpense;
     private int mIndexHeaderTransfer;
     private int mIndexHeaderGroupType;
+    private int mIndexHeaderCurrency;
     private int mIndexCategoryName;
     private int mIndexCategoryIcon;
     private int mIndexTransactionId;
@@ -129,6 +135,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mIndexHeaderExpense = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_EXPENSE);
         mIndexHeaderTransfer = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_TRANSFER);
         mIndexHeaderGroupType = cursor.getColumnIndex(TransactionHeaderCursor.COLUMN_HEADER_GROUP_TYPE);
+        mIndexHeaderCurrency = cursor.getColumnIndex(CurrencyHeaderCursor.COLUMN_HEADER_CURRENCY);
         mIndexCategoryName = cursor.getColumnIndex(Contract.Transaction.CATEGORY_NAME);
         mIndexCategoryIcon = cursor.getColumnIndex(Contract.Transaction.CATEGORY_ICON);
         mIndexTransactionId = cursor.getColumnIndex(Contract.Transaction.ID);
@@ -244,10 +251,13 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         boolean headerIsCollapsed = false;
         for (int position = 0; position < cursor.getCount(); position++) {
             if (headerCursor.isHeaderAt(position)) {
-                cursor.moveToPosition(position);
-                headerIsCollapsed = mCollapsedPeriods.contains(periodKey(
-                        cursor.getInt(mIndexHeaderGroupType),
-                        cursor.getString(mIndexHeaderStartDate)));
+                // a currency header has no period, so it never folds
+                if (mIndexHeaderCurrency == -1) {
+                    cursor.moveToPosition(position);
+                    headerIsCollapsed = mCollapsedPeriods.contains(periodKey(
+                            cursor.getInt(mIndexHeaderGroupType),
+                            cursor.getString(mIndexHeaderStartDate)));
+                }
                 mVisibleRows.add(position);
             } else if (!headerIsCollapsed) {
                 mVisibleRows.add(position);
@@ -301,9 +311,10 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
      */
     private int cursorPosition(int position) {
         if (mIndexType == -1) {
-            // The calendar and the search results hand this adapter a plain cursor with no header
-            // rows, so nothing folds and positions map straight through. The search rebuilds its
-            // cursor per keystroke, so a boxed copy of every row there would be paid per character.
+            // The calendar and the search results, unless an amount sort mixes currencies, hand this
+            // adapter a plain cursor with no header rows, so nothing folds and positions map straight
+            // through. The search rebuilds its cursor per keystroke, so a boxed copy of every row
+            // there would be paid per character.
             return position;
         }
         return position >= 0 && position < mVisibleRows.size() ? mVisibleRows.get(position) : -1;
@@ -333,6 +344,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, Cursor cursor) {
         if (viewHolder instanceof HeaderViewHolder) {
             onBindHeaderViewHolder((HeaderViewHolder) viewHolder, cursor);
+        } else if (viewHolder instanceof CurrencyHeaderViewHolder) {
+            onBindCurrencyHeaderViewHolder((CurrencyHeaderViewHolder) viewHolder, cursor);
         } else if (viewHolder instanceof TransactionViewHolder) {
             onBindItemViewHolder((TransactionViewHolder) viewHolder, cursor);
         }
@@ -353,6 +366,17 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         Date date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(mIndexTransactionDate));
         DateFormatter.applyDate(holder.mDateTextView, date);
         holder.itemView.setActivated(mSelectedIds.contains(cursor.getLong(mIndexTransactionId)));
+    }
+
+    /**
+     * The currency's name and code, or the code alone when this installation does not know it.
+     */
+    private void onBindCurrencyHeaderViewHolder(CurrencyHeaderViewHolder holder, Cursor cursor) {
+        String iso = cursor.getString(mIndexHeaderCurrency);
+        CurrencyUnit currency = CurrencyManager.getCurrency(iso);
+        holder.mTextView.setText(currency != null
+                ? holder.itemView.getContext().getString(R.string.search_currency_header, currency.getName(), iso)
+                : iso);
     }
 
     private void onBindHeaderViewHolder(HeaderViewHolder holder, Cursor cursor) {
@@ -469,6 +493,9 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         } else if (viewType == TransactionHeaderCursor.TYPE_ITEM){
             View itemView = inflater.inflate(R.layout.adapter_transaction_item, parent, false);
             return new TransactionViewHolder(itemView);
+        } else if (viewType == TYPE_CURRENCY_HEADER) {
+            View itemView = inflater.inflate(R.layout.adapter_currency_header_item, parent, false);
+            return new CurrencyHeaderViewHolder(itemView);
         } else {
             throw new IllegalArgumentException("Invalid view type: " + viewType);
         }
@@ -477,7 +504,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     @Override
     public int getItemViewType(int position) {
         if (mIndexType != -1) {
-            return getSafeCursor(cursorPosition(position)).getInt(mIndexType);
+            int type = getSafeCursor(cursorPosition(position)).getInt(mIndexType);
+            return type == TransactionHeaderCursor.TYPE_HEADER && mIndexHeaderCurrency != -1 ? TYPE_CURRENCY_HEADER : type;
         } else {
             return TransactionHeaderCursor.TYPE_ITEM;
         }
@@ -541,6 +569,17 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
                     mActionListener.onHeaderClick(start, end);
                 }
             }
+        }
+    }
+
+    /*package-local*/ static class CurrencyHeaderViewHolder extends RecyclerView.ViewHolder {
+
+        private final TextView mTextView;
+
+        /*package-local*/ CurrencyHeaderViewHolder(View itemView) {
+            super(itemView);
+            mTextView = (TextView) itemView;
+            ViewCompat.setAccessibilityHeading(itemView, true);
         }
     }
 

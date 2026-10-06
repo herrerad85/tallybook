@@ -28,6 +28,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.MotionEvent;
@@ -47,8 +48,12 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.Fragment;
+import androidx.core.view.ViewCompat;
 import androidx.loader.app.LoaderManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
@@ -63,6 +68,7 @@ import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.storage.wrapper.TransactionHeaderCursor;
 import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity;
 import com.oriondev.moneywallet.ui.activity.SearchActivity;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
@@ -1637,6 +1643,276 @@ public class SearchScreenTest {
         }
     }
 
+    @Test
+    public void theSortLabelReadsNewestWithItsArrowAndNamesItselfAsTheSort() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView label = sortLabel(activity);
+                assertEquals("Newest", label.getText().toString());
+                assertEquals("Sort, Newest", label.getContentDescription().toString());
+                assertNotNull(label.getCompoundDrawablesRelative()[2]);
+                assertEquals(1, label.getMaxLines());
+                assertTrue(label.getMinHeight() >= Math.round(48 * activity.getResources().getDisplayMetrics().density));
+                assertEquals(activity.findViewById(R.id.search_strip), label.getParent());
+            });
+        }
+    }
+
+    @Test
+    public void theSortLabelTakesTheThemesArrowColorAndARipple() {
+        // dark, where the icon color and the secondary text color differ
+        ThemeEngine.setMode(ThemeEngine.Mode.DARK);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView label = sortLabel(activity);
+                assertNotNull(TextViewCompat.getCompoundDrawableTintList(label));
+                assertEquals(ThemeEngine.getTheme().getTextColorSecondary(), TextViewCompat.getCompoundDrawableTintList(label).getDefaultColor());
+                assertTrue(label.getBackground() instanceof RippleDrawable);
+            });
+        } finally {
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "w360dp-h800dp-xxhdpi", fontScale = 1.3f)
+    public void aWrappedSummaryStaysInsideTheStripAndOneLineSharesTheSortBaseline() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                View strip = activity.findViewById(R.id.search_strip);
+                TextView summary = activity.findViewById(R.id.search_summary_text_view);
+                TextView label = sortLabel(activity);
+                pickSort(activity, "Largest amount");
+                shadowOf(Looper.getMainLooper()).idle();
+                summary.setText("72 results  ·  -$12,345.67  ·  +$8,901.23");
+                shadowOf(Looper.getMainLooper()).idle();
+                assertTrue("the summary wraps here", summary.getLineCount() >= 2);
+                assertTrue(summary.getLayout().getHeight() <= summary.getHeight());
+                assertTrue(summary.getBottom() <= strip.getHeight() - strip.getPaddingBottom());
+                summary.setText("72 results");
+                shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(1, summary.getLineCount());
+                assertEquals(label.getTop() + label.getBaseline(), summary.getTop() + summary.getBaseline());
+            });
+        }
+    }
+
+    @Test
+    public void theSortListNamesTheFiveSortsAndChecksTheCurrentOne() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                AlertDialog dialog = openSortList(activity);
+                ListView list = dialog.getListView();
+                assertEquals(Arrays.asList("Newest", "Oldest", "Category A to Z", "Largest amount", "Smallest amount"), items(list));
+                assertEquals("Newest", items(list).get(list.getCheckedItemPosition()));
+                dialog.cancel();
+                pickSort(activity, "Largest amount");
+                assertFalse("a pick closes the list", latestDialog().isShowing());
+                assertEquals(SearchFilter.Sort.LARGEST, search(activity).getFilter().getSort());
+                assertEquals("Largest amount", sortLabel(activity).getText().toString());
+                assertEquals("Sort, Largest amount", sortLabel(activity).getContentDescription().toString());
+                list = openSortList(activity).getListView();
+                assertEquals("Largest amount", items(list).get(list.getCheckedItemPosition()));
+            });
+        }
+    }
+
+    @Test
+    public void pickingASortReordersTheListWithoutTheSpinner() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        long a = fixture.row(euro, 300L, "2026-01-10 12:00:00");
+        long b = fixture.row(euro, 100L, "2026-01-12 12:00:00");
+        long c = fixture.row(euro, 500L, "2026-01-11 12:00:00");
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "3 results");
+                assertEquals(Arrays.asList(b, c, a), listedIds(activity));
+                pickSort(activity, "Oldest");
+                View list = ((AdvancedRecyclerView) activity.findViewById(R.id.advanced_recycler_view)).getRecyclerView();
+                assertEquals("the list stays shown while the load runs", View.VISIBLE, list.getVisibility());
+                await("the oldest order", () -> Arrays.asList(a, c, b).equals(listedIds(activity)));
+                assertEquals(View.VISIBLE, list.getVisibility());
+                pickSort(activity, "Largest amount");
+                assertEquals(View.VISIBLE, list.getVisibility());
+                await("the largest order", () -> Arrays.asList(c, a, b).equals(listedIds(activity)));
+                pickSort(activity, "Smallest amount");
+                await("the smallest order", () -> Arrays.asList(b, a, c).equals(listedIds(activity)));
+                assertFalse(LoaderManager.getInstance(search(activity)).hasRunningLoaders());
+            });
+        }
+    }
+
+    @Test
+    public void pickingASortStartsTheListFromItsTop() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        long largest = fixture.row(euro, 90000L, "2026-01-01 12:00:00");
+        for (int day = 2; day <= 28; day++) {
+            fixture.row(euro, 100L + day, String.format(Locale.ROOT, "2026-01-%02d 12:00:00", day));
+        }
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "28 results");
+                RecyclerView list = ((AdvancedRecyclerView) activity.findViewById(R.id.advanced_recycler_view)).getRecyclerView();
+                LinearLayoutManager layout = (LinearLayoutManager) list.getLayoutManager();
+                list.scrollToPosition(27);
+                shadowOf(Looper.getMainLooper()).idle();
+                assertTrue("the list is scrolled before the pick", layout.findFirstVisibleItemPosition() > 0);
+                pickSort(activity, "Largest amount");
+                await("the largest order", () -> listedIds(activity).get(0) == largest);
+                shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(0, layout.findFirstVisibleItemPosition());
+            });
+        }
+    }
+
+    @Test
+    public void anAmountSortOnOneCurrencyKeepsTheTotalsAndAddsNoHeader() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long euro = fixture.wallet("Euro", false);
+        fixture.money(euro, Contract.Direction.EXPENSE, 1000L);
+        fixture.money(euro, Contract.Direction.INCOME, 2550L);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "2 results");
+                String before = summaryText(activity);
+                pickSort(activity, "Largest amount");
+                await("the amount sort", () -> listedIds(activity).size() == 2
+                        && !LoaderManager.getInstance(search(activity)).hasRunningLoaders());
+                assertEquals(before, summaryText(activity));
+                assertTrue(before, before.contains("\u00B7"));
+                assertEquals(2, listItemCount(activity));
+            });
+        }
+    }
+
+    @Test
+    public void anAmountSortOnTwoCurrenciesHeadsEachRunAndCountsRowsWithNoTotals() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        Fixture fixture = new Fixture();
+        long yen = fixture.wallet("Yen", "JPY", false);
+        long euro = fixture.wallet("Euro", "EUR", false);
+        fixture.money(yen, Contract.Direction.EXPENSE, 800L);
+        fixture.money(euro, Contract.Direction.EXPENSE, 1000L);
+        fixture.money(euro, Contract.Direction.INCOME, 2550L);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "3 results");
+                assertEquals("no header under Newest", 3, listItemCount(activity));
+                pickSort(activity, "Smallest amount");
+                await("the headers", () -> listItemCount(activity) == 5);
+                awaitSummary(activity, "3 results");
+                assertEquals("3 results", summaryText(activity));
+                RecyclerView list = ((AdvancedRecyclerView) activity.findViewById(R.id.advanced_recycler_view)).getRecyclerView();
+                View euroHeader = list.getLayoutManager().findViewByPosition(0);
+                View yenHeader = list.getLayoutManager().findViewByPosition(3);
+                assertEquals("Euro (EUR)", ((TextView) euroHeader).getText().toString());
+                assertEquals("Japanese Yen (JPY)", ((TextView) yenHeader).getText().toString());
+                assertTrue(ViewCompat.isAccessibilityHeading(euroHeader));
+                assertFalse(euroHeader.performClick());
+                assertEquals(3, listedIds(activity).size());
+                assertEquals("a header opens nothing", View.VISIBLE, primaryPanel(activity).getVisibility());
+                list.getLayoutManager().findViewByPosition(1).performClick();
+                assertEquals("a row opens its transaction", View.GONE, primaryPanel(activity).getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void theSortSurvivesARecreateWithNoEditorOpen() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> pickSort(activity, "Category A to Z"));
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertEquals(SearchFilter.Sort.CATEGORY, search(activity).getFilter().getSort());
+                assertEquals("Category A to Z", sortLabel(activity).getText().toString());
+                assertEquals("Sort, Category A to Z", sortLabel(activity).getContentDescription().toString());
+            });
+        }
+    }
+
+    @Test
+    public void theSortSurvivesARecreateWithAnEditorOpen() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                pickSort(activity, "Oldest");
+                textChip(activity).performClick();
+                ((EditText) activity.findViewById(R.id.search_text_edit_text)).setText("coffee");
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(editor(activity) instanceof TextSearchEditorFragment);
+                assertEquals(SearchFilter.Sort.OLDEST, search(activity).getFilter().getSort());
+                assertEquals("Oldest", sortLabel(activity).getText().toString());
+                assertEquals("coffee", search(activity).getFilter().getText());
+            });
+        }
+    }
+
+    @Test
+    public void aSortAloneSetsNoChipAndNoSelection() {
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                pickSort(activity, "Smallest amount");
+                assertEquals(Arrays.asList("All", "Category", "Text", "People", "Status", "Wallet", "Amount", "Date"), railTexts(activity));
+                ChipGroup rail = activity.findViewById(R.id.search_rail_chip_group);
+                for (int i = 1; i < rail.getChildCount(); i++) {
+                    assertNull(rail.getChildAt(i).getContentDescription());
+                }
+                assertNull(search(activity).getFilter().toSelection(null).getL());
+            });
+        }
+    }
+
+    private static TextView sortLabel(SearchActivity activity) {
+        return activity.findViewById(R.id.search_sort_text_view);
+    }
+
+    private static String summaryText(SearchActivity activity) {
+        return ((TextView) activity.findViewById(R.id.search_summary_text_view)).getText().toString();
+    }
+
+    /**
+     * Taps the sort label and returns the list it opened, failing if no list showed.
+     */
+    private static AlertDialog openSortList(SearchActivity activity) {
+        Dialog before = ShadowDialog.getLatestDialog();
+        assertTrue("no list is open before the tap", before == null || !before.isShowing());
+        sortLabel(activity).performClick();
+        AlertDialog dialog = latestDialog();
+        assertTrue(dialog.isShowing());
+        return dialog;
+    }
+
+    /**
+     * Picks the sort that reads name, leaving its load to the caller.
+     */
+    private static void pickSort(SearchActivity activity, String name) {
+        ListView list = openSortList(activity).getListView();
+        int position = items(list).indexOf(name);
+        assertTrue(name + " is in the sort list", position >= 0);
+        list.performItemClick(list, position, list.getAdapter().getItemId(position));
+    }
+
+    /**
+     * The ids of the rows on the list, in order, headers left out.
+     */
+    private static List<Long> listedIds(SearchActivity activity) {
+        RecyclerView.Adapter<?> adapter = ((AdvancedRecyclerView) activity.findViewById(R.id.advanced_recycler_view)).getRecyclerView().getAdapter();
+        List<Long> ids = new ArrayList<>();
+        for (int i = 0; i < adapter.getItemCount(); i++) {
+            if (adapter.getItemViewType(i) == TransactionHeaderCursor.TYPE_ITEM) {
+                ids.add(adapter.getItemId(i));
+            }
+        }
+        return ids;
+    }
+
     @After
     public void unpinToday() {
         DateSearchEditorFragment.sToday = null;
@@ -3022,11 +3298,15 @@ public class SearchScreenTest {
             insert(wallet, mCategory, null, true, direction, money, "2026-01-15 12:00:00");
         }
 
+        private long row(long wallet, long money, String date) {
+            return insert(wallet, mCategory, null, true, Contract.Direction.EXPENSE, money, date);
+        }
+
         private void dated(long wallet, String date) {
             insert(wallet, mCategory, null, true, Contract.Direction.EXPENSE, 200L, date);
         }
 
-        private void insert(long wallet, long category, String people, boolean confirmed, int direction, long money, String date) {
+        private long insert(long wallet, long category, String people, boolean confirmed, int direction, long money, String date) {
             ContentValues values = new ContentValues();
             values.put(Contract.Transaction.MONEY, money);
             values.put(Contract.Transaction.DATE, date);
@@ -3038,7 +3318,7 @@ public class SearchScreenTest {
             values.put(Contract.Transaction.CONFIRMED, confirmed);
             values.put(Contract.Transaction.COUNT_IN_TOTAL, true);
             values.put(Contract.Transaction.PEOPLE_IDS, people);
-            mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values);
+            return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values));
         }
 
         /** A tax above zero writes a third row, in the from wallet. */
@@ -3080,9 +3360,6 @@ public class SearchScreenTest {
         return (Chip) ((ChipGroup) activity.findViewById(R.id.search_rail_chip_group)).getChildAt(2);
     }
 
-    /**
-     * One row per match, since the search cursor carries no date header rows.
-     */
     private static int listItemCount(SearchActivity activity) {
         return ((AdvancedRecyclerView) activity.findViewById(R.id.advanced_recycler_view)).getRecyclerView().getAdapter().getItemCount();
     }

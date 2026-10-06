@@ -877,5 +877,12 @@
     <string name="search_value_date_after">"%1$s or later"</string>
     <string name="search_value_date_before">"%1$s or earlier"</string>
     <string name="search_value_date_between">"%1$s to %2$s"</string>
+    <string name="search_sort_newest">"Newest"</string>
+    <string name="search_sort_oldest">"Oldest"</string>
+    <string name="search_sort_category">"Category A to Z"</string>
+    <string name="search_sort_largest">"Largest amount"</string>
+    <string name="search_sort_smallest">"Smallest amount"</string>
+    <string name="search_sort_description">"Sort, %1$s"</string>
+    <string name="search_currency_header">"%1$s (%2$s)"</string>
 
 </resources>
