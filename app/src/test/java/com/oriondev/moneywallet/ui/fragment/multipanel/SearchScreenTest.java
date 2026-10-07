@@ -2503,6 +2503,7 @@ public class SearchScreenTest {
                 }
                 chip(activity, "Date").performClick();
                 assertFalse(row.requestFocus());
+                assertFalse(list.requestFocus());
                 activity.findViewById(R.id.search_rail_chip_group).performClick();
                 assertNull(editor(activity));
                 assertTrue(row.requestFocus());
@@ -2689,7 +2690,7 @@ public class SearchScreenTest {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
                 await("every row", () -> listItemCount(activity) == 5);
-                chip(activity, "Date").performClick();
+                chip(activity, activity.getString(R.string.search_type_date)).performClick();
                 activity.findViewById(R.id.search_date_between_chip).performClick();
                 // Persian 1 and 30, as the grid draws them
                 day(activity, "۱").performClick();
@@ -2715,7 +2716,7 @@ public class SearchScreenTest {
         pinToday(2026, 10, 17);
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {
-                chip(activity, "Date").performClick();
+                chip(activity, activity.getString(R.string.search_type_date)).performClick();
                 shadowOf(Looper.getMainLooper()).idle();
                 ViewGroup grid = activity.findViewById(R.id.search_date_grid);
                 for (int row = 1; row <= 6; row++) {
@@ -2782,10 +2783,10 @@ public class SearchScreenTest {
                 assertTrue(shown.isSelected());
                 int accent = ThemedDialog.getAccentColor();
                 assertEquals(ThemeEngine.getTheme().getBestTextColor(accent), shown.getCurrentTextColor());
-                assertEquals(accent, ((GradientDrawable) shown.getBackground()).getColor().getDefaultColor());
+                assertEquals(accent, ((GradientDrawable) underRipple(shown)).getColor().getDefaultColor());
                 TextView other = years.get(2025 - 1970);
                 assertFalse(other.isSelected());
-                assertNull(other.getBackground());
+                assertNull(underRipple(other));
                 assertEquals(ThemeEngine.getTheme().getTextColorPrimary(), other.getCurrentTextColor());
                 ScrollView scrollView = activity.findViewById(R.id.search_date_scroll_view);
                 Rect bounds = new Rect(0, 0, shown.getWidth(), shown.getHeight());
