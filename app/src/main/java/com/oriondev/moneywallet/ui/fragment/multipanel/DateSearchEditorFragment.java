@@ -21,10 +21,12 @@ package com.oriondev.moneywallet.ui.fragment.multipanel;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.icu.text.DateFormatSymbols;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -319,7 +321,10 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
         outline.setCornerRadius(dp(4f));
         outline.setStroke(Math.round(dp(focused ? 2f : 1f)), focused ? ThemedDialog.getAccentColor()
                 : theme.getBestHintColor(theme.getColorWindowForeground()));
-        box.setBackground(outline);
+        GradientDrawable mask = new GradientDrawable();
+        mask.setCornerRadius(dp(4f));
+        mask.setColor(Color.WHITE);
+        box.setBackground(withFocus(outline, mask));
         box.setSelected(focused);
     }
 
@@ -411,7 +416,7 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
                     }
                     cell.setText(digits.format(day.get(Calendar.DAY_OF_MONTH)));
                     cell.setTextColor(end ? theme.getBestTextColor(accent) : theme.getTextColorPrimary());
-                    cell.setBackground(background);
+                    cell.setBackground(withFocus(background, getPill(Color.WHITE, 0)));
                     cell.setContentDescription(description.format(day.getTime()));
                     cell.setSelected(end);
                     cell.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
@@ -447,7 +452,7 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
             cell.setText(digits.format(year));
             boolean current = year == shown;
             cell.setTextColor(current ? theme.getBestTextColor(accent) : theme.getTextColorPrimary());
-            cell.setBackground(current ? getPill(accent, 0) : null);
+            cell.setBackground(withFocus(current ? getPill(accent, 0) : null, getPill(Color.WHITE, 0)));
             cell.setSelected(current);
             cell.setFocusable(true);
             int picked = year;
@@ -499,6 +504,13 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
                 }
             });
         }
+    }
+
+    /**
+     * A ripple's focused state draws on every API, the platform's own focus highlight only from 26.
+     */
+    private Drawable withFocus(@Nullable Drawable background, Drawable mask) {
+        return new RippleDrawable(ColorStateList.valueOf(ThemeEngine.getTheme().getColorRipple()), background, mask);
     }
 
     private GradientDrawable getPill(int fill, int stroke) {

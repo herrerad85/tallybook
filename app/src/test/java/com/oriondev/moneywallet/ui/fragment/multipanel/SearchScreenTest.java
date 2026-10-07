@@ -2075,7 +2075,7 @@ public class SearchScreenTest {
                 // Sep 2 under the default Monday start, and blank in August, whose 1st is a Saturday
                 assertEquals("2", gridCell(activity, 1, 2).getText().toString());
                 day(activity, "2").performClick();
-                assertNotNull(gridCell(activity, 1, 2).getBackground());
+                assertNotNull(underRipple(gridCell(activity, 1, 2)));
                 activity.findViewById(R.id.search_date_previous_button).performClick();
                 TextView blank = gridCell(activity, 1, 2);
                 assertEquals("", blank.getText().toString());
@@ -2450,23 +2450,62 @@ public class SearchScreenTest {
                     assertEquals("day " + number + " text", end ? onAccent : primary, cell.getCurrentTextColor());
                     boolean inside = number == 10 || number == 11;
                     boolean drawn = end || inside || number == 17;
-                    assertEquals("day " + number + " background", drawn, cell.getBackground() != null);
+                    assertEquals("day " + number + " background", drawn, underRipple(cell) != null);
                     if (end || inside) {
-                        int fill = ((GradientDrawable) cell.getBackground()).getColor().getDefaultColor();
+                        int fill = ((GradientDrawable) underRipple(cell)).getColor().getDefaultColor();
                         assertEquals("day " + number + " fill", end ? accent : ColorUtils.setAlphaComponent(accent, 0x3D), fill);
                     }
                 }
-                GradientDrawable ring = (GradientDrawable) day(activity, "17").getBackground();
+                GradientDrawable ring = (GradientDrawable) underRipple(day(activity, "17"));
                 assertEquals(0, ring.getColor().getDefaultColor());
                 assertEquals(accent, shadowOf(ring).getStrokeColor());
                 // today inside a range keeps the shading under its ring
                 pickPreset(activity, R.id.search_date_this_month_chip);
-                Drawable today = day(activity, "17").getBackground();
+                Drawable today = underRipple(day(activity, "17"));
                 assertTrue(today instanceof LayerDrawable);
                 assertEquals(2, ((LayerDrawable) today).getNumberOfLayers());
                 int fill = ((GradientDrawable) ((LayerDrawable) today).getDrawable(0)).getColor().getDefaultColor();
                 assertEquals(ColorUtils.setAlphaComponent(accent, 0x3D), fill);
                 assertEquals(accent, shadowOf((GradientDrawable) ((LayerDrawable) today).getDrawable(1)).getStrokeColor());
+            });
+        }
+    }
+
+    @Test
+    public void theDateBoxesDaysAndYearsDrawAKeyboardFocusBefore26() {
+        pinToday(2026, 9, 17);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                chip(activity, "Date").performClick();
+                activity.findViewById(R.id.search_date_between_chip).performClick();
+                assertTrue(activity.findViewById(R.id.search_date_from_box).getBackground() instanceof RippleDrawable);
+                assertTrue(activity.findViewById(R.id.search_date_to_box).getBackground() instanceof RippleDrawable);
+                assertTrue(day(activity, "3").getBackground() instanceof RippleDrawable);
+                activity.findViewById(R.id.search_date_month_text_view).performClick();
+                assertTrue(years(activity).get(2025 - 1970).getBackground() instanceof RippleDrawable);
+            });
+        }
+    }
+
+    @Test
+    public void aResultRowTakesNoKeyboardFocusWhileAnEditorIsOpen() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        dateFixture();
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitSummary(activity, "5 results");
+                RecyclerView list = ((AdvancedRecyclerView) activity.findViewById(R.id.advanced_recycler_view)).getRecyclerView();
+                View row = null;
+                for (int i = 0; row == null; i++) {
+                    if (list.getAdapter().getItemViewType(i) == TransactionHeaderCursor.TYPE_ITEM) {
+                        row = list.findViewHolderForAdapterPosition(i).itemView;
+                    }
+                }
+                chip(activity, "Date").performClick();
+                assertFalse(row.requestFocus());
+                activity.findViewById(R.id.search_rail_chip_group).performClick();
+                assertNull(editor(activity));
+                assertTrue(row.requestFocus());
             });
         }
     }
@@ -3031,6 +3070,14 @@ public class SearchScreenTest {
             previous.performClick();
         }
         assertEquals("December 2025", monthTitle(activity));
+    }
+
+    /**
+     * A date view's own drawing, under the ripple that draws its keyboard focus, or null.
+     */
+    private static Drawable underRipple(View view) {
+        RippleDrawable ripple = (RippleDrawable) view.getBackground();
+        return ripple.getId(0) == android.R.id.mask ? null : ripple.getDrawable(0);
     }
 
     private static List<TextView> years(SearchActivity activity) {

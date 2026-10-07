@@ -325,6 +325,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     private Chip mMatchChip;
     private TextView mSummaryTextView;
     private TextView mSortTextView;
+    private AdvancedRecyclerView mResultsView;
     private RecyclerView mRecyclerView;
     private View mEditorPanel;
     private TransactionSelectionMode mSelectionMode;
@@ -682,6 +683,8 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         mEditorPanel.setVisibility(open ? View.VISIBLE : View.GONE);
         mRail.setClickable(open);
         mRail.setContentDescription(open ? getString(R.string.search_close_editor) : null);
+        // a tap on a result row only closes an open editor, so the rows take no keyboard focus either
+        mResultsView.setDescendantFocusability(open ? ViewGroup.FOCUS_BLOCK_DESCENDANTS : ViewGroup.FOCUS_BEFORE_DESCENDANTS);
     }
 
     private void hideKeyboard() {
@@ -710,6 +713,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     protected void onPrepareRecyclerView(AdvancedRecyclerView recyclerView) {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setEmptyText(R.string.message_no_transaction_found);
+        mResultsView = recyclerView;
         mRecyclerView = recyclerView.getRecyclerView();
     }
 
