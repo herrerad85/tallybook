@@ -1,0 +1,3 @@
+New: search has filter chips for text, category, people, status, wallet, amount and date, and a sort. Choose a default wallet for new items under Settings, User interface. A debt or credit repayment can go to any wallet in the debt's currency.
+
+Fixes: a new item from the Total view no longer opens on an archived wallet. Automatic backup set to WiFi only could skip a backup while on WiFi. New installs start with the classic icons.

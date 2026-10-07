@@ -20,6 +20,16 @@
 
 <changelog>
 
+    <version versionName="1.13.0" versionDate="Oct 7, 2026">
+        <change>[b]New![/b] Search has a row of filter chips for text, category, people, status, wallet, amount and date, and the results can be sorted. Category, date and amount are no longer matched as typed text, use their chips.</change>
+        <change>[b]New![/b] Choose a default wallet for new items, under Settings, User interface, Default wallet.</change>
+        <change>A new item started from the Total view no longer opens on an archived wallet.</change>
+        <change>A debt or credit repayment can be saved to any wallet in the debt's currency. Changing a wallet's currency is refused while a repayment and its debt sit in two different wallets and it is one of them.</change>
+        <change>The theme settings now sit at the top of Appearance.</change>
+        <change>Automatic backup set to WiFi only could skip a backup while the phone was on WiFi.</change>
+        <change>New installs start with the classic icons. An existing install keeps its setting.</change>
+    </version>
+
     <version versionName="1.12.0" versionDate="Sep 27, 2026">
         <change>After a different Local folder was connected, automatic backup kept the old folder and every scheduled backup failed. The old folder now shows as not available until a new one is picked.</change>
         <change>[b]New![/b] A notification when a recurring transaction or transfer comes due and is added. On Android 13 and later, adding one may ask for the notification permission.</change>
