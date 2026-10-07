@@ -277,6 +277,7 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
         mMonth.add(Calendar.MONTH, months);
         mYearsShown = false;
         bindMonth();
+        mMonthTextView.announceForAccessibility(mMonthTextView.getText());
     }
 
     private void apply() {
@@ -479,6 +480,8 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
         if (selected != null) {
             View target = selected;
             ScrollView scrollView = mScrollView;
+            // read now, Robolectric has cleared it by the time the scroll runs
+            boolean accessibilityFocused = mMonthTextView.createAccessibilityNodeInfo().isAccessibilityFocused();
             OneShotPreDrawListener.add(scrollView, () -> {
                 // the list closed, or a later bindYears replaced it and queued its own scroll
                 if (!mYearsShown || !target.isAttachedToWindow()) {
@@ -490,6 +493,9 @@ public class DateSearchEditorFragment extends SearchEditorFragment {
                 // the scroll moved the focused title off screen
                 if (mMonthTextView.isFocused()) {
                     target.requestFocus();
+                }
+                if (accessibilityFocused) {
+                    target.performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
                 }
             });
         }

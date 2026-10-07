@@ -2175,12 +2175,13 @@ public class SearchScreenTest {
             scenario.onActivity(activity -> {
                 chip(activity, "Date").performClick();
                 shadowOf(Looper.getMainLooper()).idle();
+                showDecember2025(activity);
                 View title = activity.findViewById(R.id.search_date_month_text_view);
                 assertTrue(title.requestFocus());
                 title.performClick();
                 shadowOf(Looper.getMainLooper()).idle();
                 ScrollView scrollView = activity.findViewById(R.id.search_date_scroll_view);
-                TextView shown = years(activity).get(2026 - 1970);
+                TextView shown = years(activity).get(2025 - 1970);
                 assertTrue(shown.isFocused());
                 Rect bounds = new Rect(0, 0, shown.getWidth(), shown.getHeight());
                 scrollView.offsetDescendantRectToMyCoords(shown, bounds);
@@ -2203,8 +2204,14 @@ public class SearchScreenTest {
                 chip(activity, "Date").performClick();
                 shadowOf(Looper.getMainLooper()).idle();
                 View title = activity.findViewById(R.id.search_date_month_text_view);
+                int opened = shadowOf(accessibility).getSentAccessibilityEvents().size();
                 title.performClick();
                 shadowOf(Looper.getMainLooper()).idle();
+                List<AccessibilityEvent> openEvents = shadowOf(accessibility).getSentAccessibilityEvents();
+                for (AccessibilityEvent event : openEvents.subList(opened, openEvents.size())) {
+                    assertTrue("the title had no TalkBack focus, yet " + event.getText() + " took it",
+                            event.getEventType() != AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED);
+                }
                 TextView year = years(activity).get(2023 - 1970);
                 assertTrue(year.performAccessibilityAction(AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null));
                 int sent = shadowOf(accessibility).getSentAccessibilityEvents().size();
@@ -2225,6 +2232,72 @@ public class SearchScreenTest {
                 Rect bounds = new Rect(0, 0, title.getWidth(), title.getHeight());
                 scrollView.offsetDescendantRectToMyCoords(title, bounds);
                 assertTrue("the title is in view", bounds.top >= scrollView.getScrollY()
+                        && bounds.bottom <= scrollView.getScrollY() + scrollView.getHeight());
+            });
+        }
+    }
+
+    @Test
+    public void aMonthChangeIsAnnounced() {
+        pinToday(2026, 9, 17);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                AccessibilityManager accessibility = activity.getSystemService(AccessibilityManager.class);
+                shadowOf(accessibility).setEnabled(true);
+                chip(activity, "Date").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                int sent = shadowOf(accessibility).getSentAccessibilityEvents().size();
+                activity.findViewById(R.id.search_date_next_button).performClick();
+                String read = null;
+                List<AccessibilityEvent> events = shadowOf(accessibility).getSentAccessibilityEvents();
+                for (AccessibilityEvent event : events.subList(sent, events.size())) {
+                    if (event.getEventType() == AccessibilityEvent.TYPE_ANNOUNCEMENT) {
+                        read = String.valueOf(event.getText());
+                    }
+                }
+                assertEquals("[October 2026]", read);
+                sent = shadowOf(accessibility).getSentAccessibilityEvents().size();
+                day(activity, "1").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                events = shadowOf(accessibility).getSentAccessibilityEvents();
+                for (AccessibilityEvent event : events.subList(sent, events.size())) {
+                    assertTrue("a day tap announced " + event.getText(), event.getEventType() != AccessibilityEvent.TYPE_ANNOUNCEMENT);
+                }
+            });
+        }
+    }
+
+    @Test
+    public void theYearsOpenedWithTalkBackFocusTheShownYear() {
+        pinToday(2026, 9, 17);
+        try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
+            scenario.onActivity(activity -> {
+                enterTouchMode(activity);
+                AccessibilityManager accessibility = activity.getSystemService(AccessibilityManager.class);
+                shadowOf(accessibility).setEnabled(true);
+                shadowOf(accessibility).setTouchExplorationEnabled(true);
+                chip(activity, "Date").performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                showDecember2025(activity);
+                View title = activity.findViewById(R.id.search_date_month_text_view);
+                assertTrue(title.performAccessibilityAction(AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null));
+                int sent = shadowOf(accessibility).getSentAccessibilityEvents().size();
+                title.performAccessibilityAction(AccessibilityNodeInfoCompat.ACTION_CLICK, null);
+                shadowOf(Looper.getMainLooper()).idle();
+                String read = null;
+                List<AccessibilityEvent> events = shadowOf(accessibility).getSentAccessibilityEvents();
+                for (AccessibilityEvent event : events.subList(sent, events.size())) {
+                    if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
+                        read = String.valueOf(event.getText());
+                    }
+                }
+                assertEquals("[2025]", read);
+                TextView shown = years(activity).get(2025 - 1970);
+                assertTrue(shown.createAccessibilityNodeInfo().isAccessibilityFocused());
+                ScrollView scrollView = activity.findViewById(R.id.search_date_scroll_view);
+                Rect bounds = new Rect(0, 0, shown.getWidth(), shown.getHeight());
+                scrollView.offsetDescendantRectToMyCoords(shown, bounds);
+                assertTrue("the focused year is in view", bounds.top >= scrollView.getScrollY()
                         && bounds.bottom <= scrollView.getScrollY() + scrollView.getHeight());
             });
         }
@@ -2947,6 +3020,17 @@ public class SearchScreenTest {
             }
         }
         throw new AssertionError("no day reads " + text);
+    }
+
+    /**
+     * Steps back from September 2026 to a year that is not today's.
+     */
+    private static void showDecember2025(SearchActivity activity) {
+        View previous = activity.findViewById(R.id.search_date_previous_button);
+        for (int i = 0; i < 9; i++) {
+            previous.performClick();
+        }
+        assertEquals("December 2025", monthTitle(activity));
     }
 
     private static List<TextView> years(SearchActivity activity) {
