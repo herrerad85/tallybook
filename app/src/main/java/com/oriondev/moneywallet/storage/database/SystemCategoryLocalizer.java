@@ -34,6 +34,7 @@ import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.utils.IconLoader;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -80,15 +81,17 @@ public class SystemCategoryLocalizer {
      *
      * Two cases are indistinguishable, and they fall opposite ways.
      *
-     * A user who renames a category to exactly the string some shipped translation already uses
-     * for that same category IS overwritten, because that name is in the table and nothing
-     * separates it from a stale one. Renaming Debt to Deuda on an English install reverts on the
-     * next launch. This is the one way the class can destroy a rename and it is accepted, since
-     * the alternative is storing a flag for a case nobody has reported.
+     * A user who renames a category to exactly the string some shipped translation already uses for
+     * that same category, or to a name retiredNames lists for it, IS overwritten, because that name
+     * is in the table and nothing separates it from a stale one. Renaming Debt to Deuda on an
+     * English install reverts on the next launch. This is the one way the class can destroy a
+     * rename and it is accepted, since the alternative is storing a flag for a case nobody has
+     * reported.
      *
      * A row seeded by an older release whose translation has since been edited is NOT repaired,
      * because the table is built from the current build's strings and no longer contains the one
-     * it carries. It stays in the old language for good.
+     * it carries, unless that old name is listed in retiredNames. Otherwise it stays in the old
+     * language for good.
      */
     private static void relocalizeSystemCategories(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
@@ -135,19 +138,39 @@ public class SystemCategoryLocalizer {
     }
 
     /**
-     * @return every name this build would seed, per category tag.
+     * @return every name this build would seed, plus the retired ones, per category tag.
      */
     private static Map<String, Set<String>> seededNames(Context context) {
         List<Context> languages = shippedLanguages(context);
+        Map<String, Set<String>> retiredNames = retiredNames();
         Map<String, Set<String>> seededNames = new HashMap<>();
         for (SystemCategory category : SystemCategory.mSystemCategories) {
             Set<String> names = new HashSet<>();
+            Set<String> retired = retiredNames.get(category.getTag());
+            if (retired != null) {
+                names.addAll(retired);
+            }
             for (Context language : languages) {
                 names.add(category.getName(language));
             }
             seededNames.put(category.getTag(), names);
         }
         return seededNames;
+    }
+
+    /**
+     * Names an older release seeded that no current translation uses, so the rows carrying them
+     * are still recognized. Add a name here when a translation of a system category changes.
+     */
+    private static Map<String, Set<String>> retiredNames() {
+        Map<String, Set<String>> retiredNames = new HashMap<>();
+        // ru and es through 1.13.0
+        retiredNames.put(Schema.CategoryTag.TRANSFER_TAX, new HashSet<>(Arrays.asList("Налог на перевод", "Impuestos de la transferencia")));
+        retiredNames.put(Schema.CategoryTag.DEBT, Collections.singleton("Долг"));
+        retiredNames.put(Schema.CategoryTag.CREDIT, Collections.singleton("Кредит"));
+        retiredNames.put(Schema.CategoryTag.PAID_CREDIT, Collections.singleton("Оплата кредита"));
+        retiredNames.put(Schema.CategoryTag.TAX, Collections.singleton("Налог на операцию"));
+        return retiredNames;
     }
 
     /**
