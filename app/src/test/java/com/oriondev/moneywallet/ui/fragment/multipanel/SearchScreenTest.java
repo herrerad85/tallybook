@@ -1684,7 +1684,7 @@ public class SearchScreenTest {
                 TextView summary = activity.findViewById(R.id.search_summary_text_view);
                 TextView label = sortLabel(activity);
                 pickSort(activity, "Largest amount");
-                shadowOf(Looper.getMainLooper()).idle();
+                await("the sorted load", () -> !LoaderManager.getInstance(search(activity)).hasRunningLoaders());
                 summary.setText("72 results  ·  -$12,345.67  ·  +$8,901.23");
                 shadowOf(Looper.getMainLooper()).idle();
                 assertTrue("the summary wraps here", summary.getLineCount() >= 2);
