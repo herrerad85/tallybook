@@ -215,6 +215,15 @@ package com.oriondev.moneywallet.storage.database;
         /*package-local*/ static final String PERSON = "_person";
     }
 
+    /*package-local*/ static final class TransactionSplit extends BaseTable {
+        /*package-local*/ static final String TABLE = "transaction_splits";
+        /*package-local*/ static final String ID = "split_id";
+        /*package-local*/ static final String TRANSACTION = "_transaction";
+        /*package-local*/ static final String CATEGORY = "split_category";
+        /*package-local*/ static final String MONEY = "split_money";
+        /*package-local*/ static final String NOTE = "split_note";
+    }
+
     /*package-local*/ static final class Transfer extends BaseTable {
         /*package-local*/ static final String TABLE = "transfers";
         /*package-local*/ static final String ID = "transfer_id";
@@ -626,6 +635,28 @@ package com.oriondev.moneywallet.storage.database;
             "(" + Transaction.ID + ") ON UPDATE NO ACTION ON DELETE CASCADE, " +
             "FOREIGN KEY (" + TransactionPeople.PERSON + ") REFERENCES " + Person.TABLE +
             "(" + Person.ID + ") ON UPDATE NO ACTION ON DELETE CASCADE " +
+            ")";
+
+    /**
+     * The category key cascades on purpose. A release that predates this table deletes a category
+     * no live transaction names without looking here, and a part that refused the delete would
+     * make that release throw. Losing the part instead puts its money back under the main
+     * category of its transaction.
+     */
+    /*package-local*/ static final String CREATE_TABLE_TRANSACTION_SPLIT = "CREATE TABLE IF NOT EXISTS " +
+            TransactionSplit.TABLE + " (" +
+            TransactionSplit.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            TransactionSplit.TRANSACTION + " INTEGER NOT NULL, " +
+            TransactionSplit.CATEGORY + " INTEGER NOT NULL, " +
+            TransactionSplit.MONEY + " INTEGER NOT NULL, " +
+            TransactionSplit.NOTE + " TEXT, " +
+            TransactionSplit.UUID + " TEXT NOT NULL UNIQUE, " +
+            TransactionSplit.LAST_EDIT + " INTEGER NOT NULL, " +
+            TransactionSplit.DELETED + " INTEGER NOT NULL DEFAULT 0, " +
+            "FOREIGN KEY (" + TransactionSplit.TRANSACTION + ") REFERENCES " + Transaction.TABLE +
+            "(" + Transaction.ID + ") ON UPDATE NO ACTION ON DELETE CASCADE, " +
+            "FOREIGN KEY (" + TransactionSplit.CATEGORY + ") REFERENCES " + Category.TABLE +
+            "(" + Category.ID + ") ON UPDATE NO ACTION ON DELETE CASCADE " +
             ")";
 
     /*package-local*/ static final String CREATE_TABLE_TRANSFER = "CREATE TABLE " + Transfer.TABLE + " (" +

@@ -39,6 +39,7 @@ import com.oriondev.moneywallet.storage.database.model.Transaction;
 import com.oriondev.moneywallet.storage.database.model.TransactionAttachment;
 import com.oriondev.moneywallet.storage.database.model.TransactionModel;
 import com.oriondev.moneywallet.storage.database.model.TransactionPerson;
+import com.oriondev.moneywallet.storage.database.model.TransactionSplit;
 import com.oriondev.moneywallet.storage.database.model.Transfer;
 import com.oriondev.moneywallet.storage.database.model.TransferAttachment;
 import com.oriondev.moneywallet.storage.database.model.TransferModel;
@@ -337,6 +338,18 @@ import java.util.HashMap;
         object.put(JSONDatabase.Transaction.LAST_EDIT, transaction.mLastEdit);
         object.put(JSONDatabase.Transaction.DELETED, transaction.mDeleted);
         mCacheTransactions.put(transaction.mId, transaction.mUUID);
+        return object;
+    }
+
+    /*package-local*/ JSONObject getObject(TransactionSplit transactionSplit) throws JSONException {
+        JSONObject object = new JSONObject();
+        object.put(JSONDatabase.TransactionSplit.TRANSACTION, mCacheTransactions.get(transactionSplit.mTransaction));
+        object.put(JSONDatabase.TransactionSplit.CATEGORY, mCacheCategories.get(transactionSplit.mCategory));
+        object.put(JSONDatabase.TransactionSplit.MONEY, transactionSplit.mMoney);
+        object.put(JSONDatabase.TransactionSplit.NOTE, transactionSplit.mNote);
+        object.put(JSONDatabase.TransactionSplit.ID, transactionSplit.mUUID);
+        object.put(JSONDatabase.TransactionSplit.LAST_EDIT, transactionSplit.mLastEdit);
+        object.put(JSONDatabase.TransactionSplit.DELETED, transactionSplit.mDeleted);
         return object;
     }
 

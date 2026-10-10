@@ -159,6 +159,11 @@ public class SQLDatabaseUpgradeTest {
         // declaration has not changed since the initial commit, so Schema is the one a
         // release of any of these versions wrote
         old.execSQL(Schema.CREATE_TABLE_CURRENCY);
+        // every release has shipped a transaction table too, and the table of parts the last step
+        // creates names it, so deleting a category below has to find one. Only its key, since the
+        // shipped declaration names five more tables this fixture does not carry, and no row
+        // here is a transaction
+        old.execSQL("CREATE TABLE transactions (transaction_id INTEGER PRIMARY KEY AUTOINCREMENT)");
         // each release added its own columns by its own upgrade, so they are added here the same
         // way instead of being declared, and the fixture stays the tables that release shipped
         if (version >= 3) {
@@ -193,7 +198,7 @@ public class SQLDatabaseUpgradeTest {
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
         // written out so that the next version bump has to come through here
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertSchemaMatchesAFreshInstall(upgraded);
@@ -314,7 +319,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(2L, count(upgraded, Schema.CategoryRule.TABLE, null));
@@ -341,7 +346,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(2L, count(upgraded, Schema.Wallet.TABLE, "wallet_group IS NULL"));
         helper.close();
@@ -365,12 +370,80 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE, "wallet_group = 'Savings'"));
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE,
                 "wallet_group IS NULL AND wallet_id = 901"));
         helper.close();
+    }
+
+    /**
+     * A database this app wrote before the table of parts, arriving at the upgrade. The table is
+     * created empty and every row already stored is carried over.
+     */
+    @Test
+    public void aDatabaseFromBeforeThePartsComesForwardWithAnEmptyTable() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        old.execSQL("DROP TABLE transaction_splits");
+        insertCategory(old, 900, "Food");
+        insertWalletIn(old, 901, "Cash", "EUR", 1500L, false);
+        insertTransaction(old, 910, 901, 2500L);
+        old.setVersion(8);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(9, upgraded.getVersion());
+        assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
+        assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
+        assertEquals(0L, count(upgraded, "transaction_splits", null));
+        assertEquals(Long.valueOf(2500L), moneyOf(upgraded, 910));
+        helper.close();
+    }
+
+    /**
+     * A database this app wrote, put back to the version before the table of parts, arriving at
+     * the upgrade a second time. The create is guarded, so the parts already stored stay where
+     * they are instead of the create throwing on a table that is already there.
+     */
+    @Test
+    public void partsSurviveTheUpgradeRunningASecondTime() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        insertCategory(old, 900, "Food");
+        insertCategory(old, 902, "Household");
+        insertWalletIn(old, 901, "Cash", "EUR", 1500L, false);
+        insertTransaction(old, 910, 901, 2500L);
+        insertSplit(old, 920, 910, 902, 700L, "soap");
+        insertSplit(old, 921, 910, 902, 300L, null);
+        old.setVersion(8);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(9, upgraded.getVersion());
+        assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
+        assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
+        assertEquals(2L, count(upgraded, "transaction_splits", null));
+        assertEquals(1L, count(upgraded, "transaction_splits", "split_id = 920 AND " +
+                "_transaction = 910 AND split_category = 902 AND split_money = 700 AND " +
+                "split_note = 'soap'"));
+        assertEquals(1L, count(upgraded, "transaction_splits", "split_id = 921 AND " +
+                "_transaction = 910 AND split_category = 902 AND split_money = 300 AND " +
+                "split_note IS NULL"));
+        helper.close();
+    }
+
+    private void insertSplit(SQLiteDatabase db, long id, long transaction, long category,
+                             long money, String note) {
+        db.execSQL("INSERT INTO transaction_splits (split_id, _transaction, split_category, " +
+                        "split_money, split_note, uuid, last_edit, deleted) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
+                new Object[] {id, transaction, category, money, note, "split-" + id, EDIT});
     }
 
     private void insertCategoryRule(SQLiteDatabase db, long id, String pattern, long category,
@@ -432,7 +505,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(7L, count(upgraded, Schema.BudgetCategory.TABLE, null));
@@ -538,7 +611,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -621,12 +694,38 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase second = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = second.getWritableDatabase();
 
-        assertEquals(8, upgraded.getVersion());
+        assertEquals(9, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
         assertEquals(Long.valueOf(3000000L), budgetMoneyOf(upgraded, 920));
         second.close();
+    }
+
+    /**
+     * A database from before the table of parts, which the version 6 step reaches with no such
+     * table, since the version 9 step that creates it runs after. The rescale has to finish
+     * without it, and the table comes forward empty.
+     */
+    @Test
+    public void theStepRunsOnADatabaseFromBeforeTheParts() {
+        writeADatabaseAtVersionFive(0);
+        SQLiteDatabase old = mContext.openOrCreateDatabase(NAME, Context.MODE_PRIVATE, null);
+        old.execSQL("DROP TABLE transaction_splits");
+        old.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(9, upgraded.getVersion());
+        assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
+        // two tables the rescale reaches after the parts, so a step that stopped at the missing
+        // table would leave these where they were
+        assertEquals(Long.valueOf(740000L), number(upgraded,
+                "SELECT model_transaction_money FROM transaction_models WHERE model_id = 950"));
+        assertEquals(Long.valueOf(3000000L), budgetMoneyOf(upgraded, 920));
+        assertEquals(Long.valueOf(0L), number(upgraded, "SELECT COUNT(*) FROM transaction_splits"));
+        helper.close();
     }
 
     /**

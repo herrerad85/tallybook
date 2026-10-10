@@ -44,6 +44,7 @@ import com.oriondev.moneywallet.storage.database.model.Transaction;
 import com.oriondev.moneywallet.storage.database.model.TransactionAttachment;
 import com.oriondev.moneywallet.storage.database.model.TransactionModel;
 import com.oriondev.moneywallet.storage.database.model.TransactionPerson;
+import com.oriondev.moneywallet.storage.database.model.TransactionSplit;
 import com.oriondev.moneywallet.storage.database.model.Transfer;
 import com.oriondev.moneywallet.storage.database.model.TransferAttachment;
 import com.oriondev.moneywallet.storage.database.model.TransferModel;
@@ -440,6 +441,28 @@ public class JSONDatabaseImporter implements DatabaseImporter {
             }
         } catch (IOException | JSONException e) {
             throw new ImportException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void importTransactionSplits(ContentResolver contentResolver) throws ImportException {
+        // transaction splits are stored starting from backup version >= 5
+        if (mVersion >= 5) {
+            try {
+                if (JSONDatabase.TransactionSplit.ARRAY.equals(mReader.readName())) {
+                    mReader.beginArray();
+                    while (mReader.hasArrayAnotherObject()) {
+                        JSONObject object = mReader.readObject();
+                        TransactionSplit transactionSplit = mFactory.getTransactionSplit(object);
+                        SQLDatabaseImporter.insert(contentResolver, transactionSplit);
+                    }
+                    mReader.endArray();
+                } else {
+                    throw new ImportException("Wrong array name (expected = 'transaction_splits')");
+                }
+            } catch (IOException | JSONException e) {
+                throw new ImportException(e.getMessage());
+            }
         }
     }
 

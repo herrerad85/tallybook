@@ -43,6 +43,7 @@ import com.oriondev.moneywallet.storage.database.model.Transaction;
 import com.oriondev.moneywallet.storage.database.model.TransactionAttachment;
 import com.oriondev.moneywallet.storage.database.model.TransactionModel;
 import com.oriondev.moneywallet.storage.database.model.TransactionPerson;
+import com.oriondev.moneywallet.storage.database.model.TransactionSplit;
 import com.oriondev.moneywallet.storage.database.model.Transfer;
 import com.oriondev.moneywallet.storage.database.model.TransferAttachment;
 import com.oriondev.moneywallet.storage.database.model.TransferModel;
@@ -332,6 +333,18 @@ public class SQLDatabaseExporter {
         return object;
     }
 
+    public static TransactionSplit getTransactionSplit(Cursor cursor) {
+        TransactionSplit object = new TransactionSplit();
+        object.mTransaction = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.TRANSACTION));
+        object.mCategory = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.CATEGORY));
+        object.mMoney = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.MONEY));
+        object.mNote = cursor.getString(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.NOTE));
+        object.mUUID = cursor.getString(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.UUID));
+        object.mLastEdit = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.LAST_EDIT));
+        object.mDeleted = cursor.getInt(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.DELETED)) == 1;
+        return object;
+    }
+
     public static TransactionPerson getTransactionPerson(Cursor cursor) {
         TransactionPerson object = new TransactionPerson();
         object.mTransaction = cursor.isNull(cursor.getColumnIndex(Schema.TransactionPeople.TRANSACTION)) ? null : cursor.getLong(cursor.getColumnIndex(Schema.TransactionPeople.TRANSACTION));
@@ -560,6 +573,12 @@ public class SQLDatabaseExporter {
         return contentResolver.query(uri, null, selection, null, null);
     }
 
+
+    public static Cursor getAllTransactionSplits(ContentResolver contentResolver) {
+        Uri uri = SyncContentProvider.CONTENT_TRANSACTION_SPLIT;
+        String selection = Schema.TransactionSplit.DELETED + " = 0";
+        return contentResolver.query(uri, null, selection, null, null);
+    }
 
     public static Cursor getAllTransactionPeople(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_PEOPLE;

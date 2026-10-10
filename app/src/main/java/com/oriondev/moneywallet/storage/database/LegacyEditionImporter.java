@@ -102,6 +102,7 @@ public class LegacyEditionImporter {
         mDatabaseImporter.importRecurrentTransactions(contentResolver);
         mDatabaseImporter.importRecurrentTransfers(contentResolver);
         mDatabaseImporter.importTransactions(contentResolver);
+        mDatabaseImporter.importTransactionSplits(contentResolver);
         mDatabaseImporter.importTransactionPeople(contentResolver);
         mDatabaseImporter.importTransactionModels(contentResolver);
         mDatabaseImporter.importTransfers(contentResolver);

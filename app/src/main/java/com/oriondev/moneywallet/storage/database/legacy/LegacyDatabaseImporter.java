@@ -713,6 +713,11 @@ public class LegacyDatabaseImporter implements DatabaseImporter {
     }
 
     @Override
+    public void importTransactionSplits(ContentResolver contentResolver) throws ImportException {
+        // not supported in legacy database
+    }
+
+    @Override
     public void importTransactionPeople(ContentResolver contentResolver) throws ImportException {
         // not supported in legacy database
     }
