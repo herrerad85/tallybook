@@ -358,6 +358,20 @@ public class SQLDatabaseImporter {
         return ContentUris.parseId(uri);
     }
 
+    public static long insert(ContentResolver contentResolver, TransactionSplit transactionSplit) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Schema.TransactionSplit.TRANSACTION, transactionSplit.mTransaction);
+        contentValues.put(Schema.TransactionSplit.CATEGORY, transactionSplit.mCategory);
+        contentValues.put(Schema.TransactionSplit.MONEY, transactionSplit.mMoney);
+        contentValues.put(Schema.TransactionSplit.NOTE, transactionSplit.mNote);
+        contentValues.put(Schema.TransactionSplit.UUID, transactionSplit.mUUID);
+        contentValues.put(Schema.TransactionSplit.LAST_EDIT, transactionSplit.mLastEdit);
+        contentValues.put(Schema.TransactionSplit.DELETED, transactionSplit.mDeleted);
+        Uri uri = SyncContentProvider.CONTENT_TRANSACTION_SPLIT;
+        uri = contentResolver.insert(uri, contentValues);
+        return ContentUris.parseId(uri);
+    }
+
     public static long insert(ContentResolver contentResolver, TransactionPerson transactionPeople) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(Schema.TransactionPeople.TRANSACTION, transactionPeople.mTransaction);

@@ -334,6 +334,22 @@ public class JSONDatabaseExporter implements DatabaseExporter {
     }
 
     @Override
+    public void exportTransactionSplits(Cursor cursor) throws ExportException {
+        try {
+            mWriter.writeName(JSONDatabase.TransactionSplit.ARRAY);
+            mWriter.beginArray();
+            while (cursor.moveToNext()) {
+                TransactionSplit transactionSplit = SQLDatabaseExporter.getTransactionSplit(cursor);
+                JSONObject object = mFactory.getObject(transactionSplit);
+                mWriter.writeJSONObject(object);
+            }
+            mWriter.endArray();
+        } catch (IOException | JSONException e) {
+            throw new ExportException(e.getMessage());
+        }
+    }
+
+    @Override
     public void exportTransactionPeople(Cursor cursor) throws ExportException {
         try {
             mWriter.writeName(JSONDatabase.TransactionPeople.ARRAY);

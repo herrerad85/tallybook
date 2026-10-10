@@ -89,6 +89,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
             importer.importRecurrentTransactions(contentResolver);
             importer.importRecurrentTransfers(contentResolver);
             importer.importTransactions(contentResolver);
+            importer.importTransactionSplits(contentResolver);
             importer.importTransactionPeople(contentResolver);
             importer.importTransactionModels(contentResolver);
             importer.importTransfers(contentResolver);

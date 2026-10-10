@@ -76,7 +76,7 @@ import java.util.function.Supplier;
     private static final String TAG = "SQLDatabase";
 
     /*package-local*/ static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 9;
 
     /**
      * The currencies whose shipped decimals were taken from the number of digits a country
@@ -373,6 +373,7 @@ import java.util.function.Supplier;
         db.execSQL(Schema.CREATE_TABLE_SAVING);
         db.execSQL(Schema.CREATE_TABLE_TRANSACTION);
         db.execSQL(Schema.CREATE_TABLE_TRANSACTION_PEOPLE);
+        db.execSQL(Schema.CREATE_TABLE_TRANSACTION_SPLIT);
         db.execSQL(Schema.CREATE_TABLE_TRANSFER);
         db.execSQL(Schema.CREATE_TABLE_TRANSFER_PEOPLE);
         db.execSQL(Schema.CREATE_TABLE_TRANSACTION_MODEL);
@@ -477,6 +478,12 @@ import java.util.function.Supplier;
             if (!hasColumn(db, Schema.Wallet.TABLE, Schema.Wallet.GROUP)) {
                 db.execSQL(Schema.CREATE_WALLET_GROUP_COLUMN);
             }
+        }
+        if (oldVersion < 9) {
+            // the parts a transaction is split into. The create is guarded for the same reason the
+            // rules table is, an older release installed over this database and upgraded again
+            // arrives here a second time with the table and its rows still there.
+            db.execSQL(Schema.CREATE_TABLE_TRANSACTION_SPLIT);
         }
     }
 
@@ -1441,6 +1448,10 @@ import java.util.function.Supplier;
         String where = Schema.TransactionPeople.TRANSACTION + " = ?";
         String[] whereArgs = new String[]{String.valueOf(transactionId)};
         getWritableDatabase().delete(Schema.TransactionPeople.TABLE, where, whereArgs);
+        // remove all TransactionSplit
+        where = Schema.TransactionSplit.TRANSACTION + " = ?";
+        whereArgs = new String[]{String.valueOf(transactionId)};
+        getWritableDatabase().delete(Schema.TransactionSplit.TABLE, where, whereArgs);
         // now remove all TransactionAttachment
         where = Schema.TransactionAttachment.TRANSACTION + " = ?";
         whereArgs = new String[]{String.valueOf(transactionId)};
@@ -6003,6 +6014,30 @@ import java.util.function.Supplier;
                         db.update(Schema.Transaction.TABLE, contentValues, whereClause, whereArgs);
                     }
                     cursor.close();
+                }
+                // fix the parts of those transactions. The version 6 step calls this before the
+                // version 9 step creates their table, and with no table there are no parts
+                if (hasColumn(db, Schema.TransactionSplit.TABLE, Schema.TransactionSplit.MONEY)) {
+                    projection = new String[] {
+                            Schema.TransactionSplit.ID,
+                            Schema.TransactionSplit.MONEY
+                    };
+                    selection = Schema.TransactionSplit.TRANSACTION + " IN (SELECT " +
+                            Schema.Transaction.ID + " FROM " + Schema.Transaction.TABLE + " WHERE " +
+                            Schema.Transaction.WALLET + " = ?)";
+                    cursor = db.query(Schema.TransactionSplit.TABLE, projection, selection, selectionArgs, null, null, null);
+                    if (cursor != null) {
+                        while (cursor.moveToNext()) {
+                            long id = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.ID));
+                            long money = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.MONEY));
+                            ContentValues contentValues = new ContentValues();
+                            contentValues.put(Schema.TransactionSplit.MONEY, MoneyFormatter.normalize(money, decimalOffset));
+                            String whereClause = Schema.TransactionSplit.ID + " = ?";
+                            String[] whereArgs = new String[] {String.valueOf(id)};
+                            db.update(Schema.TransactionSplit.TABLE, contentValues, whereClause, whereArgs);
+                        }
+                        cursor.close();
+                    }
                 }
                 // fix the transaction model table
                 projection = new String[] {

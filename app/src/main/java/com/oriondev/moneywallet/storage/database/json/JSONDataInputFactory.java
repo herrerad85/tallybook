@@ -361,6 +361,18 @@ import java.util.Map;
         return transaction;
     }
 
+    /*package-local*/ TransactionSplit getTransactionSplit(JSONObject object) {
+        TransactionSplit transactionSplit = new TransactionSplit();
+        transactionSplit.mTransaction = mCacheTransactions.get(object.optString(JSONDatabase.TransactionSplit.TRANSACTION, null));
+        transactionSplit.mCategory = mCacheCategories.get(object.optString(JSONDatabase.TransactionSplit.CATEGORY, null));
+        transactionSplit.mMoney = object.optLong(JSONDatabase.TransactionSplit.MONEY, 0L);
+        transactionSplit.mNote = object.optString(JSONDatabase.TransactionSplit.NOTE, null);
+        transactionSplit.mUUID = object.optString(JSONDatabase.TransactionSplit.ID, null);
+        transactionSplit.mLastEdit = object.optLong(JSONDatabase.TransactionSplit.LAST_EDIT, 0L);
+        transactionSplit.mDeleted = object.optBoolean(JSONDatabase.TransactionSplit.DELETED, false);
+        return transactionSplit;
+    }
+
     /*package-local*/ TransactionPerson getTransactionPerson(JSONObject object) {
         TransactionPerson transactionPerson = new TransactionPerson();
         transactionPerson.mTransaction = mCacheTransactions.get(object.optString(JSONDatabase.TransactionPeople.TRANSACTION, null));

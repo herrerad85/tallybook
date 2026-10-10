@@ -63,6 +63,8 @@ public interface DatabaseExporter {
 
     void exportTransactions(Cursor cursor) throws ExportException;
 
+    void exportTransactionSplits(Cursor cursor) throws ExportException;
+
     void exportTransactionPeople(Cursor cursor) throws ExportException;
 
     void exportTransactionModels(Cursor cursor) throws ExportException;

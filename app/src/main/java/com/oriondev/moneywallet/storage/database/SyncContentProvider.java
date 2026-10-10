@@ -61,6 +61,7 @@ public class SyncContentProvider extends ContentProvider {
     public static final Uri CONTENT_RECURRENT_TRANSFER = Uri.parse("content://" + AUTHORITY + "/recurrent_transfers");
     public static final Uri CONTENT_TRANSACTION = Uri.parse("content://" + AUTHORITY + "/transactions");
     public static final Uri CONTENT_TRANSACTION_PEOPLE = Uri.parse("content://" + AUTHORITY + "/transaction_people");
+    public static final Uri CONTENT_TRANSACTION_SPLIT = Uri.parse("content://" + AUTHORITY + "/transaction_splits");
     public static final Uri CONTENT_TRANSACTION_MODEL = Uri.parse("content://" + AUTHORITY + "/transaction_model");
     public static final Uri CONTENT_TRANSFER = Uri.parse("content://" + AUTHORITY + "/transfers");
     public static final Uri CONTENT_TRANSFER_PEOPLE = Uri.parse("content://" + AUTHORITY + "/transfer_people");
@@ -94,6 +95,7 @@ public class SyncContentProvider extends ContentProvider {
     private static final int TABLE_TRANSACTION_ATTACHMENTS = 22;
     private static final int TABLE_TRANSFER_ATTACHMENTS = 23;
     private static final int TABLE_CATEGORY_RULES = 25;
+    private static final int TABLE_TRANSACTION_SPLITS = 26;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -117,6 +119,7 @@ public class SyncContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "recurrent_transfers", TABLE_RECURRENT_TRANSFERS);
         matcher.addURI(AUTHORITY, "transactions", TABLE_TRANSACTIONS);
         matcher.addURI(AUTHORITY, "transaction_people", TABLE_TRANSACTION_PEOPLE);
+        matcher.addURI(AUTHORITY, "transaction_splits", TABLE_TRANSACTION_SPLITS);
         matcher.addURI(AUTHORITY, "transaction_model", TABLE_TRANSACTION_MODELS);
         matcher.addURI(AUTHORITY, "transfers", TABLE_TRANSFERS);
         matcher.addURI(AUTHORITY, "transfer_people", TABLE_TRANSFER_PEOPLE);
@@ -184,6 +187,8 @@ public class SyncContentProvider extends ContentProvider {
                 return Schema.Transaction.TABLE;
             case TABLE_TRANSACTION_PEOPLE:
                 return Schema.TransactionPeople.TABLE;
+            case TABLE_TRANSACTION_SPLITS:
+                return Schema.TransactionSplit.TABLE;
             case TABLE_TRANSACTION_MODELS:
                 return Schema.TransactionModel.TABLE;
             case TABLE_TRANSFERS:

@@ -63,6 +63,8 @@ public interface DatabaseImporter {
 
     void importTransactions(ContentResolver contentResolver) throws ImportException;
 
+    void importTransactionSplits(ContentResolver contentResolver) throws ImportException;
+
     void importTransactionPeople(ContentResolver contentResolver) throws ImportException;
 
     void importTransactionModels(ContentResolver contentResolver) throws ImportException;
