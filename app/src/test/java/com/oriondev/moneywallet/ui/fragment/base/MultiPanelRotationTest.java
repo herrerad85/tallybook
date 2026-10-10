@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
  * A detail panel emptied on the two panel layout must not come back full screen after rotating to one panel.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(qualifiers = "w840dp")
+@Config(qualifiers = "w840dp-h480dp")
 public class MultiPanelRotationTest {
 
     private static final String HOST_TAG = "host";

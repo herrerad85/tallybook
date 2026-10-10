@@ -57,7 +57,7 @@ public class MultiPanelSelectionTest {
     }
 
     @Test
-    @Config(qualifiers = "w840dp")
+    @Config(qualifiers = "w840dp-h480dp")
     public void onTheTwoPanelLayoutAPanelClosingItselfKeepsTheSelectionAndBackStillEndsIt() {
         checkThePanelCloseKeepsTheSelection();
     }

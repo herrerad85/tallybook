@@ -48,7 +48,7 @@ import static org.robolectric.Shadows.shadowOf;
  * no taller than the action bar leaves the card one action bar below the toolbar's top.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(qualifiers = "w600dp")
+@Config(qualifiers = "w600dp-h480dp")
 public class PanelCardBelowToolbarTest {
 
     private static final int STATUS_BAR = 100;

@@ -22,17 +22,18 @@
 
     <!--
       ~ The secondary panel covers the whole window at these widths, so its toolbar is what sits
-      ~ behind the status bar and has to hold its content clear of it. Only at w840dp does the panel
-      ~ move into a card partway down the screen, where growing the toolbar would leave an empty
-      ~ colored band floating mid screen. Three of the panel layouts have no width qualified copy of
-      ~ their own, so they read the answer from here instead.
+      ~ behind the status bar and has to hold its content clear of it. Only at w840dp, on a window at
+      ~ least 480dp tall, does the panel move into a card partway down the screen, where growing the
+      ~ toolbar would leave an empty colored band floating mid screen. Three of the panel layouts
+      ~ have no width qualified copy of their own, so they read the answer from here instead.
       -->
     <bool name="secondary_panel_fills_window">true</bool>
 
     <!--
-      ~ The primary panel reaches the sides of the window here. From w600dp up it is a card with
-      ~ 88dp of margin on each side, so it is already clear of a side navigation bar and a cutout,
-      ~ and anything inside it that took the side insets would be indented a second time.
+      ~ The primary panel reaches the sides of the window here. From w600dp up, on a window at least
+      ~ 480dp tall, it is a card with 88dp of margin on each side, so it is already clear of a side
+      ~ navigation bar and a cutout, and anything inside it that took the side insets would be
+      ~ indented a second time.
       -->
     <bool name="panel_fills_window">true</bool>
 

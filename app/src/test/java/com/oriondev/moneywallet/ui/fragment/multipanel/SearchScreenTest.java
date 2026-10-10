@@ -1628,7 +1628,7 @@ public class SearchScreenTest {
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    @Config(qualifiers = "w914dp-h411dp-land", fontScale = 1.3f)
+    @Config(qualifiers = "w840dp-h600dp", fontScale = 1.3f)
     public void betweenKeepsBothAmountFieldsOneLineHigh() {
         try (ActivityScenario<SearchActivity> scenario = ActivityScenario.launch(SearchActivity.class)) {
             scenario.onActivity(activity -> {

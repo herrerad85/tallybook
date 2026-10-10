@@ -102,7 +102,7 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_container_frame_layout&quot; in layout &quot;activity_single_panel&quot; is missing from the following layout configurations: layout-w600dp (present in layout)"
+        message="The id &quot;primary_panel_container_frame_layout&quot; in layout &quot;activity_single_panel&quot; is missing from the following layout configurations: layout-w600dp-h480dp (present in layout)"
         errorLine1="        android:id=&quot;@+id/primary_panel_container_frame_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -114,19 +114,19 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_container_card_view&quot; in layout &quot;activity_single_panel&quot; is missing from the following layout configurations: layout (present in layout-w600dp)"
+        message="The id &quot;primary_panel_container_card_view&quot; in layout &quot;activity_single_panel&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_container_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel.xml"
             line="52"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_container_coordinator_layout&quot; in layout &quot;activity_single_panel_appbar&quot; is missing from the following layout configurations: layout-w600dp (present in layout)"
+        message="The id &quot;primary_panel_container_coordinator_layout&quot; in layout &quot;activity_single_panel_appbar&quot; is missing from the following layout configurations: layout-w600dp-h480dp (present in layout)"
         errorLine1="    android:id=&quot;@+id/primary_panel_container_coordinator_layout&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -138,31 +138,31 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_container_linear_layout&quot; in layout &quot;activity_single_panel_appbar&quot; is missing from the following layout configurations: layout (present in layout-w600dp)"
+        message="The id &quot;primary_panel_container_linear_layout&quot; in layout &quot;activity_single_panel_appbar&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp)"
         errorLine1="            android:id=&quot;@+id/primary_panel_container_linear_layout&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_appbar.xml"
             line="65"
             column="13"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;half_screen_vertical_guideline&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;half_screen_vertical_guideline&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/half_screen_vertical_guideline&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel.xml"
             line="28"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_constraint_layout&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout-w840dp (present in layout, layout-w600dp)"
+        message="The id &quot;primary_panel_constraint_layout&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout-w840dp-h480dp (present in layout, layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_constraint_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -171,15 +171,15 @@
             column="9"
             message="Occurrence in layout"/>
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel.xml"
             line="29"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_body_container_frame_layout&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout-w600dp, layout-w840dp (present in layout)"
+        message="The id &quot;primary_panel_body_container_frame_layout&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout-w600dp-h480dp, layout-w840dp-h480dp (present in layout)"
         errorLine1="            android:id=&quot;@+id/primary_panel_body_container_frame_layout&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -191,43 +191,43 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_body_container_card_view&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w840dp (present in layout-w600dp)"
+        message="The id &quot;primary_panel_body_container_card_view&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w840dp-h480dp (present in layout-w600dp-h480dp)"
         errorLine1="            android:id=&quot;@+id/primary_panel_body_container_card_view&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel.xml"
             line="57"
             column="13"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_card_view&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;primary_panel_card_view&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel.xml"
             line="59"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;secondary_panel_card_view&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;secondary_panel_card_view&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/secondary_panel_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel.xml"
             line="74"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;secondary_panel_frame_layout&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout-w840dp (present in layout, layout-w600dp)"
+        message="The id &quot;secondary_panel_frame_layout&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout-w840dp-h480dp (present in layout, layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/secondary_panel_frame_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -236,39 +236,39 @@
             column="9"
             message="Occurrence in layout"/>
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel.xml"
             line="88"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;half_screen_vertical_guideline&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;half_screen_vertical_guideline&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/half_screen_vertical_guideline&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="28"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_constraint_layout&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w840dp (present in layout-w600dp)"
+        message="The id &quot;primary_panel_constraint_layout&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w840dp-h480dp (present in layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_constraint_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar.xml"
             line="29"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_coordinator_layout&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout-w600dp, layout-w840dp (present in layout)"
+        message="The id &quot;primary_panel_coordinator_layout&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout-w600dp-h480dp, layout-w840dp-h480dp (present in layout)"
         errorLine1="        android:id=&quot;@+id/primary_panel_coordinator_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -280,19 +280,19 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_body_container_card_view&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w840dp (present in layout-w600dp)"
+        message="The id &quot;primary_panel_body_container_card_view&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w840dp-h480dp (present in layout-w600dp-h480dp)"
         errorLine1="            android:id=&quot;@+id/primary_panel_body_container_card_view&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar.xml"
             line="56"
             column="13"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;secondary_panel_frame_layout&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout-w840dp (present in layout, layout-w600dp)"
+        message="The id &quot;secondary_panel_frame_layout&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout-w840dp-h480dp (present in layout, layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/secondary_panel_frame_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -301,63 +301,63 @@
             column="9"
             message="Occurrence in layout"/>
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar.xml"
             line="86"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;left_primary_app_bar_container&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;left_primary_app_bar_container&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="                android:id=&quot;@+id/left_primary_app_bar_container&quot;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="67"
             column="17"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;primary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="83"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;secondary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;secondary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/secondary_panel_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="98"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;half_screen_vertical_guideline&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;half_screen_vertical_guideline&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/half_screen_vertical_guideline&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="28"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_constraint_layout&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout-w840dp (present in layout, layout-w600dp)"
+        message="The id &quot;primary_panel_constraint_layout&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout-w840dp-h480dp (present in layout, layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_constraint_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -366,15 +366,15 @@
             column="9"
             message="Occurrence in layout"/>
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="29"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_body_container_frame_layout&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout-w600dp, layout-w840dp (present in layout)"
+        message="The id &quot;primary_panel_body_container_frame_layout&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout-w600dp-h480dp, layout-w840dp-h480dp (present in layout)"
         errorLine1="            android:id=&quot;@+id/primary_panel_body_container_frame_layout&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -386,31 +386,31 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_body_container_card_view&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w840dp (present in layout-w600dp)"
+        message="The id &quot;primary_panel_body_container_card_view&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w840dp-h480dp (present in layout-w600dp-h480dp)"
         errorLine1="            android:id=&quot;@+id/primary_panel_body_container_card_view&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="54"
             column="13"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;left_primary_app_bar_container&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;left_primary_app_bar_container&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="                android:id=&quot;@+id/left_primary_app_bar_container&quot;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="67"
             column="17"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;secondary_panel_frame_layout&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout-w840dp (present in layout, layout-w600dp)"
+        message="The id &quot;secondary_panel_frame_layout&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout-w840dp-h480dp (present in layout, layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/secondary_panel_frame_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -419,39 +419,39 @@
             column="9"
             message="Occurrence in layout"/>
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="84"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;primary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;primary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/primary_panel_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="83"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;secondary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp (present in layout-w840dp)"
+        message="The id &quot;secondary_panel_card_view&quot; in layout &quot;fragment_multi_panel_appbar_without_scroll&quot; is missing from the following layout configurations: layout, layout-w600dp-h480dp (present in layout-w840dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/secondary_panel_card_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="98"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;main_screen_secondary_panel_scroll_view&quot; in layout &quot;layout_secondary_panel_item&quot; is missing from the following layout configurations: layout-w600dp (present in layout)"
+        message="The id &quot;main_screen_secondary_panel_scroll_view&quot; in layout &quot;layout_secondary_panel_item&quot; is missing from the following layout configurations: layout-w600dp-h480dp (present in layout)"
         errorLine1="        android:id=&quot;@+id/main_screen_secondary_panel_scroll_view&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -463,14 +463,14 @@
 
     <issue
         id="InconsistentLayout"
-        message="The id &quot;main_screen_secondary_panel_linear_layout&quot; in layout &quot;layout_secondary_panel_item&quot; is missing from the following layout configurations: layout (present in layout-w600dp)"
+        message="The id &quot;main_screen_secondary_panel_linear_layout&quot; in layout &quot;layout_secondary_panel_item&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp)"
         errorLine1="        android:id=&quot;@+id/main_screen_secondary_panel_linear_layout&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/layout_secondary_panel_item.xml"
+            file="src/main/res/layout-w600dp-h480dp/layout_secondary_panel_item.xml"
             line="62"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
 
     <issue
@@ -490,7 +490,7 @@
         errorLine1="    &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel.xml"
             line="35"
             column="6"/>
     </issue>
@@ -501,7 +501,7 @@
         errorLine1="    &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_appbar.xml"
             line="35"
             column="6"/>
     </issue>
@@ -512,7 +512,7 @@
         errorLine1="    &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_scroll.xml"
             line="35"
             column="6"/>
     </issue>
@@ -523,7 +523,7 @@
         errorLine1="        &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel.xml"
             line="41"
             column="10"/>
     </issue>
@@ -534,7 +534,7 @@
         errorLine1="    &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel.xml"
             line="41"
             column="6"/>
     </issue>
@@ -545,7 +545,7 @@
         errorLine1="    &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="41"
             column="6"/>
     </issue>
@@ -556,7 +556,7 @@
         errorLine1="            &lt;LinearLayout"
         errorLine2="             ~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="66"
             column="14"/>
     </issue>
@@ -567,7 +567,7 @@
         errorLine1="        &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="34"
             column="10"/>
     </issue>
@@ -578,7 +578,7 @@
         errorLine1="    &lt;com.oriondev.moneywallet.ui.view.theme.ThemedAppBarLayout"
         errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="41"
             column="6"/>
     </issue>
@@ -589,7 +589,7 @@
         errorLine1="            &lt;LinearLayout"
         errorLine2="             ~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="66"
             column="14"/>
     </issue>
@@ -23477,7 +23477,7 @@
         errorLine1="        android:layout_marginLeft=&quot;@dimen/layout_single_panel_primary_panel_margin_left&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel.xml"
             line="55"
             column="9"/>
     </issue>
@@ -23488,7 +23488,7 @@
         errorLine1="        android:layout_marginRight=&quot;@dimen/layout_single_panel_primary_panel_margin_right&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel.xml"
             line="56"
             column="9"/>
     </issue>
@@ -23499,7 +23499,7 @@
         errorLine1="        android:layout_marginLeft=&quot;@dimen/layout_single_panel_primary_panel_margin_left&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_appbar.xml"
             line="53"
             column="9"/>
     </issue>
@@ -23510,7 +23510,7 @@
         errorLine1="        android:layout_marginRight=&quot;@dimen/layout_single_panel_primary_panel_margin_right&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_appbar.xml"
             line="54"
             column="9"/>
     </issue>
@@ -23521,7 +23521,7 @@
         errorLine1="        android:layout_marginLeft=&quot;@dimen/layout_single_panel_primary_panel_margin_left&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_scroll.xml"
             line="53"
             column="9"/>
     </issue>
@@ -23532,7 +23532,7 @@
         errorLine1="        android:layout_marginRight=&quot;@dimen/layout_single_panel_primary_panel_margin_right&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/activity_single_panel_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/activity_single_panel_scroll.xml"
             line="54"
             column="9"/>
     </issue>
@@ -25688,7 +25688,7 @@
         errorLine1="            android:layout_marginLeft=&quot;@dimen/layout_multi_panel_primary_panel_margin_left&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel.xml"
             line="60"
             column="13"/>
     </issue>
@@ -25699,7 +25699,7 @@
         errorLine1="            android:layout_marginRight=&quot;@dimen/layout_multi_panel_primary_panel_margin_right&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel.xml"
             line="61"
             column="13"/>
     </issue>
@@ -25710,7 +25710,7 @@
         errorLine1="        android:layout_marginLeft=&quot;@dimen/layout_multi_panel_primary_panel_margin_left&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel.xml"
             line="62"
             column="9"/>
     </issue>
@@ -25721,7 +25721,7 @@
         errorLine1="        android:layout_marginRight=&quot;@dimen/layout_multi_panel_primary_panel_margin_right&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel.xml"
             line="77"
             column="9"/>
     </issue>
@@ -25732,7 +25732,7 @@
         errorLine1="            android:layout_marginLeft=&quot;@dimen/layout_multi_panel_primary_panel_margin_left&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar.xml"
             line="59"
             column="13"/>
     </issue>
@@ -25743,7 +25743,7 @@
         errorLine1="            android:layout_marginRight=&quot;@dimen/layout_multi_panel_primary_panel_margin_right&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar.xml"
             line="60"
             column="13"/>
     </issue>
@@ -25754,7 +25754,7 @@
         errorLine1="        android:layout_marginLeft=&quot;@dimen/layout_multi_panel_primary_panel_margin_left&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="86"
             column="9"/>
     </issue>
@@ -25765,7 +25765,7 @@
         errorLine1="        android:layout_marginRight=&quot;@dimen/layout_multi_panel_primary_panel_margin_right&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar.xml"
             line="101"
             column="9"/>
     </issue>
@@ -25776,7 +25776,7 @@
         errorLine1="            android:layout_marginLeft=&quot;@dimen/layout_multi_panel_primary_panel_margin_left&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="57"
             column="13"/>
     </issue>
@@ -25787,7 +25787,7 @@
         errorLine1="            android:layout_marginRight=&quot;@dimen/layout_multi_panel_primary_panel_margin_right&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w600dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w600dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="58"
             column="13"/>
     </issue>
@@ -25798,7 +25798,7 @@
         errorLine1="        android:layout_marginLeft=&quot;@dimen/layout_multi_panel_primary_panel_margin_left&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="86"
             column="9"/>
     </issue>
@@ -25809,7 +25809,7 @@
         errorLine1="        android:layout_marginRight=&quot;@dimen/layout_multi_panel_primary_panel_margin_right&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout-w840dp/fragment_multi_panel_appbar_without_scroll.xml"
+            file="src/main/res/layout-w840dp-h480dp/fragment_multi_panel_appbar_without_scroll.xml"
             line="101"
             column="9"/>
     </issue>
@@ -26785,7 +26785,7 @@
     <issue
         id="InconsistentLayout"
         severity="Warning"
-        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;activity_single_panel&quot; is missing from the following layout configurations: layout (present in layout-w600dp)"
+        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;activity_single_panel&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp)"
         category="Correctness"
         priority="6"
         summary="Inconsistent Layouts"
@@ -26793,15 +26793,15 @@
         errorLine1="        android:id=&quot;@+id/toolbar_delimiter_horizontal_guideline&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp\activity_single_panel.xml"
+            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp-h480dp\activity_single_panel.xml"
             line="35"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
     <issue
         id="InconsistentLayout"
         severity="Warning"
-        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;activity_single_panel_appbar&quot; is missing from the following layout configurations: layout (present in layout-w600dp)"
+        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;activity_single_panel_appbar&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp)"
         category="Correctness"
         priority="6"
         summary="Inconsistent Layouts"
@@ -26809,15 +26809,15 @@
         errorLine1="        android:id=&quot;@+id/toolbar_delimiter_horizontal_guideline&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp\activity_single_panel_appbar.xml"
+            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp-h480dp\activity_single_panel_appbar.xml"
             line="35"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
     <issue
         id="InconsistentLayout"
         severity="Warning"
-        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;activity_single_panel_scroll&quot; is missing from the following layout configurations: layout (present in layout-w600dp)"
+        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;activity_single_panel_scroll&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp)"
         category="Correctness"
         priority="6"
         summary="Inconsistent Layouts"
@@ -26825,15 +26825,15 @@
         errorLine1="        android:id=&quot;@+id/toolbar_delimiter_horizontal_guideline&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp\activity_single_panel_scroll.xml"
+            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp-h480dp\activity_single_panel_scroll.xml"
             line="35"
             column="9"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
     </issue>
     <issue
         id="InconsistentLayout"
         severity="Warning"
-        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout (present in layout-w600dp, layout-w840dp)"
+        message="The id &quot;toolbar_delimiter_horizontal_guideline&quot; in layout &quot;fragment_multi_panel&quot; is missing from the following layout configurations: layout (present in layout-w600dp-h480dp, layout-w840dp-h480dp)"
         category="Correctness"
         priority="6"
         summary="Inconsistent Layouts"
@@ -26841,14 +26841,14 @@
         errorLine1="            android:id=&quot;@+id/toolbar_delimiter_horizontal_guideline&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp\fragment_multi_panel.xml"
+            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w600dp-h480dp\fragment_multi_panel.xml"
             line="41"
             column="13"
-            message="Occurrence in layout-w600dp"/>
+            message="Occurrence in layout-w600dp-h480dp"/>
         <location
-            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w840dp\fragment_multi_panel.xml"
+            file="C:\Users\herre\code\moneywallet\app\src\main\res\layout-w840dp-h480dp\fragment_multi_panel.xml"
             line="41"
             column="9"
-            message="Occurrence in layout-w840dp"/>
+            message="Occurrence in layout-w840dp-h480dp"/>
     </issue>
 </issues>
