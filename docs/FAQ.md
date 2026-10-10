@@ -10,7 +10,7 @@ Tallybook works out income or expense from the category you pick, not from the s
 
 Before 1.4.0 the keypad accepted it and stored the amount as typed, which could move a total the wrong way. If you are seeing that, update.
 
-CSV import works the other way round. There is no category picker in a file, so the importer reads the sign to decide the direction, and `money` has to be negative for an expense. That format is documented in the [README](../README.md).
+CSV import works the other way round. There is no category picker in a file, so the importer reads the sign to decide the direction, and `money` has to be negative for an expense. That format is on the [CSV import format](CSV.md) page.
 
 ## Where are the charts?
 
@@ -30,7 +30,7 @@ Settings, Database, Backup services, then pick where the backups go. Open the me
 
 You can set how often it runs, restrict it to WiFi, and skip a run when nothing has changed. Choose the folder before you turn it on.
 
-There is no built in sync between devices. Point a backup at a folder your own sync tool watches, or at your WebDAV server, which Tallybook supports directly.
+There is no built in sync between devices. Point a backup at a folder your own sync tool watches, or at your WebDAV server, which Tallybook supports directly. Local folder can also save to Google Drive or Dropbox, since their apps show up in its folder picker, and automatic backups work there too.
 
 ## The currency I want is not in the list
 

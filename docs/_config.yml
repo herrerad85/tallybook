@@ -1,0 +1,13 @@
+title: Tallybook
+description: How to use Tallybook, an expense and budget tracker for Android.
+
+remote_theme: just-the-docs/just-the-docs@v0.12.0
+plugins:
+  - jekyll-remote-theme
+
+markdown: GFM
+search_enabled: true
+
+aux_links:
+  "Tallybook on GitHub":
+    - "https://github.com/herrerad85/tallybook"
