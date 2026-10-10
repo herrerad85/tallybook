@@ -38,11 +38,14 @@ public class AboutActivity extends SinglePanelActivity {
 
     @Override
     protected void onCreatePanelView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+        // the panel is not the same id in every width qualifier, and a restored fragment keeps
+        // the container id it was added under, so nest a container whose id never changes
+        inflater.inflate(R.layout.layout_panel_fragment_container, parent, true);
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentByTag(FRAGMENT_TAG);
         if (fragment == null) {
             fragmentManager.beginTransaction()
-                    .replace(parent.getId(), new AboutFragment(), FRAGMENT_TAG)
+                    .replace(R.id.panel_fragment_container, new AboutFragment(), FRAGMENT_TAG)
                     .commit();
         } else {
             fragmentManager.beginTransaction()
