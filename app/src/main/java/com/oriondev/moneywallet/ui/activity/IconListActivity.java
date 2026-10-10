@@ -30,7 +30,7 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
-import android.util.DisplayMetrics;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -68,8 +68,6 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
 
     private AdvancedRecyclerView mAdvancedRecyclerView;
     private IconAdapter mAdapter;
-
-    private int mIconSpan;
 
     private String mQuery = "";
 
@@ -131,13 +129,24 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
     protected void onCreatePanelView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.layout_activity_single_panel_body_list, parent, true);
         mAdvancedRecyclerView = view.findViewById(R.id.advanced_recycler_view);
-        mIconSpan = getIconSpanCount();
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, mIconSpan);
+        final int iconWidth = Math.round(ICON_WIDTH_DP * getResources().getDisplayMetrics().density);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 1) {
+
+            @Override
+            public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+                // the list is narrower than the display wherever the panel is a card or the side
+                // system bars pad it, and set before the children are placed so no frame shows
+                // the old count after the width changes
+                setSpanCount(Math.max(1, (getWidth() - getPaddingLeft() - getPaddingRight()) / iconWidth));
+                super.onLayoutChildren(recycler, state);
+            }
+
+        };
         gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
 
             @Override
             public int getSpanSize(int position) {
-                return mAdapter.isHeader(position) ? mIconSpan : 1;
+                return mAdapter.isHeader(position) ? gridLayoutManager.getSpanCount() : 1;
             }
 
         });
@@ -148,25 +157,6 @@ public class IconListActivity extends SinglePanelActivity implements SwipeRefres
         mAdvancedRecyclerView.setAdapter(mAdapter);
         mAdvancedRecyclerView.setOnRefreshListener(this);
         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.LOADING);
-    }
-
-    private int getIconSpanCount() {
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
-        // on large screen the panel width is not equal to the display width
-        // so we have to dynamically calculate the panel width
-        int spanCount;
-        if (dpWidth < 600) {
-            // small screen, probably a smart phone
-            spanCount = (int) (dpWidth / ICON_WIDTH_DP);
-        } else if (dpWidth >= 600 && dpWidth < 840) {
-            // small tablet screen, the max panel width is 540dp
-            spanCount = 540 / ICON_WIDTH_DP;
-        } else {
-            // large tablet screen, the max panel width is 640dp
-            spanCount = 640 / ICON_WIDTH_DP;
-        }
-        return spanCount;
     }
 
     @Override
