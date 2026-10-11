@@ -1039,7 +1039,10 @@ import java.util.function.Supplier;
      */
     private static String validParts(String partCondition) {
         return "SELECT s." + Schema.TransactionSplit.TRANSACTION +
-            " AS _parts_transaction, SUM(s." + Schema.TransactionSplit.MONEY + ") AS _parts_money FROM " +
+            " AS _parts_transaction, SUM(s." + Schema.TransactionSplit.MONEY + ") AS _parts_money, " +
+            "COUNT(DISTINCT s." + Schema.TransactionSplit.CATEGORY + ") AS _parts_categories, MAX(s." +
+            Schema.TransactionSplit.CATEGORY + " = st." + Schema.Transaction.CATEGORY +
+            ") AS _parts_in_main FROM " +
             Schema.TransactionSplit.TABLE + " AS s JOIN " + Schema.Transaction.TABLE + " AS st ON s." +
             Schema.TransactionSplit.TRANSACTION + " = st." + Schema.Transaction.ID + " LEFT JOIN " +
             Schema.Category.TABLE + " AS sc ON s." + Schema.TransactionSplit.CATEGORY + " = sc." +
@@ -1179,7 +1182,10 @@ import java.util.function.Supplier;
                 {"t." + Schema.Transaction.CONFIRMED, Contract.Transaction.CONFIRMED},
                 {"t." + Schema.Transaction.COUNT_IN_TOTAL, Contract.Transaction.COUNT_IN_TOTAL},
                 {"t." + Schema.Transaction.TAG, Contract.Transaction.TAG},
-                {"GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>')", Contract.Transaction.PEOPLE_IDS}
+                {"GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>')", Contract.Transaction.PEOPLE_IDS},
+                {"IFNULL(vp._parts_categories + CASE WHEN t." + Schema.Transaction.MONEY +
+                        " > vp._parts_money AND vp._parts_in_main = 0 THEN 1 ELSE 0 END, 0)",
+                        Contract.Transaction.SPLIT_CATEGORIES}
         };
     }
 
@@ -1201,7 +1207,8 @@ import java.util.function.Supplier;
             columns.append(", ").append(column);
         }
         return "SELECT " + columns + " " +
-                "FROM " + from + " LEFT JOIN " + Schema.Category.TABLE +
+                "FROM " + from + " LEFT JOIN (" + VALID_PARTS + ") AS vp ON vp._parts_transaction = t." +
+                Schema.Transaction.ID + " LEFT JOIN " + Schema.Category.TABLE +
                 " AS c ON " + category + " = c." + Schema.Category.ID + " AND c." +
                 Schema.Category.DELETED + " = 0 LEFT JOIN " + Schema.Category.TABLE + " AS pc ON c." +
                 Schema.Category.PARENT + " = pc." + Schema.Category.ID + " AND pc." +
@@ -2682,17 +2689,24 @@ import java.util.function.Supplier;
         // parts in this category, since then its one line reads under the main category before
         // and after. Removing the one part that keeps the others invalid would move their money
         // off the main category
-        cursor = getReadableDatabase().rawQuery("SELECT s." + Schema.TransactionSplit.ID + " FROM " +
-                Schema.TransactionSplit.TABLE + " AS s WHERE s." + Schema.TransactionSplit.CATEGORY +
-                " = ? AND s." + Schema.TransactionSplit.DELETED + " = 0 AND s." +
-                Schema.TransactionSplit.TRANSACTION + " IN (SELECT _parts_transaction FROM (" +
+        cursor = getReadableDatabase().rawQuery("SELECT DISTINCT t." + Schema.Transaction.ID + " FROM " +
+                Schema.TransactionSplit.TABLE + " AS s JOIN " + Schema.Transaction.TABLE + " AS t ON s." +
+                Schema.TransactionSplit.TRANSACTION + " = t." + Schema.Transaction.ID + " WHERE s." +
+                Schema.TransactionSplit.CATEGORY + " = ? AND s." + Schema.TransactionSplit.DELETED +
+                " = 0 AND s." + Schema.TransactionSplit.TRANSACTION + " IN (SELECT _parts_transaction FROM (" +
                 VALID_PARTS + ") UNION SELECT _parts_transaction FROM (" + validParts(" AND s." +
-                Schema.TransactionSplit.CATEGORY + " != ?") + "))",
+                Schema.TransactionSplit.CATEGORY + " != ?") + ")) ORDER BY t." + Schema.Transaction.DATE +
+                " DESC, t." + Schema.Transaction.ID + " DESC",
                 new String[] {String.valueOf(categoryId), String.valueOf(categoryId)});
         try {
             if (cursor.moveToFirst()) {
-                throw new SQLiteDataException(Contract.ErrorCode.CATEGORY_IN_USE,
-                        String.format(Locale.ENGLISH, "The category (id: %d) cannot be deleted because it is in use in %d parts of transactions", categoryId, cursor.getCount()));
+                long[] transactionIds = new long[cursor.getCount()];
+                do {
+                    transactionIds[cursor.getPosition()] = cursor.getLong(0);
+                } while (cursor.moveToNext());
+                throw new SQLiteDataException(Contract.ErrorCode.CATEGORY_IN_SPLIT,
+                        String.format(Locale.ENGLISH, "The category (id: %d) cannot be deleted because it is in use in parts of %d transactions", categoryId, transactionIds.length),
+                        transactionIds);
             }
         } finally {
             cursor.close();

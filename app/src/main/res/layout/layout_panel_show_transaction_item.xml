@@ -62,6 +62,19 @@
             tools:text="Category here" />
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
+            android:id="@+id/split_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/material_activity_body_edit_text_margin_top"
+            android:layout_marginBottom="@dimen/material_activity_body_edit_text_margin_bottom"
+            android:visibility="gone"
+            app:mtv_mode="floatingLabel"
+            app:mtv_floatingLabelText="@string/hint_split"
+            app:mtv_leftIcon="@drawable/ic_call_split_24dp"
+            app:mtv_bottomLineEnabled="true"
+            tools:text="Parts here" />
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
             android:id="@+id/date_time_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

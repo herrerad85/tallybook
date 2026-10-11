@@ -4,9 +4,15 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.test.core.app.ActivityScenario;
@@ -15,16 +21,23 @@ import androidx.test.core.app.ApplicationProvider;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
+import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.utils.DateFormatter;
+import com.oriondev.moneywallet.utils.DateUtils;
+import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowDialog;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
@@ -135,6 +148,79 @@ public class CategoryItemFragmentTest {
                         box.getText().toString());
             });
         }
+    }
+
+    /** Bonus is used by the one part of PAY_SPLIT and by nothing else. */
+    @Test
+    public void aDeleteRefusedForAPartNamesTheTransaction() {
+        SplitLedger.build(mContext);
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                CategoryItemFragment fragment = showCategoryFragment(activity, SplitLedger.BONUS);
+                assertEquals(mContext.getString(R.string.message_error_delete_category_in_split,
+                        SplitLedger.description(SplitLedger.PAY_SPLIT), ledgerDate()), deleteAndReadRefusal(fragment));
+            });
+        }
+        assertEquals(1L, count("categories", "category_id = " + SplitLedger.BONUS));
+    }
+
+    /**
+     * Tools holds a part of RECEIPT and one of TWICE, both on the same date, so the higher id
+     * comes first. TWICE has no description and is named by its amount, 7000.
+     */
+    @Test
+    public void aDeleteRefusedForSeveralNamesTheNewestAndCountsTheOthers() {
+        SplitLedger.build(mContext);
+        SQLiteDatabase db = SplitLedger.database(mContext);
+        db.execSQL("INSERT INTO categories (category_id, category_name, category_icon, category_type, " +
+                "category_show_report, uuid, last_edit, deleted) VALUES (970, 'Tools', ?, ?, 1, " +
+                "'category-tools', 1, 0)", new Object[] {ICON, Contract.CategoryType.EXPENSE.getValue()});
+        for (long transaction : new long[] {SplitLedger.RECEIPT, SplitLedger.TWICE}) {
+            db.execSQL("INSERT INTO transaction_splits (_transaction, split_category, split_money, uuid, " +
+                    "last_edit, deleted) VALUES (?, 970, 100, ?, 1, 0)", new Object[] {transaction, "tools-" + transaction});
+        }
+        db.execSQL("UPDATE transactions SET transaction_description = NULL WHERE transaction_id = " + SplitLedger.TWICE);
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                CategoryItemFragment fragment = showCategoryFragment(activity, 970L);
+                String amount = MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("EUR"), 7000L);
+                assertEquals(mContext.getString(R.string.message_error_delete_category_in_split, amount, ledgerDate()) +
+                        " " + mContext.getResources().getQuantityString(
+                        R.plurals.message_error_delete_category_in_more_splits, 1, 1), deleteAndReadRefusal(fragment));
+            });
+        }
+        assertEquals(1L, count("categories", "category_id = 970"));
+    }
+
+    private static String ledgerDate() {
+        return DateFormatter.getFormattedDate(DateUtils.getDateFromSQLDateTimeString(SplitLedger.DATE));
+    }
+
+    private String deleteAndReadRefusal(CategoryItemFragment fragment) {
+        Toolbar toolbar = fragment.requireView().findViewById(R.id.secondary_toolbar);
+        fragment.onMenuItemClick(toolbar.getMenu().findItem(R.id.action_delete_item));
+        AlertDialog confirm = (AlertDialog) ShadowDialog.getLatestDialog();
+        confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        shadowOf(Looper.getMainLooper()).idle();
+        AlertDialog refusal = (AlertDialog) ShadowDialog.getLatestDialog();
+        assertNotSame("no refusal was shown", confirm, refusal);
+        TextView message = refusal.findViewById(android.R.id.message);
+        return message.getText().toString();
+    }
+
+    private long count(String table, String selection) {
+        try (Cursor cursor = SplitLedger.database(mContext).rawQuery(
+                "SELECT COUNT(*) FROM " + table + " WHERE " + selection, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.getLong(0);
+        }
+    }
+
+    private CategoryItemFragment showCategoryFragment(FragmentActivity activity, long categoryId) {
+        showCategory(activity, categoryId);
+        return (CategoryItemFragment) activity.getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT);
     }
 
     private CheckBox showCategory(FragmentActivity activity, long categoryId) {

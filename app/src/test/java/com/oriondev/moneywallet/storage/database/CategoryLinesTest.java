@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.oriondev.moneywallet.storage.database.SplitLedger.*;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -300,7 +301,9 @@ public class CategoryLinesTest {
             mResolver.delete(ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, BONUS), null, null);
             fail("a category a part uses was deleted");
         } catch (SQLiteDataException expected) {
-            assertEquals(Contract.ErrorCode.CATEGORY_IN_USE, expected.getErrorCode());
+            assertEquals(Contract.ErrorCode.CATEGORY_IN_SPLIT, expected.getErrorCode());
+            // the one part in Bonus is the one of PAY_SPLIT
+            assertArrayEquals(new long[] {PAY_SPLIT}, expected.getItemIds());
         }
         assertEquals(1L, count("categories", "category_id = " + BONUS));
         assertEquals(1L, count("transaction_splits", "split_category = " + BONUS));
@@ -340,9 +343,35 @@ public class CategoryLinesTest {
             mResolver.delete(ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, TOOLS), null, null);
             fail("deleting the category made the other parts valid");
         } catch (SQLiteDataException expected) {
-            assertEquals(Contract.ErrorCode.CATEGORY_IN_USE, expected.getErrorCode());
+            assertEquals(Contract.ErrorCode.CATEGORY_IN_SPLIT, expected.getErrorCode());
+            assertArrayEquals(new long[] {EXACT}, expected.getItemIds());
         }
         assertEquals(1L, count("transaction_splits", "split_category = " + TOOLS));
+    }
+
+    /**
+     * The refusal lists the newest transaction first by its date, and on a tie the higher id first.
+     * WITH_HIDDEN is moved after the rest, and RECEIPT and TWICE share the fixture's date.
+     */
+    @Test
+    public void aDeleteRefusedListsTheNewestByDateFirst() {
+        insertToolsPart(RECEIPT, 100);
+        SQLiteDatabase db = database(mContext);
+        db.execSQL("INSERT INTO transaction_splits (split_id, _transaction, split_category, " +
+                "split_money, uuid, last_edit, deleted) VALUES (972, ?, ?, 100, 'split-tools-twice', 1, 0)",
+                new Object[] {TWICE, TOOLS});
+        db.execSQL("INSERT INTO transaction_splits (split_id, _transaction, split_category, " +
+                "split_money, uuid, last_edit, deleted) VALUES (973, ?, ?, 100, 'split-tools-hidden', 1, 0)",
+                new Object[] {WITH_HIDDEN, TOOLS});
+        db.execSQL("UPDATE transactions SET transaction_date = '2026-03-01 10:00:00' WHERE transaction_id = ?",
+                new Object[] {WITH_HIDDEN});
+        try {
+            mResolver.delete(ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, TOOLS), null, null);
+            fail("a category three parts use was deleted");
+        } catch (SQLiteDataException expected) {
+            assertEquals(Contract.ErrorCode.CATEGORY_IN_SPLIT, expected.getErrorCode());
+            assertArrayEquals(new long[] {WITH_HIDDEN, TWICE, RECEIPT}, expected.getItemIds());
+        }
     }
 
     private static final long TOOLS = 970;

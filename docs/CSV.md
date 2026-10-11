@@ -12,6 +12,12 @@ The header row carries the raw column keys, and a file written by hand needs the
 
 A row the importer will not read ends the import before anything from the file is saved, and the message names the line it stopped on. A row the CSV reader itself will not read, such as one with the wrong number of fields, ends it the same way but with the reader's own wording.
 
+## Split transactions
+
+An export writes a split transaction as one row for each category it falls under, each row carrying the money in that category with the date, wallet and description of the receipt. The rows of one receipt add up to its total.
+
+Importing never creates a split transaction. Each row of a file comes in as a transaction of its own. A file exported from this ledger and imported back into it is recognized row by row, so the split transactions already there are skipped and not added again.
+
 ## Importing a file from another app or a bank
 
 A file whose header does not name all five required columns, or that this app's own import cannot read, is read through a mapping screen instead. The import screen shows it after the file is picked. The separator is worked out from the header line, and a comma, a semicolon and a tab are all understood.

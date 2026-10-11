@@ -97,7 +97,9 @@ public class SplitSelectionModeTest {
         assertEquals(mContext.getResources().getQuantityString(
                 R.plurals.message_change_category_selected_transactions, 1, 1, "Salary"),
                 TransactionSelectionMode.buildCategoryMessage(mContext.getResources(), mResolver, ids, salary));
-        assertEquals(1, TransactionSelectionMode.changeCategory(mResolver, ids, salary));
+        TransactionSelectionMode.SkippedRows skipped = TransactionSelectionMode.changeCategory(mResolver, ids, salary);
+        assertEquals(0, skipped.mRefused);
+        assertEquals(1, skipped.mSplit);
         assertEquals(GROCERIES, longOf(RECEIPT, Contract.Transaction.CATEGORY_ID));
         assertEquals(Contract.Direction.EXPENSE, longOf(RECEIPT, Contract.Transaction.DIRECTION));
         assertEquals(SALARY, longOf(PLAIN_CASH, Contract.Transaction.CATEGORY_ID));
@@ -116,7 +118,9 @@ public class SplitSelectionModeTest {
         assertEquals(mContext.getResources().getQuantityString(
                 R.plurals.message_change_category_selected_transactions, 0, 0, "Bonus"),
                 TransactionSelectionMode.buildCategoryMessage(mContext.getResources(), mResolver, ids, bonus));
-        assertEquals(1, TransactionSelectionMode.changeCategory(mResolver, ids, bonus));
+        TransactionSelectionMode.SkippedRows skipped = TransactionSelectionMode.changeCategory(mResolver, ids, bonus);
+        assertEquals(0, skipped.mRefused);
+        assertEquals(1, skipped.mSplit);
         assertEquals(HOUSEHOLD, longOf(CROSSED, Contract.Transaction.CATEGORY_ID));
         assertEquals(Contract.Direction.EXPENSE, longOf(CROSSED, Contract.Transaction.DIRECTION));
         assertEquals(sorted(HOUSEHOLD + ":" + 2000), linesOf(CROSSED));
@@ -144,7 +148,9 @@ public class SplitSelectionModeTest {
         assertEquals(mContext.getResources().getQuantityString(
                 R.plurals.message_change_category_selected_transactions, 1, 1, "Salary"),
                 TransactionSelectionMode.buildCategoryMessage(mContext.getResources(), mResolver, ids, salary));
-        assertEquals(0, TransactionSelectionMode.changeCategory(mResolver, ids, salary));
+        TransactionSelectionMode.SkippedRows skipped = TransactionSelectionMode.changeCategory(mResolver, ids, salary);
+        assertEquals(0, skipped.mRefused);
+        assertEquals(0, skipped.mSplit);
         assertEquals(SALARY, longOf(row, Contract.Transaction.CATEGORY_ID));
         assertEquals(Contract.Direction.INCOME, longOf(row, Contract.Transaction.DIRECTION));
     }
@@ -153,9 +159,31 @@ public class SplitSelectionModeTest {
     @Test
     public void aSplitRowTakesAMainCategoryOfTheSameDirection() {
         Category pharmacy = new Category(PHARMACY, "Pharmacy", null, Contract.CategoryType.EXPENSE);
-        assertEquals(0, TransactionSelectionMode.changeCategory(mResolver, new long[] {RECEIPT}, pharmacy));
+        TransactionSelectionMode.SkippedRows skipped =
+                TransactionSelectionMode.changeCategory(mResolver, new long[] {RECEIPT}, pharmacy);
+        assertEquals(0, skipped.mRefused);
+        assertEquals(0, skipped.mSplit);
         assertEquals(sorted(PHARMACY + ":" + (10000 - 2000 - 3000), HOUSEHOLD + ":" + 2000,
                 FUEL + ":" + 3000), linesOf(RECEIPT));
+    }
+
+    /**
+     * DEBT_ROW is skipped as a debt and RECEIPT as a split row Salary would turn to income, and
+     * each reason gets its own sentence. PLAIN_CASH moves.
+     */
+    @Test
+    public void theSkipMessageNamesASplitRowApartFromADebtRow() {
+        Category salary = new Category(SALARY, "Salary", null, Contract.CategoryType.INCOME);
+        TransactionSelectionMode.SkippedRows skipped = TransactionSelectionMode.changeCategory(mResolver,
+                new long[] {DEBT_ROW, RECEIPT, PLAIN_CASH}, salary);
+        assertEquals(1, skipped.mRefused);
+        assertEquals(1, skipped.mSplit);
+        assertEquals(mContext.getResources().getQuantityString(R.plurals.message_error_change_selected_transactions, 1, 1) +
+                "\n\n" + mContext.getResources().getQuantityString(R.plurals.message_error_change_split_transactions, 1, 1),
+                TransactionSelectionMode.buildSkippedMessage(mContext.getResources(), skipped));
+        assertEquals(mContext.getResources().getQuantityString(R.plurals.message_error_change_split_transactions, 2, 2),
+                TransactionSelectionMode.buildSkippedMessage(mContext.getResources(), new TransactionSelectionMode.SkippedRows(0, 2)));
+        assertEquals(null, TransactionSelectionMode.buildSkippedMessage(mContext.getResources(), new TransactionSelectionMode.SkippedRows(0, 0)));
     }
 
     private List<String> linesOf(long transaction) {
