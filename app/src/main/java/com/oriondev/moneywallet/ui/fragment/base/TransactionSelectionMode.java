@@ -49,6 +49,7 @@ import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.SQLiteDataException;
+import com.oriondev.moneywallet.storage.database.SyncContentProvider;
 import com.oriondev.moneywallet.ui.activity.ToolbarController;
 import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
@@ -214,7 +215,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
         Resources resources = context.getResources();
         ContentResolver resolver = context.getApplicationContext().getContentResolver();
         sDeleteExecutor.execute(() -> {
-            String message = buildCategoryMessage(resources, resolver, ids, category.getId(), category.getName());
+            String message = buildCategoryMessage(resources, resolver, ids, category);
             sMainHandler.post(() -> {
                 if (mListFragment.getView() == null) {
                     return;
@@ -383,33 +384,63 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
     }
 
     /*package-local*/ static String buildCategoryMessage(Resources resources, ContentResolver resolver, long[] ids,
-                                                         long categoryId, String categoryName) {
+                                                         Category category) {
         int count = 0;
-        try (Cursor rows = queryStored(resolver, ids, Contract.Transaction.TYPE, Contract.Transaction.CATEGORY_ID)) {
+        Set<Long> split = querySplit(resolver, ids);
+        try (Cursor rows = queryStored(resolver, ids, Contract.Transaction.ID, Contract.Transaction.TYPE,
+                Contract.Transaction.CATEGORY_ID, Contract.Transaction.DIRECTION)) {
             while (rows != null && rows.moveToNext()) {
-                if (rows.getLong(rows.getColumnIndexOrThrow(Contract.Transaction.CATEGORY_ID)) != categoryId
-                        && isStandard(rows)) {
+                if (rows.getLong(rows.getColumnIndexOrThrow(Contract.Transaction.CATEGORY_ID)) != category.getId()
+                        && isStandard(rows) && !keepsItsParts(rows, split, category)) {
                     count++;
                 }
             }
         }
         return resources.getQuantityString(R.plurals.message_change_category_selected_transactions,
-                count, count, categoryName);
+                count, count, category.getName());
+    }
+
+    private static Cursor queryStored(ContentResolver resolver, long[] ids, String... projection) {
+        return resolver.query(DataContentProvider.CONTENT_TRANSACTIONS, projection,
+                idsIn(Contract.Transaction.ID, ids), null, null);
     }
 
     // the ids inlined and not bound, a select all can pass more than the 999 variables older SQLite allows
-    private static Cursor queryStored(ContentResolver resolver, long[] ids, String... projection) {
+    private static String idsIn(String column, long[] ids) {
         StringBuilder joined = new StringBuilder();
         for (long id : ids) {
             joined.append(joined.length() > 0 ? "," : "").append(id);
         }
-        return resolver.query(DataContentProvider.CONTENT_TRANSACTIONS, projection,
-                Contract.Transaction.ID + " IN (" + joined + ")", null, null);
+        return column + " IN (" + joined + ")";
+    }
+
+    /**
+     * The rows among the ids that hold a live part, also a row whose parts are invalid and so read
+     * as nothing, since a new direction can make them valid and move money off the main category.
+     */
+    private static Set<Long> querySplit(ContentResolver resolver, long[] ids) {
+        Set<Long> split = new HashSet<>();
+        try (Cursor parts = resolver.query(SyncContentProvider.CONTENT_TRANSACTION_SPLIT,
+                new String[] {Contract.TransactionSplit.TRANSACTION_ID},
+                idsIn(Contract.TransactionSplit.TRANSACTION_ID, ids) + " AND " +
+                        Contract.TransactionSplit.DELETED + " = 0", null, null)) {
+            while (parts != null && parts.moveToNext()) {
+                split.add(parts.getLong(0));
+            }
+        }
+        return split;
     }
 
     // anything but a plain transaction belongs to a transfer, a debt or a saving that owns its wallet
     private static boolean isStandard(Cursor row) {
         return row.getInt(row.getColumnIndexOrThrow(Contract.Transaction.TYPE)) == Contract.TransactionType.STANDARD;
+    }
+
+    // a split row keeps its category when the new one would turn its direction, since every part
+    // has to stay in a category of the direction of its transaction
+    private static boolean keepsItsParts(Cursor row, Set<Long> split, Category category) {
+        return split.contains(row.getLong(row.getColumnIndexOrThrow(Contract.Transaction.ID)))
+                && row.getInt(row.getColumnIndexOrThrow(Contract.Transaction.DIRECTION)) != category.getDirection();
     }
 
     @Nullable
@@ -442,6 +473,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                 if (from.getDecimals() != to.getDecimals()) {
                     long money = row.getLong(row.getColumnIndexOrThrow(Contract.Transaction.MONEY));
                     values.put(Contract.Transaction.MONEY, MoneyFormatter.normalize(money, from.getDecimals(), to.getDecimals()));
+                    values.put(Contract.Transaction.FIX_SPLIT_DECIMALS, to.getDecimals() - from.getDecimals());
                 }
                 resolver.update(uri, values, null, null);
             } catch (SQLiteDataException e) {
@@ -452,7 +484,9 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
     }
 
     /*package-local*/ static int changeCategory(ContentResolver resolver, long[] ids, Category category) {
-        String[] projection = new String[] {Contract.Transaction.TYPE, Contract.Transaction.CATEGORY_ID};
+        String[] projection = new String[] {Contract.Transaction.ID, Contract.Transaction.TYPE,
+                Contract.Transaction.CATEGORY_ID, Contract.Transaction.DIRECTION};
+        Set<Long> split = querySplit(resolver, ids);
         int skipped = 0;
         for (long id : ids) {
             Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, id);
@@ -461,7 +495,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                         || row.getLong(row.getColumnIndexOrThrow(Contract.Transaction.CATEGORY_ID)) == category.getId()) {
                     continue;
                 }
-                if (!isStandard(row)) {
+                if (!isStandard(row) || keepsItsParts(row, split, category)) {
                     skipped++;
                     continue;
                 }

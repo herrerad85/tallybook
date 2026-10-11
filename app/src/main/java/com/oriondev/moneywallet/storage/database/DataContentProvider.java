@@ -65,6 +65,17 @@ public class DataContentProvider extends ContentProvider {
     public static final Uri CONTENT_PEOPLE = Uri.parse("content://" + AUTHORITY + "/people");
     public static final Uri CONTENT_CATEGORY_RULES = Uri.parse("content://" + AUTHORITY + "/category_rules");
     public static final Uri CONTENT_ATTACHMENTS = Uri.parse("content://" + AUTHORITY + "/attachments");
+    /**
+     * One row per category a transaction's money falls under, a split transaction giving one per
+     * part and one for what is left under its main category. Same columns as
+     * {@link #CONTENT_TRANSACTIONS} plus {@link Contract.Transaction#LINE_ID}.
+     */
+    public static final Uri CONTENT_CATEGORY_LINES = Uri.parse("content://" + AUTHORITY + "/category_lines");
+    /**
+     * The transactions with a line the selection matches, each once, carrying the money of the
+     * lines it matched. The selection itself sees each line with the full total as its money.
+     */
+    public static final Uri CONTENT_CATEGORY_SHARES = Uri.parse("content://" + AUTHORITY + "/category_shares");
 
     /**
      * Every uri above sits under this one. An observer registered here with descendants included
@@ -130,6 +141,9 @@ public class DataContentProvider extends ContentProvider {
     private static final int CATEGORY_RULE_ITEM = 48;
     private static final int CATEGORY_RULE_MATCH = 49;
 
+    private static final int CATEGORY_LINE_LIST = 50;
+    private static final int CATEGORY_SHARE_LIST = 51;
+
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
     private static UriMatcher createUriMatcher() {
@@ -185,6 +199,8 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "people/#/transactions", PERSON_TRANSACTION_LIST);
         matcher.addURI(AUTHORITY, "attachments", ATTACHMENT_LIST);
         matcher.addURI(AUTHORITY, "attachments/#", ATTACHMENT_ITEM);
+        matcher.addURI(AUTHORITY, "category_lines", CATEGORY_LINE_LIST);
+        matcher.addURI(AUTHORITY, "category_shares", CATEGORY_SHARE_LIST);
         return matcher;
     }
 
@@ -375,6 +391,12 @@ public class DataContentProvider extends ContentProvider {
             case ATTACHMENT_ITEM:
                 cursor = new MultiUriCursorWrapper(db().getAttachment(ContentUris.parseId(uri), projection));
                 break;
+            case CATEGORY_LINE_LIST:
+                cursor = new MultiUriCursorWrapper(db().getCategoryLines(projection, selection, selectionArgs, sortOrder));
+                break;
+            case CATEGORY_SHARE_LIST:
+                cursor = new MultiUriCursorWrapper(db().getCategoryShares(projection, selection, selectionArgs, sortOrder));
+                break;
         }
         if (cursor != null) {
             cursor.setNotificationUri(getContentResolver(), CONTENT_ALL);
@@ -483,6 +505,9 @@ public class DataContentProvider extends ContentProvider {
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.attachment";
             case ATTACHMENT_ITEM:
                 return "vnd.android.cursor.item/vnd.com.oriondev.moneywallet.storage.attachment";
+            case CATEGORY_LINE_LIST:
+            case CATEGORY_SHARE_LIST:
+                return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.transaction";
         }
         return null;
     }

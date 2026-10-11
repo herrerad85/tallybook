@@ -462,6 +462,7 @@
     <string name="message_error_insert_category_not_consistent">"The selected parent category is not of the same type of this category."</string>
     <string name="message_error_update_category_deep_hierarchy">"Nested child categories are not supported: this category has one or more children and cannot be updated as child category."</string>
     <string name="message_error_update_category_not_consistent">"The selected parent category is not of the same type of this category."</string>
+    <string name="message_error_update_category_type_in_split">"The type of this category cannot be changed while a split transaction uses it."</string>
     <string name="message_error_delete_category_with_children">"This category cannot be deleted because it has one or more children. Please remove them before."</string>
     <string name="message_error_delete_category_in_use">"This category cannot be deleted because it is in use. Please remove any references to this category and retry."</string>
     <string name="message_error_delete_system_category">"This category cannot be deleted because it is a system category."</string>

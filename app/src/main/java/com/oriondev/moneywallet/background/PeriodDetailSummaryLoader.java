@@ -75,7 +75,7 @@ public class PeriodDetailSummaryLoader extends AbstractGenericLoader<PeriodDetai
     public PeriodDetailSummaryData loadInBackground() {
         Money totalNetIncomes = new Money();
         List<PeriodMoney> periodMoneyList = new ArrayList<>();
-        Uri uri = DataContentProvider.CONTENT_TRANSACTIONS;
+        Uri uri = DataContentProvider.CONTENT_CATEGORY_LINES;
         String[] projection = new String[] {
                 Contract.Transaction.DATE,
                 Contract.Transaction.DIRECTION,
