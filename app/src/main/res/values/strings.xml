@@ -131,6 +131,10 @@
     <string name="hint_people">"People"</string>
     <string name="hint_place">"Place"</string>
     <string name="hint_note">"Note"</string>
+    <string name="hint_split_into_categories">"Split into categories"</string>
+    <string name="hint_split_add_part">"Add a part"</string>
+    <string name="hint_split_remaining">"Remaining under %1$s"</string>
+    <string name="split_part">"%1$s, %2$s"</string>
     <string name="hint_wallet_group">"Group"</string>
     <string name="hint_tax">"Tax"</string>
     <string name="hint_type">"Type"</string>
@@ -417,6 +421,10 @@
     <string name="title_failed">"Failed"</string>
     <string name="title_error">"Error"</string>
     <string name="error_saving_withdraw_over_balance">"You cannot withdraw more than %1$s from this saving."</string>
+    <string name="error_split_total_below_parts">"The amount is less than the parts add up to. Raise the amount or lower the parts."</string>
+    <string name="error_split_part_not_positive">"Every part needs an amount above zero."</string>
+    <string name="error_split_part_wrong_type">"Every part needs a category of the same type as the main category, income or expense."</string>
+    <string name="error_split_not_saved">"These parts cannot be saved. Check the category of each part."</string>
     <string name="title_changelog">"Changelog"</string>
     <string name="title_licenses">"Licenses"</string>
     <string name="title_debt_insert_master_transaction">"Well done"</string>

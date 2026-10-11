@@ -54,6 +54,7 @@ public class CategoryPickerActivity extends SinglePanelViewPagerActivity impleme
     public static final String SHOW_SUB_CATEGORIES = "CategoryPickerActivity::Argument::ShowSubCategories";
     public static final String SHOW_SYSTEM_CATEGORIES = "CategoryPickerActivity::Argument::ShowSystemCategories";
     public static final String RESULT_CATEGORY = "CategoryPickerActivity::Result::Category";
+    public static final String ONLY_TYPE = "CategoryPickerActivity::Argument::OnlyType";
 
     private static final String SS_QUERY = "CategoryPickerActivity::SavedState::Query";
 
@@ -126,13 +127,18 @@ public class CategoryPickerActivity extends SinglePanelViewPagerActivity impleme
             showSubCategories = intent.getBooleanExtra(SHOW_SUB_CATEGORIES, true);
             showSystemCategories = intent.getBooleanExtra(SHOW_SYSTEM_CATEGORIES, false);
         }
-        return new CategoryViewPagerAdapter(fragmentManager, this, showSubCategories, showSystemCategories);
+        return new CategoryViewPagerAdapter(fragmentManager, this, showSubCategories, showSystemCategories, getOnlyType());
+    }
+
+    private Contract.CategoryType getOnlyType() {
+        Intent intent = getIntent();
+        return intent != null ? (Contract.CategoryType) intent.getSerializableExtra(ONLY_TYPE) : null;
     }
 
     @Override
     protected void onCreatePanelView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         super.onCreatePanelView(inflater, parent, savedInstanceState);
-        if (savedInstanceState == null) {
+        if (savedInstanceState == null && getOnlyType() == null) {
             setViewPagerPosition(1);
         }
     }
@@ -146,6 +152,11 @@ public class CategoryPickerActivity extends SinglePanelViewPagerActivity impleme
     protected void onFloatingActionButtonClick() {
         Intent intent = new Intent(this, NewEditCategoryActivity.class);
         intent.putExtra(NewEditItemActivity.MODE, NewEditItemActivity.Mode.NEW_ITEM);
+        if (getOnlyType() != null) {
+            intent.putExtra(NewEditCategoryActivity.TYPE, getOnlyType());
+            startActivity(intent);
+            return;
+        }
         switch (getViewPagerPosition()) {
             case 0:
             case 2:

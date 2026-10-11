@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Material Symbols "call_split", outlined, from
+  ~ https://github.com/google/material-design-icons, Apache License 2.0.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:height="24dp"
+        android:width="24dp"
+        android:viewportWidth="960"
+        android:viewportHeight="960">
+    <group android:translateY="960">
+        <path android:fillColor="#000" android:pathData="M440-160v-304L240-664v104h-80v-240h240v80H296l224 224v336h-80Zm154-376-58-58 128-126H560v-80h240v240h-80v-104L594-536Z" />
+    </group>
+</vector>

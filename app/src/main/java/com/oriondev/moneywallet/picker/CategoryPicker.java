@@ -229,6 +229,18 @@ public class CategoryPicker extends Fragment implements ParentCategoryPickerDial
         startActivityForResult(intent, REQUEST_CATEGORY_PICKER);
     }
 
+    /**
+     * Offers the categories of one type alone, for a choice that has to follow a direction
+     * already made elsewhere on the screen.
+     */
+    public void showPicker(Contract.CategoryType type) {
+        Intent intent = new Intent(getActivity(), CategoryPickerActivity.class);
+        intent.putExtra(CategoryPickerActivity.SHOW_SUB_CATEGORIES, true);
+        intent.putExtra(CategoryPickerActivity.SHOW_SYSTEM_CATEGORIES, false);
+        intent.putExtra(CategoryPickerActivity.ONLY_TYPE, type);
+        startActivityForResult(intent, REQUEST_CATEGORY_PICKER);
+    }
+
     public void showParentPicker(long categoryId, Contract.CategoryType type) {
         mParentCategoryPickerDialog.showPicker(getChildFragmentManager(), getDialogTag(), mCurrentCategory, categoryId, type);
     }
