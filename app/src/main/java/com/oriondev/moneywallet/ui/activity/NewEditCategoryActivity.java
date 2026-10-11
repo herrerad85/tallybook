@@ -298,6 +298,9 @@ public class NewEditCategoryActivity extends NewEditItemActivity implements Icon
                             case Contract.ErrorCode.CATEGORY_NOT_CONSISTENT:
                                 contentRes = R.string.message_error_update_category_not_consistent;
                                 break;
+                            case Contract.ErrorCode.CATEGORY_IN_USE:
+                                contentRes = R.string.message_error_update_category_type_in_split;
+                                break;
                         }
                         if (contentRes != 0) {
                             ThemedDialog.buildMaterialDialog(this)

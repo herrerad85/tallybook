@@ -77,7 +77,7 @@ public class PeriodDetailFlowLoader extends AbstractGenericLoader<PeriodDetailFl
         Map<Long, Money> directMoneyMap = new HashMap<>();
         Map<Long, Category> categoryCache = loadCategoryCache();
         Map<Long, Category> childCategoryCache = loadChildCategoryCache();
-        Uri uri = DataContentProvider.CONTENT_TRANSACTIONS;
+        Uri uri = DataContentProvider.CONTENT_CATEGORY_LINES;
         String[] projection = new String[] {
                 Contract.Transaction.CATEGORY_ID,
                 Contract.Transaction.CATEGORY_PARENT_ID,

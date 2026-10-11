@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,11 +43,11 @@ public abstract class AbstractDataImporter {
     private final Context mContext;
 
     /**
-     * Per wallet, how many rows it already held for each key, read the first time this import
-     * reaches that wallet and so before it wrote anything there. A match is used up when a row is
-     * skipped against it, and rows this import writes are never added.
+     * Per wallet, the transactions it already held, read the first time this import reaches that
+     * wallet and so before it wrote anything there. A match is used up when a row is skipped
+     * against it, and rows this import writes are never added.
      */
-    private final Map<Long, Map<List<Object>, Integer>> mSavedRows = new HashMap<>();
+    private final Map<Long, SavedRows> mSavedRows = new HashMap<>();
 
     private int mAlreadySavedRows;
 
@@ -68,8 +69,13 @@ public abstract class AbstractDataImporter {
     public abstract int getRoundedAmounts();
 
     /**
-     * How many rows this import skipped because the wallet already held a transaction with the
-     * same date, direction, amount and description, once {@link #importData()} has run.
+     * How many rows this import skipped because the wallet already held a transaction, or a
+     * category line of a split one, with the same date, direction, amount and description, once
+     * {@link #importData()} has run. A split transaction is matched by its total or by its lines,
+     * never by both, and which one is settled by every row of the file before the first row is
+     * matched, when the rows were counted first through {@link #countRow}. When no row was
+     * counted, as for a file read through a mapping, every split transaction is matched by its
+     * total.
      */
     public int getAlreadySavedRows() {
         return mAlreadySavedRows;
@@ -96,6 +102,26 @@ public abstract class AbstractDataImporter {
                                      int direction, String description, String event, String place,
                                      String people, String note) {
         return insertTransaction(getContext().getContentResolver(), walletId, category, datetime, money, direction, description, event, place, people, note);
+    }
+
+    /**
+     * Counts a row of the file against the wallet it names, before any row is saved, so that each
+     * split transaction is settled by the whole file and not by whichever row reaches it first.
+     * Creates nothing, since a wallet that does not exist yet held no rows and so needs no count.
+     */
+    protected void countRow(String wallet, CurrencyUnit currencyUnit, Date datetime, long money,
+                            int direction, String description) {
+        ContentResolver contentResolver = getContext().getContentResolver();
+        Long walletId = findWallet(contentResolver, wallet, currencyUnit);
+        if (walletId != null) {
+            countRow(contentResolver, walletId, datetime, money, direction, description);
+        }
+    }
+
+    private void countRow(ContentResolver contentResolver, long walletId, Date datetime, long money,
+                          int direction, String description) {
+        savedRows(contentResolver, walletId).count(rowKey(DateUtils.getSQLDateTimeString(datetime),
+                direction, money, description));
     }
 
     private boolean insertTransaction(ContentResolver contentResolver, long walletId, String category,
@@ -149,45 +175,158 @@ public abstract class AbstractDataImporter {
      */
     private boolean isAlreadySaved(ContentResolver contentResolver, long walletId, String date,
                                    int direction, long money, String description) {
-        Map<List<Object>, Integer> saved = mSavedRows.get(walletId);
+        return savedRows(contentResolver, walletId).use(rowKey(date, direction, money, description));
+    }
+
+    private SavedRows savedRows(ContentResolver contentResolver, long walletId) {
+        SavedRows saved = mSavedRows.get(walletId);
         if (saved == null) {
             saved = readSavedRows(contentResolver, walletId);
             mSavedRows.put(walletId, saved);
         }
-        List<Object> key = rowKey(date, direction, money, description);
-        Integer left = saved.get(key);
-        if (left == null) {
-            return false;
-        }
-        if (left == 1) {
-            saved.remove(key);
-        } else {
-            saved.put(key, left - 1);
-        }
-        return true;
+        return saved;
     }
 
-    // one query per wallet and not one per row, at the cost of holding the wallet's rows until
-    // the import ends
-    private static Map<List<Object>, Integer> readSavedRows(ContentResolver contentResolver, long walletId) {
-        Map<List<Object>, Integer> saved = new HashMap<>();
+    /**
+     * A split transaction the wallet held before the import. A file made before it was split holds
+     * it as one row for its total, and an export made after holds it as one row per category line.
+     */
+    private static final class SavedSplit {
+
+        private final List<Object> mTotal;
+        private final List<List<Object>> mLines;
+
+        private SavedSplit(List<Object> total, List<List<Object>> lines) {
+            mTotal = total;
+            mLines = lines;
+        }
+    }
+
+    /**
+     * What a wallet held before the import, as how many more rows each key can match. An unsplit
+     * transaction offers its total once. A split one offers its total or its lines, never both,
+     * and which is settled once, from the rows counted before the first row is matched, so the
+     * order of the rows does not decide it.
+     */
+    private static final class SavedRows {
+
+        private final Map<List<Object>, Integer> mLeft = new HashMap<>();
+
+        /** The split transactions, until they are settled into mLeft. */
+        private List<SavedSplit> mSplits = new ArrayList<>();
+
+        /**
+         * How many rows of the file hold each line key of a split transaction. Only those keys
+         * are counted, so this grows with the wallet's split transactions and not with the file.
+         */
+        private Map<List<Object>, Integer> mFileRows = new HashMap<>();
+
+        private void count(List<Object> key) {
+            mFileRows.computeIfPresent(key, (any, rows) -> rows + 1);
+        }
+
+        private boolean use(List<Object> key) {
+            if (mSplits != null) {
+                settle();
+            }
+            Integer left = mLeft.get(key);
+            if (left == null) {
+                return false;
+            }
+            if (left == 1) {
+                mLeft.remove(key);
+            } else {
+                mLeft.put(key, left - 1);
+            }
+            return true;
+        }
+
+        /**
+         * A split transaction is matched by its lines when the file holds each of them as many
+         * times as the transaction has it, and by its total otherwise. As many file rows as there
+         * are saved unsplit transactions with the same key are left out of the count, so unsplit
+         * transactions equal to the parts of a receipt leave the receipt to its total. A part of
+         * zero is a line the file has to hold too, so a file made before the split, which holds
+         * only the total, settles that receipt to its total.
+         */
+        private void settle() {
+            Map<List<Object>, Integer> unsplit = new HashMap<>(mLeft);
+            for (SavedSplit split : mSplits) {
+                Map<List<Object>, Integer> needed = new HashMap<>();
+                for (List<Object> line : split.mLines) {
+                    needed.merge(line, 1, Integer::sum);
+                }
+                boolean byLines = true;
+                for (Map.Entry<List<Object>, Integer> line : needed.entrySet()) {
+                    int available = mFileRows.get(line.getKey()) - unsplit.getOrDefault(line.getKey(), 0);
+                    if (available < line.getValue()) {
+                        byLines = false;
+                    }
+                }
+                for (List<Object> key : byLines ? split.mLines : Collections.singletonList(split.mTotal)) {
+                    mLeft.merge(key, 1, Integer::sum);
+                }
+            }
+            mSplits = null;
+            mFileRows = null;
+        }
+    }
+
+    // one query per source per wallet and not one per row, at the cost of holding the wallet's
+    // rows until the import ends. The category lines are kept only for a transaction with a part
+    // among them, since any other gives one line equal to its total
+    private static SavedRows readSavedRows(ContentResolver contentResolver, long walletId) {
+        Map<Long, List<Object>> totals = new HashMap<>();
         List<String> arguments = new ArrayList<>(CSVDataExporter.ROWS_SELECTION_ARGS);
         arguments.add(String.valueOf(walletId));
+        String selection = CSVDataExporter.ROWS_SELECTION + " AND " + Contract.Transaction.WALLET_ID + " = ?";
+        String[] selectionArgs = arguments.toArray(new String[0]);
         Cursor cursor = contentResolver.query(DataContentProvider.CONTENT_TRANSACTIONS,
-                new String[] {Contract.Transaction.DATE, Contract.Transaction.DIRECTION,
-                        Contract.Transaction.MONEY, Contract.Transaction.DESCRIPTION},
-                CSVDataExporter.ROWS_SELECTION + " AND " + Contract.Transaction.WALLET_ID + " = ?",
-                arguments.toArray(new String[0]), null);
+                new String[] {Contract.Transaction.ID, Contract.Transaction.DATE,
+                        Contract.Transaction.DIRECTION, Contract.Transaction.MONEY,
+                        Contract.Transaction.DESCRIPTION},
+                selection, selectionArgs, null);
         if (cursor != null) {
             try {
                 while (cursor.moveToNext()) {
-                    List<Object> key = rowKey(cursor.getString(0), cursor.getInt(1),
-                            cursor.getLong(2), cursor.getString(3));
-                    Integer count = saved.get(key);
-                    saved.put(key, count == null ? 1 : count + 1);
+                    totals.put(cursor.getLong(0), rowKey(cursor.getString(1), cursor.getInt(2),
+                            cursor.getLong(3), cursor.getString(4)));
                 }
             } finally {
                 cursor.close();
+            }
+        }
+        Map<Long, List<List<Object>>> lines = new HashMap<>();
+        Set<Long> split = new HashSet<>();
+        cursor = contentResolver.query(DataContentProvider.CONTENT_CATEGORY_LINES,
+                new String[] {Contract.Transaction.ID, Contract.Transaction.SPLIT_ID,
+                        Contract.Transaction.DATE, Contract.Transaction.DIRECTION,
+                        Contract.Transaction.MONEY, Contract.Transaction.DESCRIPTION},
+                selection, selectionArgs, null);
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(0);
+                    if (!cursor.isNull(1)) {
+                        split.add(id);
+                    }
+                    lines.computeIfAbsent(id, key -> new ArrayList<>()).add(rowKey(cursor.getString(2),
+                            cursor.getInt(3), cursor.getLong(4), cursor.getString(5)));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        SavedRows saved = new SavedRows();
+        for (Map.Entry<Long, List<Object>> total : totals.entrySet()) {
+            if (split.contains(total.getKey())) {
+                List<List<Object>> transactionLines = lines.get(total.getKey());
+                saved.mSplits.add(new SavedSplit(total.getValue(), transactionLines));
+                for (List<Object> line : transactionLines) {
+                    saved.mFileRows.put(line, 0);
+                }
+            } else {
+                saved.mLeft.merge(total.getValue(), 1, Integer::sum);
             }
         }
         return saved;
@@ -205,6 +344,30 @@ public abstract class AbstractDataImporter {
     }
 
     private long getOrCreateWallet(ContentResolver contentResolver, String name, CurrencyUnit currencyUnit) {
+        Long walletId = findWallet(contentResolver, name, currencyUnit);
+        if (walletId != null) {
+            return walletId;
+        }
+        // if we reached this line, the wallet does not exists and we have to create it
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Contract.Wallet.NAME, name);
+        contentValues.put(Contract.Wallet.ICON, generateRandomIcon(name));
+        contentValues.put(Contract.Wallet.CURRENCY, currencyUnit.getIso());
+        contentValues.put(Contract.Wallet.COUNT_IN_TOTAL, true);
+        contentValues.put(Contract.Wallet.START_MONEY, 0L);
+        contentValues.put(Contract.Wallet.ARCHIVED, false);
+        Uri result = contentResolver.insert(DataContentProvider.CONTENT_WALLETS, contentValues);
+        if (result == null) {
+            throw new RuntimeException("Failed to create the new wallet");
+        }
+        return ContentUris.parseId(result);
+    }
+
+    /**
+     * The id of the wallet a row naming this wallet and currency belongs to, or null when there is
+     * none yet.
+     */
+    private static Long findWallet(ContentResolver contentResolver, String name, CurrencyUnit currencyUnit) {
         Uri uri = DataContentProvider.CONTENT_WALLETS;
         String[] projection = new String[] {Contract.Wallet.ID};
         // trimmed because the wallet editor saves a name as typed and the import trims the one in
@@ -225,19 +388,7 @@ public abstract class AbstractDataImporter {
                 cursor.close();
             }
         }
-        // if we reached this line, the wallet does not exists and we have to create it
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Contract.Wallet.NAME, name);
-        contentValues.put(Contract.Wallet.ICON, generateRandomIcon(name));
-        contentValues.put(Contract.Wallet.CURRENCY, currencyUnit.getIso());
-        contentValues.put(Contract.Wallet.COUNT_IN_TOTAL, true);
-        contentValues.put(Contract.Wallet.START_MONEY, 0L);
-        contentValues.put(Contract.Wallet.ARCHIVED, false);
-        Uri result = contentResolver.insert(uri, contentValues);
-        if (result == null) {
-            throw new RuntimeException("Failed to create the new wallet");
-        }
-        return ContentUris.parseId(result);
+        return null;
     }
 
     private long getOrCreateCategory(ContentResolver contentResolver, String name, int direction) {

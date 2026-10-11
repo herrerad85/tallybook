@@ -161,7 +161,7 @@ public class ImportExportIntentService extends IntentService {
         // initialize the correct data exporter
         AbstractDataExporter dataExporter = getDataExporter(context, dataFormat, folder);
         ContentResolver contentResolver = context.getContentResolver();
-        Uri uri = DataContentProvider.CONTENT_TRANSACTIONS;
+        Uri uri = DataContentProvider.CONTENT_CATEGORY_LINES;
         // initialize the selection builder with common variables
         StringBuilder selectionBuilder = new StringBuilder();
         List<String> selectionArguments = new ArrayList<>();

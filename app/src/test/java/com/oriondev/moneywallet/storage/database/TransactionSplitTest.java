@@ -198,11 +198,14 @@ public class TransactionSplitTest {
 
     /**
      * A category only parts use leaves with them, and the parents stay with their totals and main
-     * categories, so the money of the lost part reads under the main category again.
+     * categories, so the money of the lost part reads under the main category again. The delete is
+     * the bare statement a release that predates parts runs, since this one refuses a category a
+     * part uses.
      */
     @Test
     public void deletingACategoryTakesThePartsUsingItAndLeavesTheirParents() {
-        mResolver.delete(ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, PHARMACY), null, null);
+        SQLDatabase.getShared(mContext).getWritableDatabase().execSQL(
+                "DELETE FROM categories WHERE category_id = " + PHARMACY);
         long left = 0;
         for (long[] part : PARTS) {
             if (part[2] != PHARMACY) {

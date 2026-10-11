@@ -1019,52 +1019,190 @@ import java.util.function.Supplier;
      * @return a cursor with zero or more rows.
      */
     /*package-local*/ Cursor getTransactions(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        String subQuery = "SELECT " +
-                "t." + Schema.Transaction.ID + " AS " + Contract.Transaction.ID + ", " +
-                "t." + Schema.Transaction.MONEY + " AS " + Contract.Transaction.MONEY + ", " +
-                "t." + Schema.Transaction.DATE + " AS " + Contract.Transaction.DATE + ", " +
-                "t." + Schema.Transaction.DESCRIPTION + " AS " + Contract.Transaction.DESCRIPTION + ", " +
-                "t." + Schema.Transaction.CATEGORY + " AS " + Contract.Transaction.CATEGORY_ID + ", " +
-                "c." + Schema.Category.NAME + " AS " + Contract.Transaction.CATEGORY_NAME + ", " +
-                "c." + Schema.Category.ICON + " AS " + Contract.Transaction.CATEGORY_ICON + ", " +
-                "c." + Schema.Category.PARENT + " AS " + Contract.Transaction.CATEGORY_PARENT_ID + ", " +
-                "c." + Schema.Category.TYPE + " AS " + Contract.Transaction.CATEGORY_TYPE + ", " +
-                "c." + Schema.Category.TAG + " AS " + Contract.Transaction.CATEGORY_TAG + ", " +
-                "c." + Schema.Category.SHOW_REPORT + " AS " + Contract.Transaction.CATEGORY_SHOW_REPORT + ", " +
-                "pc." + Schema.Category.SHOW_REPORT + " AS " + Contract.Transaction.CATEGORY_PARENT_SHOW_REPORT + ", " +
-                "t." + Schema.Transaction.DIRECTION + " AS " + Contract.Transaction.DIRECTION + ", " +
-                "t." + Schema.Transaction.TYPE + " AS " + Contract.Transaction.TYPE + ", " +
-                "t." + Schema.Transaction.WALLET + " AS " + Contract.Transaction.WALLET_ID + ", " +
-                "w." + Schema.Wallet.NAME + " AS " + Contract.Transaction.WALLET_NAME + ", " +
-                "w." + Schema.Wallet.ICON + " AS " + Contract.Transaction.WALLET_ICON + ", " +
-                "w." + Schema.Wallet.CURRENCY + " AS " + Contract.Transaction.WALLET_CURRENCY + ", " +
-                "w." + Schema.Wallet.COUNT_IN_TOTAL + " AS " + Contract.Transaction.WALLET_COUNT_IN_TOTAL + ", " +
-                "w." + Schema.Wallet.ARCHIVED + " AS " + Contract.Transaction.WALLET_ARCHIVED + ", " +
-                "w." + Schema.Wallet.TAG + " AS " + Contract.Transaction.WALLET_TAG + ", " +
-                "t." + Schema.Transaction.PLACE + " AS " + Contract.Transaction.PLACE_ID + ", " +
-                "p." + Schema.Place.NAME + " AS " + Contract.Transaction.PLACE_NAME + ", " +
-                "p." + Schema.Place.ICON + " AS " + Contract.Transaction.PLACE_ICON + ", " +
-                "p." + Schema.Place.ADDRESS + " AS " + Contract.Transaction.PLACE_ADDRESS + ", " +
-                "p." + Schema.Place.LATITUDE + " AS " + Contract.Transaction.PLACE_LATITUDE + ", " +
-                "p." + Schema.Place.LONGITUDE + " AS " + Contract.Transaction.PLACE_LONGITUDE + ", " +
-                "p." + Schema.Place.TAG + " AS " + Contract.Transaction.PLACE_TAG + ", " +
-                "t." + Schema.Transaction.EVENT + " AS " + Contract.Transaction.EVENT_ID + ", " +
-                "e." + Schema.Event.NAME + " AS " + Contract.Transaction.EVENT_NAME + ", " +
-                "e." + Schema.Event.ICON + " AS " + Contract.Transaction.EVENT_ICON + ", " +
-                "e." + Schema.Event.NOTE + " AS " + Contract.Transaction.EVENT_NOTE + ", " +
-                "e." + Schema.Event.START_DATE + " AS " + Contract.Transaction.EVENT_START_DATE + ", " +
-                "e." + Schema.Event.END_DATE + " AS " + Contract.Transaction.EVENT_END_DATE + ", " +
-                "e." + Schema.Event.TAG + " AS " + Contract.Transaction.EVENT_TAG + ", " +
-                "t." + Schema.Transaction.NOTE + " AS " + Contract.Transaction.NOTE + ", " +
-                "t." + Schema.Transaction.DEBT + " AS " + Contract.Transaction.DEBT_ID + ", " +
-                "t." + Schema.Transaction.SAVING + " AS " + Contract.Transaction.SAVING_ID + ", " +
-                "t." + Schema.Transaction.RECURRENCE + " AS " + Contract.Transaction.RECURRENCE_ID + ", " +
-                "t." + Schema.Transaction.CONFIRMED + " AS " + Contract.Transaction.CONFIRMED + ", " +
-                "t." + Schema.Transaction.COUNT_IN_TOTAL + " AS " + Contract.Transaction.COUNT_IN_TOTAL + ", " +
-                "t." + Schema.Transaction.TAG + " AS " + Contract.Transaction.TAG + ", " +
-                "GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>') AS " + Contract.Transaction.PEOPLE_IDS + " " +
-                "FROM " + Schema.Transaction.TABLE + " AS t LEFT JOIN " + Schema.Category.TABLE +
-                " AS c ON t." + Schema.Transaction.CATEGORY + " = c." + Schema.Category.ID + " AND c." +
+        String subQuery = transactionRows("t." + Schema.Transaction.MONEY, "t." + Schema.Transaction.CATEGORY,
+                Schema.Transaction.TABLE + " AS t", "t." + Schema.Transaction.ID);
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
+    /**
+     * The transactions whose live parts are valid, each with the sum of those parts. Parts are
+     * ignored, and the transaction reads as unsplit under its main category, when they add up to
+     * more than the total, when one is below zero, when one sits in a category of the other
+     * direction or in a system category, or when the transaction is not a standard one. A release
+     * that predates parts can edit the total, the category or the direction without them, and a
+     * restore takes any amount a backup holds, so none of this is guaranteed by the writes.
+     */
+    private static final String VALID_PARTS = validParts("");
+
+    /**
+     * The same, counting only the live parts that also match the given condition on s.
+     */
+    private static String validParts(String partCondition) {
+        return "SELECT s." + Schema.TransactionSplit.TRANSACTION +
+            " AS _parts_transaction, SUM(s." + Schema.TransactionSplit.MONEY + ") AS _parts_money FROM " +
+            Schema.TransactionSplit.TABLE + " AS s JOIN " + Schema.Transaction.TABLE + " AS st ON s." +
+            Schema.TransactionSplit.TRANSACTION + " = st." + Schema.Transaction.ID + " LEFT JOIN " +
+            Schema.Category.TABLE + " AS sc ON s." + Schema.TransactionSplit.CATEGORY + " = sc." +
+            Schema.Category.ID + " AND sc." + Schema.Category.DELETED + " = 0 WHERE s." +
+            Schema.TransactionSplit.DELETED + " = 0 AND st." + Schema.Transaction.DELETED + " = 0" +
+            partCondition + " GROUP BY s." +
+            Schema.TransactionSplit.TRANSACTION + " HAVING SUM(s." + Schema.TransactionSplit.MONEY +
+            ") <= MAX(st." + Schema.Transaction.MONEY + ") AND MIN(s." + Schema.TransactionSplit.MONEY +
+            ") >= 0 AND MAX(st." + Schema.Transaction.TYPE + ") = " + Contract.TransactionType.STANDARD +
+            " AND MIN(CASE WHEN (st." + Schema.Transaction.DIRECTION + " = " + Schema.Direction.EXPENSE +
+            " AND sc." + Schema.Category.TYPE + " = " + Schema.CategoryType.EXPENSE + ") OR (st." +
+            Schema.Transaction.DIRECTION + " = " + Schema.Direction.INCOME + " AND sc." +
+            Schema.Category.TYPE + " = " + Schema.CategoryType.INCOME + ") THEN 1 ELSE 0 END) = 1";
+    }
+
+    /**
+     * The category lines, one per category a transaction's money falls under. A transaction with
+     * valid parts gives a line per part and a line under its main category for what the parts
+     * leave of the total, only when that is above zero. Every other transaction gives one line,
+     * itself. So the lines of a transaction always add up to its total, and none is negative.
+     *
+     * The key of a line is the part's id, or the transaction's id negated for the line under the
+     * main category. It is unique across both, and the lowest key of a transaction is its main
+     * line when it has one and its first part otherwise.
+     */
+    private static final String CATEGORY_LINES = "SELECT -t." + Schema.Transaction.ID + " AS _line_id, " +
+            "NULL AS _line_split, t." + Schema.Transaction.ID + " AS _line_transaction, t." +
+            Schema.Transaction.CATEGORY + " AS _line_category, t." + Schema.Transaction.MONEY +
+            " - IFNULL(v._parts_money, 0) AS _line_money FROM " + Schema.Transaction.TABLE +
+            " AS t LEFT JOIN (" + VALID_PARTS + ") AS v ON v._parts_transaction = t." +
+            Schema.Transaction.ID + " WHERE t." + Schema.Transaction.DELETED + " = 0 AND (" +
+            "v._parts_transaction IS NULL OR t." + Schema.Transaction.MONEY + " > v._parts_money) " +
+            "UNION ALL SELECT s." + Schema.TransactionSplit.ID + ", s." + Schema.TransactionSplit.ID +
+            ", s." + Schema.TransactionSplit.TRANSACTION + ", s." + Schema.TransactionSplit.CATEGORY +
+            ", s." + Schema.TransactionSplit.MONEY + " FROM " + Schema.TransactionSplit.TABLE +
+            " AS s JOIN (" + VALID_PARTS + ") AS v ON v._parts_transaction = s." +
+            Schema.TransactionSplit.TRANSACTION + " WHERE s." + Schema.TransactionSplit.DELETED + " = 0";
+
+    private static final String CATEGORY_LINES_FROM = "(" + CATEGORY_LINES + ") AS l JOIN " +
+            Schema.Transaction.TABLE + " AS t ON l._line_transaction = t." + Schema.Transaction.ID;
+
+    /**
+     * This method is called by the content provider when the user is querying the category lines
+     * of the transactions.
+     *
+     * @param projection column names that are requested to be part of the cursor.
+     * @param selection string that may contains additional filters for the query.
+     * @param selectionArgs string array that may contains the arguments for the selection string.
+     * @param sortOrder string that may contains column name to use to sort the cursor.
+     * @return a cursor with zero or more rows.
+     */
+    /*package-local*/ Cursor getCategoryLines(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String subQuery = transactionRows("l._line_money", "l._line_category", CATEGORY_LINES_FROM,
+                "l._line_id", "l._line_id AS " + Contract.Transaction.LINE_ID,
+                "l._line_split AS " + Contract.Transaction.SPLIT_ID);
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
+    /**
+     * This method is called by the content provider when the user is querying the transactions
+     * that have a category line matching the selection. Each comes once, carrying the money of
+     * its matching lines and the category of the lowest matching line. The selection runs on each
+     * line before they are summed, and sees the full total of the transaction as its money, so a
+     * filter on the amount still matches the receipt and not the share.
+     *
+     * @param projection column names that are requested to be part of the cursor.
+     * @param selection string that may contains additional filters for the query.
+     * @param selectionArgs string array that may contains the arguments for the selection string.
+     * @param sortOrder string that may contains column name to use to sort the cursor.
+     * @return a cursor with zero or more rows.
+     */
+    /*package-local*/ Cursor getCategoryShares(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String lines = transactionRows("t." + Schema.Transaction.MONEY, "l._line_category",
+                CATEGORY_LINES_FROM, "l._line_id", "l._line_id AS " + Contract.Transaction.LINE_ID,
+                "l._line_split AS " + Contract.Transaction.SPLIT_ID, "l._line_money AS _line_money");
+        StringBuilder columns = new StringBuilder();
+        for (String[] column : transactionColumns("", "")) {
+            String name = column[1];
+            columns.append(Contract.Transaction.MONEY.equals(name) ? "SUM(_line_money) AS " + name : name).append(", ");
+        }
+        // the one MIN in this select is what makes SQLite take every other column from the row
+        // holding the lowest key
+        String subQuery = "SELECT " + columns + "MIN(" + Contract.Transaction.LINE_ID + ") AS " +
+                Contract.Transaction.LINE_ID + ", " + Contract.Transaction.SPLIT_ID + " FROM (" + lines +
+                ")" + (TextUtils.isEmpty(selection) ? "" : " WHERE " + selection) + " GROUP BY " +
+                Contract.Transaction.ID;
+        return queryFrom(subQuery, projection, null, selectionArgs, sortOrder);
+    }
+
+    /**
+     * Every column a transaction row carries, as the expression and the name it goes by.
+     *
+     * @param money expression giving the money of the row.
+     * @param category expression giving the id of its category, which the category columns follow.
+     */
+    private static String[][] transactionColumns(String money, String category) {
+        return new String[][] {
+                {"t." + Schema.Transaction.ID, Contract.Transaction.ID},
+                {money, Contract.Transaction.MONEY},
+                {"t." + Schema.Transaction.DATE, Contract.Transaction.DATE},
+                {"t." + Schema.Transaction.DESCRIPTION, Contract.Transaction.DESCRIPTION},
+                {category, Contract.Transaction.CATEGORY_ID},
+                {"c." + Schema.Category.NAME, Contract.Transaction.CATEGORY_NAME},
+                {"c." + Schema.Category.ICON, Contract.Transaction.CATEGORY_ICON},
+                {"c." + Schema.Category.PARENT, Contract.Transaction.CATEGORY_PARENT_ID},
+                {"c." + Schema.Category.TYPE, Contract.Transaction.CATEGORY_TYPE},
+                {"c." + Schema.Category.TAG, Contract.Transaction.CATEGORY_TAG},
+                {"c." + Schema.Category.SHOW_REPORT, Contract.Transaction.CATEGORY_SHOW_REPORT},
+                {"pc." + Schema.Category.SHOW_REPORT, Contract.Transaction.CATEGORY_PARENT_SHOW_REPORT},
+                {"t." + Schema.Transaction.DIRECTION, Contract.Transaction.DIRECTION},
+                {"t." + Schema.Transaction.TYPE, Contract.Transaction.TYPE},
+                {"t." + Schema.Transaction.WALLET, Contract.Transaction.WALLET_ID},
+                {"w." + Schema.Wallet.NAME, Contract.Transaction.WALLET_NAME},
+                {"w." + Schema.Wallet.ICON, Contract.Transaction.WALLET_ICON},
+                {"w." + Schema.Wallet.CURRENCY, Contract.Transaction.WALLET_CURRENCY},
+                {"w." + Schema.Wallet.COUNT_IN_TOTAL, Contract.Transaction.WALLET_COUNT_IN_TOTAL},
+                {"w." + Schema.Wallet.ARCHIVED, Contract.Transaction.WALLET_ARCHIVED},
+                {"w." + Schema.Wallet.TAG, Contract.Transaction.WALLET_TAG},
+                {"t." + Schema.Transaction.PLACE, Contract.Transaction.PLACE_ID},
+                {"p." + Schema.Place.NAME, Contract.Transaction.PLACE_NAME},
+                {"p." + Schema.Place.ICON, Contract.Transaction.PLACE_ICON},
+                {"p." + Schema.Place.ADDRESS, Contract.Transaction.PLACE_ADDRESS},
+                {"p." + Schema.Place.LATITUDE, Contract.Transaction.PLACE_LATITUDE},
+                {"p." + Schema.Place.LONGITUDE, Contract.Transaction.PLACE_LONGITUDE},
+                {"p." + Schema.Place.TAG, Contract.Transaction.PLACE_TAG},
+                {"t." + Schema.Transaction.EVENT, Contract.Transaction.EVENT_ID},
+                {"e." + Schema.Event.NAME, Contract.Transaction.EVENT_NAME},
+                {"e." + Schema.Event.ICON, Contract.Transaction.EVENT_ICON},
+                {"e." + Schema.Event.NOTE, Contract.Transaction.EVENT_NOTE},
+                {"e." + Schema.Event.START_DATE, Contract.Transaction.EVENT_START_DATE},
+                {"e." + Schema.Event.END_DATE, Contract.Transaction.EVENT_END_DATE},
+                {"e." + Schema.Event.TAG, Contract.Transaction.EVENT_TAG},
+                {"t." + Schema.Transaction.NOTE, Contract.Transaction.NOTE},
+                {"t." + Schema.Transaction.DEBT, Contract.Transaction.DEBT_ID},
+                {"t." + Schema.Transaction.SAVING, Contract.Transaction.SAVING_ID},
+                {"t." + Schema.Transaction.RECURRENCE, Contract.Transaction.RECURRENCE_ID},
+                {"t." + Schema.Transaction.CONFIRMED, Contract.Transaction.CONFIRMED},
+                {"t." + Schema.Transaction.COUNT_IN_TOTAL, Contract.Transaction.COUNT_IN_TOTAL},
+                {"t." + Schema.Transaction.TAG, Contract.Transaction.TAG},
+                {"GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>')", Contract.Transaction.PEOPLE_IDS}
+        };
+    }
+
+    /**
+     * The select every transaction view is built on, one row per value of the group key.
+     *
+     * @param money expression giving the money of a row.
+     * @param category expression giving the id of the category of a row.
+     * @param from source of the rows, which has to name the transactions table t.
+     * @param groupBy key of a row.
+     * @param extraColumns further columns, each an expression with its name.
+     */
+    private static String transactionRows(String money, String category, String from, String groupBy, String... extraColumns) {
+        StringBuilder columns = new StringBuilder();
+        for (String[] column : transactionColumns(money, category)) {
+            columns.append(columns.length() > 0 ? ", " : "").append(column[0]).append(" AS ").append(column[1]);
+        }
+        for (String column : extraColumns) {
+            columns.append(", ").append(column);
+        }
+        return "SELECT " + columns + " " +
+                "FROM " + from + " LEFT JOIN " + Schema.Category.TABLE +
+                " AS c ON " + category + " = c." + Schema.Category.ID + " AND c." +
                 Schema.Category.DELETED + " = 0 LEFT JOIN " + Schema.Category.TABLE + " AS pc ON c." +
                 Schema.Category.PARENT + " = pc." + Schema.Category.ID + " AND pc." +
                 Schema.Category.DELETED + " = 0 JOIN " + Schema.Wallet.TABLE + " AS w ON t." +
@@ -1077,8 +1215,7 @@ import java.util.function.Supplier;
                 Schema.Transaction.PLACE + " = " + Schema.Place.ID + " AND p." + Schema.Place.DELETED +
                 " = 0 LEFT JOIN " + Schema.Event.TABLE + " AS e ON t." + Schema.Transaction.EVENT +
                 " = e." + Schema.Event.ID + " AND e." + Schema.Event.DELETED + " = 0 WHERE t." +
-                Schema.Transaction.DELETED + " = 0 GROUP BY t." + Schema.Transaction.ID;
-        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+                Schema.Transaction.DELETED + " = 0 GROUP BY " + groupBy;
     }
 
     /**
@@ -1388,6 +1525,24 @@ import java.util.function.Supplier;
                             getWritableDatabase().update(Schema.TransactionAttachment.TABLE, cv, where, whereArgs);
                         }
                     }
+                }
+            }
+            if (contentValues.containsKey(Contract.Transaction.FIX_SPLIT_DECIMALS)) {
+                int decimalOffset = contentValues.getAsInteger(Contract.Transaction.FIX_SPLIT_DECIMALS);
+                projection = new String[] {Schema.TransactionSplit.ID, Schema.TransactionSplit.MONEY};
+                where = Schema.TransactionSplit.TRANSACTION + " = ?";
+                whereArgs = new String[]{String.valueOf(transactionId)};
+                cursor = getReadableDatabase().query(Schema.TransactionSplit.TABLE, projection, where, whereArgs, null, null, null);
+                try {
+                    while (cursor.moveToNext()) {
+                        cv = new ContentValues();
+                        cv.put(Schema.TransactionSplit.MONEY, MoneyFormatter.normalize(cursor.getLong(1), decimalOffset));
+                        cv.put(Schema.TransactionSplit.LAST_EDIT, System.currentTimeMillis());
+                        getWritableDatabase().update(Schema.TransactionSplit.TABLE, cv,
+                                Schema.TransactionSplit.ID + " = ?", new String[]{String.valueOf(cursor.getLong(0))});
+                    }
+                } finally {
+                    cursor.close();
                 }
             }
             // remove all deleted TransactionPeople
@@ -2107,7 +2262,7 @@ import java.util.function.Supplier;
         if (selectionArgs != null) {
             System.arraycopy(selectionArgs, 0, _selectionArgs, 2, size);
         }
-        return getTransactions(projection, _selection, _selectionArgs, sortOrder);
+        return getCategoryShares(projection, _selection, _selectionArgs, sortOrder);
     }
 
     /**
@@ -2176,6 +2331,7 @@ import java.util.function.Supplier;
         // check if category is a system category: only the flag SHOW_REPORT can be changed
         boolean isSystemCategory = false;
         boolean isChildCategory = false;
+        Integer currentType = null;
         String[] projection = new String[] {Schema.Category.TYPE, Schema.Category.PARENT};
         String where = Schema.Category.ID + " = ?";
         String[] whereArgs = new String[]{String.valueOf(categoryId)};
@@ -2183,6 +2339,7 @@ import java.util.function.Supplier;
         if (cursor != null) {
             try {
                 if (cursor.moveToFirst()) {
+                    currentType = cursor.getInt(cursor.getColumnIndexOrThrow(Schema.Category.TYPE));
                     if (cursor.getInt(cursor.getColumnIndex(Schema.Category.TYPE)) == Contract.CategoryType.SYSTEM.getValue()) {
                         isSystemCategory = true;
                     }
@@ -2251,6 +2408,27 @@ import java.util.function.Supplier;
                         cursor.close();
                     }
                 }
+            }
+        }
+        // a part has to sit in a category of its transaction's direction, so a type change that
+        // flips the direction of either side is refused while live parts depend on it
+        if (!isSystemCategory && currentType != null && contentValues.containsKey(Contract.Category.TYPE)
+                && contentValues.getAsInteger(Contract.Category.TYPE) != Schema.CategoryType.SYSTEM
+                && contentValues.getAsInteger(Contract.Category.TYPE) != currentType.intValue()) {
+            cursor = getReadableDatabase().rawQuery("SELECT s." + Schema.TransactionSplit.ID + " FROM " +
+                    Schema.TransactionSplit.TABLE + " AS s JOIN " + Schema.Transaction.TABLE + " AS t ON s." +
+                    Schema.TransactionSplit.TRANSACTION + " = t." + Schema.Transaction.ID + " WHERE (s." +
+                    Schema.TransactionSplit.CATEGORY + " = ? OR t." + Schema.Transaction.CATEGORY +
+                    " = ?) AND s." + Schema.TransactionSplit.DELETED + " = 0 AND t." +
+                    Schema.Transaction.DELETED + " = 0", new String[] {String.valueOf(categoryId),
+                    String.valueOf(categoryId)});
+            try {
+                if (cursor.moveToFirst()) {
+                    throw new SQLiteDataException(Contract.ErrorCode.CATEGORY_IN_USE,
+                            String.format(Locale.ENGLISH, "The type of the category (id: %d) cannot be changed because %d parts of transactions depend on it", categoryId, cursor.getCount()));
+                }
+            } finally {
+                cursor.close();
             }
         }
         // update the category
@@ -2367,6 +2545,27 @@ import java.util.function.Supplier;
             } finally {
                 cursor.close();
             }
+        }
+        // check if category is in use in some part of a transaction. The key carries ON DELETE
+        // CASCADE, so a part this check lets through leaves with the category. That is safe only
+        // for a part of a transaction whose parts are invalid now and stay invalid without the
+        // parts in this category, since then its one line reads under the main category before
+        // and after. Removing the one part that keeps the others invalid would move their money
+        // off the main category
+        cursor = getReadableDatabase().rawQuery("SELECT s." + Schema.TransactionSplit.ID + " FROM " +
+                Schema.TransactionSplit.TABLE + " AS s WHERE s." + Schema.TransactionSplit.CATEGORY +
+                " = ? AND s." + Schema.TransactionSplit.DELETED + " = 0 AND s." +
+                Schema.TransactionSplit.TRANSACTION + " IN (SELECT _parts_transaction FROM (" +
+                VALID_PARTS + ") UNION SELECT _parts_transaction FROM (" + validParts(" AND s." +
+                Schema.TransactionSplit.CATEGORY + " != ?") + "))",
+                new String[] {String.valueOf(categoryId), String.valueOf(categoryId)});
+        try {
+            if (cursor.moveToFirst()) {
+                throw new SQLiteDataException(Contract.ErrorCode.CATEGORY_IN_USE,
+                        String.format(Locale.ENGLISH, "The category (id: %d) cannot be deleted because it is in use in %d parts of transactions", categoryId, cursor.getCount()));
+            }
+        } finally {
+            cursor.close();
         }
         // check if category is in use in some transaction model
         projection = new String[] {Schema.TransactionModel.ID};
@@ -3376,9 +3575,12 @@ import java.util.function.Supplier;
                 " JOIN " + Schema.Wallet.TABLE + " AS w ON bw._wallet = w." + Schema.Wallet.ID +
                 " WHERE bw. " + Schema.BudgetWallet.DELETED + " = 0 AND b." + Schema.Budget.DELETED +
                 " = 0 AND w." + Schema.Wallet.DELETED + " = 0 AND b." + Schema.Budget.TYPE + " = " +
-                Schema.BudgetType.CATEGORY + ") AS b LEFT JOIN (SELECT tr.*, tc." +
-                Schema.Category.PARENT + " AS _parent_category FROM " + Schema.Transaction.TABLE +
-                " AS tr JOIN " + Schema.Category.TABLE + " AS tc ON tr." + Schema.Transaction.CATEGORY +
+                Schema.BudgetType.CATEGORY + ") AS b LEFT JOIN (SELECT tr." + Schema.Transaction.WALLET +
+                ", tr." + Schema.Transaction.DATE + ", tr." + Schema.Transaction.DIRECTION +
+                ", l._line_category AS " + Schema.Transaction.CATEGORY + ", l._line_money AS " +
+                Schema.Transaction.MONEY + ", tc." + Schema.Category.PARENT + " AS _parent_category FROM (" +
+                CATEGORY_LINES + ") AS l JOIN " + Schema.Transaction.TABLE + " AS tr ON l._line_transaction = tr." +
+                Schema.Transaction.ID + " JOIN " + Schema.Category.TABLE + " AS tc ON l._line_category" +
                 " = tc." + Schema.Category.ID + " WHERE tr." + Schema.Transaction.DELETED + " = 0 " +
                 " AND tc." + Schema.Category.DELETED + " = 0) AS t ON (b._wallet_id = t." +
                 Schema.Transaction.WALLET + " AND DATETIME(t." + Schema.Transaction.DATE +
@@ -3462,6 +3664,42 @@ import java.util.function.Supplier;
      * @return a cursor with zero or more rows.
      */
     /*package-local*/ Cursor getBudgetTransactions(long budgetId, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        Cursor budget = getReadableDatabase().query(Schema.Budget.TABLE, new String[] {Schema.Budget.TYPE,
+                Schema.Budget.START_DATE, Schema.Budget.END_DATE}, Schema.Budget.ID + " = ? AND " +
+                Schema.Budget.DELETED + " = 0", new String[] {String.valueOf(budgetId)}, null, null, null);
+        try {
+            if (budget.moveToFirst() && budget.getInt(0) == Schema.BudgetType.CATEGORY) {
+                // the lines and not the rows, so each row carries what it adds to the progress,
+                // and only the lines whose own category is not flagged deleted, which the progress
+                // leaves out too
+                String categories = "(SELECT " + Schema.BudgetCategory.CATEGORY + " FROM " +
+                        Schema.BudgetCategory.TABLE + " WHERE " + Schema.BudgetCategory.BUDGET + " = " +
+                        budgetId + " AND " + Schema.BudgetCategory.DELETED + " = 0)";
+                String _selection = Contract.Transaction.WALLET_ID + " IN (SELECT " +
+                        Schema.BudgetWallet.WALLET + " FROM " + Schema.BudgetWallet.TABLE + " WHERE " +
+                        Schema.BudgetWallet.BUDGET + " = " + budgetId + " AND " + Schema.BudgetWallet.DELETED +
+                        " = 0) AND (" + Contract.Transaction.CATEGORY_ID + " IN " + categories + " OR " +
+                        Contract.Transaction.CATEGORY_PARENT_ID + " IN " + categories + ") AND " +
+                        Contract.Transaction.CATEGORY_ID + " IN (SELECT " + Schema.Category.ID + " FROM " +
+                        Schema.Category.TABLE + " WHERE " + Schema.Category.DELETED + " = 0) AND DATETIME(" +
+                        Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime') AND DATE(" +
+                        Contract.Transaction.DATE + ") >= DATE(?) AND DATE(" + Contract.Transaction.DATE +
+                        ") <= DATE(?)";
+                if (!TextUtils.isEmpty(selection)) {
+                    _selection += " AND (" + selection + ")";
+                }
+                int size = selectionArgs != null ? selectionArgs.length : 0;
+                String[] _selectionArgs = new String[size + 2];
+                _selectionArgs[0] = budget.getString(1);
+                _selectionArgs[1] = budget.getString(2);
+                if (selectionArgs != null) {
+                    System.arraycopy(selectionArgs, 0, _selectionArgs, 2, size);
+                }
+                return getCategoryShares(projection, _selection, _selectionArgs, sortOrder);
+            }
+        } finally {
+            budget.close();
+        }
         String subQuery = "SELECT " +
                 "t." + Schema.Transaction.ID + " AS " + Contract.Transaction.ID + ", " +
                 "t." + Schema.Transaction.MONEY + " AS " + Contract.Transaction.MONEY + ", " +
@@ -3562,29 +3800,6 @@ import java.util.function.Supplier;
                 "WHERE bw2." + Schema.BudgetWallet.BUDGET + " = b." + Schema.Budget.ID + " " +
                 "AND bw2." + Schema.BudgetWallet.DELETED + " = 0 " +
                 ") " +
-                "UNION " +
-
-                // case budget of type category
-                "SELECT t.* FROM(SELECT b.*, w." + Schema.Wallet.ID + " AS _wallet_id, " +
-                "w." + Schema.Wallet.CURRENCY + " AS _wallet_currency, " +
-                "w." + Schema.Wallet.COUNT_IN_TOTAL + " AS _wallet_total FROM " +
-                Schema.BudgetWallet.TABLE + " AS bw JOIN " + Schema.Budget.TABLE + " AS b ON " +
-                "bw._budget = b." + Schema.Budget.ID + " JOIN " + Schema.Wallet.TABLE + " AS w ON " +
-                "bw._wallet = w." + Schema.Wallet.ID + " WHERE bw. " + Schema.BudgetWallet.DELETED +
-                " = 0 AND b." + Schema.Budget.DELETED + " = 0 AND w." + Schema.Wallet.DELETED +
-                " = 0 AND b." + Schema.Budget.TYPE + " = " + Schema.BudgetType.CATEGORY +
-                ") AS b LEFT JOIN " + Schema.Transaction.TABLE + " AS t ON b._wallet_id = t." +
-                Schema.Transaction.WALLET + " AND t." + Schema.Transaction.DELETED + " = 0 JOIN " +
-                Schema.Category.TABLE + " AS tc ON t." + Schema.Transaction.CATEGORY + " = tc." +
-                Schema.Category.ID + " AND tc." + Schema.Category.DELETED + " = 0 WHERE (" +
-                Schema.Transaction.CATEGORY + " IN " + budgetCategoriesOf("b") + " OR tc." +
-                Schema.Category.PARENT + " IN " + budgetCategoriesOf("b") + ") " +
-                "AND DATETIME(t." + Schema.Transaction.DATE + ") <= DATETIME('now', 'localtime') " +
-                "AND DATE(t." + Schema.Transaction.DATE + ") >= DATE(b." +
-                Schema.Budget.START_DATE + ") AND DATE(t." + Schema.Transaction.DATE +
-                ") <=  DATE(b." + Schema.Budget.END_DATE + ") " + "AND b." + Schema.Budget.ID +
-                " = " + budgetId + " " +
-
                 ") AS t " +
                 "LEFT JOIN " + Schema.Category.TABLE + " AS c " +
                 "ON t." + Schema.Transaction.CATEGORY + " = c." + Schema.Category.ID + " " +

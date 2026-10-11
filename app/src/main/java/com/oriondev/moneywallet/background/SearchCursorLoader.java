@@ -86,6 +86,10 @@ public class SearchCursorLoader extends CursorLoader {
         // only then, since the wallets query totals every transaction
         Map<String, Integer> decimals = mFilter.isAmountSet() ? loadDecimals(getContext()) : null;
         Pair<String, String[]> selection = mFilter.toSelection(decimals);
+        // with a category ticked, a split transaction matches once and carries the money of its
+        // parts in the ticked categories
+        setUri(mFilter.getCategoryIds().isEmpty() ? DataContentProvider.CONTENT_TRANSACTIONS
+                : DataContentProvider.CONTENT_CATEGORY_SHARES);
         setSelection(selection.getL());
         setSelectionArgs(selection.getR());
         setSortOrder(mFilter.getSort().getOrderBy());

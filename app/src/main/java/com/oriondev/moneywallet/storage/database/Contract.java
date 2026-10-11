@@ -124,6 +124,28 @@ public class Contract {
         public static final String PEOPLE_IDS = "transaction_person_ids";
         public static final String ATTACHMENT_IDS = "transaction_attachment_ids";
         public static final String TAG = Schema.Transaction.TAG;
+        /**
+         * Read only from {@link DataContentProvider#CONTENT_CATEGORY_LINES} and
+         * {@link DataContentProvider#CONTENT_CATEGORY_SHARES}. The line is a key unique to one
+         * line, and the split is the part a line comes from, null on the line of the main category.
+         */
+        public static final String LINE_ID = "transaction_line_id";
+        public static final String SPLIT_ID = Schema.TransactionSplit.ID;
+        /**
+         * Written with a wallet that moves a transaction across currency decimals, holding the
+         * decimals of the new currency minus those of the old one, so the parts are rescaled in
+         * the same write as the total.
+         */
+        public static final String FIX_SPLIT_DECIMALS = "action_fix_split_decimals";
+    }
+
+    /**
+     * Columns of the parts table as {@link SyncContentProvider#CONTENT_TRANSACTION_SPLIT} reads
+     * it, every part there whether its transaction reads as split or not.
+     */
+    public static final class TransactionSplit {
+        public static final String TRANSACTION_ID = Schema.TransactionSplit.TRANSACTION;
+        public static final String DELETED = Schema.TransactionSplit.DELETED;
     }
 
     public static final class Transfer {

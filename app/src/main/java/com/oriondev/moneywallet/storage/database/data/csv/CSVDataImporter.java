@@ -2,6 +2,7 @@ package com.oriondev.moneywallet.storage.database.data.csv;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -154,7 +155,10 @@ public class CSVDataImporter extends AbstractDataImporter {
      * each row as it was read left every row before a bad one in the ledger, under a message
      * telling the user the import had failed. Reading twice parses every row twice. That is the
      * cost of not keeping the parsed rows: an import file can be any size, and a list of them
-     * would grow with it.
+     * would grow with it. The first pass also counts each row read without a mapping against the
+     * wallet it names, so a split transaction that wallet already held is matched by its total or
+     * by its lines from the whole file, whatever order the rows come in. A file read through a
+     * mapping is not counted, and each split transaction is matched by its total.
      */
     @Override
     public void importData() throws IOException {
@@ -180,7 +184,9 @@ public class CSVDataImporter extends AbstractDataImporter {
     }
 
     /**
-     * Reads every row and throws on the first bad one. Saves a row only when write is true.
+     * Reads every row and throws on the first bad one. Saves a row when write is true. Otherwise
+     * a row read without a mapping is counted, which reads the wallet it names but creates
+     * nothing, and a row read through one is only checked.
      * {@link #importData} calls this twice, with write off and then on. The first pass is what
      * names the line a bad row is on, and it keeps a file that was never going to work from
      * opening a write transaction at all. A row the database itself refuses reaches only the
@@ -221,10 +227,11 @@ public class CSVDataImporter extends AbstractDataImporter {
                     readMappedRow(cells, write);
                 }
             } catch (RuntimeException e) {
-                // Only the checking pass blames a line. The saving pass is where
-                // insertTransaction runs, and "Line 37: Failed to create the new wallet" would
-                // send the user to look at a row that is fine.
-                if (write) {
+                // Only the checking pass blames a line, and never for a database failure. The
+                // saving pass is where insertTransaction runs, and "Line 37: Failed to create the
+                // new wallet" would send the user to look at a row that is fine, as would a query
+                // failing while checking.
+                if (write || e instanceof SQLException) {
                     throw e;
                 }
                 throw new RuntimeException("Line " + reader.getLinesRead() + ": " + e.getMessage(), e);
@@ -283,7 +290,9 @@ public class CSVDataImporter extends AbstractDataImporter {
         long money = toMinorUnits(moneyDecimal, moneyString, currencyUnit.getDecimals());
         int direction = directionOf(money);
         Date datetime = parseDatetime(datetimeString);
-        if (write && insertTransaction(wallet, currencyUnit, category, datetime, Math.abs(money), direction, description, event, place, people, note)) {
+        if (!write) {
+            countRow(wallet, currencyUnit, datetime, Math.abs(money), direction, description);
+        } else if (insertTransaction(wallet, currencyUnit, category, datetime, Math.abs(money), direction, description, event, place, people, note)) {
             countIfRounded(money, currencyUnit.getDecimals(), moneyDecimal);
         }
     }
@@ -309,6 +318,8 @@ public class CSVDataImporter extends AbstractDataImporter {
         Date datetime = CsvImportMapping.parseDate(dateString, mMapping.datePattern);
         long money = toMinorUnits(amount, amountString, mMappedCurrency.getDecimals());
         int direction = directionOf(money);
+        // not counted while checking, since a file read through a mapping never holds this app's
+        // category lines, so each split transaction is matched by its total
         if (write) {
             // read only when saving, so checking a row never reads a string resource
             if (category == null) {

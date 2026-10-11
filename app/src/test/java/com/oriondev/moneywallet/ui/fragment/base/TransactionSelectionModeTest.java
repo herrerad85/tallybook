@@ -220,7 +220,8 @@ public class TransactionSelectionModeTest {
         insertTransaction(cash, food, 1250L);
         assertEquals("Change the category of 2 transactions to Salary?",
                 TransactionSelectionMode.buildCategoryMessage(resources, mResolver,
-                        new long[] {first, second, already, others[0], others[1], others[2]}, salary, "Salary"));
+                        new long[] {first, second, already, others[0], others[1], others[2]},
+                        new Category(salary, "Salary", null, Contract.CategoryType.INCOME)));
     }
 
     @Test

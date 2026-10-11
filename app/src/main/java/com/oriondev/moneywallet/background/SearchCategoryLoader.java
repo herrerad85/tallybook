@@ -31,8 +31,10 @@ import com.oriondev.moneywallet.ui.fragment.dialog.MultiCategoryPickerDialog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Every category in the Category editor's order, the expense parents, then the income ones, then
@@ -111,13 +113,16 @@ public class SearchCategoryLoader extends AbstractGenericLoader<List<SearchCateg
     }
 
     /**
-     * @param counts the transactions in each category, by id, or null to count none.
+     * @param counts the ids of the transactions in each category, by id, or null to count none.
      */
-    public static List<Entry> loadCategories(Context context, @Nullable Map<Long, Integer> counts) {
+    public static List<Entry> loadCategories(Context context, @Nullable Map<Long, Set<Long>> counts) {
         List<Entry> expense = new ArrayList<>();
         List<Entry> income = new ArrayList<>();
         List<Entry> system = new ArrayList<>();
         Map<Long, Entry> parents = new HashMap<>();
+        // a transaction split across a parent and its child, or two children, counts once for the
+        // parent, which ticks them all
+        Map<Long, Set<Long>> family = new HashMap<>();
         String[] projection = new String[] {Contract.Category.ID, Contract.Category.NAME,
                 Contract.Category.ICON, Contract.Category.TYPE, Contract.Category.PARENT};
         Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_CATEGORIES, projection, null, null, MultiCategoryPickerDialog.SORT_ORDER);
@@ -125,16 +130,19 @@ public class SearchCategoryLoader extends AbstractGenericLoader<List<SearchCateg
             try {
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(0);
-                    Integer count = counts != null ? counts.get(id) : null;
+                    Set<Long> transactions = counts != null && counts.containsKey(id) ? counts.get(id) : new HashSet<>();
                     Contract.CategoryType type = Contract.CategoryType.fromValue(cursor.getInt(3));
-                    Entry entry = new Entry(id, cursor.getString(1), cursor.getString(2), type, count != null ? count : 0);
+                    Entry entry = new Entry(id, cursor.getString(1), cursor.getString(2), type, transactions.size());
                     // null for a top level category, and for one whose parent was deleted
                     Entry parent = cursor.isNull(4) ? null : parents.get(cursor.getLong(4));
                     if (parent != null) {
                         parent.mChildren.add(entry);
-                        parent.mCount += entry.mCount;
+                        Set<Long> union = family.get(parent.mId);
+                        union.addAll(transactions);
+                        parent.mCount = union.size();
                     } else {
                         parents.put(id, entry);
+                        family.put(id, new HashSet<>(transactions));
                         (type == Contract.CategoryType.EXPENSE ? expense
                                 : type == Contract.CategoryType.INCOME ? income : system).add(entry);
                     }
@@ -150,17 +158,17 @@ public class SearchCategoryLoader extends AbstractGenericLoader<List<SearchCateg
     }
 
     /**
-     * One pass over the rows the strip can show. A transaction has one category, so the rows a set
-     * of ids matches are the sum of each id's count.
+     * One pass over the category lines, so a split transaction is found under each category it
+     * has a line in.
      */
-    private static Map<Long, Integer> countByCategory(Context context) {
-        Map<Long, Integer> counts = new HashMap<>();
-        String[] projection = new String[] {Contract.Transaction.CATEGORY_ID};
-        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_TRANSACTIONS, projection, null, null, null);
+    private static Map<Long, Set<Long>> countByCategory(Context context) {
+        Map<Long, Set<Long>> counts = new HashMap<>();
+        String[] projection = new String[] {Contract.Transaction.CATEGORY_ID, Contract.Transaction.ID};
+        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_CATEGORY_LINES, projection, null, null, null);
         if (cursor != null) {
             try {
                 while (cursor.moveToNext()) {
-                    counts.merge(cursor.getLong(0), 1, Integer::sum);
+                    counts.computeIfAbsent(cursor.getLong(0), id -> new HashSet<>()).add(cursor.getLong(1));
                 }
             } finally {
                 cursor.close();

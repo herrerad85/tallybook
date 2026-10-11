@@ -183,9 +183,9 @@ public class CSVDataImporterTest {
      * refusal can only fire if the wallet column was found, which is the whole point: with the
      * mark still on the file the message is about a wallet column that was never found instead.
      *
-     * The context is null because nothing between here and the refusal reads it. Only saving a
-     * row does, and no row is ever saved: the import reads the file once to refuse a bad one
-     * before saving anything, and this file is refused on that pass.
+     * The context is null because nothing between here and the refusal reads it. A valid row
+     * would read it, since the check pass counts each one against its wallet, and this file's
+     * only row is refused first.
      */
     @Test
     public void anImportOpensTheFileThroughOpenFile() throws IOException {
