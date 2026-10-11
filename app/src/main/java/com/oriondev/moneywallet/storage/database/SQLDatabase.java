@@ -1301,8 +1301,107 @@ import java.util.function.Supplier;
                     getWritableDatabase().insert(Schema.TransactionAttachment.TABLE, null, cva);
                 }
             }
+            if (contentValues.containsKey(Contract.Transaction.SPLIT_PARTS)) {
+                writeSplitParts(transactionId, contentValues.getAsString(Contract.Transaction.SPLIT_PARTS));
+            }
         }
         return transactionId;
+    }
+
+    /**
+     * Makes the live parts of a transaction exactly the ones given, after checking them against
+     * the row as it is stored, so it runs once the row itself is written. Every write of the
+     * provider runs inside one transaction, so a refusal here takes the row back out with it.
+     *
+     * The parts are replaced and not matched up with the ones already there, the same end the
+     * people of a transaction reach, since a part has nothing but its own id to be matched by.
+     *
+     * @param transactionId id of the transaction.
+     * @param encodedParts the parts as {@link Contract.Transaction#SPLIT_PARTS} holds them, null
+     *                     or an empty array for none.
+     * @throws SQLiteDataException with {@link Contract.ErrorCode#SPLIT_NOT_VALID} when a part is
+     *                             of zero or below, the parts add up to more than the total, a
+     *                             part sits in a system category or in one of the other
+     *                             direction, or the transaction is not a standard one.
+     */
+    private void writeSplitParts(long transactionId, String encodedParts) {
+        List<ContentValues> parts = new ArrayList<>();
+        try {
+            for (SplitPartsCodec.Part part : SplitPartsCodec.decode(encodedParts)) {
+                ContentValues cv = new ContentValues();
+                cv.put(Schema.TransactionSplit.CATEGORY, part.getCategoryId());
+                cv.put(Schema.TransactionSplit.MONEY, part.getMoney());
+                cv.put(Schema.TransactionSplit.NOTE, part.getNote());
+                parts.add(cv);
+            }
+        } catch (JSONException e) {
+            throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID, "The parts cannot be read: " + e.getMessage());
+        }
+        if (!parts.isEmpty()) {
+            checkSplitParts(transactionId, parts);
+        }
+        getWritableDatabase().delete(Schema.TransactionSplit.TABLE, Schema.TransactionSplit.TRANSACTION +
+                " = ?", new String[] {String.valueOf(transactionId)});
+        for (ContentValues cv : parts) {
+            cv.put(Schema.TransactionSplit.TRANSACTION, transactionId);
+            cv.put(Schema.TransactionSplit.UUID, UUID.randomUUID().toString());
+            cv.put(Schema.TransactionSplit.LAST_EDIT, System.currentTimeMillis());
+            cv.put(Schema.TransactionSplit.DELETED, false);
+            getWritableDatabase().insert(Schema.TransactionSplit.TABLE, null, cv);
+        }
+    }
+
+    /**
+     * A sum past the largest long wraps below zero and would pass the check against the total.
+     */
+    private void checkSplitParts(long transactionId, List<ContentValues> parts) {
+        long total;
+        int direction;
+        int type;
+        Cursor cursor = getReadableDatabase().query(Schema.Transaction.TABLE, new String[] {
+                Schema.Transaction.MONEY, Schema.Transaction.DIRECTION, Schema.Transaction.TYPE},
+                Schema.Transaction.ID + " = ?", new String[] {String.valueOf(transactionId)}, null, null, null);
+        try {
+            if (!cursor.moveToFirst()) {
+                throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                        String.format(Locale.ENGLISH, "The transaction (id: %d) is not stored", transactionId));
+            }
+            total = cursor.getLong(0);
+            direction = cursor.getInt(1);
+            type = cursor.getInt(2);
+        } finally {
+            cursor.close();
+        }
+        if (type != Contract.TransactionType.STANDARD) {
+            throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                    String.format(Locale.ENGLISH, "The transaction (id: %d) is of type %d and cannot be split", transactionId, type));
+        }
+        int categoryType = direction == Schema.Direction.INCOME ? Schema.CategoryType.INCOME : Schema.CategoryType.EXPENSE;
+        long sum = 0L;
+        for (ContentValues part : parts) {
+            long money = part.getAsLong(Schema.TransactionSplit.MONEY);
+            long categoryId = part.getAsLong(Schema.TransactionSplit.CATEGORY);
+            if (money <= 0L) {
+                throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                        String.format(Locale.ENGLISH, "A part of the transaction (id: %d) holds %d", transactionId, money));
+            }
+            sum = money > Long.MAX_VALUE - sum ? Long.MAX_VALUE : sum + money;
+            cursor = getReadableDatabase().query(Schema.Category.TABLE, new String[] {Schema.Category.TYPE},
+                    Schema.Category.ID + " = ? AND " + Schema.Category.DELETED + " = 0",
+                    new String[] {String.valueOf(categoryId)}, null, null, null);
+            try {
+                if (!cursor.moveToFirst() || cursor.getInt(0) != categoryType) {
+                    throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                            String.format(Locale.ENGLISH, "The category (id: %d) of a part is missing or not of the direction of the transaction (id: %d)", categoryId, transactionId));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (sum > total) {
+            throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                    String.format(Locale.ENGLISH, "The parts of the transaction (id: %d) add up to %d, more than its total of %d", transactionId, sum, total));
+        }
     }
 
     /**
@@ -1354,6 +1453,34 @@ import java.util.function.Supplier;
                 Schema.TransactionPeople.DELETED + " = 0 AND p." + Schema.Person.DELETED + " = 0 AND " +
                 Schema.TransactionPeople.TRANSACTION + " = " + String.valueOf(id);
         return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
+    /**
+     * This method is called by the content provider when the user is querying the live parts of
+     * a specific transaction, each with its category, whether they are valid or not.
+     *
+     * @param id of the transaction.
+     * @param projection column names that are requested to be part of the cursor.
+     * @param selection string that may contains additional filters for the query.
+     * @param selectionArgs string array that may contains the arguments for the selection string.
+     * @param sortOrder string that may contains column name to use to sort the cursor.
+     * @return a cursor with zero or more rows.
+     */
+    /*package-local*/ Cursor getTransactionSplits(long id, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String subQuery = "SELECT " +
+                "s." + Schema.TransactionSplit.ID + " AS " + Contract.TransactionSplit.ID + ", " +
+                "s." + Schema.TransactionSplit.CATEGORY + " AS " + Contract.TransactionSplit.CATEGORY_ID + ", " +
+                "c." + Schema.Category.NAME + " AS " + Contract.TransactionSplit.CATEGORY_NAME + ", " +
+                "c." + Schema.Category.ICON + " AS " + Contract.TransactionSplit.CATEGORY_ICON + ", " +
+                "c." + Schema.Category.TYPE + " AS " + Contract.TransactionSplit.CATEGORY_TYPE + ", " +
+                "s." + Schema.TransactionSplit.MONEY + " AS " + Contract.TransactionSplit.MONEY + ", " +
+                "s." + Schema.TransactionSplit.NOTE + " AS " + Contract.TransactionSplit.NOTE + " " +
+                "FROM " + Schema.TransactionSplit.TABLE + " AS s LEFT JOIN " + Schema.Category.TABLE +
+                " AS c ON s." + Schema.TransactionSplit.CATEGORY + " = c." + Schema.Category.ID +
+                " AND c." + Schema.Category.DELETED + " = 0 WHERE s." + Schema.TransactionSplit.DELETED +
+                " = 0 AND s." + Schema.TransactionSplit.TRANSACTION + " = " + id;
+        return queryFrom(subQuery, projection, selection, selectionArgs,
+                sortOrder != null ? sortOrder : Contract.TransactionSplit.ID);
     }
 
     /**
@@ -1526,6 +1653,9 @@ import java.util.function.Supplier;
                         }
                     }
                 }
+            }
+            if (contentValues.containsKey(Contract.Transaction.SPLIT_PARTS)) {
+                writeSplitParts(transactionId, contentValues.getAsString(Contract.Transaction.SPLIT_PARTS));
             }
             if (contentValues.containsKey(Contract.Transaction.FIX_SPLIT_DECIMALS)) {
                 int decimalOffset = contentValues.getAsInteger(Contract.Transaction.FIX_SPLIT_DECIMALS);

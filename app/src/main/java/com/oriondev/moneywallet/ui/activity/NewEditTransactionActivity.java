@@ -28,6 +28,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
@@ -132,6 +133,8 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     private static final String TAG_PLACE_PICKER = "NewEditTransactionActivity::Tag::PlacePicker";
     private static final String TAG_PERSON_PICKER = "NewEditTransactionActivity::Tag::PersonPicker";
     private static final String TAG_ATTACHMENT_PICKER = "NewEditTransactionActivity::Tag::AttachmentPicker";
+    private static final String TAG_PART_CATEGORY_PICKER = "NewEditTransactionActivity::Tag::PartCategoryPicker";
+    private static final String TAG_PART_MONEY_PICKER = "NewEditTransactionActivity::Tag::PartMoneyPicker";
 
     private static final String SS_RULES = "NewEditTransactionActivity::SavedState::Rules";
     private static final String SS_OPEN_CALCULATOR = "NewEditTransactionActivity::SavedState::OpenCalculator";
@@ -159,6 +162,10 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     private PlacePicker mPlacePicker;
     private PersonPicker mPersonPicker;
     private AttachmentPicker mAttachmentPicker;
+    private CategoryPicker mPartCategoryPicker;
+    private MoneyPicker mPartMoneyPicker;
+
+    private SplitPartsEditor mSplitPartsEditor;
 
     private TransactionEditorRules mRules = new TransactionEditorRules();
 
@@ -205,6 +212,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         mConfirmedCheckBox = view.findViewById(R.id.confirmed_checkbox);
         mCountInTotalCheckBox = view.findViewById(R.id.count_in_total_checkbox);
         mAttachmentView = view.findViewById(R.id.attachment_view);
+        mSplitPartsEditor = new SplitPartsEditor(this, view.findViewById(R.id.split_parts_layout),
+                view.findViewById(R.id.split_remaining_edit_text), view.findViewById(R.id.split_edit_text),
+                mCategoryEditText);
         // disable unused edit texts
         mCategoryEditText.setTextViewMode(true);
         mDateEditText.setTextViewMode(true);
@@ -425,6 +435,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                         Contract.Transaction.EVENT_END_DATE,
                         Contract.Transaction.SAVING_ID,
                         Contract.Transaction.DEBT_ID,
+                        Contract.Transaction.RECURRENCE_ID,
                         Contract.Transaction.CONFIRMED,
                         Contract.Transaction.COUNT_IN_TOTAL
                 };
@@ -477,6 +488,8 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                         if (!cursor.isNull(cursor.getColumnIndex(Contract.Transaction.SAVING_ID))) {
                             mRules.setSavingId(cursor.getLong(cursor.getColumnIndex(Contract.Transaction.SAVING_ID)));
                         }
+                        mRules.setRecurrent(!duplicating && !cursor.isNull(
+                                cursor.getColumnIndexOrThrow(Contract.Transaction.RECURRENCE_ID)));
                         mConfirmedCheckBox.setChecked(cursor.getInt(cursor.getColumnIndex(Contract.Transaction.CONFIRMED)) == 1);
                         mCountInTotalCheckBox.setChecked(cursor.getInt(cursor.getColumnIndex(Contract.Transaction.COUNT_IN_TOTAL)) == 1);
                     }
@@ -507,6 +520,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                             cursor.close();
                         }
                     }
+                }
+                if (mRules.offersSplit()) {
+                    readParts(contentResolver, Uri.withAppendedPath(uri, "splits"));
                 }
                 // the previous cursor contains only a column with the list of ids of linked people.
                 // we need instead to buildMaterialDialog the full person object so we must perform a separated
@@ -893,6 +909,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
             if (restored != null) {
                 mRules = restored;
             }
+            mSplitPartsEditor.restoreState(savedInstanceState);
         }
         if (savedInstanceState == null && category != null) {
             mRules.setDebtPayment(TransactionEditorRules.isDebtPaymentTag(category.getTag()));
@@ -915,6 +932,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         mPersonPicker = PersonPicker.createPicker(fragmentManager, TAG_PERSON_PICKER, people);
         mPlacePicker = PlacePicker.createPicker(fragmentManager, TAG_PLACE_PICKER, place);
         mAttachmentPicker = AttachmentPicker.createPicker(fragmentManager, TAG_ATTACHMENT_PICKER, attachments);
+        mPartCategoryPicker = CategoryPicker.createPicker(fragmentManager, TAG_PART_CATEGORY_PICKER, (Category) null);
+        mPartMoneyPicker = MoneyPicker.createPicker(fragmentManager, TAG_PART_MONEY_PICKER, null, 0L);
+        mSplitPartsEditor.attach(mRules, mMoneyPicker, mCategoryPicker, mPartCategoryPicker, mPartMoneyPicker);
         // here and not with the other listeners, because this one reaches the category picker and
         // the pickers are built above. A focus listener and not a text watcher, so the lookup runs
         // once the user has finished typing instead of once per character
@@ -1104,6 +1124,33 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         super.onSaveInstanceState(outState);
         outState.putSerializable(SS_RULES, mRules);
         outState.putBoolean(SS_OPEN_CALCULATOR, mOpenCalculatorOnResume);
+        mSplitPartsEditor.saveState(outState);
+    }
+
+    private void readParts(ContentResolver contentResolver, Uri uri) {
+        String[] projection = new String[] {
+                Contract.TransactionSplit.CATEGORY_ID,
+                Contract.TransactionSplit.CATEGORY_NAME,
+                Contract.TransactionSplit.CATEGORY_ICON,
+                Contract.TransactionSplit.CATEGORY_TYPE,
+                Contract.TransactionSplit.MONEY,
+                Contract.TransactionSplit.NOTE
+        };
+        Cursor cursor = contentResolver.query(uri, projection, null, null, null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                int typeIndex = cursor.getColumnIndexOrThrow(Contract.TransactionSplit.CATEGORY_TYPE);
+                Category category = new Category(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.TransactionSplit.CATEGORY_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.TransactionSplit.CATEGORY_NAME)),
+                        IconLoader.parse(cursor.getString(cursor.getColumnIndexOrThrow(Contract.TransactionSplit.CATEGORY_ICON))),
+                        cursor.isNull(typeIndex) ? null : Contract.CategoryType.fromValue(cursor.getInt(typeIndex)));
+                mSplitPartsEditor.addPart(category,
+                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.TransactionSplit.MONEY)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.TransactionSplit.NOTE)));
+            }
+            cursor.close();
+        }
     }
 
     @Override
@@ -1320,7 +1367,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         // the description field may never have lost focus, so the save is the second place the
         // rules are read. The guard inside leaves a category the user picked alone
         fillCategoryFromRules();
-        if (validate()) {
+        if (validate() && mSplitPartsEditor.validate()) {
             ContentValues contentValues = new TransactionContentValuesBuilder()
                     .money(mMoneyPicker.getCurrentMoney())
                     .date(DateUtils.getSQLDateTimeString(mDateTimePicker.getCurrentDateTime()))
@@ -1339,6 +1386,9 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                     .peopleIds(Contract.getObjectIds(mPersonPicker.getCurrentPeople()))
                     .attachmentIds(Contract.getObjectIds(mAttachmentPicker.getCurrentAttachments()))
                     .build();
+            if (mRules.offersSplit()) {
+                contentValues.put(Contract.Transaction.SPLIT_PARTS, mSplitPartsEditor.encodeParts());
+            }
             ContentResolver contentResolver = getContentResolver();
             try {
                 switch (mode) {
@@ -1354,12 +1404,18 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                         break;
                 }
             } catch (SQLiteDataException e) {
-                if (e.getErrorCode() != Contract.ErrorCode.WALLETS_NOT_CONSISTENT) {
+                int message;
+                if (e.getErrorCode() == Contract.ErrorCode.WALLETS_NOT_CONSISTENT) {
+                    message = R.string.error_debt_wallet_currency_not_consistent;
+                } else if (e.getErrorCode() == Contract.ErrorCode.SPLIT_NOT_VALID) {
+                    message = R.string.error_split_not_saved;
+                } else {
                     throw e;
                 }
+                Log.w("NewEditTransactionActivity", "The save was refused", e);
                 ThemedDialog.buildMaterialDialog(this)
                         .setTitle(R.string.title_error)
-                        .setMessage(R.string.error_debt_wallet_currency_not_consistent)
+                        .setMessage(message)
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
                 return;
@@ -1420,16 +1476,25 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
 
     @Override
     public void onMoneyChanged(String tag, CurrencyUnit currency, long money) {
+        if (TAG_PART_MONEY_PICKER.equals(tag)) {
+            mSplitPartsEditor.onPartMoneyChanged(money);
+            return;
+        }
         if (currency != null) {
             mCurrencyTextView.setText(currency.getSymbol());
         } else {
             mCurrencyTextView.setText("?");
         }
         mMoneyTextView.setText(mMoneyFormatter.getNotTintedString(currency, money, MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN));
+        mSplitPartsEditor.showParts();
     }
 
     @Override
     public void onCategoryChanged(String tag, Category category) {
+        if (TAG_PART_CATEGORY_PICKER.equals(tag)) {
+            mSplitPartsEditor.onPartCategoryChanged(category);
+            return;
+        }
         // every pick reaches here, the user's through the picker and the rules' through
         // setCategory, so the flag is cleared here and set again only by the rule fill itself
         mCategoryFilledByRule = false;
@@ -1438,6 +1503,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         } else {
             mCategoryEditText.setText(null);
         }
+        mSplitPartsEditor.showParts();
     }
 
     @Override

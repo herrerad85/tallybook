@@ -36,17 +36,44 @@ public class CategoryViewPagerAdapter extends FragmentPagerAdapter {
     private final Context mContext;
     private final boolean mShowSubCategories;
     private final boolean mShowSystemCategories;
+    private final Contract.CategoryType mOnlyType;
 
     public CategoryViewPagerAdapter(FragmentManager fm, Context context, boolean showSubCategories, boolean showSystemCategories) {
+        this(fm, context, showSubCategories, showSystemCategories, null);
+    }
+
+    /**
+     * @param onlyType the one type to show as the only page, or null for every type.
+     */
+    public CategoryViewPagerAdapter(FragmentManager fm, Context context, boolean showSubCategories,
+                                    boolean showSystemCategories, Contract.CategoryType onlyType) {
         super(fm);
         mContext = context;
         mShowSubCategories = showSubCategories;
         mShowSystemCategories = showSystemCategories;
+        mOnlyType = onlyType;
+    }
+
+    /**
+     * The page a type is shown on when every type is.
+     */
+    private int pageOf(int position) {
+        if (mOnlyType == null) {
+            return position;
+        }
+        switch (mOnlyType) {
+            case INCOME:
+                return 0;
+            case EXPENSE:
+                return 1;
+            default:
+                return 2;
+        }
     }
 
     @Override
     public Fragment getItem(int position) {
-        switch (position) {
+        switch (pageOf(position)) {
             case 0:
                 return CategoryListFragment.newInstance(Contract.CategoryType.INCOME, mShowSubCategories);
             case 1:
@@ -59,12 +86,15 @@ public class CategoryViewPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public int getCount() {
+        if (mOnlyType != null) {
+            return 1;
+        }
         return mShowSystemCategories ? 3 : 2;
     }
 
     @Override
     public CharSequence getPageTitle(int position) {
-        switch (position) {
+        switch (pageOf(position)) {
             case 0:
                 return mContext.getString(R.string.menu_category_tab_income);
             case 1:

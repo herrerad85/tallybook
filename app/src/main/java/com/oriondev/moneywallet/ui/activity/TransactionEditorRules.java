@@ -35,7 +35,7 @@ import java.util.List;
  * The editor keeps the loading. Every branch of it chooses which row to read and reading takes a
  * content resolver, so what lives here is only what is decided once the values are in hand.
  *
- * It carries the five pieces of state the editor holds across a recreate. They travel as one
+ * It carries the six pieces of state the editor holds across a recreate. They travel as one
  * object under one bundle key, so the keys cannot collide with each other.
  */
 public class TransactionEditorRules implements Serializable {
@@ -62,6 +62,7 @@ public class TransactionEditorRules implements Serializable {
     private Long mSavingId = null;
     private boolean mSavingCompleted = false;
     private boolean mDebtPayment = false;
+    private boolean mRecurrent = false;
 
     public int getType() {
         return mType;
@@ -101,6 +102,19 @@ public class TransactionEditorRules implements Serializable {
 
     public void setDebtPayment(boolean debtPayment) {
         mDebtPayment = debtPayment;
+    }
+
+    public void setRecurrent(boolean recurrent) {
+        mRecurrent = recurrent;
+    }
+
+    /**
+     * Only a transaction standing on its own is split. A transfer leg, a debt row and a saving
+     * row each carry their role in a category of their own, and a row started from a model is
+     * stored as a model row. One a recurrence wrote is left whole like the recurrence itself.
+     */
+    public boolean offersSplit() {
+        return mType == TYPE_STANDARD && mDebtId == null && mSavingId == null && !mRecurrent;
     }
 
     /**

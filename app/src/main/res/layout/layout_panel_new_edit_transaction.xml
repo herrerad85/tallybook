@@ -46,6 +46,32 @@
         app:met_mode="floatingLabel"
         app:met_leftIcon="@drawable/ic_table_large_24dp" />
 
+    <LinearLayout
+        android:id="@+id/split_parts_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialEditText
+        android:id="@+id/split_remaining_edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textMultiLine"
+        android:visibility="gone"
+        app:met_mode="floatingLabel"
+        app:met_leftIcon="@drawable/ic_table_large_24dp" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialEditText
+        android:id="@+id/split_edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/hint_split_into_categories"
+        android:inputType="textMultiLine"
+        android:visibility="gone"
+        app:met_mode="floatingLabel"
+        app:met_leftIcon="@drawable/ic_call_split_24dp" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">

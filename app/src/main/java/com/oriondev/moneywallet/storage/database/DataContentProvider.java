@@ -143,6 +143,7 @@ public class DataContentProvider extends ContentProvider {
 
     private static final int CATEGORY_LINE_LIST = 50;
     private static final int CATEGORY_SHARE_LIST = 51;
+    private static final int TRANSACTION_SPLIT_LIST = 52;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -201,6 +202,7 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "attachments/#", ATTACHMENT_ITEM);
         matcher.addURI(AUTHORITY, "category_lines", CATEGORY_LINE_LIST);
         matcher.addURI(AUTHORITY, "category_shares", CATEGORY_SHARE_LIST);
+        matcher.addURI(AUTHORITY, "transactions/#/splits", TRANSACTION_SPLIT_LIST);
         return matcher;
     }
 
@@ -397,6 +399,9 @@ public class DataContentProvider extends ContentProvider {
             case CATEGORY_SHARE_LIST:
                 cursor = new MultiUriCursorWrapper(db().getCategoryShares(projection, selection, selectionArgs, sortOrder));
                 break;
+            case TRANSACTION_SPLIT_LIST:
+                cursor = new MultiUriCursorWrapper(db().getTransactionSplits(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));
+                break;
         }
         if (cursor != null) {
             cursor.setNotificationUri(getContentResolver(), CONTENT_ALL);
@@ -508,6 +513,8 @@ public class DataContentProvider extends ContentProvider {
             case CATEGORY_LINE_LIST:
             case CATEGORY_SHARE_LIST:
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.transaction";
+            case TRANSACTION_SPLIT_LIST:
+                return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.transaction.split";
         }
         return null;
     }

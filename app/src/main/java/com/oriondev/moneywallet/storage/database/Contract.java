@@ -137,6 +137,7 @@ public class Contract {
          * the same write as the total.
          */
         public static final String FIX_SPLIT_DECIMALS = "action_fix_split_decimals";
+        public static final String SPLIT_PARTS = "transaction_split_parts";
     }
 
     /**
@@ -146,6 +147,16 @@ public class Contract {
     public static final class TransactionSplit {
         public static final String TRANSACTION_ID = Schema.TransactionSplit.TRANSACTION;
         public static final String DELETED = Schema.TransactionSplit.DELETED;
+        public static final String ID = Schema.TransactionSplit.ID;
+        public static final String CATEGORY_ID = Schema.TransactionSplit.CATEGORY;
+        public static final String CATEGORY_NAME = "split_" + Schema.Category.NAME;
+        public static final String CATEGORY_ICON = "split_" + Schema.Category.ICON;
+        public static final String CATEGORY_TYPE = "split_" + Schema.Category.TYPE;
+        public static final String MONEY = Schema.TransactionSplit.MONEY;
+        public static final String NOTE = Schema.TransactionSplit.NOTE;
+        public static final String PART_CATEGORY = "category";
+        public static final String PART_MONEY = "money";
+        public static final String PART_NOTE = "note";
     }
 
     public static final class Transfer {
@@ -824,6 +835,7 @@ public class Contract {
         public static final int SYSTEM_CATEGORY_NOT_MODIFIABLE = 4543;
         public static final int TRANSACTION_USED_IN_TRANSFER = 4544;
         public static final int INVALID_RECURRENCE_RULE = 4545;
+        public static final int SPLIT_NOT_VALID = 4546;
     }
 
     public static List<Long> parseObjectIds(String encodedIds) {

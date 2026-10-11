@@ -6,10 +6,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -19,11 +23,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.google.android.material.tabs.TabLayout;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Attachment;
 import com.oriondev.moneywallet.model.Category;
 import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.model.Person;
+import com.oriondev.moneywallet.model.Wallet;
 import com.oriondev.moneywallet.picker.AttachmentPicker;
 import com.oriondev.moneywallet.picker.CategoryPicker;
 import com.oriondev.moneywallet.picker.DateTimePicker;
@@ -32,6 +38,7 @@ import com.oriondev.moneywallet.picker.PersonPicker;
 import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.fragment.dialog.WalletPickerDialog;
@@ -48,6 +55,8 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDialog;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -733,6 +742,533 @@ public class NewEditTransactionActivityTest {
         }
     }
 
+    // splits, over SplitLedger, whose ids start at 901 and so never meet the rows above
+
+    private static final String PART_CATEGORY_PICKER = "NewEditTransactionActivity::Tag::PartCategoryPicker";
+    private static final String PART_MONEY_PICKER = "NewEditTransactionActivity::Tag::PartMoneyPicker";
+
+    @Test
+    public void aNewTransactionIsSavedWithItsParts() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.WALLET_ID, SplitLedger.CASH);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                categoryPicker(activity).setCategory(ledgerCategory(SplitLedger.GROCERIES));
+                moneyPicker(activity).setMoney(9000L);
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.split_edit_text).getVisibility());
+                addPart(activity, SplitLedger.HOUSEHOLD, 2000L);
+                addPart(activity, SplitLedger.FUEL, 1500L);
+                assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
+                assertEquals(remainingHint(activity, "Groceries"), remainingField(activity).getHint().toString());
+                assertEquals(euro(9000L - 2000L - 1500L), remainingField(activity).getTextAsString());
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        long id = newestId();
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:null", SplitLedger.FUEL + ":1500:null"), storedParts(id));
+    }
+
+    /** The part picker offers the main category's type alone, and the keypad follows the pick. */
+    @Test
+    public void aPartIsPickedAmongCategoriesOfTheMainOnesType() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.PAY_SPLIT))) {
+            scenario.onActivity(activity -> {
+                activity.findViewById(R.id.split_edit_text).performClick();
+                Intent picker = shadowOf(activity).getNextStartedActivity();
+                assertEquals(CategoryPickerActivity.class.getName(), picker.getComponent().getClassName());
+                assertEquals(Contract.CategoryType.INCOME, picker.getSerializableExtra(CategoryPickerActivity.ONLY_TYPE));
+                partCategoryPicker(activity).setCategory(ledgerCategory(SplitLedger.BONUS));
+                assertStartedCalculator(activity);
+            });
+        }
+    }
+
+    /** The expense page is the second when every type is shown, so it cannot pass by being first. */
+    @Test
+    public void thePartPickerShowsThePageOfTheMainCategorysType() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        Intent[] picker = new Intent[1];
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                activity.findViewById(R.id.split_edit_text).performClick();
+                picker[0] = shadowOf(activity).getNextStartedActivity();
+            });
+        }
+        try (ActivityScenario<CategoryPickerActivity> scenario = ActivityScenario.launch(picker[0])) {
+            scenario.onActivity(activity -> {
+                TabLayout tabs = activity.findViewById(R.id.tab_layout);
+                assertEquals(1, tabs.getTabCount());
+                assertEquals(activity.getString(R.string.menu_category_tab_expense), tabs.getTabAt(0).getText().toString());
+                List<String> names = categoryPickerNames(activity);
+                assertTrue(names.toString(), names.containsAll(Arrays.asList("Fuel", "Groceries")));
+                assertFalse(names.toString(), names.contains("Salary") || names.contains("Bonus"));
+            });
+        }
+    }
+
+    @Test
+    public void anEditedPartIsSavedAndTheOthersKept() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                // the part flagged deleted is not listed
+                assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
+                choosePartAction(activity, 1, 1);
+                partMoneyPicker(activity).setMoney(4000L);
+                choosePartAction(activity, 0, 2);
+                AlertDialog note = (AlertDialog) ShadowDialog.getLatestDialog();
+                ((EditText) note.findViewById(R.id.dialog_input_edit_text)).setText("soap");
+                note.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                shadowOf(Looper.getMainLooper()).idle();
+                assertEquals(euro(10000L - 2000L - 4000L), remainingField(activity).getTextAsString());
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:soap", SplitLedger.FUEL + ":4000:null"),
+                storedParts(SplitLedger.RECEIPT));
+    }
+
+    @Test
+    public void aTotalBelowThePartsIsRefused() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                // the parts are 2000 and 3000
+                moneyPicker(activity).setMoney(2000L + 3000L - 1L);
+                assertRefused(activity, R.string.error_split_total_below_parts);
+                moneyPicker(activity).setMoney(2000L + 3000L);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(2000L + 3000L, moneyOf(SplitLedger.RECEIPT));
+    }
+
+    /** Added plainly, 2000 raised to the largest amount less 1000, and 3000, wrap below the total. */
+    @Test
+    public void partsAddingUpPastTheLargestAmountAreRefusedBeforeTheDatabase() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        List<String> row = rowsOf("transactions", "transaction_id = " + SplitLedger.RECEIPT);
+        List<String> parts = rowsOf("transaction_splits", "_transaction = " + SplitLedger.RECEIPT);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                choosePartAction(activity, 0, 1);
+                partMoneyPicker(activity).setMoney(Long.MAX_VALUE - 1000L);
+                assertRefused(activity, R.string.error_split_total_below_parts);
+            });
+        }
+        assertEquals(row, rowsOf("transactions", "transaction_id = " + SplitLedger.RECEIPT));
+        assertEquals(parts, rowsOf("transaction_splits", "_transaction = " + SplitLedger.RECEIPT));
+    }
+
+    /** Spare goes from another window, through the app's own delete, after the editor took it for a part. */
+    @Test
+    public void aNewTransactionWhosePartCategoryIsDeletedElsewhereIsRefusedThenSaved() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.WALLET_ID, SplitLedger.CASH);
+        int before = countTransactions();
+        long partsBefore = countParts("1");
+        List<String> label = new ArrayList<>();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                categoryPicker(activity).setCategory(ledgerCategory(SplitLedger.GROCERIES));
+                moneyPicker(activity).setMoney(9000L);
+                addPart(activity, SplitLedger.SPARE, 2000L);
+                addPart(activity, SplitLedger.FUEL, 1500L);
+                assertEquals(1, mResolver.delete(ContentUris.withAppendedId(
+                        DataContentProvider.CONTENT_CATEGORIES, SplitLedger.SPARE), null, null));
+                assertRefused(activity, R.string.error_split_not_saved);
+                label.addAll(partLabels(activity));
+                assertRefused(activity, R.string.error_split_not_saved);
+                choosePartAction(activity, 0, 0);
+                partCategoryPicker(activity).setCategory(ledgerCategory(SplitLedger.HOUSEHOLD));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(Arrays.asList("Spare", "Fuel"), label);
+        assertEquals(before + 1, countTransactions());
+        assertEquals(partsBefore + 2, countParts("1"));
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:null", SplitLedger.FUEL + ":1500:null"),
+                storedParts(newestId()));
+    }
+
+    /** On an edit the row and its parts stay as they were, and removing the new part lets it save. */
+    @Test
+    public void anEditWhoseNewPartCategoryIsDeletedElsewhereIsRefusedThenSaved() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        List<String> row = rowsOf("transactions", "transaction_id = " + SplitLedger.RECEIPT);
+        List<String> parts = rowsOf("transaction_splits", "_transaction = " + SplitLedger.RECEIPT);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                moneyPicker(activity).setMoney(12000L);
+                addPart(activity, SplitLedger.SPARE, 1000L);
+                assertEquals(1, mResolver.delete(ContentUris.withAppendedId(
+                        DataContentProvider.CONTENT_CATEGORIES, SplitLedger.SPARE), null, null));
+                assertRefused(activity, R.string.error_split_not_saved);
+                assertEquals(row, rowsOf("transactions", "transaction_id = " + SplitLedger.RECEIPT));
+                assertEquals(parts, rowsOf("transaction_splits", "_transaction = " + SplitLedger.RECEIPT));
+                choosePartAction(activity, 2, -1);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(12000L, moneyOf(SplitLedger.RECEIPT));
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:null", SplitLedger.FUEL + ":3000:null"),
+                storedParts(SplitLedger.RECEIPT));
+    }
+
+    @Test
+    public void aPartOfZeroIsRefused() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                choosePartAction(activity, 0, 1);
+                partMoneyPicker(activity).setMoney(0L);
+                assertRefused(activity, R.string.error_split_part_not_positive);
+            });
+        }
+    }
+
+    /** A new main category of the other direction would leave the parts on the wrong side. */
+    @Test
+    public void aDirectionFlipOnASplitRowIsRefused() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                categoryPicker(activity).setCategory(ledgerCategory(SplitLedger.SALARY));
+                assertRefused(activity, R.string.error_split_part_wrong_type);
+            });
+        }
+        assertEquals(SplitLedger.GROCERIES, longOf(SplitLedger.RECEIPT, Contract.Transaction.CATEGORY_ID));
+        assertEquals(Contract.Direction.EXPENSE, longOf(SplitLedger.RECEIPT, Contract.Transaction.DIRECTION));
+    }
+
+    /**
+     * CROSSED holds a Salary part on an expense, so it reads as unsplit. It opens on that part,
+     * is refused while the part stays, and removing it saves the row unsplit.
+     */
+    @Test
+    public void aRowWithInvalidPartsOpensOnThemAndIsRefusedUntilRepaired() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.CROSSED))) {
+            scenario.onActivity(activity -> {
+                assertEquals(Collections.singletonList("Salary"), partLabels(activity));
+                assertRefused(activity, R.string.error_split_part_wrong_type);
+                choosePartAction(activity, 0, -1);
+                assertEquals(View.GONE, activity.findViewById(R.id.split_parts_layout).getVisibility());
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(Collections.<String>emptyList(), storedParts(SplitLedger.CROSSED));
+    }
+
+    /** OVER holds parts of 800 and 700 on a total of 1000, and is saved once the total covers them. */
+    @Test
+    public void aRowWhosePartsPassItsTotalIsSavedOnceTheTotalCoversThem() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.OVER))) {
+            scenario.onActivity(activity -> {
+                assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
+                assertRefused(activity, R.string.error_split_total_below_parts);
+                moneyPicker(activity).setMoney(800L + 700L);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":800:null", SplitLedger.FUEL + ":700:null"),
+                storedParts(SplitLedger.OVER));
+    }
+
+    /**
+     * MoneyPicker keeps the minor units of the total when the wallet changes currency, and the
+     * parts keep theirs with it, so 10000 with parts of 2000 and 3000 becomes 10000 yen with parts
+     * of 2000 and 3000 yen.
+     */
+    @Test
+    public void aWalletOfAnotherCurrencyKeepsThePartsInStepWithTheTotal() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                WalletPicker wallets = (WalletPicker) activity.getSupportFragmentManager().findFragmentByTag(WALLET_PICKER);
+                wallets.onWalletSelected(new Wallet(SplitLedger.YEN, "Yen", null,
+                        CurrencyManager.getCurrency("JPY"), 0L, 0L));
+                assertEquals(10000L, moneyPicker(activity).getCurrentMoney());
+                assertEquals(MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("JPY"),
+                        10000L - 2000L - 3000L), remainingField(activity).getTextAsString());
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(SplitLedger.YEN, longOf(SplitLedger.RECEIPT, Contract.Transaction.WALLET_ID));
+        assertEquals(10000L, moneyOf(SplitLedger.RECEIPT));
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:null", SplitLedger.FUEL + ":3000:null"),
+                storedParts(SplitLedger.RECEIPT));
+    }
+
+    @Test
+    public void aCopyTakesThePartsAsPartsOfItsOwn() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        List<String> original = storedParts(SplitLedger.RECEIPT);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.DUPLICATE_ID, SplitLedger.RECEIPT);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        long copy = newestId();
+        assertFalse(copy == SplitLedger.RECEIPT);
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:null", SplitLedger.FUEL + ":3000:null"), storedParts(copy));
+        assertEquals("the original keeps its own rows", original, storedParts(SplitLedger.RECEIPT));
+        assertEquals(2L, countParts("_transaction = " + copy + " AND split_id NOT IN (930, 931)"));
+    }
+
+    /** A part added, and one waiting for its category, both come back after a recreate. */
+    @Test
+    public void thePartsSurviveARecreate() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.WALLET_ID, SplitLedger.CASH);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                categoryPicker(activity).setCategory(ledgerCategory(SplitLedger.GROCERIES));
+                moneyPicker(activity).setMoney(9000L);
+                addPart(activity, SplitLedger.HOUSEHOLD, 2000L);
+                activity.findViewById(R.id.split_edit_text).performClick();
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertEquals(Collections.singletonList("Household"), partLabels(activity));
+                assertEquals(euro(9000L - 2000L), remainingField(activity).getTextAsString());
+                // the category picked for the part that was being added when the screen went
+                partCategoryPicker(activity).setCategory(ledgerCategory(SplitLedger.FUEL));
+                partMoneyPicker(activity).setMoney(1500L);
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        long id = newestId();
+        assertEquals(sortedOf(SplitLedger.HOUSEHOLD + ":2000:null", SplitLedger.FUEL + ":1500:null"), storedParts(id));
+    }
+
+    /** Nothing but a plain transaction offers the action, and saving one of the others leaves its parts. */
+    @Test
+    public void onlyAPlainTransactionOffersTheSplit() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        List<String> debtParts = storedParts(SplitLedger.DEBT_ROW);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.DEBT_ROW))) {
+            scenario.onActivity(activity -> {
+                assertEquals(View.GONE, activity.findViewById(R.id.split_edit_text).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.split_parts_layout).getVisibility());
+                save(activity);
+            });
+        }
+        assertEquals(debtParts, storedParts(SplitLedger.DEBT_ROW));
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(
+                savingIntent(NewEditTransactionActivity.SAVING_DEPOSIT))) {
+            scenario.onActivity(activity -> assertEquals(View.GONE,
+                    activity.findViewById(R.id.split_edit_text).getVisibility()));
+        }
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(
+                debtIntent(insertDebt(mEuroWallet), NewEditTransactionActivity.DEBT_PAY))) {
+            scenario.onActivity(activity -> assertEquals(View.GONE,
+                    activity.findViewById(R.id.split_edit_text).getVisibility()));
+        }
+        Intent model = newItemIntent();
+        model.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_MODEL);
+        model.putExtra(NewEditTransactionActivity.MODEL_ID, insertModel(4200L, mEuroWallet));
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(model)) {
+            scenario.onActivity(activity -> assertEquals(View.GONE,
+                    activity.findViewById(R.id.split_edit_text).getVisibility()));
+        }
+    }
+
+    @Test
+    public void aRowARecurrenceWroteHidesTheSplitAndACopyOfItOffersIt() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        SQLiteDatabase db = SplitLedger.database(ApplicationProvider.getApplicationContext());
+        db.execSQL("INSERT INTO recurrent_transactions (recurrent_transaction_id, recurrent_transaction_money, " +
+                        "recurrent_transaction_category, recurrent_transaction_direction, " +
+                        "recurrent_transaction_wallet, recurrent_transaction_start_date, " +
+                        "recurrent_transaction_last_occurrence, recurrent_transaction_rule, uuid, last_edit, " +
+                        "deleted) VALUES (960, 10000, ?, ?, ?, '2026-01-15', '2026-01-15', 'FREQ=MONTHLY', " +
+                        "'recurrence-960', 0, 0)",
+                new Object[] {SplitLedger.GROCERIES, Contract.Direction.EXPENSE, SplitLedger.CASH});
+        db.execSQL("UPDATE transactions SET transaction_recurrence = 960 WHERE transaction_id = " + SplitLedger.RECEIPT);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.RECEIPT))) {
+            scenario.onActivity(activity -> {
+                assertEquals(View.GONE, activity.findViewById(R.id.split_edit_text).getVisibility());
+                assertEquals(View.GONE, activity.findViewById(R.id.split_parts_layout).getVisibility());
+            });
+        }
+        Intent copy = newItemIntent();
+        copy.putExtra(NewEditTransactionActivity.DUPLICATE_ID, SplitLedger.RECEIPT);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(copy)) {
+            scenario.onActivity(activity -> {
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.split_edit_text).getVisibility());
+                assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
+            });
+        }
+    }
+
+    private static Category ledgerCategory(long id) {
+        boolean income = id == SplitLedger.SALARY || id == SplitLedger.BONUS;
+        return new Category(id, SplitLedger.NAMES.get(id), null,
+                income ? Contract.CategoryType.INCOME : Contract.CategoryType.EXPENSE);
+    }
+
+    private static CategoryPicker partCategoryPicker(NewEditTransactionActivity activity) {
+        return (CategoryPicker) activity.getSupportFragmentManager().findFragmentByTag(PART_CATEGORY_PICKER);
+    }
+
+    private static MoneyPicker partMoneyPicker(NewEditTransactionActivity activity) {
+        return (MoneyPicker) activity.getSupportFragmentManager().findFragmentByTag(PART_MONEY_PICKER);
+    }
+
+    /** Adds a part the way a user does: the action, a category from the picker, then the keypad. */
+    private static void addPart(NewEditTransactionActivity activity, long category, long money) {
+        activity.findViewById(R.id.split_edit_text).performClick();
+        partCategoryPicker(activity).setCategory(ledgerCategory(category));
+        partMoneyPicker(activity).setMoney(money);
+    }
+
+    /**
+     * Opens the actions of a part and picks one: 0 category, 1 amount, 2 note, -1 remove.
+     */
+    private static void choosePartAction(NewEditTransactionActivity activity, int part, int action) {
+        ViewGroup parts = activity.findViewById(R.id.split_parts_layout);
+        parts.getChildAt(part).performClick();
+        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        if (action < 0) {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).performClick();
+        } else {
+            ListView list = dialog.getListView();
+            list.performItemClick(list, action, list.getAdapter().getItemId(action));
+        }
+        shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    private static List<String> partLabels(NewEditTransactionActivity activity) {
+        ViewGroup parts = activity.findViewById(R.id.split_parts_layout);
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < parts.getChildCount(); i++) {
+            labels.add(((MaterialEditText) parts.getChildAt(i)).getHint().toString());
+        }
+        return labels;
+    }
+
+    private static MaterialEditText remainingField(NewEditTransactionActivity activity) {
+        return activity.findViewById(R.id.split_remaining_edit_text);
+    }
+
+    private static String remainingHint(NewEditTransactionActivity activity, String category) {
+        return activity.getString(R.string.hint_split_remaining, category);
+    }
+
+    private static String euro(long money) {
+        return MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("EUR"), money);
+    }
+
+    /** Saves, and checks the save was refused with this message and nothing was written. */
+    private void assertRefused(NewEditTransactionActivity activity, int message) {
+        int before = countTransactions();
+        long parts = countParts("1");
+        save(activity);
+        assertFalse(activity.isFinishing());
+        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+        assertTrue(dialog.isShowing());
+        TextView text = dialog.findViewById(android.R.id.message);
+        assertEquals(activity.getString(message), text.getText().toString());
+        dialog.dismiss();
+        assertEquals(before, countTransactions());
+        assertEquals(parts, countParts("1"));
+    }
+
+    /** The live parts of a row as category:money:note. */
+    private List<String> storedParts(long transaction) {
+        List<String> parts = new ArrayList<>();
+        try (Cursor cursor = SplitLedger.database(ApplicationProvider.getApplicationContext()).rawQuery(
+                "SELECT split_category || ':' || split_money || ':' || IFNULL(split_note, 'null') FROM " +
+                        "transaction_splits WHERE deleted = 0 AND _transaction = " + transaction, null)) {
+            while (cursor.moveToNext()) {
+                parts.add(cursor.getString(0));
+            }
+        }
+        Collections.sort(parts);
+        return parts;
+    }
+
+    /** Every column of every row the selection takes, flagged deleted or not. */
+    private List<String> rowsOf(String table, String selection) {
+        List<String> rows = new ArrayList<>();
+        try (Cursor cursor = SplitLedger.database(ApplicationProvider.getApplicationContext()).rawQuery(
+                "SELECT * FROM " + table + " WHERE " + selection, null)) {
+            while (cursor.moveToNext()) {
+                List<String> columns = new ArrayList<>();
+                for (int i = 0; i < cursor.getColumnCount(); i++) {
+                    columns.add(cursor.getColumnName(i) + "=" + cursor.getString(i));
+                }
+                rows.add(columns.toString());
+            }
+        }
+        Collections.sort(rows);
+        return rows;
+    }
+
+    private long countParts(String selection) {
+        try (Cursor cursor = SplitLedger.database(ApplicationProvider.getApplicationContext()).rawQuery(
+                "SELECT COUNT(*) FROM transaction_splits WHERE " + selection, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.getLong(0);
+        }
+    }
+
+    private long longOf(long transactionId, String column) {
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, transactionId);
+        try (Cursor cursor = mResolver.query(uri, new String[] {column}, null, null, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.getLong(0);
+        }
+    }
+
+    private long newestId() {
+        try (Cursor cursor = newestTransaction()) {
+            return cursor.getLong(0);
+        }
+    }
+
+    private static List<String> sortedOf(String... rows) {
+        List<String> list = new ArrayList<>(Arrays.asList(rows));
+        Collections.sort(list);
+        return list;
+    }
+
     // fixtures
 
     private long insertCategory() {
@@ -1094,6 +1630,31 @@ public class NewEditTransactionActivityTest {
                 View.MeasureSpec.makeMeasureSpec(metrics.heightPixels, View.MeasureSpec.AT_MOST));
         decor.layout(0, 0, decor.getMeasuredWidth(), decor.getMeasuredHeight());
         assertEquals(list.getAdapter().getItemCount(), list.getChildCount());
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < list.getChildCount(); i++) {
+            names.add(((TextView) list.getChildAt(i).findViewById(R.id.name_text_view)).getText().toString());
+        }
+        return names;
+    }
+
+    /** The category names the picker lists, read off its rows once the loader lands. */
+    private static List<String> categoryPickerNames(CategoryPickerActivity activity) {
+        RecyclerView list = activity.findViewById(R.id.recycler_view);
+        for (int i = 0; i < 200 && (list.getAdapter() == null || list.getAdapter().getItemCount() == 0); i++) {
+            shadowOf(Looper.getMainLooper()).idle();
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals("the categories never loaded", View.VISIBLE, list.getVisibility());
+        View decor = activity.getWindow().getDecorView();
+        DisplayMetrics metrics = decor.getResources().getDisplayMetrics();
+        decor.measure(View.MeasureSpec.makeMeasureSpec(metrics.widthPixels, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(metrics.heightPixels, View.MeasureSpec.EXACTLY));
+        decor.layout(0, 0, decor.getMeasuredWidth(), decor.getMeasuredHeight());
         List<String> names = new ArrayList<>();
         for (int i = 0; i < list.getChildCount(); i++) {
             names.add(((TextView) list.getChildAt(i).findViewById(R.id.name_text_view)).getText().toString());
