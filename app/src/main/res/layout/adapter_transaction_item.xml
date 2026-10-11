@@ -45,22 +45,44 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_begin="36dp" />
 
+    <!--
+      The category name and the split marker sit packed at the start, so the marker follows the
+      name and the name is the one that gives way when the row is short of room.
+    -->
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/primary_text_view"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/material_component_lists_two_line_primary_text_start_margin"
         android:layout_marginStart="@dimen/material_component_lists_two_line_primary_text_start_margin"
-        android:layout_marginRight="@dimen/material_component_lists_two_line_primary_text_end_margin"
-        android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
         android:textSize="@dimen/material_component_lists_two_line_with_avatar_primary_text_size"
         android:maxLines="1"
         android:ellipsize="end"
+        app:layout_goneMarginRight="@dimen/material_component_lists_two_line_primary_text_end_margin"
+        app:layout_goneMarginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintBottom_toTopOf="@+id/text_guideline"
-        app:layout_constraintEnd_toStartOf="@+id/money_text_view"
+        app:layout_constraintEnd_toStartOf="@+id/split_image_view"
         app:layout_constraintStart_toStartOf="parent"
         app:theme_textColor="textColorPrimary"
         tools:text="This is the primary text" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedImageView
+        android:id="@+id/split_image_view"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
+        android:src="@drawable/ic_call_split_24dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@+id/primary_text_view"
+        app:layout_constraintBottom_toBottomOf="@+id/primary_text_view"
+        app:layout_constraintEnd_toStartOf="@+id/money_text_view"
+        app:layout_constraintStart_toEndOf="@+id/primary_text_view"
+        app:theme_backgroundColor="colorWindowForeground"
+        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/money_text_view"

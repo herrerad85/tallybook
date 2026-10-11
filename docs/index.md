@@ -25,6 +25,16 @@ On **Transactions**, the round + button opens **New transaction** on the Transac
 - A transaction dated in the future is saved, but the transactions list and the balance leave it out until its date arrives. The app says so when you save.
 - Long press the Tallybook icon on your home screen for **New transaction** and **New transfer** shortcuts.
 
+## Splitting a transaction
+
+One receipt can cover several categories. In **New transaction**, or when you edit one, **Split into categories** adds a part. Pick its category, then its amount, and add more parts the same way with **Add a part**. Tap a part to change its category, amount or note, or to remove it.
+
+- The category you picked for the transaction stays its main category. Whatever the parts leave of the amount is the remainder, and it stays under the main category. The **Remaining under** line shows it as you go.
+- The amount is still the whole receipt, so wallet balances and totals count it once. A part needs an amount above zero, the parts cannot add up to more than the amount, and every part has to be of the same type as the main category, income or expense.
+- The transactions of a category, a category budget and the Overview by category count only that category's share of the receipt. Open the transaction to see every part and the remainder.
+- In the lists a split transaction has a split icon after its category name.
+- Only a plain transaction can be split. Transfers, debts, savings, models and recurrences cannot.
+
 ## Categories
 
 **Categories** has three tabs, Incomes, Expenses and System. The + button adds a category, and **Sort** in the toolbar reorders them.

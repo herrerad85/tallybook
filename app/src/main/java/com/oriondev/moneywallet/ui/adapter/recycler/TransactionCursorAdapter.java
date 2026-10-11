@@ -86,6 +86,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private int mIndexTransactionDate;
     private int mIndexTransactionMoney;
     private int mIndexCurrency;
+    private int mIndexSplitCategories;
 
     private MoneyFormatter mMoneyFormatter;
 
@@ -145,6 +146,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mIndexTransactionDate = cursor.getColumnIndex(Contract.Transaction.DATE);
         mIndexTransactionMoney = cursor.getColumnIndex(Contract.Transaction.MONEY);
         mIndexCurrency = cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY);
+        mIndexSplitCategories = cursor.getColumnIndex(Contract.Transaction.SPLIT_CATEGORIES);
         // The superclass calls this from two places: when it takes a new cursor, after that
         // cursor is in place and before it tells the list anything changed, and from its own
         // constructor. The constructor call cannot land here, because this adapter is always
@@ -356,6 +358,15 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         IconLoader.loadInto(icon, holder.mAvatarImageView);
         holder.mPrimaryTextView.setText(cursor.getString(mIndexCategoryName));
         holder.mSecondaryTextView.setText(cursor.getString(mIndexTransactionDescription));
+        int splitCategories = mIndexSplitCategories != -1 ? cursor.getInt(mIndexSplitCategories) : 0;
+        if (splitCategories > 0) {
+            holder.mSplitImageView.setVisibility(View.VISIBLE);
+            holder.mSplitImageView.setContentDescription(holder.itemView.getResources().getQuantityString(
+                    R.plurals.description_split_categories, splitCategories, splitCategories));
+        } else {
+            holder.mSplitImageView.setVisibility(View.GONE);
+            holder.mSplitImageView.setContentDescription(null);
+        }
         CurrencyUnit currency = CurrencyManager.getCurrency(cursor.getString(mIndexCurrency));
         long money = cursor.getLong(mIndexTransactionMoney);
         if (cursor.getInt(mIndexTransactionDirection) == Contract.Direction.INCOME) {
@@ -587,6 +598,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
 
         private ImageView mAvatarImageView;
         private TextView mPrimaryTextView;
+        private ImageView mSplitImageView;
         private TextView mMoneyTextView;
         private TextView mSecondaryTextView;
         private TextView mDateTextView;
@@ -595,6 +607,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             super(itemView);
             mAvatarImageView = itemView.findViewById(R.id.avatar_image_view);
             mPrimaryTextView = itemView.findViewById(R.id.primary_text_view);
+            mSplitImageView = itemView.findViewById(R.id.split_image_view);
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mSecondaryTextView = itemView.findViewById(R.id.secondary_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);

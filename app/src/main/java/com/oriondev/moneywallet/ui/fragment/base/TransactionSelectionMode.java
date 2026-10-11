@@ -63,7 +63,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /**
  * The selection of a transaction list, drawn on the primary toolbar of the multi panel fragment
@@ -201,7 +201,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                     return;
                 }
                 showChangeDialog(mListFragment.requireActivity(), ids, message,
-                        () -> moveTransactions(resolver, ids, wallet.getId(), iso));
+                        () -> new SkippedRows(moveTransactions(resolver, ids, wallet.getId(), iso), 0));
             });
         });
     }
@@ -302,7 +302,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
         return refused;
     }
 
-    private void showChangeDialog(Context context, long[] ids, String message, IntSupplier write) {
+    private void showChangeDialog(Context context, long[] ids, String message, Supplier<SkippedRows> write) {
         ThemedDialog.buildMaterialDialog(context)
                 .setTitle(R.string.title_warning)
                 .setMessage(message)
@@ -311,26 +311,48 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                 .show();
     }
 
-    private void change(long[] ids, IntSupplier write) {
+    private void change(long[] ids, Supplier<SkippedRows> write) {
         if (!isSameSelection(mAdapter.getSelectedIds(), ids)) {
             showSelectionChangedToast();
             return;
         }
         finish();
         sDeleteExecutor.execute(() -> {
-            int skipped = write.getAsInt();
+            SkippedRows skipped = write.get();
             sMainHandler.post(() -> {
-                if (mListFragment.getView() == null || skipped == 0) {
+                if (mListFragment.getView() == null) {
+                    return;
+                }
+                String message = buildSkippedMessage(mListFragment.getResources(), skipped);
+                if (message == null) {
                     return;
                 }
                 ThemedDialog.buildMaterialDialog(mListFragment.requireActivity())
                         .setTitle(R.string.title_error)
-                        .setMessage(mListFragment.getResources().getQuantityString(
-                                R.plurals.message_error_change_selected_transactions, skipped, skipped))
+                        .setMessage(message)
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
             });
         });
+    }
+
+    /**
+     * Each reason a row was skipped gets its own sentence, so a split transaction is not sent to
+     * a transfer, debt or saving screen it does not belong to.
+     *
+     * @return the message, or null when nothing was skipped.
+     */
+    /*package-local*/ static String buildSkippedMessage(Resources resources, SkippedRows skipped) {
+        StringBuilder message = new StringBuilder();
+        if (skipped.mRefused > 0) {
+            message.append(resources.getQuantityString(R.plurals.message_error_change_selected_transactions,
+                    skipped.mRefused, skipped.mRefused));
+        }
+        if (skipped.mSplit > 0) {
+            message.append(message.length() > 0 ? "\n\n" : "").append(resources.getQuantityString(
+                    R.plurals.message_error_change_split_transactions, skipped.mSplit, skipped.mSplit));
+        }
+        return message.length() > 0 ? message.toString() : null;
     }
 
     private void showSelectionChangedToast() {
@@ -483,11 +505,12 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
         return skipped;
     }
 
-    /*package-local*/ static int changeCategory(ContentResolver resolver, long[] ids, Category category) {
+    /*package-local*/ static SkippedRows changeCategory(ContentResolver resolver, long[] ids, Category category) {
         String[] projection = new String[] {Contract.Transaction.ID, Contract.Transaction.TYPE,
                 Contract.Transaction.CATEGORY_ID, Contract.Transaction.DIRECTION};
         Set<Long> split = querySplit(resolver, ids);
         int skipped = 0;
+        int splitSkipped = 0;
         for (long id : ids) {
             Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, id);
             try (Cursor row = resolver.query(uri, projection, null, null, null)) {
@@ -495,8 +518,12 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                         || row.getLong(row.getColumnIndexOrThrow(Contract.Transaction.CATEGORY_ID)) == category.getId()) {
                     continue;
                 }
-                if (!isStandard(row) || keepsItsParts(row, split, category)) {
+                if (!isStandard(row)) {
                     skipped++;
+                    continue;
+                }
+                if (keepsItsParts(row, split, category)) {
+                    splitSkipped++;
                     continue;
                 }
                 ContentValues values = new ContentValues();
@@ -507,7 +534,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                 skipped++;
             }
         }
-        return skipped;
+        return new SkippedRows(skipped, splitSkipped);
     }
 
     private void closePanelShowingAnyOf(long[] ids, Set<Long> refused) {
@@ -523,6 +550,17 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                     panel.showItemId(0L);
                 }
             }
+        }
+    }
+
+    /*package-local*/ static final class SkippedRows {
+
+        /*package-local*/ final int mRefused;
+        /*package-local*/ final int mSplit;
+
+        /*package-local*/ SkippedRows(int refused, int split) {
+            mRefused = refused;
+            mSplit = split;
         }
     }
 }

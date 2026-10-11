@@ -138,6 +138,7 @@ public class Contract {
          */
         public static final String FIX_SPLIT_DECIMALS = "action_fix_split_decimals";
         public static final String SPLIT_PARTS = "transaction_split_parts";
+        public static final String SPLIT_CATEGORIES = "transaction_split_categories";
     }
 
     /**
@@ -836,6 +837,7 @@ public class Contract {
         public static final int TRANSACTION_USED_IN_TRANSFER = 4544;
         public static final int INVALID_RECURRENCE_RULE = 4545;
         public static final int SPLIT_NOT_VALID = 4546;
+        public static final int CATEGORY_IN_SPLIT = 4547;
     }
 
     public static List<Long> parseObjectIds(String encodedIds) {

@@ -27,17 +27,31 @@ import android.database.sqlite.SQLiteException;
 public class SQLiteDataException extends SQLiteException {
 
     private final int mErrorCode;
+    private final long[] mItemIds;
 
     /*package-local*/ SQLiteDataException(int code) {
         mErrorCode = code;
+        mItemIds = new long[0];
     }
 
     /*package-local*/ SQLiteDataException(int code, String error) {
+        this(code, error, new long[0]);
+    }
+
+    /*package-local*/ SQLiteDataException(int code, String error, long[] itemIds) {
         super(error);
         mErrorCode = code;
+        mItemIds = itemIds;
     }
 
     public int getErrorCode() {
         return mErrorCode;
+    }
+
+    /**
+     * The rows the refusal is about, for an error code that says which. Empty for the others.
+     */
+    public long[] getItemIds() {
+        return mItemIds;
     }
 }

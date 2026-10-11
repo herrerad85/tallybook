@@ -39,6 +39,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,6 +74,39 @@ public class SplitWriteTest {
         long id = ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values));
         assertEquals(sorted(HOUSEHOLD + ":2000:soap", FUEL + ":1500:null"), partsOf(id));
         assertEquals(sorted(GROCERIES + ":" + (9000 - 2000 - 1500), HOUSEHOLD + ":2000", FUEL + ":1500"), linesOf(id));
+        // Groceries for what is left, Household and Fuel
+        assertEquals(3L, splitCategoriesOf(id));
+    }
+
+    /**
+     * A part in the main category itself, with money left over: the lines are Groceries for what
+     * is left, Groceries for the part and Household, which is two categories.
+     */
+    @Test
+    public void aPartInTheMainCategoryIsCountedOnce() throws Exception {
+        ContentValues values = newExpense(9000L);
+        values.put(Contract.Transaction.SPLIT_PARTS, parts(part(GROCERIES, 1000, null), part(HOUSEHOLD, 2000, null)));
+        long id = ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values));
+        assertEquals(sorted(GROCERIES + ":" + (9000 - 1000 - 2000), GROCERIES + ":1000", HOUSEHOLD + ":2000"), linesOf(id));
+        assertEquals(2L, splitCategoriesOf(id));
+    }
+
+    /** The per category list reads the shares view, which carries the count too. */
+    @Test
+    public void theSharesCarryTheCountOfCategories() {
+        try (Cursor cursor = mResolver.query(DataContentProvider.CONTENT_CATEGORY_SHARES,
+                new String[] {Contract.Transaction.ID, Contract.Transaction.SPLIT_CATEGORIES},
+                Contract.Transaction.CATEGORY_ID + " = ?", new String[] {String.valueOf(HOUSEHOLD)},
+                Contract.Transaction.ID)) {
+            List<String> rows = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                rows.add(cursor.getLong(0) + ":" + cursor.getLong(1));
+            }
+            // the rows with a Household line. CROSSED and PLAIN_BANK read as unsplit, WITH_HIDDEN
+            // as Household and Hidden. OVER is filed under Pharmacy, and its parts are not read
+            assertEquals(Arrays.asList(RECEIPT + ":3", CROSSED + ":0", WITH_HIDDEN + ":2", TWICE + ":2",
+                    PLAIN_BANK + ":0"), rows);
+        }
     }
 
     @Test
@@ -103,6 +137,7 @@ public class SplitWriteTest {
         assertEquals(1, update(RECEIPT, values));
         assertEquals(Collections.<String>emptyList(), allPartsOf(RECEIPT));
         assertEquals(sorted(GROCERIES + ":10000"), linesOf(RECEIPT));
+        assertEquals(0L, splitCategoriesOf(RECEIPT));
     }
 
     @Test
@@ -296,6 +331,15 @@ public class SplitWriteTest {
         }
         Collections.sort(lines);
         return lines;
+    }
+
+    private long splitCategoriesOf(long transaction) {
+        try (Cursor cursor = mResolver.query(DataContentProvider.CONTENT_TRANSACTIONS,
+                new String[] {Contract.Transaction.SPLIT_CATEGORIES}, Contract.Transaction.ID + " = ?",
+                new String[] {String.valueOf(transaction)}, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.getLong(0);
+        }
     }
 
     private long count(String table, String selection) {

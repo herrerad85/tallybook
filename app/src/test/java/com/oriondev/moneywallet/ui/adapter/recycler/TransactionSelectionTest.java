@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.adapter.recycler;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.view.ContextThemeWrapper;
@@ -31,6 +32,9 @@ import androidx.test.core.app.ApplicationProvider;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Group;
 import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SplitLedger;
+import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.storage.wrapper.TransactionHeaderCursor;
 
@@ -48,6 +52,8 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -294,6 +300,58 @@ public class TransactionSelectionTest {
                 new String[] {DAY_15, DAY_14}));
         assertEquals(ids(3L), selected(adapter));
         assertEquals(1, listener.mSelectionCount);
+    }
+
+    /**
+     * The marker over the provider's own rows, from SplitLedger. RECEIPT reads as Groceries,
+     * Household and Fuel, EXACT as Pharmacy and Fuel with nothing left for Groceries, TWICE as
+     * Groceries and Household twice, which is two categories. OVER holds parts past its total and
+     * reads as unsplit, and so does PLAIN_CASH, which has none.
+     */
+    @Test
+    public void theSplitMarkerShowsOnlyOnARowThatReadsAsSplit() {
+        Context context = ApplicationProvider.getApplicationContext();
+        TestDatabases.useFreshDatabase(context);
+        SplitLedger.build(context);
+        long[] ids = {SplitLedger.RECEIPT, SplitLedger.EXACT, SplitLedger.OVER, SplitLedger.TWICE, SplitLedger.PLAIN_CASH};
+        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_TRANSACTIONS, null,
+                Contract.Transaction.ID + " IN (" + ids[0] + ", " + ids[1] + ", " + ids[2] + ", " + ids[3] +
+                        ", " + ids[4] + ")", null, Contract.Transaction.ID + " ASC");
+        TransactionCursorAdapter adapter = adapter(new Records(), cursor);
+        RecyclerView list = listWith(adapter);
+        int[] categories = {3, 2, 0, 2, 0};
+        for (int position = 0; position < ids.length; position++) {
+            View marker = childAt(list, position).findViewById(R.id.split_image_view);
+            if (categories[position] == 0) {
+                assertEquals("row " + ids[position], View.GONE, marker.getVisibility());
+            } else {
+                assertEquals("row " + ids[position], View.VISIBLE, marker.getVisibility());
+                assertEquals(context.getResources().getQuantityString(R.plurals.description_split_categories,
+                        categories[position], categories[position]), marker.getContentDescription());
+            }
+        }
+        adapter.changeCursor(null);
+    }
+
+    /** A row view reused for a row that reads as unsplit drops the marker of the row before. */
+    @Test
+    public void aReusedRowDropsTheSplitMarker() {
+        Context context = ApplicationProvider.getApplicationContext();
+        TestDatabases.useFreshDatabase(context);
+        SplitLedger.build(context);
+        TransactionCursorAdapter adapter = adapter(new Records(), context.getContentResolver().query(
+                DataContentProvider.CONTENT_TRANSACTIONS, null, Contract.Transaction.ID + " = " + SplitLedger.RECEIPT, null, null));
+        RecyclerView list = listWith(adapter);
+        View row = childAt(list, 0);
+        assertEquals(View.VISIBLE, row.findViewById(R.id.split_image_view).getVisibility());
+        adapter.changeCursor(context.getContentResolver().query(
+                DataContentProvider.CONTENT_TRANSACTIONS, null, Contract.Transaction.ID + " = " + SplitLedger.PLAIN_CASH, null, null));
+        layOut(list);
+        assertSame("the row view was not reused", row, childAt(list, 0));
+        View marker = row.findViewById(R.id.split_image_view);
+        assertEquals(View.GONE, marker.getVisibility());
+        assertNull(marker.getContentDescription());
+        adapter.changeCursor(null);
     }
 
     private static class Records implements TransactionCursorAdapter.ActionListener {

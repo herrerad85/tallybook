@@ -121,8 +121,10 @@ public class TransactionSelectionModeTest {
         long cash = insertWallet("Cash", "EUR");
         long id = insertTransaction(cash, insertCategory(Contract.CategoryType.EXPENSE), 1250L);
         long salary = insertCategory(Contract.CategoryType.INCOME);
-        assertEquals(0, TransactionSelectionMode.changeCategory(mResolver, new long[] {id},
-                new Category(salary, "Salary", null, Contract.CategoryType.INCOME)));
+        TransactionSelectionMode.SkippedRows skipped = TransactionSelectionMode.changeCategory(mResolver, new long[] {id},
+                new Category(salary, "Salary", null, Contract.CategoryType.INCOME));
+        assertEquals(0, skipped.mRefused);
+        assertEquals(0, skipped.mSplit);
         assertEquals(salary, longOf(id, Contract.Transaction.CATEGORY_ID));
         assertEquals(Contract.Direction.INCOME, longOf(id, Contract.Transaction.DIRECTION));
         assertEquals(1250L, longOf(id, Contract.Transaction.MONEY));
@@ -155,8 +157,10 @@ public class TransactionSelectionModeTest {
         long debtCategory = longOf(others[1], Contract.Transaction.CATEGORY_ID);
         long savingCategory = longOf(others[2], Contract.Transaction.CATEGORY_ID);
         long[] ids = new long[] {others[0], others[1], others[2], plain};
-        assertEquals(3, TransactionSelectionMode.changeCategory(mResolver, ids,
-                new Category(target, "Groceries", null, Contract.CategoryType.EXPENSE)));
+        TransactionSelectionMode.SkippedRows skipped = TransactionSelectionMode.changeCategory(mResolver, ids,
+                new Category(target, "Groceries", null, Contract.CategoryType.EXPENSE));
+        assertEquals(3, skipped.mRefused);
+        assertEquals(0, skipped.mSplit);
         assertEquals(debtCategory, longOf(others[1], Contract.Transaction.CATEGORY_ID));
         assertEquals(savingCategory, longOf(others[2], Contract.Transaction.CATEGORY_ID));
         assertEquals(target, longOf(plain, Contract.Transaction.CATEGORY_ID));

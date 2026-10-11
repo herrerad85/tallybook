@@ -14,18 +14,22 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.database.TransferContentValuesBuilder;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
 import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
+import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateUtils;
+import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -341,6 +345,82 @@ public class TransactionItemFragmentTest {
                         started.getComponent().getClassName());
             });
         }
+    }
+
+    /**
+     * RECEIPT is 10000 under Groceries with parts of 2000 in Household and 3000 in Fuel, and a
+     * part flagged deleted that is not listed.
+     */
+    @Test
+    public void aSplitRowListsItsPartsAndWhatIsLeftUnderTheMainCategory() {
+        Context context = ApplicationProvider.getApplicationContext();
+        SplitLedger.build(context);
+        SplitLedger.database(context).execSQL("UPDATE transaction_splits SET split_note = 'soap' WHERE split_id = 930");
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TransactionItemFragment fragment = showTransaction(activity, SplitLedger.RECEIPT);
+                assertEquals(activity.getString(R.string.split_part_with_note, "Household", euro(2000L), "soap") + "\n" +
+                        activity.getString(R.string.split_part, "Fuel", euro(3000L)) + "\n" +
+                        activity.getString(R.string.split_remainder, "Groceries", euro(10000L - 2000L - 3000L)),
+                        awaitSplitText(fragment));
+            });
+        }
+    }
+
+    /** CROSSED holds a Salary part on an expense, which no total counts. */
+    @Test
+    public void invalidPartsAreListedWithALineSayingTheyAreNotCounted() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TransactionItemFragment fragment = showTransaction(activity, SplitLedger.CROSSED);
+                assertEquals(activity.getString(R.string.split_part, "Salary", euro(500L)) + "\n" +
+                        activity.getString(R.string.split_not_counted), awaitSplitText(fragment));
+            });
+        }
+    }
+
+    /**
+     * Coming back to the foreground, the loader hands the fragment the same parts cursor it
+     * already read to the end, the way it does when the user backs out of the editor.
+     */
+    @Test
+    public void thePartsStayListedWhenTheScreenComesBackToTheForeground() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            String[] shown = new String[1];
+            scenario.onActivity(activity -> shown[0] = awaitSplitText(showTransaction(activity, SplitLedger.RECEIPT)));
+            scenario.moveToState(Lifecycle.State.CREATED);
+            scenario.moveToState(Lifecycle.State.RESUMED);
+            scenario.onActivity(activity -> {
+                idleMainLooper();
+                TransactionItemFragment fragment = (TransactionItemFragment)
+                        activity.getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT);
+                assertNotNull(fragment);
+                TextView split = fragment.requireView().findViewById(R.id.split_text_view);
+                assertEquals(View.VISIBLE, split.getVisibility());
+                assertEquals(shown[0], split.getText().toString());
+            });
+        }
+    }
+
+    /** The parts and the row come back through two loaders, so this waits for the line to fill. */
+    private String awaitSplitText(TransactionItemFragment fragment) {
+        TextView split = fragment.requireView().findViewById(R.id.split_text_view);
+        for (int i = 0; i < 200 && split.getVisibility() != View.VISIBLE; i++) {
+            idleMainLooper();
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+        assertEquals("the parts never showed", View.VISIBLE, split.getVisibility());
+        return split.getText().toString();
+    }
+
+    private static String euro(long money) {
+        return MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("EUR"), money);
     }
 
     /**
