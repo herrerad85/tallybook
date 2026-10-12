@@ -351,12 +351,14 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
     }
 
     /**
-     * False for a debt, whose repayments may sit in any wallet of its currency and all count
-     * toward its progress, so hiding the ones outside the selected wallet would contradict it.
+     * False for a debt, whose repayments may sit in any wallet of its currency, and for a budget,
+     * whose list already holds only the wallets it covers. Each counts all of those rows toward
+     * its progress, so hiding the ones outside the selected wallet would contradict it.
      */
     private boolean filtersByCurrentWallet() {
         Bundle arguments = getArguments();
-        return arguments == null || arguments.getSerializable(FILTER_TYPE) != FilterType.DEBT;
+        Object type = arguments != null ? arguments.getSerializable(FILTER_TYPE) : null;
+        return type != FilterType.DEBT && type != FilterType.BUDGET;
     }
 
     @Override
