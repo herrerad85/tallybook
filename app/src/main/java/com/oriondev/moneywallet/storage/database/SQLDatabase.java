@@ -76,7 +76,7 @@ import java.util.function.Supplier;
     private static final String TAG = "SQLDatabase";
 
     /*package-local*/ static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 10;
 
     /**
      * The currencies whose shipped decimals were taken from the number of digits a country
@@ -484,6 +484,14 @@ import java.util.function.Supplier;
             // rules table is, an older release installed over this database and upgraded again
             // arrives here a second time with the table and its rows still there.
             db.execSQL(Schema.CREATE_TABLE_TRANSACTION_SPLIT);
+        }
+        if (oldVersion < 10) {
+            // a transaction saved from a model's edit screen was stored as type model, so it never
+            // offered a split or a copy. It is a plain transaction like the rest.
+            ContentValues transaction = new ContentValues();
+            transaction.put(Schema.Transaction.TYPE, Contract.TransactionType.STANDARD);
+            db.update(Schema.Transaction.TABLE, transaction, Schema.Transaction.TYPE + " = ?",
+                    new String[] {String.valueOf(Contract.TransactionType.MODEL)});
         }
     }
 

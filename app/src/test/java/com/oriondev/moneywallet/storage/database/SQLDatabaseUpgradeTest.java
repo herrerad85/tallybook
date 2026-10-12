@@ -159,11 +159,12 @@ public class SQLDatabaseUpgradeTest {
         // declaration has not changed since the initial commit, so Schema is the one a
         // release of any of these versions wrote
         old.execSQL(Schema.CREATE_TABLE_CURRENCY);
-        // every release has shipped a transaction table too, and the table of parts the last step
-        // creates names it, so deleting a category below has to find one. Only its key, since the
-        // shipped declaration names five more tables this fixture does not carry, and no row
-        // here is a transaction
-        old.execSQL("CREATE TABLE transactions (transaction_id INTEGER PRIMARY KEY AUTOINCREMENT)");
+        // every release has shipped a transaction table too, and the table of parts the version 9
+        // step creates names it, so deleting a category below has to find one. Only its key and
+        // the type the version 10 step rewrites, since the shipped declaration names five more
+        // tables this fixture does not carry, and no row here is a transaction
+        old.execSQL("CREATE TABLE transactions (transaction_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "transaction_type INTEGER NOT NULL)");
         // each release added its own columns by its own upgrade, so they are added here the same
         // way instead of being declared, and the fixture stays the tables that release shipped
         if (version >= 3) {
@@ -198,7 +199,7 @@ public class SQLDatabaseUpgradeTest {
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
         // written out so that the next version bump has to come through here
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertSchemaMatchesAFreshInstall(upgraded);
@@ -319,7 +320,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(2L, count(upgraded, Schema.CategoryRule.TABLE, null));
@@ -346,7 +347,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(2L, count(upgraded, Schema.Wallet.TABLE, "wallet_group IS NULL"));
         helper.close();
@@ -370,7 +371,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE, "wallet_group = 'Savings'"));
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE,
@@ -396,7 +397,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(0L, count(upgraded, "transaction_splits", null));
@@ -425,7 +426,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(2L, count(upgraded, "transaction_splits", null));
@@ -435,6 +436,32 @@ public class SQLDatabaseUpgradeTest {
         assertEquals(1L, count(upgraded, "transaction_splits", "split_id = 921 AND " +
                 "_transaction = 910 AND split_category = 902 AND split_money = 300 AND " +
                 "split_note IS NULL"));
+        helper.close();
+    }
+
+    @Test
+    public void aTransactionStoredAsAModelComesForwardAsAPlainOne() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        insertCategory(old, 900, "Food");
+        insertWalletIn(old, 901, "Cash", "EUR", 1500L, false);
+        for (int type = 0; type <= 4; type++) {
+            insertTransaction(old, 910 + type, 901, 2500L, type);
+        }
+        old.setVersion(9);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(10, upgraded.getVersion());
+        assertEquals(Long.valueOf(Contract.TransactionType.STANDARD), typeOf(upgraded, 910));
+        assertEquals(Long.valueOf(Contract.TransactionType.TRANSFER), typeOf(upgraded, 911));
+        assertEquals(Long.valueOf(Contract.TransactionType.DEBT), typeOf(upgraded, 912));
+        assertEquals(Long.valueOf(Contract.TransactionType.SAVING), typeOf(upgraded, 913));
+        assertEquals(Long.valueOf(Contract.TransactionType.STANDARD), typeOf(upgraded, 914));
+        assertEquals(Long.valueOf(EDIT),
+                number(upgraded, "SELECT last_edit FROM transactions WHERE transaction_id = 914"));
         helper.close();
     }
 
@@ -469,6 +496,8 @@ public class SQLDatabaseUpgradeTest {
         // declaration has not changed since the initial commit, so Schema is the one a
         // release of any of these versions wrote
         old.execSQL(Schema.CREATE_TABLE_CURRENCY);
+        old.execSQL("CREATE TABLE transactions (transaction_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "transaction_type INTEGER NOT NULL)");
         insertCategory(old, 1, "Food");
         insertCategory(old, 5, "Rent");
         insertCategory(old, 7, "Fun");
@@ -505,7 +534,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(7L, count(upgraded, Schema.BudgetCategory.TABLE, null));
@@ -611,7 +640,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -694,7 +723,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase second = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = second.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -717,7 +746,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(9, upgraded.getVersion());
+        assertEquals(10, upgraded.getVersion());
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
         // two tables the rescale reaches after the parts, so a step that stopped at the missing
         // table would leave these where they were
@@ -807,12 +836,16 @@ public class SQLDatabaseUpgradeTest {
     }
 
     private void insertTransaction(SQLiteDatabase db, long id, long wallet, long money) {
+        insertTransaction(db, id, wallet, money, Contract.TransactionType.STANDARD);
+    }
+
+    private void insertTransaction(SQLiteDatabase db, long id, long wallet, long money, int type) {
         db.execSQL("INSERT INTO transactions (transaction_id, transaction_money, " +
                         "transaction_date, transaction_category, transaction_direction, " +
                         "transaction_type, transaction_wallet, uuid, last_edit, deleted) " +
                         "VALUES (?, ?, '2026-09-01 12:00:00', 900, ?, ?, ?, ?, ?, 0)",
-                new Object[] {id, money, Schema.Direction.EXPENSE,
-                        Contract.TransactionType.STANDARD, wallet, "transaction-" + id, EDIT});
+                new Object[] {id, money, Schema.Direction.EXPENSE, type, wallet,
+                        "transaction-" + id, EDIT});
     }
 
     private void insertBudgetIn(SQLiteDatabase db, long id, String iso, long money) {
@@ -885,6 +918,10 @@ public class SQLDatabaseUpgradeTest {
 
     private Long moneyOf(SQLiteDatabase db, long transaction) {
         return number(db, "SELECT transaction_money FROM transactions WHERE transaction_id = " + transaction);
+    }
+
+    private Long typeOf(SQLiteDatabase db, long transaction) {
+        return number(db, "SELECT transaction_type FROM transactions WHERE transaction_id = " + transaction);
     }
 
     private Long budgetMoneyOf(SQLiteDatabase db, long budget) {

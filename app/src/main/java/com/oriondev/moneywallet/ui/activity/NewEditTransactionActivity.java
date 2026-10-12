@@ -900,6 +900,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                         }
                         cursor.close();
                     }
+                    mRules.setType(TYPE_STANDARD);
                 }
                 datetime = new Date();
             }

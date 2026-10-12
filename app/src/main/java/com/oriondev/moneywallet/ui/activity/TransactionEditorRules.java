@@ -110,8 +110,8 @@ public class TransactionEditorRules implements Serializable {
 
     /**
      * Only a transaction standing on its own is split. A transfer leg, a debt row and a saving
-     * row each carry their role in a category of their own, and a row started from a model is
-     * stored as a model row. One a recurrence wrote is left whole like the recurrence itself.
+     * row each carry their role in a category of their own. One a recurrence wrote is left whole
+     * like the recurrence itself.
      */
     public boolean offersSplit() {
         return mType == TYPE_STANDARD && mDebtId == null && mSavingId == null && !mRecurrent;
