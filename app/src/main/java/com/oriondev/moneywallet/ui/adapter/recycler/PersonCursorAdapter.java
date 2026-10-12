@@ -20,14 +20,10 @@
 package com.oriondev.moneywallet.ui.adapter.recycler;
 
 import android.database.Cursor;
-import android.os.Bundle;
-import android.util.Log;
 import androidx.annotation.NonNull;
-import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.RecyclerViewAccessibilityDelegate;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,53 +69,7 @@ public class PersonCursorAdapter extends AbstractCursorAdapter<PersonCursorAdapt
     public PersonCursorAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View itemView = inflater.inflate(R.layout.adapter_person_item, parent, false);
-        if (parent instanceof RecyclerView) {
-            RecyclerViewAccessibilityDelegate parentDelegate =
-                    ((RecyclerView) parent).getCompatAccessibilityDelegate();
-            if (parentDelegate != null) {
-                ViewCompat.setAccessibilityDelegate(itemView,
-                        new PersonItemDelegate(parentDelegate.getItemDelegate()));
-            } else {
-                // Only reachable if something cleared the RecyclerView's own delegate. The row
-                // still works, it just loses the named long press, so leave a trace rather than
-                // dropping the label in silence.
-                Log.w("PersonCursorAdapter", "no RecyclerView accessibility delegate, long press stays unlabelled");
-            }
-        }
         return new ViewHolder(itemView);
-    }
-
-    /**
-     * A person row needs two things announced that cannot both come from one delegate. Its
-     * position in the list is supplied only by the RecyclerView's own item delegate, and the long
-     * press is otherwise announced with no destination. Setting any delegate on a row makes
-     * RecyclerView skip attaching its own, so this forwards to that one rather than replacing it.
-     */
-    private static class PersonItemDelegate extends AccessibilityDelegateCompat {
-
-        private final AccessibilityDelegateCompat mItemDelegate;
-
-        private PersonItemDelegate(AccessibilityDelegateCompat itemDelegate) {
-            mItemDelegate = itemDelegate;
-        }
-
-        @Override
-        public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfoCompat info) {
-            mItemDelegate.onInitializeAccessibilityNodeInfo(host, info);
-            info.addAction(new AccessibilityNodeInfoCompat.AccessibilityActionCompat(
-                    AccessibilityNodeInfoCompat.ACTION_LONG_CLICK,
-                    host.getContext().getString(R.string.action_open_person_details)
-            ));
-        }
-
-        @Override
-        public boolean performAccessibilityAction(View host, int action, Bundle args) {
-            // Nothing this forward reaches is implemented on the recyclerview this project
-            // resolves, so it changes no behaviour today. It is here so that wrapping the item
-            // delegate stays a complete wrap rather than a partial one.
-            return mItemDelegate.performAccessibilityAction(host, action, args);
-        }
-
     }
 
     /*package-local*/ class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
@@ -132,9 +82,10 @@ public class PersonCursorAdapter extends AbstractCursorAdapter<PersonCursorAdapt
             mAvatarImageView = itemView.findViewById(R.id.avatar_image_view);
             mNameTextView = itemView.findViewById(R.id.primary_text_view);
             itemView.setOnClickListener(this);
-            // Named for screen readers by PersonItemDelegate above, which is set in
-            // onCreateViewHolder because it needs the RecyclerView to forward to.
             itemView.setOnLongClickListener(this);
+            ViewCompat.replaceAccessibilityAction(itemView,
+                    AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_LONG_CLICK,
+                    itemView.getContext().getString(R.string.action_open_person_details), null);
         }
 
         @Override
