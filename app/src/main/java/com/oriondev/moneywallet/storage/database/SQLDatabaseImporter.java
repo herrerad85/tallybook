@@ -339,7 +339,8 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.Transaction.DESCRIPTION, transaction.mDescription);
         contentValues.put(Schema.Transaction.CATEGORY, transaction.mCategory);
         contentValues.put(Schema.Transaction.DIRECTION, transaction.mDirection);
-        contentValues.put(Schema.Transaction.TYPE, transaction.mType);
+        contentValues.put(Schema.Transaction.TYPE, transaction.mType == Contract.TransactionType.MODEL
+                ? Contract.TransactionType.STANDARD : transaction.mType);
         contentValues.put(Schema.Transaction.WALLET, transaction.mWallet);
         contentValues.put(Schema.Transaction.PLACE, transaction.mPlace);
         contentValues.put(Schema.Transaction.NOTE, transaction.mNote);

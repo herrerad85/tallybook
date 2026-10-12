@@ -676,6 +676,22 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
+    public void aTransactionSavedFromAModelIsStoredAsAPlainOne() {
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_MODEL);
+        intent.putExtra(NewEditTransactionActivity.MODEL_ID, insertModel(4200L, mDollarWallet));
+        int before = countTransactions();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before + 1, countTransactions());
+        assertEquals(Contract.TransactionType.STANDARD, longOf(newestId(), Contract.Transaction.TYPE));
+    }
+
+    @Test
     public void aDebtPaymentCarriesTheDebtsOwnPlace() {
         long placeId = insertPlace();
         long debt = insertDebt(mEuroWallet, null, placeId);
@@ -1103,7 +1119,7 @@ public class NewEditTransactionActivityTest {
         model.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_MODEL);
         model.putExtra(NewEditTransactionActivity.MODEL_ID, insertModel(4200L, mEuroWallet));
         try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(model)) {
-            scenario.onActivity(activity -> assertEquals(View.GONE,
+            scenario.onActivity(activity -> assertEquals(View.VISIBLE,
                     activity.findViewById(R.id.split_edit_text).getVisibility()));
         }
     }
