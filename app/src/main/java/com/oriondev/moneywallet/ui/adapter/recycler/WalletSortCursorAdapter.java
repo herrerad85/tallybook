@@ -95,6 +95,9 @@ public class WalletSortCursorAdapter extends AbstractCursorAdapter<WalletSortCur
 
     @Override
     public Cursor swapCursor(Cursor newCursor) {
+        if (newCursor == getCursor()) {
+            return null;
+        }
         Cursor oldCursor = super.swapCursor(newCursor);
         mSortedIndices.clear();
         if (newCursor != null) {

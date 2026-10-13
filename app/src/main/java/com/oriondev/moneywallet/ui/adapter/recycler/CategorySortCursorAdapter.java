@@ -95,6 +95,9 @@ public class CategorySortCursorAdapter extends AbstractCursorAdapter<CategorySor
 
     @Override
     public Cursor swapCursor(Cursor newCursor) {
+        if (newCursor == getCursor()) {
+            return null;
+        }
         Cursor oldCursor = super.swapCursor(newCursor);
         mSortedIndices.clear();
         if (newCursor != null) {
