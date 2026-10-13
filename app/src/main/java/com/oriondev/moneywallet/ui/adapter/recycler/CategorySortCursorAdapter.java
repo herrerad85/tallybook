@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.ui.adapter.recycler;
 
 import android.database.Cursor;
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -35,7 +36,6 @@ import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.utils.IconLoader;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,6 +49,7 @@ public class CategorySortCursorAdapter extends AbstractCursorAdapter<CategorySor
 
     private final CategorySortListener mListener;
     private final List<Integer> mSortedIndices;
+    private final ReorderAccessibilityDelegate mReorderDelegate = new ReorderAccessibilityDelegate(this::moveItem);
 
     public CategorySortCursorAdapter(CategorySortListener listener) {
         super(null, Contract.Category.ID);
@@ -65,6 +66,7 @@ public class CategorySortCursorAdapter extends AbstractCursorAdapter<CategorySor
 
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
+        ViewCompat.setAccessibilityDelegate(holder.itemView, mReorderDelegate);
         if (position >= 0 && position < mSortedIndices.size()) {
             super.onBindViewHolder(holder, mSortedIndices.get(position));
         }
@@ -82,6 +84,7 @@ public class CategorySortCursorAdapter extends AbstractCursorAdapter<CategorySor
     public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View itemView = inflater.inflate(R.layout.adapter_category_sort_item, parent, false);
+        itemView.setFocusable(true);
         return new CategoryViewHolder(itemView);
     }
 
@@ -110,7 +113,7 @@ public class CategorySortCursorAdapter extends AbstractCursorAdapter<CategorySor
 
     public boolean moveItem(int from, int to) {
         if (Math.min(from, to) >= 0 && Math.max(from, to) < mSortedIndices.size()) {
-            Collections.swap(mSortedIndices, from, to);
+            mSortedIndices.add(to, mSortedIndices.remove(from));
             notifyItemMoved(from, to);
             return true;
         }

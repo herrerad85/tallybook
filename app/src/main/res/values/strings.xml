@@ -271,6 +271,10 @@
     <string name="title_fragment_item_person">"Person"</string>
 
     <string name="action_open_person_details">"Open person details"</string>
+    <string name="action_move_up">"Move up"</string>
+    <string name="action_move_down">"Move down"</string>
+    <string name="action_move_to_top">"Move to top"</string>
+    <string name="action_move_to_bottom">"Move to bottom"</string>
 
     <string name="menu_action_attach_file">"Attach file"</string>
     <string name="menu_action_save_changes">"Save changes"</string>

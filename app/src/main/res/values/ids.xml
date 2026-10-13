@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="action_move_up" type="id" />
+    <item name="action_move_down" type="id" />
+    <item name="action_move_to_top" type="id" />
+    <item name="action_move_to_bottom" type="id" />
+</resources>
