@@ -65,8 +65,20 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
 
     private boolean mAppBarScrolledPastStatusBar;
 
+    private ThemeEngine.Mode mThemeMode;
+
+    /**
+     * The XML theme for the mode is set here, before any view exists, which is why a mode change
+     * recreates the activity in onThemeChanged instead of repainting it.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mThemeMode = ThemeEngine.getTheme().getMode();
+        if (mThemeMode == ThemeEngine.Mode.DARK) {
+            setTheme(R.style.MoneyWalletAppThemeDark);
+        } else if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
+            setTheme(R.style.MoneyWalletAppThemeDeepDark);
+        }
         super.onCreate(savedInstanceState);
         // Both bars go transparent and the window stops reserving space for them, on every release
         // and not only where Android 15 enforces it, so one arrangement covers the whole range.
@@ -191,6 +203,10 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
 
     @Override
     public void onThemeChanged(ITheme theme) {
+        if (theme.getMode() != mThemeMode) {
+            recreate();
+            return;
+        }
         ThemeEngine.applyTheme(getWindow().peekDecorView(), true);
         onThemeSetup(theme);
     }

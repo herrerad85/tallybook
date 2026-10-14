@@ -557,9 +557,6 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
                 }
 
             });
-            // the report icon is a ThemedImageView, which tints itself from the row it sits on and
-            // repaints when the mode changes. A theme attribute in the vector would resolve
-            // against the xml theme, which is the light one whatever mode the user picked
             itemView.findViewById(R.id.report_image_view)
                     .setVisibility(mHeaderOpensReport ? View.VISIBLE : View.GONE);
             if (mHeaderOpensReport) {
@@ -611,8 +608,6 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mSecondaryTextView = itemView.findViewById(R.id.secondary_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);
-            // the ripple color, because it is translucent and so reads on every light and dark
-            // background, while an xml attribute would resolve against the light theme only
             StateListDrawable selected = new StateListDrawable();
             selected.addState(new int[] {android.R.attr.state_activated},
                     new ColorDrawable(ThemeEngine.getTheme().getColorRipple()));

@@ -145,11 +145,11 @@
 
     </RelativeLayout>
 
-    <LinearLayout
+    <com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.25"
-        android:background="?attr/colorPrimary" >
+        app:theme_backgroundColor="colorPrimary" >
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedKeypadButton
             android:id="@+id/keyboard_button_7"
@@ -184,13 +184,13 @@
             app:theme_backgroundColor="colorPrimary"
             style="?android:attr/borderlessButtonStyle" />
 
-    </LinearLayout>
+    </com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout>
 
-    <LinearLayout
+    <com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.25"
-        android:background="?attr/colorPrimary" >
+        app:theme_backgroundColor="colorPrimary" >
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedKeypadButton
             android:id="@+id/keyboard_button_4"
@@ -225,13 +225,13 @@
             app:theme_backgroundColor="colorPrimary"
             style="?android:attr/borderlessButtonStyle" />
 
-    </LinearLayout>
+    </com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout>
 
-    <LinearLayout
+    <com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.25"
-        android:background="?attr/colorPrimary" >
+        app:theme_backgroundColor="colorPrimary" >
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedKeypadButton
             android:id="@+id/keyboard_button_1"
@@ -266,14 +266,14 @@
             app:theme_backgroundColor="colorPrimary"
             style="?android:attr/borderlessButtonStyle" />
 
-    </LinearLayout>
+    </com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout>
 
-    <LinearLayout
+    <com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout
         android:id="@+id/keypad_last_row"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.25"
-        android:background="?attr/colorPrimary" >
+        app:theme_backgroundColor="colorPrimary" >
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedKeypadButton
             android:id="@+id/keyboard_button_point"
@@ -309,6 +309,6 @@
             app:theme_backgroundColor="colorPrimary"
             style="?android:attr/borderlessButtonStyle" />
 
-    </LinearLayout>
+    </com.oriondev.moneywallet.ui.view.theme.ThemedLinearLayout>
 
 </LinearLayout>

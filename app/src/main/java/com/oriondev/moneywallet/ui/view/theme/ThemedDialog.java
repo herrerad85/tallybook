@@ -101,9 +101,6 @@ public class ThemedDialog {
      * material-dialogs to wrap them in a scroller carry their own.
      */
     public static View inflateScrollableView(Context context, @LayoutRes int layoutRes) {
-        // Every caller passes an activity, whose theme is light in every mode, so a plain widget
-        // in the layout would resolve its text colors light and draw dark on a dark dialog. The
-        // wrapper puts the layout on the same dialog style the builder picks.
         Context themedContext = new ContextThemeWrapper(context, getDialogTheme());
         NestedScrollView scrollView = new NestedScrollView(themedContext);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -163,8 +160,7 @@ public class ThemedDialog {
     /**
      * Paints the underline with the accent while the field is live and leaves it faded while the
      * field is disabled or idle, and paints the typed text and the hint. All of it comes from the
-     * theme engine, not from colorControlNormal or textColorPrimary on the inflating context,
-     * because that context is the activity and its theme is light in every mode.
+     * theme engine, not from colorControlNormal or textColorPrimary on the inflating context.
      */
     public static void tintInput(EditText editText) {
         int accent = getAccentColor();
@@ -185,9 +181,8 @@ public class ThemedDialog {
     }
 
     /**
-     * The single alert dialog factory for the app. It picks the light or dark dialog theme,
-     * because ThemeEngine paints views by hand and never sets an XML theme, and puts the accent on
-     * the buttons, which only exist once the dialog is shown.
+     * The single alert dialog factory for the app. It picks the light or dark dialog theme and
+     * puts the accent on the buttons, which only exist once the dialog is shown.
      */
     private static class ThemedAlertDialogBuilder extends MaterialAlertDialogBuilder {
 
@@ -231,7 +226,7 @@ public class ThemedDialog {
      * because that is the only thing MaterialDatePicker accepts; the caller owns the conversion.
      * MaterialDatePicker.getThemeResId returns the id handed to setTheme as soon as it is non
      * zero, and onCreateDialog then reads materialCalendarStyle off a Dialog built with it, which
-     * ThemeOverlay.MaterialComponents.MaterialCalendar sets. So the app theme needs no calendar
+     * ThemeOverlay.Material3.MaterialCalendar sets. So the app theme needs no calendar
      * attribute of its own.
      */
     public static MaterialDatePicker<Long> buildDatePickerDialog(long selectionUtcMillis) {
@@ -243,10 +238,7 @@ public class ThemedDialog {
 
     /**
      * The time picker, opened on its keyboard input mode, which is the closest thing the library
-     * this replaces had to a number pad. MaterialTimePicker.getThemeResId short circuits on the
-     * override the same way, and otherwise goes through the null tolerant MaterialAttributes
-     * resolve, so it would not have thrown on the missing attribute. It is still handed a style,
-     * for dark mode.
+     * this replaces had to a number pad.
      */
     public static MaterialTimePicker buildTimePickerDialog(boolean is24HourMode, int hourOfDay, int minute) {
         return new MaterialTimePicker.Builder()
@@ -284,11 +276,6 @@ public class ThemedDialog {
         private Menu mMenu;
 
         private BottomSheetMenuBuilder(Context context) {
-            // BottomSheetDialog.getThemeResId(Context, int) uses the style id it is handed when
-            // that is non zero and otherwise resolves bottomSheetDialogTheme, falling back to
-            // Theme_Design_Light_BottomSheetDialog when the attribute is missing. The app theme
-            // has a Bridge parent and does not define it, so a sheet built without an explicit
-            // style would be light in all three dark modes.
             mDialog = new BottomSheetDialog(context, getBottomSheetTheme());
             mNavigationView = new NavigationView(mDialog.getContext());
             // The sheet behind the menu already carries the surface color, from the style above,
@@ -310,9 +297,7 @@ public class ThemedDialog {
 
         /**
          * The header above the rows. NavigationView draws the title of a submenu as a group
-         * header, so every item added after this call goes into that submenu. Its color comes
-         * from android:textColorSecondary, which design_navigation_item_subheader.xml reads and
-         * both bottom sheet styles set.
+         * header, so every item added after this call goes into that submenu.
          */
         public BottomSheetMenuBuilder addTitleItem(@StringRes int titleRes) {
             mMenu = mMenu.addSubMenu(titleRes);

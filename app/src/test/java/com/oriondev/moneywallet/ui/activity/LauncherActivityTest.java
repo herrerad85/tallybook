@@ -13,6 +13,7 @@ import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,12 +37,24 @@ import static org.robolectric.Shadows.shadowOf;
 public class LauncherActivityTest {
 
     private Context mContext;
+    private ActivityController<LauncherActivity> mController;
 
     @Before
     public void setUp() {
         mContext = ApplicationProvider.getApplicationContext();
         TestDatabases.useFreshDatabase(mContext);
         PreferenceManager.setIsFirstStartDone(false);
+    }
+
+    /**
+     * ThemeEngine keeps its observers in a static list for the whole run, so a screen left alive
+     * here would be recreated by a later test's mode change.
+     */
+    @After
+    public void tearDown() {
+        if (mController != null && !mController.get().isDestroyed()) {
+            mController.destroy();
+        }
     }
 
     @Test
@@ -104,8 +117,8 @@ public class LauncherActivityTest {
      */
     private LauncherActivity launch(boolean taskRoot, Class<?> base, boolean ownTask) {
         Intent intent = new Intent(mContext, LauncherActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        ActivityController<LauncherActivity> controller = Robolectric.buildActivity(LauncherActivity.class, intent);
-        LauncherActivity activity = controller.get();
+        mController = Robolectric.buildActivity(LauncherActivity.class, intent);
+        LauncherActivity activity = mController.get();
         shadowOf(activity).setIsTaskRoot(taskRoot);
         ActivityManager.RecentTaskInfo info = new ActivityManager.RecentTaskInfo();
         info.persistentId = ownTask ? activity.getTaskId() : activity.getTaskId() + 1;
@@ -114,6 +127,6 @@ public class LauncherActivityTest {
         shadowOf(task).setTaskInfo(info);
         ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         shadowOf(manager).setAppTasks(Collections.singletonList(task));
-        return controller.create().get();
+        return mController.create().get();
     }
 }

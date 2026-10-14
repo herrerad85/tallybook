@@ -109,7 +109,6 @@ public abstract class SearchEditorFragment extends Fragment {
         });
     }
 
-    // the XML theme is always the light one
     protected void styleChoices(ChipGroup group) {
         ITheme theme = ThemeEngine.getTheme();
         int accent = ThemedDialog.getAccentColor();
