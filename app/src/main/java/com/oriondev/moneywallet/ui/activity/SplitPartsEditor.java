@@ -164,7 +164,7 @@ import java.util.List;
             MaterialEditText view = (MaterialEditText) mActivity.getLayoutInflater().inflate(
                     R.layout.layout_split_part, mSplitPartsLayout, false);
             view.setTextViewMode(true);
-            view.setHint(nameOf(part.mCategory));
+            view.setFloatingLabelText(nameOf(part.mCategory));
             String money = mMoneyFormatter.getNotTintedString(currency, part.mMoney);
             view.setText(TextUtils.isEmpty(part.mNote) ? money : mActivity.getString(R.string.split_part, money, part.mNote));
             final int index = i;
@@ -179,7 +179,7 @@ import java.util.List;
             mSplitPartsLayout.addView(view);
             remaining -= part.mMoney;
         }
-        mSplitRemainingEditText.setHint(mActivity.getString(R.string.hint_split_remaining,
+        mSplitRemainingEditText.setFloatingLabelText(mActivity.getString(R.string.hint_split_remaining,
                 nameOf(mCategoryPicker.getCurrentCategory())));
         mSplitRemainingEditText.setText(mMoneyFormatter.getNotTintedString(currency, remaining));
     }
