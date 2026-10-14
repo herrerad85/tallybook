@@ -353,8 +353,8 @@
     <string name="message_backup_status_restoring"> "Yedekleme dosyası geri yükleniyor ..." </string>
     <string name="message_backup_creation_success"> "Yedekleme doğru şekilde oluşturuldu." </string>
     <string name="message_backup_restoring_success"> "Yedekleme doğru şekilde geri yüklendi." </string>
-    <string name="message_backup_creation_failed"> "Yedeklemenin oluşturulması sırasında hata oluştu. Mesaj:% s" </string>
-    <string name="message_backup_restoring_failed"> "Yedeklemenin geri yüklenmesi sırasında hata oluştu. Mesaj:% s" </string>
+    <string name="message_backup_creation_failed"> "Yedeklemenin oluşturulması sırasında hata oluştu. Mesaj: %s" </string>
+    <string name="message_backup_restoring_failed"> "Yedeklemenin geri yüklenmesi sırasında hata oluştu. Mesaj: %s" </string>
     <string name="message_action_archive_wallet"> "Bu cüzdanı arşivlemek istediğinizden emin misiniz? Menüde artık görünmeyecek." </string>
     <string name="message_action_unarchive_wallet"> "Bu cüzdanı unarchive etmek istediğinizden emin misiniz? Menüde tekrar görünür olacak." </string>
     <string name="message_action_archive_debt"> "Bu borcu arşivlemek istediğinizden emin misiniz?" </string>
@@ -386,12 +386,12 @@
     <string name="message_delete_place"> "Bu yeri silmek istediğinize emin misiniz?" </string>
     <string name="message_delete_person"> "Bu kişiyi silmek istediğinize emin misiniz?" </string>
     <string name="message_debt_insert_master_transaction"> "Bu borç için bir ana işlem eklemek ister misiniz?" </string>
-    <string name="message_error_legacy_upgrade_failed"> "Dahili veritabanını yükseltirken bir hata oluştu. Lütfen sabırlı olun ve bu mesajı geliştiriciye bildirin. Uygulamayı kaldırmayın veya verilerinizi kaybedeceksiniz. Uygulamaya yönlendirileceksiniz bir şeyin bozulup bozulmadığını kontrol etmek için. Hata mesajı:% s "</string>
+    <string name="message_error_legacy_upgrade_failed"> "Dahili veritabanını yükseltirken bir hata oluştu. Lütfen sabırlı olun ve bu mesajı geliştiriciye bildirin. Uygulamayı kaldırmayın veya verilerinizi kaybedeceksiniz. Uygulamaya yönlendirileceksiniz bir şeyin bozulup bozulmadığını kontrol etmek için. Hata mesajı: %s "</string>
     <string name="message_data_import_without_backup"> "Bu, verilerinizi bozabilecek ve bozabilecek bir özelliktir, devam etmeden önce mevcut verilerinizi yedeklediğinizden emin olun. Yine de devam etmek istiyor musunuz?" </string>
     <string name="message_data_import_running"> "İçe aktarılıyor ..." </string>
     <string name="message_data_export_running"> "Dışa aktarılıyor ..." </string>
-    <string name="message_data_import_failed"> "İçe aktarma işlemi sırasında hata oluştu. Mesaj:% s" </string>
-    <string name="message_data_export_failed"> "Verme işlemi sırasında başarısızlık. Mesaj:% s" </string>
+    <string name="message_data_import_failed"> "İçe aktarma işlemi sırasında hata oluştu. Mesaj: %s" </string>
+    <string name="message_data_export_failed"> "Verme işlemi sırasında başarısızlık. Mesaj: %s" </string>
     <string name="message_data_import_success"> "Veriler doğru içe aktarıldı." </string>
     <string name="message_data_export_success"> "Veriler doğru dışa aktarıldı. Oluşturulan dosyayı açmak istiyor musunuz?" </string>
 
@@ -445,10 +445,10 @@
     <string name="setting_title_security_change_sequence"> "Kilit açma sırasını değiştir" </string>
     <string name="setting_title_exchange_rate_source"> "Hizmet" </string>
     <string name="setting_title_exchange_rate_api_key"> "Özel api-anahtar" </string>
-    <string name="setting_summary_exchange_rate_api_key"> "Api-anahtar:% s" </string>
+    <string name="setting_summary_exchange_rate_api_key"> "Api-anahtar: %s" </string>
     <string name="setting_summary_exchange_rate_api_key_missing"> "Api anahtarı eksik" </string>
     <string name="setting_title_exchange_rate_update"> "Döviz kurlarını güncelle" </string>
-    <string name="setting_summary_exchange_rate_update"> "Son güncelleme:% s" </string>
+    <string name="setting_summary_exchange_rate_update"> "Son güncelleme: %s" </string>
     <string name="setting_subtitle_user_interface"> "İstediğiniz gibi kişiselleştirin" </string>
     <string name="setting_subtitle_utility"> "Kullanılabilir araçları ayarlayın" </string>
     <string name="setting_subtitle_database"> "Verilerinizi yönetin" </string>
@@ -486,7 +486,7 @@
     <string name="notification_title_backup_restoring_failed"> "Yedekleme geri yükleme başarısız oldu" </string>
     <string name="notification_content_downloading_data"> "Güncellenmiş veri indiriliyor…" </string>
     <string name="notification_content_caching_data"> "Güncellenmiş veri kaydediliyor…" </string>
-    <string name="notification_content_error_message"> "Hata:% s" </string>
+    <string name="notification_content_error_message"> "Hata: %s" </string>
     <string name="notification_content_backup_file_creation"> "Yerel yedekleme dosyası yazılıyor…" </string>
     <string name="notification_content_backup_file_uploading"> "Yedekleme dosyası yükleniyor…" </string>
     <string name="notification_content_backup_file_downloading"> "Yedekleme dosyası indiriliyor…" </string>
@@ -494,7 +494,7 @@
     <string name="notification_content_backup_error_wifi_network"> "İşlem, yalnızca cihaz bir WiFi ağına bağlıyken gerçekleştirilmek üzere programlandı. Bir WiFi ağına bağlanın ve tekrar deneyin." </string>
     <string name="notification_content_backup_error_backend_recoverable"> "Arka uç servisiyle iletişim kurulurken bir hata oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin." </string>
     <string name="notification_content_backup_error_backend"> "Arka uçta bir hata oluştu ve otomatik yedekleme devre dışı bırakıldı. Herhangi bir sorun olup olmadığını kontrol edin." </string>
-    <string name="notification_content_backup_error_internal"> "İşlem sırasında muhtemelen bir hata olan dahili bir hata oluştu. Lütfen bu mesajı geliştiriciye bildirin:% s" </string>
+    <string name="notification_content_backup_error_internal"> "İşlem sırasında muhtemelen bir hata olan dahili bir hata oluştu. Lütfen bu mesajı geliştiriciye bildirin: %s" </string>
     <string name="notification_action_retry"> "Yeniden Dene" </string>
     <string name="message_error_network_connection"> "ağ bağlantısı" </string>
     <string name="message_error_invalid_response"> "geçersiz yanıt" </string>
