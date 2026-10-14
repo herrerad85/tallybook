@@ -38,6 +38,8 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.material.color.DynamicColors;
+import com.google.android.material.color.DynamicColorsOptions;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
@@ -67,9 +69,13 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
 
     private ThemeEngine.Mode mThemeMode;
 
+    private int mSeedColorPrimary;
+
     /**
-     * The XML theme for the mode is set here, before any view exists, which is why a mode change
-     * recreates the activity in onThemeChanged instead of repainting it.
+     * The XML theme for the mode, and the color roles seeded from the saved
+     * primary, are set here, before any view exists, which is why a change of either recreates the
+     * activity in onThemeChanged instead of repainting it. A previewed primary is not saved, so it
+     * only repaints.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +85,17 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
         } else if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
             setTheme(R.style.MoneyWalletAppThemeDeepDark);
         }
+        mSeedColorPrimary = ThemeEngine.getSavedColorPrimary();
+        DynamicColorsOptions.Builder options = new DynamicColorsOptions.Builder()
+                .setContentBasedSource(mSeedColorPrimary);
+        if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
+            // With a content source the library applies its own overlay of personalized colors and
+            // ignores both dynamicColorThemeOverlay and setThemeOverlay, so deep dark puts its
+            // black surfaces back once that overlay is in.
+            options.setOnAppliedCallback(activity -> activity.getTheme()
+                    .applyStyle(R.style.ThemeOverlay_MoneyWallet_DeepDark, true));
+        }
+        DynamicColors.applyToActivityIfAvailable(this, options.build());
         super.onCreate(savedInstanceState);
         // Both bars go transparent and the window stops reserving space for them, on every release
         // and not only where Android 15 enforces it, so one arrangement covers the whole range.
@@ -204,6 +221,11 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
     @Override
     public void onThemeChanged(ITheme theme) {
         if (theme.getMode() != mThemeMode) {
+            recreate();
+            return;
+        }
+        if (DynamicColors.isDynamicColorAvailable()
+                && ThemeEngine.getSavedColorPrimary() != mSeedColorPrimary) {
             recreate();
             return;
         }
