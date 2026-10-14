@@ -23,8 +23,7 @@
          dark modes before super.onCreate, and recreates the activity when the mode changes. Not
          DayNight, because the mode is picked in the app and not taken from the system. The color
          roles were generated once from the default primary #3f51b5 with SchemeContent, the scheme
-         the library seeds dynamic color from a single color with, so a user who picked another
-         color still sees these on whatever ThemeEngine does not paint. The screens carry their
+         the library seeds dynamic color from a single color with. The screens carry their
          own toolbar, so the parent's window action bar and title stay off. -->
     <style name="MoneyWalletAppTheme" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">#24389C</item>
@@ -139,6 +138,12 @@
     <!-- The deep dark mode paints the list content black, so only the background and surface
          roles follow it. -->
     <style name="MoneyWalletAppThemeDeepDark" parent="MoneyWalletAppThemeDark">
+        <item name="android:colorBackground">#000000</item>
+        <item name="colorSurface">#000000</item>
+        <item name="colorSurfaceDim">#000000</item>
+    </style>
+
+    <style name="ThemeOverlay.MoneyWallet.DeepDark" parent="">
         <item name="android:colorBackground">#000000</item>
         <item name="colorSurface">#000000</item>
         <item name="colorSurfaceDim">#000000</item>

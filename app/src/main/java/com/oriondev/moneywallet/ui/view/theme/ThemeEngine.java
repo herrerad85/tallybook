@@ -269,6 +269,18 @@ public class ThemeEngine implements ITheme {
         }
     }
 
+    /**
+     * The primary the user saved. While a chooser is open getColorPrimary answers with its preview
+     * instead.
+     */
+    public static int getSavedColorPrimary() {
+        if (sInstance != null) {
+            return sInstance.getStoredColorPrimary();
+        } else {
+            throw new RuntimeException("ThemeEngine not initialized!");
+        }
+    }
+
     public static void applyTheme(View view, boolean propagate) {
         if (view instanceof ThemeConsumer) {
             ((ThemeConsumer) view).onApplyTheme(sInstance);
