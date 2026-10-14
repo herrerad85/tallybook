@@ -356,6 +356,16 @@ public class MaterialEditText extends androidx.appcompat.widget.AppCompatEditTex
         return mMode;
     }
 
+    /**
+     * Sets the label drawn above the text. TextView.setHint cannot do it, since it is final and
+     * the label is read from the hint only once, when the view is inflated.
+     */
+    public void setFloatingLabelText(String label) {
+        mHint = label;
+        setHint(label);
+        calculatePadding();
+    }
+
     public void setFloatingLabelColorNormal(int floatingLabelColorNormal) {
         mFloatingLabelColorNormal = floatingLabelColorNormal;
     }

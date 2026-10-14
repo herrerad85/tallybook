@@ -34,9 +34,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.AttributeSetBuilder;
 import org.robolectric.Shadows;
+import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.shadows.ShadowLegacyCanvas;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -148,5 +153,47 @@ public class MaterialEditTextTest {
                 (float) (SIDE_PADDING + scroll), line.left, 0f);
         assertEquals("the right edge does not move with the scroll offset",
                 (float) (WIDTH - SIDE_PADDING + scroll), line.right, 0f);
+    }
+
+    private MaterialEditText floatingLabelField(String xmlHint) {
+        Context context = new ContextThemeWrapper(ApplicationProvider.getApplicationContext(),
+                R.style.MoneyWalletAppTheme);
+        AttributeSetBuilder attributes = Robolectric.buildAttributeSet()
+                .addAttribute(R.attr.met_mode, "floatingLabel");
+        if (xmlHint != null) {
+            attributes.addAttribute(android.R.attr.hint, xmlHint);
+        }
+        return new MaterialEditText(context, attributes.build());
+    }
+
+    // under the legacy graphics mode a label in the xml makes no room above the text either
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void aLabelSetAfterInflationGetsTheRoomOfOneSetInXml() {
+        int withoutLabel = floatingLabelField(null).getPaddingTop();
+        int withXmlLabel = floatingLabelField("Food").getPaddingTop();
+        assertTrue("a label in the xml makes no room above the text, so this cannot tell",
+                withXmlLabel > withoutLabel);
+        MaterialEditText view = floatingLabelField(null);
+        view.setFloatingLabelText("Food");
+        assertEquals("the label set later does not make the room one from the xml does",
+                withXmlLabel, view.getPaddingTop());
+    }
+
+    @Test
+    public void aLabelSetAfterInflationIsDrawnOnceThereIsText() {
+        MaterialEditText view = floatingLabelField(null);
+        view.setFloatingLabelText("Food");
+        view.setText("12.00");
+        view.measure(View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
+        view.layout(0, 0, WIDTH, HEIGHT);
+        // the label slides in when the text stops being empty, so run that animation out
+        ShadowLooper.idleMainLooper(1, TimeUnit.SECONDS);
+        Canvas canvas = new Canvas();
+        view.onDrawFloatingLabel(canvas);
+        ShadowLegacyCanvas shadow = (ShadowLegacyCanvas) Shadows.shadowOf(canvas);
+        assertEquals("the label was not drawn", 1, shadow.getTextHistoryCount());
+        assertEquals("Food", shadow.getDrawnTextEvent(0).text);
     }
 }
