@@ -67,6 +67,7 @@ public class ThemedViewPagerIndicator extends TabLayout implements ThemeEngine.T
     private void initialize() {
         mDotDiameter = getResources().getDimensionPixelSize(R.dimen.view_pie_chart_indicator_radius) * 2;
         setSelectedTabIndicator(null);
+        setBackground(null);
         // GRAVITY_CENTER is what gives the tabs a wrapped width and centers the row instead of
         // stretching each tab to an equal share
         setTabGravity(GRAVITY_CENTER);

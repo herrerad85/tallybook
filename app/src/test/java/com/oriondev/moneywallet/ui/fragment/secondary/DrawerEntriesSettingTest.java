@@ -49,7 +49,7 @@ import static org.robolectric.Shadows.shadowOf;
 
 /**
  * The drawer entries setting lists every entry the user can hide, checked when the drawer
- * shows it. Robolectric draws only the first seven rows of the list, and a row's checked state
+ * shows it. Robolectric draws only the first six rows of the list, and a row's checked state
  * is set when it is drawn, so only those rows are read or clicked here.
  */
 @RunWith(RobolectricTestRunner.class)
@@ -59,7 +59,7 @@ public class DrawerEntriesSettingTest {
 
     private static final int ROW_OVERVIEW = 1;
     private static final int ROW_BUDGETS = 3;
-    private static final int DRAWN_ROWS = 7;
+    private static final int DRAWN_ROWS = 6;
 
     private static final String OVERVIEW = String.valueOf(MainActivity.HIDEABLE_ENTRY_IDS[ROW_OVERVIEW]);
     private static final String BUDGETS = String.valueOf(MainActivity.HIDEABLE_ENTRY_IDS[ROW_BUDGETS]);

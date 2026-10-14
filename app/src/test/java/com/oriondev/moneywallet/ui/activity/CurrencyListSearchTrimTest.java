@@ -28,11 +28,13 @@ import androidx.test.core.app.ApplicationProvider;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.controller.ActivityController;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNull;
@@ -44,10 +46,23 @@ import static org.junit.Assert.assertNull;
 @RunWith(RobolectricTestRunner.class)
 public class CurrencyListSearchTrimTest {
 
+    private ActivityController<CurrencyListActivity> mController;
+
     @Before
     public void setUp() {
         Context context = ApplicationProvider.getApplicationContext();
         TestDatabases.useFreshDatabase(context);
+    }
+
+    /**
+     * ThemeEngine keeps its observers in a static list for the whole run, so a screen left alive
+     * here would be recreated by a later test's mode change.
+     */
+    @After
+    public void tearDown() {
+        if (mController != null && !mController.get().isDestroyed()) {
+            mController.destroy();
+        }
     }
 
     @Test
@@ -62,8 +77,9 @@ public class CurrencyListSearchTrimTest {
         assertNull(loader.getSelection());
     }
 
-    private static CursorLoader loaderFor(String typed) {
-        CurrencyListActivity activity = Robolectric.buildActivity(CurrencyListActivity.class).setup().get();
+    private CursorLoader loaderFor(String typed) {
+        mController = Robolectric.buildActivity(CurrencyListActivity.class).setup();
+        CurrencyListActivity activity = mController.get();
         EditText search = activity.findViewById(R.id.search_edit_text);
         search.setText(typed);
         return (CursorLoader) activity.onCreateLoader(0, null);

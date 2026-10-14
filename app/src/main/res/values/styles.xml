@@ -19,25 +19,141 @@
 
 <resources>
 
-    <!-- Base application theme. The Bridge parent keeps AppCompat's own widget styles and adds the
-         theme attributes material's widgets check for when they inflate. It is a Light theme and not
-         DayNight because ThemeEngine paints the dark modes itself. The screens carry their own
-         toolbar, so the parent's window action bar and title stay off. -->
-    <style name="MoneyWalletAppTheme" parent="Theme.MaterialComponents.Light.NoActionBar.Bridge">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <!-- The app theme for the light mode. ThemedActivity swaps in one of the two below for the
+         dark modes before super.onCreate, and recreates the activity when the mode changes. Not
+         DayNight, because the mode is picked in the app and not taken from the system. The color
+         roles were generated once from the default primary #3f51b5 with SchemeContent, the scheme
+         the library seeds dynamic color from a single color with, so a user who picked another
+         color still sees these on whatever ThemeEngine does not paint. The screens carry their
+         own toolbar, so the parent's window action bar and title stay off. -->
+    <style name="MoneyWalletAppTheme" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#24389C</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryInverse">#BAC3FF</item>
+        <item name="colorPrimaryContainer">#3F51B5</item>
+        <item name="colorOnPrimaryContainer">#CACFFF</item>
+        <item name="colorPrimaryFixed">#DEE0FF</item>
+        <item name="colorPrimaryFixedDim">#BAC3FF</item>
+        <item name="colorOnPrimaryFixed">#00105C</item>
+        <item name="colorOnPrimaryFixedVariant">#293CA0</item>
+        <item name="colorSecondary">#565C84</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondaryContainer">#C9CFFD</item>
+        <item name="colorOnSecondaryContainer">#51577F</item>
+        <item name="colorSecondaryFixed">#DEE0FF</item>
+        <item name="colorSecondaryFixedDim">#BEC4F2</item>
+        <item name="colorOnSecondaryFixed">#12183D</item>
+        <item name="colorOnSecondaryFixedVariant">#3E446B</item>
+        <item name="colorTertiary">#6E2073</item>
+        <item name="colorOnTertiary">#FFFFFF</item>
+        <item name="colorTertiaryContainer">#893A8D</item>
+        <item name="colorOnTertiaryContainer">#FFBDFB</item>
+        <item name="colorTertiaryFixed">#FFD6FA</item>
+        <item name="colorTertiaryFixedDim">#FFA9FD</item>
+        <item name="colorOnTertiaryFixed">#37003C</item>
+        <item name="colorOnTertiaryFixedVariant">#722578</item>
+        <item name="android:colorBackground">#FBF8FF</item>
+        <item name="colorOnBackground">#1A1B22</item>
+        <item name="colorSurface">#FBF8FF</item>
+        <item name="colorOnSurface">#1A1B22</item>
+        <item name="colorSurfaceVariant">#E2E1F1</item>
+        <item name="colorOnSurfaceVariant">#454652</item>
+        <item name="colorSurfaceInverse">#2F3037</item>
+        <item name="colorOnSurfaceInverse">#F2EFF9</item>
+        <item name="colorSurfaceBright">#FBF8FF</item>
+        <item name="colorSurfaceDim">#DBD9E2</item>
+        <item name="colorSurfaceContainer">#EFEDF6</item>
+        <item name="colorSurfaceContainerLow">#F4F2FC</item>
+        <item name="colorSurfaceContainerHigh">#E9E7F0</item>
+        <item name="colorSurfaceContainerLowest">#FFFFFF</item>
+        <item name="colorSurfaceContainerHighest">#E3E1EA</item>
+        <item name="colorOutline">#757684</item>
+        <item name="colorOutlineVariant">#C5C5D4</item>
+        <item name="colorError">#BA1A1A</item>
+        <item name="colorOnError">#FFFFFF</item>
+        <item name="colorErrorContainer">#FFDAD6</item>
+        <item name="colorOnErrorContainer">#93000A</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
         <item name="drawerArrowStyle">@style/MoneyWalletDrawerArrowStyle</item>
+        <item name="switchStyle">@style/Widget.AppCompat.CompoundButton.Switch</item>
+        <!-- Material3 turns the overlay on, and it would tint the drawer and app bar colors
+             ThemeEngine paints. -->
+        <item name="elevationOverlayEnabled">false</item>
     </style>
 
-    <!-- ThemedDialog picks one of these two for every alert dialog in the app. ThemeEngine repaints
-         views by hand and never sets an XML theme, and the app theme is light, so without an
-         explicit dark overlay both dark modes would draw a light dialog. -->
-    <style name="MoneyWalletAlertDialogLight" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog"/>
+    <style name="MoneyWalletAppThemeDark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#BAC3FF</item>
+        <item name="colorOnPrimary">#08218A</item>
+        <item name="colorPrimaryInverse">#4355B9</item>
+        <item name="colorPrimaryContainer">#3F51B5</item>
+        <item name="colorOnPrimaryContainer">#CACFFF</item>
+        <item name="colorPrimaryFixed">#DEE0FF</item>
+        <item name="colorPrimaryFixedDim">#BAC3FF</item>
+        <item name="colorOnPrimaryFixed">#00105C</item>
+        <item name="colorOnPrimaryFixedVariant">#293CA0</item>
+        <item name="colorSecondary">#BEC4F2</item>
+        <item name="colorOnSecondary">#272E53</item>
+        <item name="colorSecondaryContainer">#3E446B</item>
+        <item name="colorOnSecondaryContainer">#ADB2DF</item>
+        <item name="colorSecondaryFixed">#DEE0FF</item>
+        <item name="colorSecondaryFixedDim">#BEC4F2</item>
+        <item name="colorOnSecondaryFixed">#12183D</item>
+        <item name="colorOnSecondaryFixedVariant">#3E446B</item>
+        <item name="colorTertiary">#FFA9FD</item>
+        <item name="colorOnTertiary">#58055F</item>
+        <item name="colorTertiaryContainer">#893A8D</item>
+        <item name="colorOnTertiaryContainer">#FFBDFB</item>
+        <item name="colorTertiaryFixed">#FFD6FA</item>
+        <item name="colorTertiaryFixedDim">#FFA9FD</item>
+        <item name="colorOnTertiaryFixed">#37003C</item>
+        <item name="colorOnTertiaryFixedVariant">#722578</item>
+        <item name="android:colorBackground">#121319</item>
+        <item name="colorOnBackground">#E3E1EA</item>
+        <item name="colorSurface">#121319</item>
+        <item name="colorOnSurface">#E3E1EA</item>
+        <item name="colorSurfaceVariant">#454652</item>
+        <item name="colorOnSurfaceVariant">#C5C5D4</item>
+        <item name="colorSurfaceInverse">#E3E1EA</item>
+        <item name="colorOnSurfaceInverse">#2F3037</item>
+        <item name="colorSurfaceBright">#383940</item>
+        <item name="colorSurfaceDim">#121319</item>
+        <item name="colorSurfaceContainer">#1F1F26</item>
+        <item name="colorSurfaceContainerLow">#1A1B22</item>
+        <item name="colorSurfaceContainerHigh">#292930</item>
+        <item name="colorSurfaceContainerLowest">#0D0E14</item>
+        <item name="colorSurfaceContainerHighest">#34343B</item>
+        <item name="colorOutline">#8F909E</item>
+        <item name="colorOutlineVariant">#454652</item>
+        <item name="colorError">#FFB4AB</item>
+        <item name="colorOnError">#690005</item>
+        <item name="colorErrorContainer">#93000A</item>
+        <item name="colorOnErrorContainer">#FFDAD6</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="drawerArrowStyle">@style/MoneyWalletDrawerArrowStyle</item>
+        <item name="switchStyle">@style/Widget.AppCompat.CompoundButton.Switch</item>
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
 
-    <style name="MoneyWalletAlertDialogDark" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+    <!-- The deep dark mode paints the list content black, so only the background and surface
+         roles follow it. -->
+    <style name="MoneyWalletAppThemeDeepDark" parent="MoneyWalletAppThemeDark">
+        <item name="android:colorBackground">#000000</item>
+        <item name="colorSurface">#000000</item>
+        <item name="colorSurfaceDim">#000000</item>
+    </style>
+
+    <!-- ThemedDialog picks one of these two for every alert dialog in the app. Each keeps the
+         dialog on the card color ThemeEngine paints in its mode, #FFFFFF or #424242, the surface
+         ThemedDialog checks the accent against. A Material3 dialog draws on
+         colorSurfaceContainerHigh. -->
+    <style name="MoneyWalletAlertDialogLight" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurfaceContainerHigh">@android:color/white</item>
+    </style>
+
+    <style name="MoneyWalletAlertDialogDark" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurfaceContainerHigh">@color/dialogDarkBackground</item>
         <item name="colorSurface">@color/dialogDarkBackground</item>
         <item name="colorOnSurface">@color/dialogDarkTextPrimary</item>
         <item name="colorOnBackground">@color/dialogDarkTextPrimary</item>
@@ -50,12 +166,12 @@
         <item name="colorControlHighlight">@color/dialogDarkControlHighlight</item>
     </style>
 
-    <!-- The app theme has a Bridge parent, which defines no bottomSheetDialogTheme, so every
-         bottom sheet is handed one of these two by name. They override exactly what the alert
-         dialog pair above overrides, so a sheet and a dialog read the same in every mode. -->
-    <style name="MoneyWalletBottomSheetLight" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog"/>
+    <!-- Every bottom sheet is handed one of these two by name, picked the same way as the dialog
+         pair above. A Material3 sheet draws on colorSurfaceContainerLow. -->
+    <style name="MoneyWalletBottomSheetLight" parent="ThemeOverlay.Material3.BottomSheetDialog"/>
 
-    <style name="MoneyWalletBottomSheetDark" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+    <style name="MoneyWalletBottomSheetDark" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="colorSurfaceContainerLow">@color/dialogDarkBackground</item>
         <item name="colorSurface">@color/dialogDarkBackground</item>
         <item name="colorOnSurface">@color/dialogDarkTextPrimary</item>
         <item name="colorOnBackground">@color/dialogDarkTextPrimary</item>
@@ -68,14 +184,14 @@
         <item name="colorControlHighlight">@color/dialogDarkControlHighlight</item>
     </style>
 
-    <!-- Same reason as the two pairs above: the Bridge parent defines neither
-         materialCalendarTheme nor materialTimePickerTheme, so both pickers are handed a style by
-         name through ThemedDialog. -->
-    <style name="MoneyWalletDatePickerLight" parent="ThemeOverlay.MaterialComponents.MaterialCalendar"/>
+    <!-- Both pickers are handed one of these by name through ThemedDialog, picked the same way.
+         Both draw on colorSurfaceContainerHigh. -->
+    <style name="MoneyWalletDatePickerLight" parent="ThemeOverlay.Material3.MaterialCalendar">
+        <item name="colorSurfaceContainerHigh">@android:color/white</item>
+    </style>
 
-    <style name="MoneyWalletDatePickerDark" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
-        <item name="buttonBarPositiveButtonStyle">@style/MoneyWalletDatePickerDarkActionButton</item>
-        <item name="buttonBarNegativeButtonStyle">@style/MoneyWalletDatePickerDarkActionButton</item>
+    <style name="MoneyWalletDatePickerDark" parent="ThemeOverlay.Material3.MaterialCalendar">
+        <item name="colorSurfaceContainerHigh">@color/dialogDarkBackground</item>
         <item name="colorSurface">@color/dialogDarkBackground</item>
         <item name="colorOnSurface">@color/dialogDarkTextPrimary</item>
         <item name="colorOnBackground">@color/dialogDarkTextPrimary</item>
@@ -88,22 +204,12 @@
         <item name="colorControlHighlight">@color/dialogDarkControlHighlight</item>
     </style>
 
-    <!-- mtrl_picker_actions.xml gives CANCEL and OK the style behind buttonBarNegativeButtonStyle
-         and buttonBarPositiveButtonStyle, and ThemeOverlay.MaterialComponents.MaterialCalendar
-         points both at Widget.MaterialComponents.Button.TextButton.Dialog, whose android:textColor
-         is mtrl_text_btn_text_color_selector: colorPrimary at full alpha while the button is
-         enabled. On the #424242 dialog surface the default primary #3F51B5 reads 1.46 to 1, so the
-         two words are close to invisible in both dark modes. This style keeps everything else about
-         the material text button and swaps only that color, which the dark overlay above already
-         pins to white through colorOnSurface, for 10.05 to 1. The header band reads colorPrimary
-         too and is left alone. The light picker is untouched. -->
-    <style name="MoneyWalletDatePickerDarkActionButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/date_picker_dark_action_button_text</item>
+    <style name="MoneyWalletTimePickerLight" parent="ThemeOverlay.Material3.MaterialTimePicker">
+        <item name="colorSurfaceContainerHigh">@android:color/white</item>
     </style>
 
-    <style name="MoneyWalletTimePickerLight" parent="ThemeOverlay.MaterialComponents.TimePicker"/>
-
-    <style name="MoneyWalletTimePickerDark" parent="ThemeOverlay.MaterialComponents.TimePicker">
+    <style name="MoneyWalletTimePickerDark" parent="ThemeOverlay.Material3.MaterialTimePicker">
+        <item name="colorSurfaceContainerHigh">@color/dialogDarkBackground</item>
         <item name="colorSurface">@color/dialogDarkBackground</item>
         <item name="colorOnSurface">@color/dialogDarkTextPrimary</item>
         <item name="colorOnBackground">@color/dialogDarkTextPrimary</item>
@@ -123,9 +229,9 @@
     </style>
 
     <!-- A chip paints chipSurfaceColor under its background, and the default chip style takes it
-         from colorSurface, which the light app theme keeps white in every mode. The search rail
-         gives an unset chip a transparent background, so in dark mode the chip drew as a white
-         pill. Code cannot set the surface color, only a style can. -->
+         from colorSurface. The search rail gives an unset chip a transparent background, so in
+         dark mode the chip drew as a white pill. Code cannot set the surface color, only a style
+         can. -->
     <style name="SearchRailChip" parent="Widget.MaterialComponents.Chip.Action">
         <item name="chipSurfaceColor">@android:color/transparent</item>
     </style>

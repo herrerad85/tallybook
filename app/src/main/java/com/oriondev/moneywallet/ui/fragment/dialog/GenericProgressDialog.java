@@ -86,14 +86,8 @@ public class GenericProgressDialog extends DialogFragment {
         View view = getLayoutInflater().cloneInContext(dialog.getContext()).inflate(layoutRes, null);
         mProgressIndicator = view.findViewById(R.id.dialog_progress_indicator);
         mProgressIndicator.setMax(100);
-        // The widget defaults to colorPrimary, which neither dialog style sets, so it sinks into
-        // the dark dialog surface.
         mProgressIndicator.setIndicatorColor(ThemedDialog.getAccentColor());
         if (!indeterminate) {
-            // setIndicatorColor leaves the track alone, and the linear style declares no track
-            // color, so the widget derived one at inflation by fading colorPrimary to the theme's
-            // disabledAlpha, which all but erases it on the dark dialog. The circular style
-            // declares a transparent track and keeps it.
             mProgressIndicator.setTrackColor(ThemedDialog.getIdleColor());
         }
         mMessageTextView = view.findViewById(R.id.dialog_progress_message);

@@ -416,9 +416,6 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
         }
     }
 
-    /**
-     * The XML theme is always the light one, so the chips take their colors from the theme engine.
-     */
     private void styleChip(Chip chip, boolean set) {
         ITheme theme = ThemeEngine.getTheme();
         int foreground;

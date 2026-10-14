@@ -3233,7 +3233,6 @@ public class SearchScreenTest {
         return ((MaterialCheckBox) row(activity, name).findViewById(R.id.search_row_check_box)).getCheckedState();
     }
 
-    // the app theme is not Material 3, so the dash needs the row layout's own button and icon
     private static void assertDashDrawn(SearchActivity activity, String name) {
         MaterialCheckBox box = row(activity, name).findViewById(R.id.search_row_check_box);
         assertEquals(com.google.android.material.R.drawable.mtrl_checkbox_button,

@@ -24,9 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Holds the two dialog layouts that are inflated outside a dialog's own themed context to the dark
- * surface they land on. The app theme is light in every mode, so a color the activity resolves is
- * dark whatever mode the user picked, and on a dark dialog that leaves text on top of a surface of
- * nearly its own tone.
+ * surface they land on.
  */
 @RunWith(RobolectricTestRunner.class)
 public class ThemedDialogDarkModeTest {
