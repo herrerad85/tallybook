@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.activity.base;
 
+import android.app.UiModeManager;
 import android.graphics.Color;
 import android.util.TypedValue;
 
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
@@ -39,11 +41,12 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 /**
  * Below Android 12 is sdk 24 because the suite already loads it. Each further sdk keeps another
  * copy of the framework in the one test JVM, and sdk 30 here was enough to run the whole suite out
- * of memory.
+ * of memory. The system contrast test is sdk 36 for the same reason.
  */
 @RunWith(RobolectricTestRunner.class)
 public class ThemedActivityDynamicColorTest {
@@ -129,6 +132,21 @@ public class ThemedActivityDynamicColorTest {
         RecreateCountingActivity activity = launch();
         ThemeEngine.setColorPrimary(GREEN ^ 0x00FFFFFF);
         assertEquals(0, activity.mRecreates);
+    }
+
+    @Test
+    @Config(sdk = 36)
+    public void aContrastBelowTheStandardLevelSeedsTheStandardRoles() {
+        int standard = onSurfaceVariantAtContrast(0);
+        assertEquals(standard, onSurfaceVariantAtContrast(-1));
+        assertNotEquals("the contrast never reached the seeding", standard,
+                onSurfaceVariantAtContrast(1));
+    }
+
+    private int onSurfaceVariantAtContrast(float contrast) {
+        shadowOf(RuntimeEnvironment.getApplication().getSystemService(UiModeManager.class))
+                .setContrast(contrast);
+        return resolve(launch(), com.google.android.material.R.attr.colorOnSurfaceVariant);
     }
 
     private RecreateCountingActivity launch() {
