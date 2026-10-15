@@ -19,7 +19,9 @@
 
 package com.oriondev.moneywallet.ui.activity.base;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
+import android.app.UiModeManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.content.Context;
@@ -38,8 +40,11 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.material.color.ColorResourcesOverride;
 import com.google.android.material.color.DynamicColors;
-import com.google.android.material.color.DynamicColorsOptions;
+import com.google.android.material.color.MaterialColorUtilitiesHelper;
+import com.google.android.material.color.utilities.Hct;
+import com.google.android.material.color.utilities.SchemeContent;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
@@ -86,22 +91,47 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
             setTheme(R.style.MoneyWalletAppThemeDeepDark);
         }
         mSeedColorPrimary = ThemeEngine.getSavedColorPrimary();
-        DynamicColorsOptions.Builder options = new DynamicColorsOptions.Builder()
-                .setContentBasedSource(mSeedColorPrimary);
-        if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
-            // With a content source the library applies its own overlay of personalized colors and
-            // ignores both dynamicColorThemeOverlay and setThemeOverlay, so deep dark puts its
-            // black surfaces back once that overlay is in.
-            options.setOnAppliedCallback(activity -> activity.getTheme()
-                    .applyStyle(R.style.ThemeOverlay_MoneyWallet_DeepDark, true));
-        }
-        DynamicColors.applyToActivityIfAvailable(this, options.build());
+        applySeededColors();
         super.onCreate(savedInstanceState);
         // Both bars go transparent and the window stops reserving space for them, on every release
         // and not only where Android 15 enforces it, so one arrangement covers the whole range.
         // Each surface then asks for the insets it needs through SystemBars.
         WindowCompat.enableEdgeToEdge(getWindow());
         ThemeEngine.registerObserver(this);
+    }
+
+    /**
+     * Workaround: does what DynamicColors.applyToActivityIfAvailable does with a content source,
+     * except that a system contrast below the standard level is seeded at the standard level. From
+     * Android 14 the library seeds at the system level and has no option to change it, and below
+     * the standard level the secondary text in dialogs and pickers is too dim to read. A Samsung
+     * S25 on One UI 8.5 ships at that level. The classes it calls are restricted to the library,
+     * so a Material update can change them.
+     * The personalized colors also set the surfaces, so deep dark puts its black surfaces back
+     * once they are in.
+     */
+    @SuppressLint("RestrictedApi")
+    private void applySeededColors() {
+        if (!DynamicColors.isDynamicColorAvailable()) {
+            return;
+        }
+        float contrast = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            UiModeManager uiModeManager = getSystemService(UiModeManager.class);
+            if (uiModeManager != null) {
+                contrast = Math.max(0, uiModeManager.getContrast());
+            }
+        }
+        SchemeContent scheme = new SchemeContent(Hct.fromInt(mSeedColorPrimary),
+                mThemeMode != ThemeEngine.Mode.LIGHT, contrast);
+        ColorResourcesOverride override = ColorResourcesOverride.getInstance();
+        if (override == null || !override.applyIfPossible(this,
+                MaterialColorUtilitiesHelper.createColorResourcesIdsToColorValues(scheme))) {
+            return;
+        }
+        if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
+            getTheme().applyStyle(R.style.ThemeOverlay_MoneyWallet_DeepDark, true);
+        }
     }
 
     /**
