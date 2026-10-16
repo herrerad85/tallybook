@@ -42,6 +42,7 @@ import android.view.ViewGroup;
 
 import com.google.android.material.color.ColorResourcesOverride;
 import com.google.android.material.color.DynamicColors;
+import com.google.android.material.color.DynamicColorsOptions;
 import com.google.android.material.color.MaterialColorUtilitiesHelper;
 import com.google.android.material.color.utilities.Hct;
 import com.google.android.material.color.utilities.SchemeContent;
@@ -76,11 +77,13 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
 
     private int mSeedColorPrimary;
 
+    private boolean mSystemColors;
+
     /**
-     * The XML theme for the mode, and the color roles seeded from the saved
-     * primary, are set here, before any view exists, which is why a change of either recreates the
-     * activity in onThemeChanged instead of repainting it. A previewed primary is not saved, so it
-     * only repaints.
+     * The XML theme for the mode, and the color roles seeded from the saved primary or taken from
+     * the wallpaper, are set here, before any view exists, which is why a change of any of them
+     * recreates the activity in onThemeChanged instead of repainting it. A previewed primary is not
+     * saved, so it only repaints.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +94,12 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
             setTheme(R.style.MoneyWalletAppThemeDeepDark);
         }
         mSeedColorPrimary = ThemeEngine.getSavedColorPrimary();
-        applySeededColors();
+        mSystemColors = ThemeEngine.isSystemColorsEnabled();
+        if (mSystemColors) {
+            applySystemColors();
+        } else {
+            applySeededColors();
+        }
         super.onCreate(savedInstanceState);
         // Both bars go transparent and the window stops reserving space for them, on every release
         // and not only where Android 15 enforces it, so one arrangement covers the whole range.
@@ -132,6 +140,20 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
         if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
             getTheme().applyStyle(R.style.ThemeOverlay_MoneyWallet_DeepDark, true);
         }
+    }
+
+    /**
+     * The wallpaper colors also set the surfaces, so deep dark puts its black surfaces back, but
+     * only once the library has applied them.
+     */
+    private void applySystemColors() {
+        DynamicColors.applyToActivityIfAvailable(this, new DynamicColorsOptions.Builder()
+                .setOnAppliedCallback(activity -> {
+                    if (mThemeMode == ThemeEngine.Mode.DEEP_DARK) {
+                        getTheme().applyStyle(R.style.ThemeOverlay_MoneyWallet_DeepDark, true);
+                    }
+                })
+                .build());
     }
 
     /**
@@ -254,7 +276,11 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
             recreate();
             return;
         }
-        if (DynamicColors.isDynamicColorAvailable()
+        if (ThemeEngine.isSystemColorsEnabled() != mSystemColors) {
+            recreate();
+            return;
+        }
+        if (DynamicColors.isDynamicColorAvailable() && !mSystemColors
                 && ThemeEngine.getSavedColorPrimary() != mSeedColorPrimary) {
             recreate();
             return;

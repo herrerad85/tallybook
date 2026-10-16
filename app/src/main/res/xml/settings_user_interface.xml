@@ -24,6 +24,12 @@
     <com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory
         android:title="@string/setting_category_ui_appearance" >
 
+        <com.oriondev.moneywallet.ui.preference.ThemedSwitchPreference
+            android:key="system_colors"
+            android:title="@string/setting_title_ui_system_colors"
+            android:summary="@string/setting_summary_ui_system_colors"
+            android:persistent="false" />
+
         <com.oriondev.moneywallet.ui.preference.ColorPreference
             android:key="theme_color_primary"
             android:title="@string/setting_title_ui_theme_color_primary" />

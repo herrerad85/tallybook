@@ -22,10 +22,13 @@ package com.oriondev.moneywallet.ui.view.theme;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Build;
 import androidx.annotation.UiThread;
 import androidx.core.graphics.ColorUtils;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.google.android.material.color.DynamicColors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +44,7 @@ public class ThemeEngine implements ITheme {
     private static final String COLOR_PRIMARY_DARK = "color_primary_dark";
     private static final String COLOR_ACCENT = "color_accent";
     private static final String MODE = "mode";
+    private static final String SYSTEM_COLORS = "system_colors";
 
     private static final int DEFAULT_COLOR_PRIMARY = Color.parseColor("#3f51b5");
     private static final int DEFAULT_COLOR_PRIMARY_DARK = Color.parseColor("#303F9F");
@@ -253,6 +257,30 @@ public class ThemeEngine implements ITheme {
     }
 
     @UiThread
+    public static void setUseSystemColors(boolean useSystemColors) {
+        if (sInstance != null) {
+            if (useSystemColors != isSystemColorsEnabled()) {
+                sInstance.mPreferences.edit().putBoolean(SYSTEM_COLORS, useSystemColors).apply();
+                notifyObservers();
+            }
+        } else {
+            throw new RuntimeException("ThemeEngine not initialized!");
+        }
+    }
+
+    /**
+     * Whether the user asked for the wallpaper colors. Where dynamic color is not available the
+     * app keeps the picked colors even while this is true.
+     */
+    public static boolean isSystemColorsEnabled() {
+        if (sInstance != null) {
+            return sInstance.mPreferences.getBoolean(SYSTEM_COLORS, false);
+        } else {
+            throw new RuntimeException("ThemeEngine not initialized!");
+        }
+    }
+
+    @UiThread
     private static void notifyObservers() {
         if (sInstance != null) {
             for (ThemeObserver observer : mThemeObserverList) {
@@ -271,11 +299,19 @@ public class ThemeEngine implements ITheme {
 
     /**
      * The primary the user saved. While a chooser is open getColorPrimary answers with its preview
-     * instead.
+     * instead, and while the system colors are in use with the wallpaper color.
      */
     public static int getSavedColorPrimary() {
         if (sInstance != null) {
             return sInstance.getStoredColorPrimary();
+        } else {
+            throw new RuntimeException("ThemeEngine not initialized!");
+        }
+    }
+
+    public static int getSavedColorAccent() {
+        if (sInstance != null) {
+            return sInstance.getStoredColorAccent();
         } else {
             throw new RuntimeException("ThemeEngine not initialized!");
         }
@@ -292,9 +328,11 @@ public class ThemeEngine implements ITheme {
         }
     }
 
+    private final Context mContext;
     private final SharedPreferences mPreferences;
 
     private ThemeEngine(Context context) {
+        mContext = context.getApplicationContext();
         mPreferences = context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
     }
 
@@ -303,7 +341,16 @@ public class ThemeEngine implements ITheme {
     @Override
     public int getColorPrimary() {
         Integer preview = sPreviewColorPrimary;
-        return preview != null ? noAlpha(preview) : getStoredColorPrimary();
+        if (preview != null) {
+            return noAlpha(preview);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && usesSystemColors()) {
+            return mContext.getColor(android.R.color.system_primary_light);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && usesSystemColors()) {
+            return mContext.getColor(android.R.color.system_accent1_600);
+        }
+        return getStoredColorPrimary();
     }
 
     @Override
@@ -318,7 +365,22 @@ public class ThemeEngine implements ITheme {
     @Override
     public int getColorAccent() {
         Integer preview = sPreviewColorAccent;
-        return preview != null ? noAlpha(preview) : getStoredColorAccent();
+        if (preview != null) {
+            return noAlpha(preview);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && usesSystemColors()) {
+            return mContext.getColor(isDark() ? android.R.color.system_secondary_dark
+                    : android.R.color.system_secondary_light);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && usesSystemColors()) {
+            return mContext.getColor(isDark() ? android.R.color.system_accent2_200
+                    : android.R.color.system_accent2_600);
+        }
+        return getStoredColorAccent();
+    }
+
+    private boolean usesSystemColors() {
+        return mPreferences.getBoolean(SYSTEM_COLORS, false) && DynamicColors.isDynamicColorAvailable();
     }
 
     private int getStoredColorPrimary() {

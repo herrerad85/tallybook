@@ -58,12 +58,15 @@ public class ThemedActivityDynamicColorTest {
 
     private int mOriginalPrimary;
     private ThemeEngine.Mode mOriginalMode;
+    private boolean mOriginalSystemColors;
 
     @Before
     public void saveTheTheme() {
         ThemeEngine.clearPreview();
         mOriginalPrimary = ThemeEngine.getSavedColorPrimary();
         mOriginalMode = ThemeEngine.getTheme().getMode();
+        mOriginalSystemColors = ThemeEngine.isSystemColorsEnabled();
+        ThemeEngine.setUseSystemColors(false);
         ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
         ThemeEngine.setColorPrimary(GREEN);
     }
@@ -83,6 +86,7 @@ public class ThemedActivityDynamicColorTest {
         ThemeEngine.clearPreview();
         ThemeEngine.setColorPrimary(mOriginalPrimary);
         ThemeEngine.setMode(mOriginalMode);
+        ThemeEngine.setUseSystemColors(mOriginalSystemColors);
     }
 
     @Test
@@ -132,6 +136,76 @@ public class ThemedActivityDynamicColorTest {
         RecreateCountingActivity activity = launch();
         ThemeEngine.setColorPrimary(GREEN ^ 0x00FFFFFF);
         assertEquals(0, activity.mRecreates);
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void turningTheSystemColorsOnRebuildsTheActivityAndTheSameValueDoesNot() {
+        RecreateCountingActivity activity = launch();
+        ThemeEngine.setUseSystemColors(true);
+        assertEquals(1, activity.mRecreates);
+        ThemeEngine.setUseSystemColors(true);
+        assertEquals("setting the value it already had rebuilt the activity", 1, activity.mRecreates);
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void turningTheSystemColorsOffRebuildsTheActivityAndTheSameValueDoesNot() {
+        ThemeEngine.setUseSystemColors(true);
+        RecreateCountingActivity activity = launch();
+        ThemeEngine.setUseSystemColors(false);
+        assertEquals(1, activity.mRecreates);
+        ThemeEngine.setUseSystemColors(false);
+        assertEquals("setting the value it already had rebuilt the activity", 1, activity.mRecreates);
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void aSavedPrimaryDoesNotRebuildTheActivityWhileTheSystemColorsAreOn() {
+        ThemeEngine.setUseSystemColors(true);
+        RecreateCountingActivity activity = launch();
+        ThemeEngine.setColorPrimary(GREEN ^ 0x00FFFFFF);
+        assertEquals(0, activity.mRecreates);
+    }
+
+    @Test
+    @Config(sdk = {33, 34})
+    public void theSystemColorsReplaceTheStaticRoles() {
+        ThemeEngine.setUseSystemColors(true);
+        RecreateCountingActivity activity = launch();
+        int primary = resolve(activity, androidx.appcompat.R.attr.colorPrimary);
+        assertNotEquals("the static role stayed", STATIC_COLOR_PRIMARY, primary);
+        assertEquals("the toolbar and the components disagree", primary,
+                ThemeEngine.getTheme().getColorPrimary());
+        assertEquals(resolve(activity, com.google.android.material.R.attr.colorSecondary),
+                ThemeEngine.getTheme().getColorAccent());
+    }
+
+    @Test
+    @Config(sdk = {33, 34})
+    public void darkTakesTheDarkSystemRolesWithoutTheBlackSurfaces() {
+        ThemeEngine.setUseSystemColors(true);
+        ThemeEngine.setMode(ThemeEngine.Mode.DARK);
+        RecreateCountingActivity activity = launch();
+        assertEquals(resolve(activity, com.google.android.material.R.attr.colorSecondary),
+                ThemeEngine.getTheme().getColorAccent());
+        assertNotEquals(Color.BLACK, resolve(activity, android.R.attr.colorBackground));
+    }
+
+    @Test
+    @Config(sdk = {33, 34})
+    public void deepDarkStaysBlackOverTheSystemColors() {
+        ThemeEngine.setUseSystemColors(true);
+        ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
+        RecreateCountingActivity activity = launch();
+        assertEquals(resolve(activity, com.google.android.material.R.attr.colorSecondary),
+                ThemeEngine.getTheme().getColorAccent());
+        assertEquals(Color.BLACK, resolve(activity, android.R.attr.colorBackground));
+        assertEquals(Color.BLACK, resolve(activity, com.google.android.material.R.attr.colorSurface));
+        assertEquals(Color.BLACK,
+                resolve(activity, com.google.android.material.R.attr.colorSurfaceDim));
+        assertNotEquals("the static role stayed", 0xFFBAC3FF,
+                resolve(activity, androidx.appcompat.R.attr.colorPrimary));
     }
 
     @Test
