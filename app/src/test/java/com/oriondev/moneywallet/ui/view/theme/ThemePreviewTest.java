@@ -19,6 +19,8 @@
 
 package com.oriondev.moneywallet.ui.view.theme;
 
+import android.content.Context;
+
 import androidx.core.graphics.ColorUtils;
 
 import org.junit.After;
@@ -26,9 +28,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowBuild;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -44,12 +50,15 @@ public class ThemePreviewTest {
 
     private int mOriginalPrimary;
     private int mOriginalAccent;
+    private boolean mOriginalSystemColors;
 
     @Before
     public void readTheStoredTheme() {
         // The getters answer with a preview while one is live, so one left behind by anything
         // else would be read here as the stored color and then written by the teardown.
         ThemeEngine.clearPreview();
+        mOriginalSystemColors = ThemeEngine.isSystemColorsEnabled();
+        ThemeEngine.setUseSystemColors(false);
         mOriginalPrimary = ThemeEngine.getTheme().getColorPrimary();
         mOriginalAccent = ThemeEngine.getTheme().getColorAccent();
     }
@@ -66,6 +75,7 @@ public class ThemePreviewTest {
         ThemeEngine.clearPreview();
         ThemeEngine.setColorPrimary(mOriginalPrimary);
         ThemeEngine.setColorAccent(mOriginalAccent);
+        ThemeEngine.setUseSystemColors(mOriginalSystemColors);
     }
 
     @Test
@@ -160,6 +170,75 @@ public class ThemePreviewTest {
         } finally {
             ThemeEngine.unregisterObserver(observer);
         }
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void theSystemColorsAreWhatTheThemeReadsWhileTheyAreOnAndThePicksStayStored() {
+        ITheme theme = ThemeEngine.getTheme();
+        Context application = RuntimeEnvironment.getApplication();
+        int systemPrimary = application.getColor(android.R.color.system_accent1_600);
+        int systemAccent = application.getColor(android.R.color.system_accent2_600);
+        ThemeEngine.setColorPrimary(inverted(systemPrimary));
+        ThemeEngine.setColorAccent(inverted(systemAccent));
+
+        ThemeEngine.setUseSystemColors(true);
+        assertEquals(systemPrimary, theme.getColorPrimary());
+        assertEquals(systemAccent, theme.getColorAccent());
+        assertEquals(inverted(systemPrimary), ThemeEngine.getSavedColorPrimary());
+        assertEquals(inverted(systemAccent), ThemeEngine.getSavedColorAccent());
+
+        ThemeEngine.setUseSystemColors(false);
+        assertEquals(inverted(systemPrimary), theme.getColorPrimary());
+        assertEquals(inverted(systemAccent), theme.getColorAccent());
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void theSystemAccentIsToneEightyInBothDarkModes() {
+        Context application = RuntimeEnvironment.getApplication();
+        int lightTone = application.getColor(android.R.color.system_accent2_600);
+        int darkTone = application.getColor(android.R.color.system_accent2_200);
+        assertNotEquals(lightTone, darkTone);
+        ThemeEngine.Mode originalMode = ThemeEngine.getTheme().getMode();
+        ThemeEngine.setUseSystemColors(true);
+        try {
+            ThemeEngine.setMode(ThemeEngine.Mode.DARK);
+            assertEquals(darkTone, ThemeEngine.getTheme().getColorAccent());
+            ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
+            assertEquals(darkTone, ThemeEngine.getTheme().getColorAccent());
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+            assertEquals(lightTone, ThemeEngine.getTheme().getColorAccent());
+        } finally {
+            ThemeEngine.setMode(originalMode);
+        }
+    }
+
+    @Test
+    @Config(sdk = 33)
+    public void aLivePreviewStillWinsWhileTheSystemColorsAreOn() {
+        ITheme theme = ThemeEngine.getTheme();
+        ThemeEngine.setUseSystemColors(true);
+        int systemPrimary = theme.getColorPrimary();
+        int systemAccent = theme.getColorAccent();
+        ThemeEngine.setColorPrimary(systemPrimary);
+        ThemeEngine.setColorAccent(systemAccent);
+
+        ThemeEngine.previewColorPrimary(inverted(systemPrimary));
+        ThemeEngine.previewColorAccent(inverted(systemAccent));
+        assertEquals(inverted(systemPrimary), theme.getColorPrimary());
+        assertEquals(inverted(systemAccent), theme.getColorAccent());
+    }
+
+    /** Robolectric's own maker is on the library's list of makers with dynamic color. */
+    @Test
+    @Config(sdk = {24, 32})
+    public void theSystemColorsChangeNothingWhereDynamicColorIsUnavailable() {
+        ShadowBuild.setManufacturer("acme");
+        ShadowBuild.setBrand("acme");
+        ThemeEngine.setUseSystemColors(true);
+        assertEquals(mOriginalPrimary, ThemeEngine.getTheme().getColorPrimary());
+        assertEquals(mOriginalAccent, ThemeEngine.getTheme().getColorAccent());
     }
 
     /** Opaque, and never the color it was handed. */

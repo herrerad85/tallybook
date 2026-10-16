@@ -37,6 +37,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.material.color.DynamicColors;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Group;
 import com.oriondev.moneywallet.picker.ColorPicker;
@@ -90,6 +91,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     private Preference mDefaultWalletPreference;
     private SwitchPreferenceCompat mAutoOpenCalculatorPreference;
     private SwitchPreferenceCompat mDotMatrixIconsPreference;
+    private SwitchPreferenceCompat mSystemColorsPreference;
     private ColorPreference mColorPrimaryPreference;
     private ColorPreference mColorAccentPreference;
     private ThemedListPreference mThemeTypePreference;
@@ -116,6 +118,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         mDefaultWalletPreference = findPreference("default_wallet");
         mAutoOpenCalculatorPreference = (SwitchPreferenceCompat) findPreference("auto_open_calculator");
         mDotMatrixIconsPreference = (SwitchPreferenceCompat) findPreference("dot_matrix_icons");
+        mSystemColorsPreference = (SwitchPreferenceCompat) findPreference("system_colors");
         mColorPrimaryPreference = (ColorPreference) findPreference("theme_color_primary");
         mColorAccentPreference = (ColorPreference) findPreference("theme_color_accent");
         mThemeTypePreference = (ThemedListPreference) findPreference("theme_type");
@@ -219,6 +222,9 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         setupCurrentThemeType();
         mAutoOpenCalculatorPreference.setChecked(PreferenceManager.isAutoOpenCalculatorEnabled());
         mDotMatrixIconsPreference.setChecked(PreferenceManager.isDotMatrixIconsEnabled());
+        mSystemColorsPreference.setVisible(DynamicColors.isDynamicColorAvailable());
+        mSystemColorsPreference.setChecked(ThemeEngine.isSystemColorsEnabled());
+        setupThemeColorsVisible();
         // attach listeners to each preference to get notified when a value changes
         mCustomDigitsSetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
@@ -330,6 +336,16 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                 // around this screen keeps the wallet icons it already has. Recreating the
                 // activity rebuilds it the way a rotation does and comes back to this screen.
                 requireActivity().recreate();
+                return true;
+            }
+
+        });
+        mSystemColorsPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                ThemeEngine.setUseSystemColors((Boolean) newValue);
+                setupThemeColorsVisible();
                 return true;
             }
 
@@ -601,12 +617,22 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
         }
     }
 
+    private void setupThemeColorsVisible() {
+        boolean visible = !DynamicColors.isDynamicColorAvailable() || !ThemeEngine.isSystemColorsEnabled();
+        mColorPrimaryPreference.setVisible(visible);
+        mColorAccentPreference.setVisible(visible);
+    }
+
+    /**
+     * The two theme pickers start from the saved colors, never from the theme. While the system
+     * colors are in use the theme answers with the wallpaper colors, and a picker keeps its color
+     * across a recreate, so it would still show and offer them once the switch is turned off.
+     */
     private void onCreateFragments(FragmentManager fragmentManager) {
-        ITheme theme = ThemeEngine.getTheme();
         mColorIncomePicker = ColorPicker.createPicker(fragmentManager, TAG_COLOR_INCOME, PreferenceManager.getCurrentIncomeColor(), false, this);
         mColorExpensePicker = ColorPicker.createPicker(fragmentManager, TAG_COLOR_EXPENSE, PreferenceManager.getCurrentExpenseColor(), false, this);
-        mColorPrimaryPicker = ColorPicker.createPicker(fragmentManager, TAG_COLOR_PRIMARY, theme.getColorPrimary(), false, this);
-        mColorAccentPicker = ColorPicker.createPicker(fragmentManager, TAG_COLOR_ACCENT, theme.getColorAccent(), true, this);
+        mColorPrimaryPicker = ColorPicker.createPicker(fragmentManager, TAG_COLOR_PRIMARY, ThemeEngine.getSavedColorPrimary(), false, this);
+        mColorAccentPicker = ColorPicker.createPicker(fragmentManager, TAG_COLOR_ACCENT, ThemeEngine.getSavedColorAccent(), true, this);
         mCustomDigitSetupDialog = (CustomDigitSetupDialog) fragmentManager.findFragmentByTag(TAG_CUSTOM_DIGIT);
         if (mCustomDigitSetupDialog == null) {
             mCustomDigitSetupDialog = CustomDigitSetupDialog.newInstance();
