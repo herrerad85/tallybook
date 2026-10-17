@@ -30,7 +30,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatSpinner;
+
+import com.oriondev.moneywallet.R;
 
 /**
  * Created by andrea on 20/08/18.
@@ -64,7 +67,9 @@ public class ThemedSpinner extends AppCompatSpinner implements ThemeEngine.Theme
         // appcompat 1.8.0 carries @RestrictTo(LIBRARY_GROUP_PREFIX) on that setter, which is what
         // the suppression above is for.
         setSupportBackgroundTintList(ColorStateList.valueOf(theme.getIconColor()));
-        setPopupBackgroundDrawable(new ColorDrawable(theme.isDark() ? COLOR_BACKGROUND_DARK : COLOR_BACKGROUND_LIGHT));
+        setPopupBackgroundDrawable(theme.getMode() == ThemeEngine.Mode.DEEP_DARK
+                ? AppCompatResources.getDrawable(getContext(), R.drawable.popup_background_deep_dark)
+                : new ColorDrawable(theme.isDark() ? COLOR_BACKGROUND_DARK : COLOR_BACKGROUND_LIGHT));
     }
 
     /**

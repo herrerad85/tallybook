@@ -90,7 +90,7 @@ public class ThemeEngine implements ITheme {
     private static final int[] DEFAULT_COLOR_CARD_BACKGROUND = new int[] {
             Color.parseColor("#FFFFFF"), // OK
             Color.parseColor("#424242"), // OK
-            Color.parseColor("#424242")  // OK
+            Color.parseColor("#000000")  // OK
     };
 
     private static final int[] DEFAULT_COLOR_WINDOW_FOREGROUND = new int[] {
@@ -102,7 +102,7 @@ public class ThemeEngine implements ITheme {
     private static final int[] DEFAULT_COLOR_WINDOW_BACKGROUND = new int[] {
             Color.parseColor("#FAFAFA"), // OK
             Color.parseColor("#212121"), // OK
-            Color.parseColor("#212121")  // OK
+            Color.parseColor("#000000")  // OK
     };
 
     private static final int[] DEFAULT_COLOR_RIPPLE = new int[] {
@@ -114,7 +114,7 @@ public class ThemeEngine implements ITheme {
     private static final int[] DRAWER_BACKGROUND_COLOR = new int[] {
             Color.parseColor("#F9F9F9"),
             Color.parseColor("#303030"),
-            Color.parseColor("#303030")
+            Color.parseColor("#000000")
     };
 
     private static final int[] DRAWER_ICON_COLOR = new int[] {

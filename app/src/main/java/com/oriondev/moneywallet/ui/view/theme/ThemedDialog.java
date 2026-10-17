@@ -19,11 +19,14 @@
 
 package com.oriondev.moneywallet.ui.view.theme;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Build;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -47,9 +50,11 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.oriondev.moneywallet.R;
@@ -93,7 +98,29 @@ public class ThemedDialog {
      */
     @StyleRes
     private static int getDialogTheme() {
-        return ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletAlertDialogDark : R.style.MoneyWalletAlertDialogLight;
+        return ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletAlertDialogDeepDark
+                : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletAlertDialogDark : R.style.MoneyWalletAlertDialogLight;
+    }
+
+    /**
+     * In deep dark a dialog is black on a black screen, where the scrim cannot darken anything,
+     * so it gets a 1dp outline to show its edge. The alert dialog and both pickers paint their
+     * window with a MaterialShapeDrawable, which the alert dialog and the date picker wrap in an
+     * InsetDrawable, and none of them reads a stroke from a style. Call it once the window background is set.
+     */
+    public static void outlineDeepDark(Dialog dialog) {
+        if (ThemeEngine.getTheme().getMode() != ThemeEngine.Mode.DEEP_DARK || dialog.getWindow() == null) {
+            return;
+        }
+        Drawable background = dialog.getWindow().getDecorView().getBackground();
+        if (background instanceof InsetDrawable) {
+            background = ((InsetDrawable) background).getDrawable();
+        }
+        if (background instanceof MaterialShapeDrawable) {
+            Context context = dialog.getContext();
+            ((MaterialShapeDrawable) background).setStroke(context.getResources().getDisplayMetrics().density,
+                    MaterialColors.getColor(context, com.google.android.material.R.attr.colorOutline, Color.GRAY));
+        }
     }
 
     /**
@@ -200,6 +227,7 @@ public class ThemedDialog {
         @Override
         public AlertDialog create() {
             final AlertDialog dialog = super.create();
+            outlineDeepDark(dialog);
             dialog.setOnShowListener(new DialogInterface.OnShowListener() {
 
                 @Override
@@ -231,7 +259,8 @@ public class ThemedDialog {
      */
     public static MaterialDatePicker<Long> buildDatePickerDialog(long selectionUtcMillis) {
         return MaterialDatePicker.Builder.datePicker()
-                .setTheme(ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletDatePickerDark : R.style.MoneyWalletDatePickerLight)
+                .setTheme(ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletDatePickerDeepDark
+                        : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletDatePickerDark : R.style.MoneyWalletDatePickerLight)
                 .setSelection(selectionUtcMillis)
                 .build();
     }
@@ -242,7 +271,8 @@ public class ThemedDialog {
      */
     public static MaterialTimePicker buildTimePickerDialog(boolean is24HourMode, int hourOfDay, int minute) {
         return new MaterialTimePicker.Builder()
-                .setTheme(ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletTimePickerDark : R.style.MoneyWalletTimePickerLight)
+                .setTheme(ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletTimePickerDeepDark
+                        : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletTimePickerDark : R.style.MoneyWalletTimePickerLight)
                 .setInputMode(MaterialTimePicker.INPUT_MODE_KEYBOARD)
                 .setTimeFormat(is24HourMode ? TimeFormat.CLOCK_24H : TimeFormat.CLOCK_12H)
                 .setHour(hourOfDay)
@@ -255,12 +285,13 @@ public class ThemedDialog {
     }
 
     /**
-     * Which of the two bottom sheet styles the app draws a sheet with, picked the same way
-     * getDialogTheme picks between the two alert dialog styles.
+     * Which bottom sheet style the app draws a sheet with, picked the same way
+     * getDialogTheme picks the alert dialog style.
      */
     @StyleRes
     private static int getBottomSheetTheme() {
-        return ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletBottomSheetDark : R.style.MoneyWalletBottomSheetLight;
+        return ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletBottomSheetDeepDark
+                : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletBottomSheetDark : R.style.MoneyWalletBottomSheetLight;
     }
 
     /**
