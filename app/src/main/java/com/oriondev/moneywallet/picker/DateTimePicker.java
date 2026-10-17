@@ -102,7 +102,24 @@ public class DateTimePicker extends Fragment {
         if (!mRebuildDatePicker) {
             reattachDatePickerListener();
         }
+        getChildFragmentManager().registerFragmentLifecycleCallbacks(mPickerOutliner, false);
     }
+
+    /**
+     * Outlines a picker in deep dark. It is registered in onCreate so a picker the FragmentManager
+     * rebuilds gets it too, and it runs on started because the date picker only sets its window
+     * background in its own onStart.
+     */
+    private final FragmentManager.FragmentLifecycleCallbacks mPickerOutliner = new FragmentManager.FragmentLifecycleCallbacks() {
+
+        @Override
+        public void onFragmentStarted(@NonNull FragmentManager fragmentManager, @NonNull Fragment fragment) {
+            if (fragment instanceof DialogFragment && ((DialogFragment) fragment).getDialog() != null) {
+                ThemedDialog.outlineDeepDark(((DialogFragment) fragment).getDialog());
+            }
+        }
+
+    };
 
     /**
      * MaterialTimePicker is a DialogFragment shown by tag. When the host is recreated the
