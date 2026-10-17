@@ -235,17 +235,17 @@ public class LockActivity extends ThemedActivity {
     }
 
     /**
-     * This screen has no toolbar and no list. It paints the primary color over the whole window,
+     * This screen has no toolbar and no list. It paints the primary background over the whole window,
      * so that is what is behind both bars.
      */
     @Override
     protected int getColorBehindStatusBar(ITheme theme) {
-        return theme.getColorPrimary();
+        return theme.getColorPrimaryBackground();
     }
 
     @Override
     protected int getColorBehindNavigationBar(ITheme theme) {
-        return theme.getColorPrimary();
+        return theme.getColorPrimaryBackground();
     }
 
     private void initializeUi(Bundle savedInstanceState) {

@@ -108,12 +108,12 @@ public class ThemedAppBarLayout extends AppBarLayout implements ThemeEngine.Them
     private int getBackgroundColor(ITheme theme) {
         if (mBackgroundColor != null) {
             if (mBackgroundColor == BackgroundColor.COLOR_PRIMARY) {
-                return theme.getColorPrimary();
+                return theme.getColorPrimaryBackground();
             } else {
                 return theme.getColorPrimaryDark();
             }
         } else {
-            return theme.getColorPrimary();
+            return theme.getColorPrimaryBackground();
         }
     }
 

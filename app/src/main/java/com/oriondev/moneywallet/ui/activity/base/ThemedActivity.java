@@ -313,7 +313,7 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
      */
     protected int getColorBehindStatusBar(ITheme theme) {
         return mAppBarScrolledPastStatusBar
-                ? theme.getColorWindowForeground() : theme.getColorPrimary();
+                ? theme.getColorWindowForeground() : theme.getColorPrimaryBackground();
     }
 
     /**

@@ -43,7 +43,7 @@ package com.oriondev.moneywallet.ui.view.theme;
     /*package-local*/ int getColor(ITheme theme) {
         switch (mValue) {
             case 0:
-                return theme.getColorPrimary();
+                return theme.getColorPrimaryBackground();
             case 1:
                 return theme.getColorPrimaryDark();
             case 2:

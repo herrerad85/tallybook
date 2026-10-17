@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.ui.view.theme;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Rect;
@@ -30,14 +31,30 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.InsetDrawable;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
 
+import com.andrognito.patternlockview.PatternLockView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.picker.DateTimePicker;
+import com.oriondev.moneywallet.storage.database.TestDatabases;
+import com.oriondev.moneywallet.ui.activity.CalculatorActivity;
+import com.oriondev.moneywallet.ui.activity.CurrencyConverterActivity;
+import com.oriondev.moneywallet.ui.activity.LockActivity;
+import com.oriondev.moneywallet.ui.activity.MainActivity;
 
 import org.junit.After;
 import org.junit.Before;
@@ -51,11 +68,14 @@ import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.util.ReflectionHelpers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 public class DeepDarkThemeTest {
+
+    private static final int YELLOW = 0xFFFFEB3B;
 
     private ThemeEngine.Mode mOriginalMode;
 
@@ -90,6 +110,94 @@ public class DeepDarkThemeTest {
         assertEquals(0xFF000000, theme.getColorWindowBackground());
         assertEquals(0xFF000000, theme.getDrawerBackgroundColor());
         assertEquals(0xFF202020, theme.getDrawerSelectedItemColor());
+    }
+
+    @Test
+    public void deepDarkPaintsThePrimaryBackgroundBlackAndKeepsThePrimary() {
+        int original = ThemeEngine.getSavedColorPrimary();
+        ThemeEngine.setColorPrimary(YELLOW);
+        try {
+            ITheme theme = ThemeEngine.getTheme();
+
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+            assertEquals(YELLOW, theme.getColorPrimaryBackground());
+
+            ThemeEngine.setMode(ThemeEngine.Mode.DARK);
+            assertEquals(YELLOW, theme.getColorPrimaryBackground());
+
+            ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
+            assertEquals(0xFF000000, theme.getColorPrimaryBackground());
+            assertEquals(YELLOW, theme.getColorPrimary());
+        } finally {
+            ThemeEngine.setColorPrimary(original);
+        }
+    }
+
+    /** A yellow primary takes dark text and dark system bar icons, so a header left yellow fails. */
+    @Test
+    public void deepDarkPaintsTheHeaderKeypadAndSystemBarsBlack() {
+        int original = ThemeEngine.getSavedColorPrimary();
+        ThemeEngine.setColorPrimary(YELLOW);
+        ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
+        try (ActivityScenario<CalculatorActivity> scenario = ActivityScenario.launch(CalculatorActivity.class)) {
+            scenario.onActivity(activity -> {
+                Toolbar toolbar = activity.findViewById(R.id.primary_toolbar);
+                assertEquals(0xFF000000, backgroundColor(toolbar));
+                TextView title = ReflectionHelpers.getField(toolbar, "mTitleTextView");
+                assertEquals(0xFFFFFFFF, title.getCurrentTextColor());
+                assertEquals(0xFF000000, backgroundColor(activity.findViewById(R.id.app_bar_container)));
+                assertEquals(0xFF000000, backgroundColor(activity.findViewById(R.id.keypad_container)));
+                TextView key = activity.findViewById(R.id.keyboard_clear_button);
+                assertEquals(0xFF000000, backgroundColor(key));
+                assertEquals(0xFFFFFFFF, key.getCurrentTextColor());
+                assertFalse(bars(activity).isAppearanceLightStatusBars());
+                assertFalse(bars(activity).isAppearanceLightNavigationBars());
+
+                LayoutInflater inflater = activity.getLayoutInflater();
+                View tabs = inflater.inflate(R.layout.view_multi_panel_view_pager_app_bar, null);
+                ThemeEngine.applyTheme(tabs, true);
+                assertEquals(0xFF000000, backgroundColor(tabs));
+                View header = inflater.inflate(R.layout.layout_header_show_icon_name_item,
+                        new FrameLayout(activity), true);
+                ThemeEngine.applyTheme(header, true);
+                assertEquals(0xFFFFFFFF, ((TextView) header.findViewById(R.id.name_text_view)).getCurrentTextColor());
+            });
+        } finally {
+            ThemeEngine.setColorPrimary(original);
+        }
+    }
+
+    @Test
+    public void deepDarkPaintsTheConverterLockScreenAndDrawerHeaderBlack() {
+        TestDatabases.useFreshDatabase(ApplicationProvider.getApplicationContext());
+        int original = ThemeEngine.getSavedColorPrimary();
+        ThemeEngine.setColorPrimary(YELLOW);
+        ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
+        try {
+            Intent[] lock = new Intent[1];
+            try (ActivityScenario<CurrencyConverterActivity> scenario = ActivityScenario.launch(CurrencyConverterActivity.class)) {
+                scenario.onActivity(activity -> {
+                    assertFalse(bars(activity).isAppearanceLightNavigationBars());
+                    lock[0] = LockActivity.enableLock(activity, LockMode.SEQUENCE);
+                });
+            }
+            try (ActivityScenario<LockActivity> scenario = ActivityScenario.launch(lock[0])) {
+                scenario.onActivity(activity -> {
+                    assertFalse(bars(activity).isAppearanceLightStatusBars());
+                    assertFalse(bars(activity).isAppearanceLightNavigationBars());
+                    PatternLockView pattern = activity.findViewById(R.id.pattern_lock_view);
+                    assertEquals(0xFFFFFFFF, pattern.getNormalStateColor());
+                });
+            }
+            try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+                scenario.onActivity(activity -> {
+                    assertEquals(0xFF000000, backgroundColor(activity.findViewById(R.id.navigation_drawer_header)));
+                    assertEquals(0xFFFFFFFF, ((TextView) activity.findViewById(R.id.wallet_name_text_view)).getCurrentTextColor());
+                });
+            }
+        } finally {
+            ThemeEngine.setColorPrimary(original);
+        }
     }
 
     @Test
@@ -269,6 +377,19 @@ public class DeepDarkThemeTest {
             assertTrue(theme.resolveAttribute(attr, value, true));
             assertEquals(0xFF000000, value.data);
         }
+    }
+
+    private static WindowInsetsControllerCompat bars(AppCompatActivity activity) {
+        return WindowCompat.getInsetsController(activity.getWindow(), activity.getWindow().getDecorView());
+    }
+
+    /** AppBarLayout wraps the color it is given in a MaterialShapeDrawable. */
+    private static int backgroundColor(View view) {
+        Drawable background = view.getBackground();
+        if (background instanceof MaterialShapeDrawable) {
+            return ((MaterialShapeDrawable) background).getFillColor().getDefaultColor();
+        }
+        return ((ColorDrawable) background).getColor();
     }
 
     private static int color(Context context, int style, int attr) {

@@ -809,7 +809,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     }
 
     private void applyNavigationDrawerHeaderTheme(ITheme theme) {
-        int backgroundColor = theme.getColorPrimary();
+        int backgroundColor = theme.getColorPrimaryBackground();
         int textColor = theme.getBestTextColor(backgroundColor);
         mHeaderView.setBackgroundColor(backgroundColor);
         mWalletNameView.setTextColor(textColor);

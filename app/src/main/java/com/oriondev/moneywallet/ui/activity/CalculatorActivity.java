@@ -105,12 +105,12 @@ public class CalculatorActivity extends SinglePanelActivity implements View.OnCl
     private boolean mRendering;
 
     /**
-     * The keypad fills the bottom of this screen and carries the primary color, so that is what is
+     * The keypad fills the bottom of this screen and carries the primary background, so that is what is
      * behind the navigation bar here, not the list background the base class assumes.
      */
     @Override
     protected int getColorBehindNavigationBar(ITheme theme) {
-        return theme.getColorPrimary();
+        return theme.getColorPrimaryBackground();
     }
 
     @Override

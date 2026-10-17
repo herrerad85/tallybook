@@ -363,6 +363,11 @@ public class ThemeEngine implements ITheme {
     }
 
     @Override
+    public int getColorPrimaryBackground() {
+        return getMode() == Mode.DEEP_DARK ? Color.BLACK : getColorPrimary();
+    }
+
+    @Override
     public int getColorAccent() {
         Integer preview = sPreviewColorAccent;
         if (preview != null) {

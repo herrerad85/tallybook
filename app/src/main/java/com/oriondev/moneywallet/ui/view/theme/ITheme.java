@@ -28,6 +28,12 @@ public interface ITheme {
 
     int getColorPrimaryDark();
 
+    /**
+     * What an area with the primary color as its background is painted, black in deep dark.
+     * Text, icons and accents drawn in the primary color keep getColorPrimary.
+     */
+    int getColorPrimaryBackground();
+
     int getColorAccent();
 
     ThemeEngine.Mode getMode();
