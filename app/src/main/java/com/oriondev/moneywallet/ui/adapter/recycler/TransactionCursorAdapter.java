@@ -87,6 +87,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private int mIndexTransactionMoney;
     private int mIndexCurrency;
     private int mIndexSplitCategories;
+    private int mIndexConfirmed;
 
     private MoneyFormatter mMoneyFormatter;
 
@@ -147,6 +148,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mIndexTransactionMoney = cursor.getColumnIndex(Contract.Transaction.MONEY);
         mIndexCurrency = cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY);
         mIndexSplitCategories = cursor.getColumnIndex(Contract.Transaction.SPLIT_CATEGORIES);
+        mIndexConfirmed = cursor.getColumnIndex(Contract.Transaction.CONFIRMED);
         // The superclass calls this from two places: when it takes a new cursor, after that
         // cursor is in place and before it tells the list anything changed, and from its own
         // constructor. The constructor call cannot land here, because this adapter is always
@@ -366,6 +368,14 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         } else {
             holder.mSplitImageView.setVisibility(View.GONE);
             holder.mSplitImageView.setContentDescription(null);
+        }
+        if (mIndexConfirmed != -1 && cursor.getInt(mIndexConfirmed) == 0) {
+            holder.mUnconfirmedImageView.setVisibility(View.VISIBLE);
+            holder.mUnconfirmedImageView.setContentDescription(
+                    holder.itemView.getResources().getString(R.string.search_value_unconfirmed));
+        } else {
+            holder.mUnconfirmedImageView.setVisibility(View.GONE);
+            holder.mUnconfirmedImageView.setContentDescription(null);
         }
         CurrencyUnit currency = CurrencyManager.getCurrency(cursor.getString(mIndexCurrency));
         long money = cursor.getLong(mIndexTransactionMoney);
@@ -596,6 +606,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         private ImageView mAvatarImageView;
         private TextView mPrimaryTextView;
         private ImageView mSplitImageView;
+        private ImageView mUnconfirmedImageView;
         private TextView mMoneyTextView;
         private TextView mSecondaryTextView;
         private TextView mDateTextView;
@@ -605,6 +616,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             mAvatarImageView = itemView.findViewById(R.id.avatar_image_view);
             mPrimaryTextView = itemView.findViewById(R.id.primary_text_view);
             mSplitImageView = itemView.findViewById(R.id.split_image_view);
+            mUnconfirmedImageView = itemView.findViewById(R.id.unconfirmed_image_view);
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mSecondaryTextView = itemView.findViewById(R.id.secondary_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);

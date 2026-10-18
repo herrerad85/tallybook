@@ -46,8 +46,10 @@
         app:layout_constraintGuide_begin="36dp" />
 
     <!--
-      The category name and the split marker sit packed at the start, so the marker follows the
-      name and the name is the one that gives way when the row is short of room.
+      The category name and the split and unconfirmed markers sit packed at the start, so the
+      markers follow the name and the name is the one that gives way when the row is short of room.
+      The gap before the amount is the amount's start padding, because a gone margin on the name
+      would also open between the name and the unconfirmed marker when the split marker is gone.
     -->
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/primary_text_view"
@@ -58,8 +60,6 @@
         android:textSize="@dimen/material_component_lists_two_line_with_avatar_primary_text_size"
         android:maxLines="1"
         android:ellipsize="end"
-        app:layout_goneMarginRight="@dimen/material_component_lists_two_line_primary_text_end_margin"
-        app:layout_goneMarginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
         app:layout_constrainedWidth="true"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintHorizontal_chainStyle="packed"
@@ -74,13 +74,26 @@
         android:layout_width="18dp"
         android:layout_height="18dp"
         android:layout_marginStart="4dp"
-        android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
         android:src="@drawable/ic_call_split_24dp"
         android:visibility="gone"
         app:layout_constraintTop_toTopOf="@+id/primary_text_view"
         app:layout_constraintBottom_toBottomOf="@+id/primary_text_view"
-        app:layout_constraintEnd_toStartOf="@+id/money_text_view"
+        app:layout_constraintEnd_toStartOf="@+id/unconfirmed_image_view"
         app:layout_constraintStart_toEndOf="@+id/primary_text_view"
+        app:theme_backgroundColor="colorWindowForeground"
+        tools:visibility="visible" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedImageView
+        android:id="@+id/unconfirmed_image_view"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="4dp"
+        android:src="@drawable/ic_schedule_24dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@+id/primary_text_view"
+        app:layout_constraintBottom_toBottomOf="@+id/primary_text_view"
+        app:layout_constraintEnd_toStartOf="@+id/money_text_view"
+        app:layout_constraintStart_toEndOf="@+id/split_image_view"
         app:theme_backgroundColor="colorWindowForeground"
         tools:visibility="visible" />
 
@@ -90,6 +103,7 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="@dimen/material_component_lists_two_line_primary_text_end_margin"
         android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
+        android:paddingStart="@dimen/material_component_lists_two_line_primary_text_end_margin"
         android:textSize="@dimen/material_component_lists_two_line_with_avatar_primary_text_size"
         app:layout_constraintBottom_toTopOf="@+id/text_guideline"
         app:layout_constraintEnd_toEndOf="parent"
