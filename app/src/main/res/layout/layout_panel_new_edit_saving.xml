@@ -51,7 +51,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/hint_expiration_date"
-        android:inputType="textNoSuggestions"
+        android:inputType="textMultiLine|textNoSuggestions"
         app:met_mode="floatingLabel"
         app:met_leftIcon="@drawable/ic_calendar_black_24dp"
         app:met_showCancelButton="true" />
