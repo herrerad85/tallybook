@@ -29,6 +29,7 @@
 
         <ImageView
             android:id="@+id/avatar_image_view"
+            android:contentDescription="@string/description_change_icon"
             android:layout_width="@dimen/material_activity_header_icon_width"
             android:layout_height="@dimen/material_activity_header_icon_height"
             android:layout_marginLeft="@dimen/material_activity_header_icon_start_margin"

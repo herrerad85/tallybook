@@ -33,7 +33,7 @@
             android:layout_height="@dimen/material_activity_header_icon_height"
             android:layout_marginLeft="@dimen/material_activity_header_icon_start_margin"
             android:layout_marginStart="@dimen/material_activity_header_icon_start_margin"
-            android:contentDescription="@string/description_category_icon"
+            android:contentDescription="@string/description_change_icon"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"

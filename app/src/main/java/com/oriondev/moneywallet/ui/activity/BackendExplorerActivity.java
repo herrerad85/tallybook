@@ -112,6 +112,7 @@ public class BackendExplorerActivity extends SinglePanelActivity implements Swip
         super.onSetupFloatingActionButton(floatingActionButton);
         if (floatingActionButton != null) {
             floatingActionButton.setImageResource(R.drawable.ic_create_new_folder_black_24dp);
+            floatingActionButton.setContentDescription(getString(R.string.hint_new_folder));
         }
     }
 

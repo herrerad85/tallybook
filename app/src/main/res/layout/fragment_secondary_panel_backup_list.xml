@@ -62,6 +62,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|bottom"
                 android:layout_margin="@dimen/fragment_multi_panel_fab_margin"
+                android:contentDescription="@string/title_backup_create"
                 android:src="@drawable/ic_add_24dp" />
 
         </FrameLayout>

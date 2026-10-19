@@ -169,6 +169,7 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
         Fragment parent = getParentFragment();
         if (parent instanceof MultiPanelFragment && !((MultiPanelFragment) parent).isExtendedLayout()) {
             mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+            mToolbar.setNavigationContentDescription(R.string.hint_navigate_up);
             mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -184,6 +185,7 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
             mToolbar.setOnMenuItemClickListener(this);
             if (mCoverToolbar != null) {
                 mCoverToolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+                mCoverToolbar.setNavigationContentDescription(R.string.hint_navigate_up);
                 mCoverToolbar.setNavigationOnClickListener(new View.OnClickListener() {
 
                     @Override

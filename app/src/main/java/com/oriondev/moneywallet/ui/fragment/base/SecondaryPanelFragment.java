@@ -87,6 +87,7 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
         if (mToolbar != null) {
             if (getParentFragment() instanceof MultiPanelController && !((MultiPanelController) getParentFragment()).isExtendedLayout()) {
                 mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+                mToolbar.setNavigationContentDescription(R.string.hint_navigate_up);
                 mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
 
                     @Override

@@ -49,7 +49,7 @@
                 android:layout_marginLeft="@dimen/material_component_lists_card_avatar_start_margin"
                 android:layout_marginStart="@dimen/material_component_lists_card_avatar_start_margin"
                 android:layout_marginTop="@dimen/material_component_lists_card_avatar_top_margin"
-                android:contentDescription="@string/description_debt_icon"
+                android:contentDescription="@string/description_transaction_icon"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"

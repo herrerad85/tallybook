@@ -81,6 +81,7 @@ public class SettingMultiPanelFragment extends MultiPanelFragment implements Set
         mSecondaryToolbar = view.findViewById(R.id.secondary_toolbar);
         if (!isExtendedLayout()) {
             mSecondaryToolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+            mSecondaryToolbar.setNavigationContentDescription(R.string.hint_navigate_up);
             mSecondaryToolbar.setNavigationOnClickListener(new View.OnClickListener() {
 
                 @Override

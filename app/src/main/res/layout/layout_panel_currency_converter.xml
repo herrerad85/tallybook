@@ -141,6 +141,7 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             app:systemBarInsetBottom="false"
+            android:contentDescription="@string/description_swap_currencies"
             android:src="@drawable/ic_swap_vert_black_24dp" />
 
     </RelativeLayout>

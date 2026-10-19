@@ -74,6 +74,7 @@ public abstract class SinglePanelActivity extends BaseActivity implements Toolba
         int iconRes = getNavigationIcon();
         if (iconRes > 0) {
             mToolbar.setNavigationIcon(getNavigationIcon());
+            mToolbar.setNavigationContentDescription(R.string.hint_navigate_up);
             mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
 
                 @Override

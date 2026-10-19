@@ -13703,17 +13703,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.string.description_budget_type_icon` appears to be unused"
-        errorLine1="    &lt;string name=&quot;description_budget_type_icon&quot;>&quot;Budget type icon&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/descriptions.xml"
-            line="36"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.dimen.material_dialog_check_box_start_end_margin` appears to be unused"
         errorLine1="    &lt;dimen name=&quot;material_dialog_check_box_start_end_margin&quot;>8dp&lt;/dimen>"
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">

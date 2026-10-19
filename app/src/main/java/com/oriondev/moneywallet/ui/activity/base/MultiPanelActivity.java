@@ -66,6 +66,7 @@ public abstract class MultiPanelActivity extends BaseActivity implements Toolbar
     @Override
     public void setToolbar(Toolbar toolbar) {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+        toolbar.setNavigationContentDescription(R.string.hint_navigate_up);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
 
             @Override

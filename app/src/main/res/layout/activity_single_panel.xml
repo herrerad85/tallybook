@@ -58,6 +58,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fragment_multi_panel_fab_margin"
+        android:contentDescription="@string/action_add"
         android:src="@drawable/ic_add_24dp"
         app:borderWidth="0dp"
         app:layout_constraintEnd_toEndOf="parent"
