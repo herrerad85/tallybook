@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/material_activity_body_edit_text_margin_top"
             android:hint="@string/hint_date"
-            android:inputType="textNoSuggestions"
+            android:inputType="textMultiLine|textNoSuggestions"
             app:met_mode="floatingLabel"
             app:met_leftIcon="@drawable/ic_today_black_24dp"
             app:layout_constraintStart_toStartOf="parent"
