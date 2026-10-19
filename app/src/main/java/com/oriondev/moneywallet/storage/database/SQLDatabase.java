@@ -874,13 +874,14 @@ import java.util.function.Supplier;
      * @param walletId id of the wallet to update.
      * @param contentValues bundle that contains the data from the content provider.
      * @return the number of row updated inside the database.
-     * @throws SQLiteDataException if the currency changes and checkSplitDebtPaymentWallet refuses
-     *                             the wallet.
+     * @throws SQLiteDataException if the currency changes and checkSplitDebtPaymentWallet or
+     *                             checkSplitSavingWallet refuses the wallet.
      */
     /*package-local*/ int updateWallet(long walletId, ContentValues contentValues) {
         if (contentValues.containsKey(Contract.Wallet.CURRENCY) && !TextUtils.equals(
                 contentValues.getAsString(Contract.Wallet.CURRENCY), walletCurrency(walletId))) {
             checkSplitDebtPaymentWallet(walletId);
+            checkSplitSavingWallet(walletId);
         }
         ContentValues cv = new ContentValues();
         if (contentValues.containsKey(Contract.Wallet.NAME)) {
@@ -4472,25 +4473,49 @@ import java.util.function.Supplier;
      * count one currency at face value as the other. Pending and future payments are asked about
      * too, since they join the sum once they are confirmed.
      *
-     * A system category that cannot be found binds as the text null and matches no row.
-     *
      * @param walletId id of the wallet whose currency is changing.
      * @throws SQLiteDataException if the wallet holds a payment whose debt is in another wallet,
      *                             or a debt with a payment in another wallet.
      */
     private void checkSplitDebtPaymentWallet(long walletId) {
-        String query = "SELECT 1 FROM " + Schema.Transaction.TABLE + " AS t JOIN " +
-                Schema.Debt.TABLE + " AS d ON t." + Schema.Transaction.DEBT + " = d." +
-                Schema.Debt.ID + " JOIN " + Schema.Wallet.TABLE + " AS w ON d." +
-                Schema.Debt.WALLET + " = w." + Schema.Wallet.ID + " WHERE t." +
-                Schema.Transaction.DELETED + " = 0 AND d." + Schema.Debt.DELETED + " = 0 AND w." +
-                Schema.Wallet.DELETED + " = 0 AND t." + Schema.Transaction.CATEGORY +
-                " IN (?, ?) AND t." + Schema.Transaction.WALLET + " != d." + Schema.Debt.WALLET +
-                " AND (t." + Schema.Transaction.WALLET + " = ? OR d." + Schema.Debt.WALLET +
-                " = ?) LIMIT 1";
+        if (isSplitWallet(Schema.Debt.TABLE, Schema.Transaction.DEBT, Schema.Debt.ID,
+                Schema.Debt.WALLET, Schema.Debt.DELETED, Schema.CategoryTag.PAID_DEBT,
+                Schema.CategoryTag.PAID_CREDIT, walletId)) {
+            String message = String.format(Locale.ENGLISH,
+                    "Wallet (id: %d) holds a debt or a debt payment whose other half is in another wallet",
+                    walletId);
+            throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
+        }
+    }
+
+    private void checkSplitSavingWallet(long walletId) {
+        if (isSplitWallet(Schema.Saving.TABLE, Schema.Transaction.SAVING, Schema.Saving.ID,
+                Schema.Saving.WALLET, Schema.Saving.DELETED, Schema.CategoryTag.SAVING_DEPOSIT,
+                Schema.CategoryTag.SAVING_WITHDRAW, walletId)) {
+            String message = String.format(Locale.ENGLISH,
+                    "Wallet (id: %d) holds a saving or a saving transaction whose other half is in another wallet",
+                    walletId);
+            throw new SQLiteDataException(Contract.ErrorCode.SAVING_IN_OTHER_WALLET, message);
+        }
+    }
+
+    /**
+     * A system category that cannot be found binds as the text null and matches no row.
+     */
+    private boolean isSplitWallet(String table, String ownerColumn, String idColumn,
+                                  String walletColumn, String deletedColumn, String firstTag,
+                                  String secondTag, long walletId) {
+        String query = "SELECT 1 FROM " + Schema.Transaction.TABLE + " AS t JOIN " + table +
+                " AS o ON t." + ownerColumn + " = o." + idColumn + " JOIN " +
+                Schema.Wallet.TABLE + " AS w ON o." + walletColumn + " = w." + Schema.Wallet.ID +
+                " WHERE t." + Schema.Transaction.DELETED + " = 0 AND o." + deletedColumn +
+                " = 0 AND w." + Schema.Wallet.DELETED + " = 0 AND t." +
+                Schema.Transaction.CATEGORY + " IN (?, ?) AND t." + Schema.Transaction.WALLET +
+                " != o." + walletColumn + " AND (t." + Schema.Transaction.WALLET + " = ? OR o." +
+                walletColumn + " = ?) LIMIT 1";
         String[] args = new String[] {
-                String.valueOf(getSystemCategoryId(Schema.CategoryTag.PAID_DEBT)),
-                String.valueOf(getSystemCategoryId(Schema.CategoryTag.PAID_CREDIT)),
+                String.valueOf(getSystemCategoryId(firstTag)),
+                String.valueOf(getSystemCategoryId(secondTag)),
                 String.valueOf(walletId),
                 String.valueOf(walletId)
         };
@@ -4503,12 +4528,7 @@ import java.util.function.Supplier;
                 cursor.close();
             }
         }
-        if (split) {
-            String message = String.format(Locale.ENGLISH,
-                    "Wallet (id: %d) holds a debt or a debt payment whose other half is in another wallet",
-                    walletId);
-            throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
-        }
+        return split;
     }
 
     /**

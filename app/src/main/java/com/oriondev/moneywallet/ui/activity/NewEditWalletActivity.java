@@ -370,12 +370,15 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
                         break;
                 }
             } catch (SQLiteDataException e) {
-                if (e.getErrorCode() != Contract.ErrorCode.WALLETS_NOT_CONSISTENT) {
+                if (e.getErrorCode() != Contract.ErrorCode.WALLETS_NOT_CONSISTENT
+                        && e.getErrorCode() != Contract.ErrorCode.SAVING_IN_OTHER_WALLET) {
                     throw e;
                 }
                 ThemedDialog.buildMaterialDialog(this)
                         .setTitle(R.string.title_error)
-                        .setMessage(R.string.error_wallet_currency_has_split_repayment)
+                        .setMessage(e.getErrorCode() == Contract.ErrorCode.SAVING_IN_OTHER_WALLET
+                                ? R.string.error_wallet_currency_has_split_saving
+                                : R.string.error_wallet_currency_has_split_repayment)
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
                 return;

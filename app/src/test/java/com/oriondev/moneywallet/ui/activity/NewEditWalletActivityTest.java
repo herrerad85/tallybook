@@ -250,6 +250,35 @@ public class NewEditWalletActivityTest {
         }
     }
 
+    /** A deposit left behind when its savings goal moved to another wallet holds this one the same way. */
+    @Test
+    public void changingTheCurrencyOfAWalletHoldingASplitSavingShowsWhyAndStaysOpen() {
+        long wallet = insertWallet("Cash", null);
+        long savingWallet = insertWallet("Bank", null);
+        long saving = insertSaving(wallet);
+        insertDeposit(saving, wallet);
+        moveSaving(saving, savingWallet);
+        try (ActivityScenario<NewEditWalletActivity> scenario = ActivityScenario.launch(editIntent(wallet))) {
+            scenario.onActivity(activity -> {
+                activity.<MaterialEditText>findViewById(R.id.currency_edit_text).performClick();
+                idle();
+                Intent picker = shadowOf(activity).getNextStartedActivity();
+                assertEquals(CurrencyListActivity.class.getName(), picker.getComponent().getClassName());
+                CurrencyUnit dollar = CurrencyManager.getCurrency("USD");
+                assertNotNull(dollar);
+                shadowOf(activity).receiveResult(picker, Activity.RESULT_OK,
+                        new Intent().putExtra(CurrencyListActivity.RESULT_CURRENCY, dollar));
+                idle();
+                save(activity);
+                TextView message = latestPicker().findViewById(android.R.id.message);
+                assertEquals(activity.getString(R.string.error_wallet_currency_has_split_saving),
+                        String.valueOf(message.getText()));
+                assertFalse(activity.isFinishing());
+                assertEquals("EUR", storedCurrency(wallet));
+            });
+        }
+    }
+
     private static void pick(ListView list, int position) {
         list.performItemClick(list, position, list.getAdapter().getItemId(position));
         idle();
@@ -374,6 +403,39 @@ public class NewEditWalletActivityTest {
         values.put(Contract.Transaction.CONFIRMED, true);
         values.put(Contract.Transaction.COUNT_IN_TOTAL, true);
         assertTrue(ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values)) > 0);
+    }
+
+    private long insertSaving(long wallet) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Saving.DESCRIPTION, "Holiday");
+        values.put(Contract.Saving.ICON, ICON);
+        values.put(Contract.Saving.START_MONEY, 0L);
+        values.put(Contract.Saving.END_MONEY, 2000L);
+        values.put(Contract.Saving.WALLET_ID, wallet);
+        values.put(Contract.Saving.COMPLETE, false);
+        return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_SAVINGS, values));
+    }
+
+    private void insertDeposit(long saving, long wallet) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Transaction.MONEY, 500L);
+        values.put(Contract.Transaction.DATE, "2026-07-01 10:00:00");
+        values.put(Contract.Transaction.DESCRIPTION, "Holiday");
+        values.put(Contract.Transaction.CATEGORY_ID, systemCategory(Contract.CategoryTag.SAVING_DEPOSIT));
+        values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+        values.put(Contract.Transaction.TYPE, Contract.TransactionType.STANDARD);
+        values.put(Contract.Transaction.WALLET_ID, wallet);
+        values.put(Contract.Transaction.SAVING_ID, saving);
+        values.put(Contract.Transaction.CONFIRMED, true);
+        values.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        assertTrue(ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, values)) > 0);
+    }
+
+    private void moveSaving(long saving, long wallet) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Saving.WALLET_ID, wallet);
+        assertEquals(1, mResolver.update(ContentUris.withAppendedId(DataContentProvider.CONTENT_SAVINGS, saving),
+                values, null, null));
     }
 
     private long systemCategory(String tag) {
