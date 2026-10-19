@@ -488,6 +488,10 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
 
     private void setupCurrentExchangeRateUpdate() {
         long timestamp = PreferenceManager.getLastExchangeRateUpdateTimestamp();
+        if (timestamp == 0) {
+            mExchangeRateUpdatePreference.setSummary(R.string.setting_summary_exchange_rate_never_updated);
+            return;
+        }
         String summary = DateFormatter.getDateFromToday(new Date(timestamp));
         String fullSummary = getString(R.string.setting_summary_exchange_rate_update, summary);
         mExchangeRateUpdatePreference.setSummary(fullSummary);
