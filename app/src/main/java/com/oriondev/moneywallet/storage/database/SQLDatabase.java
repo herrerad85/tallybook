@@ -3669,6 +3669,7 @@ import java.util.function.Supplier;
                 " = 0 AND b." + Schema.Budget.TYPE + " = " + Schema.BudgetType.EXPENSES +
                 " ) AS b LEFT JOIN " + Schema.Transaction.TABLE + " AS t ON b._wallet_id = t." +
                 Schema.Transaction.WALLET + " AND t." + Schema.Transaction.DELETED + " = 0 AND t." +
+                Schema.Transaction.CONFIRMED + " = 1 AND t." +
                 Schema.Transaction.DIRECTION + " = 0 AND DATETIME(t." + Schema.Transaction.DATE +
                 ") <= DATETIME('now', 'localtime') AND DATE(t." + Schema.Transaction.DATE +
                 ") >= DATE(b." + Schema.Budget.START_DATE + ") AND DATE(t." + Schema.Transaction.DATE +
@@ -3700,6 +3701,7 @@ import java.util.function.Supplier;
                 " = 0 AND b." + Schema.Budget.TYPE + " = " + Schema.BudgetType.INCOMES +
                 " ) AS b LEFT JOIN " + Schema.Transaction.TABLE + " AS t ON b._wallet_id = t." +
                 Schema.Transaction.WALLET + " AND t." + Schema.Transaction.DELETED + " = 0 AND t." +
+                Schema.Transaction.CONFIRMED + " = 1 AND t." +
                 Schema.Transaction.DIRECTION + " = 1 AND DATETIME(t." + Schema.Transaction.DATE +
                 ") <= DATETIME('now', 'localtime') AND DATE(t." + Schema.Transaction.DATE +
                 ") >= DATE(b." + Schema.Budget.START_DATE + ") AND DATE(t." +
@@ -3735,6 +3737,7 @@ import java.util.function.Supplier;
                 CATEGORY_LINES + ") AS l JOIN " + Schema.Transaction.TABLE + " AS tr ON l._line_transaction = tr." +
                 Schema.Transaction.ID + " JOIN " + Schema.Category.TABLE + " AS tc ON l._line_category" +
                 " = tc." + Schema.Category.ID + " WHERE tr." + Schema.Transaction.DELETED + " = 0 " +
+                " AND tr." + Schema.Transaction.CONFIRMED + " = 1 " +
                 " AND tc." + Schema.Category.DELETED + " = 0) AS t ON (b._wallet_id = t." +
                 Schema.Transaction.WALLET + " AND DATETIME(t." + Schema.Transaction.DATE +
                 ") <= DATETIME('now', 'localtime') AND DATE(t." + Schema.Transaction.DATE +
