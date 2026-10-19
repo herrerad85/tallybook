@@ -302,12 +302,12 @@ public class NewEditSavingActivity extends NewEditItemActivity implements IconPi
             contentValues.put(Contract.Saving.END_MONEY, mMoneyPicker.getCurrentMoney());
             contentValues.put(Contract.Saving.WALLET_ID, mWalletPicker.getCurrentWallet().getId());
             contentValues.put(Contract.Saving.END_DATE, mExpDatePicker.isSelected() ? DateUtils.getSQLDateString(mExpDatePicker.getCurrentDateTime()) : null);
-            contentValues.put(Contract.Saving.COMPLETE, false);
             contentValues.put(Contract.Saving.NOTE, mNoteEditText.getTextAsString());
             ContentResolver contentResolver = getContentResolver();
             try {
                 switch (mode) {
                     case NEW_ITEM:
+                        contentValues.put(Contract.Saving.COMPLETE, false);
                         contentResolver.insert(DataContentProvider.CONTENT_SAVINGS, contentValues);
                         break;
                     case EDIT_ITEM:
