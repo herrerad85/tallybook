@@ -134,7 +134,7 @@ public class RecurrentTransactionItemFragment extends SecondaryPanelFragment imp
     private void showDeleteDialog(Context context) {
         ThemedDialog.buildMaterialDialog(context)
                 .setTitle(R.string.title_warning)
-                .setMessage(R.string.message_delete_transaction_model)
+                .setMessage(R.string.message_delete_recurrent_transaction)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     @Override

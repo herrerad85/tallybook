@@ -16591,17 +16591,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.string.message_delete_recurrent_transaction` appears to be unused"
-        errorLine1="    &lt;string name=&quot;message_delete_recurrent_transaction&quot;>&quot;Are you sure you want to delete this recurrent transaction? All the already generated transactions will not be removed.&quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="450"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.string.notification_content_downloading_data` appears to be unused"
         errorLine1="    &lt;string name=&quot;notification_content_downloading_data&quot;>&quot;Downloading updated data…&quot;&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
