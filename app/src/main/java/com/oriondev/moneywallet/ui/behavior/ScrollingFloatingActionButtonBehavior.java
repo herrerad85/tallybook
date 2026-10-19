@@ -28,13 +28,13 @@ import android.view.View;
 
 import com.oriondev.moneywallet.R;
 
-import java.util.List;
-
 /**
  * A custom behavior for the Floating Action Button when it is attached to a CoordinatorLayout. It
- * shrinks the button as a snackbar comes up under it, so the two do not overlap.
+ * hides the button while a snackbar covers it and shows it again once the snackbar is gone.
  */
 public class ScrollingFloatingActionButtonBehavior extends CoordinatorLayout.Behavior<FloatingActionButton> {
+
+    private boolean mHiddenForSnackbar;
 
     public ScrollingFloatingActionButtonBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -47,25 +47,18 @@ public class ScrollingFloatingActionButtonBehavior extends CoordinatorLayout.Beh
 
     @Override
     public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton fab, View dependency) {
-        if (dependency instanceof Snackbar.SnackbarLayout) {
-            float translationY = getFabTranslationYForSnackBar(parent, fab);
-            float percentComplete = -translationY / dependency.getHeight();
-            float scaleFactor = 1 - percentComplete;
-            fab.setScaleX(scaleFactor);
-            fab.setScaleY(scaleFactor);
+        if (fab.getVisibility() == View.VISIBLE && parent.doViewsOverlap(fab, dependency)) {
+            mHiddenForSnackbar = true;
+            fab.hide();
         }
-        return true;
+        return false;
     }
 
-    private float getFabTranslationYForSnackBar(CoordinatorLayout parent, FloatingActionButton fab) {
-        float minOffset = 0;
-        final List<View> dependencies = parent.getDependencies(fab);
-        for (int i = 0, z = dependencies.size(); i < z; i++) {
-            final View view = dependencies.get(i);
-            if (view instanceof Snackbar.SnackbarLayout && parent.doViewsOverlap(fab, view)) {
-                minOffset = Math.min(minOffset, view.getTranslationY() - view.getHeight());
-            }
+    @Override
+    public void onDependentViewRemoved(CoordinatorLayout parent, FloatingActionButton fab, View dependency) {
+        if (mHiddenForSnackbar) {
+            mHiddenForSnackbar = false;
+            fab.show();
         }
-        return minOffset;
     }
 }
