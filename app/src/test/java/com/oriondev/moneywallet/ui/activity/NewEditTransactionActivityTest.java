@@ -776,7 +776,7 @@ public class NewEditTransactionActivityTest {
                 addPart(activity, SplitLedger.HOUSEHOLD, 2000L);
                 addPart(activity, SplitLedger.FUEL, 1500L);
                 assertEquals(Arrays.asList("Household", "Fuel"), partLabels(activity));
-                assertEquals(remainingHint(activity, "Groceries"), remainingField(activity).getHint().toString());
+                assertEquals(remainingHint(activity, "Groceries"), remainingField(activity).getFloatingLabelText());
                 assertEquals(euro(9000L - 2000L - 1500L), remainingField(activity).getTextAsString());
                 save(activity);
                 assertTrue(activity.isFinishing());
@@ -1194,7 +1194,7 @@ public class NewEditTransactionActivityTest {
         ViewGroup parts = activity.findViewById(R.id.split_parts_layout);
         List<String> labels = new ArrayList<>();
         for (int i = 0; i < parts.getChildCount(); i++) {
-            labels.add(((MaterialEditText) parts.getChildAt(i)).getHint().toString());
+            labels.add(((MaterialEditText) parts.getChildAt(i)).getFloatingLabelText());
         }
         return labels;
     }

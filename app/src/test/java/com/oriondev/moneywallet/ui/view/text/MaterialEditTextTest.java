@@ -21,10 +21,14 @@ package com.oriondev.moneywallet.ui.view.text;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.os.Build;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.oriondev.moneywallet.R;
@@ -44,6 +48,8 @@ import org.robolectric.shadows.ShadowLegacyCanvas;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -195,5 +201,130 @@ public class MaterialEditTextTest {
         ShadowLegacyCanvas shadow = (ShadowLegacyCanvas) Shadows.shadowOf(canvas);
         assertEquals("the label was not drawn", 1, shadow.getTextHistoryCount());
         assertEquals("Food", shadow.getDrawnTextEvent(0).text);
+    }
+
+    private MaterialEditText labeledField(String label) {
+        MaterialEditText view = floatingLabelField(null);
+        view.setFloatingLabelText(label);
+        return view;
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void theRoomForALabelDoesNotDependOnItsLetters() {
+        int rent = labeledField("Rent").getPaddingTop();
+        assertEquals("a label with descenders gets more room", rent,
+                labeledField("Electricity").getPaddingTop());
+        assertEquals("a label in lower case gets less room", rent,
+                labeledField("rent").getPaddingTop());
+    }
+
+    private static class LabelCanvas extends Canvas {
+
+        private String mText;
+        private Paint mPaint;
+
+        @Override
+        public void drawText(@NonNull String text, float x, float y, @NonNull Paint paint) {
+            mText = text;
+            mPaint = paint;
+        }
+    }
+
+    // under the legacy graphics mode measureText counts characters, so the fit would mean nothing
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void aLabelWiderThanTheFieldIsDrawnEllipsized() {
+        String label = "Remaining under Home supplies, Garden tools, Kitchen appliances and Bathroom fittings";
+        MaterialEditText view = labeledField(label);
+        view.setText("12.00");
+        view.measure(View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
+        view.layout(0, 0, WIDTH, HEIGHT);
+        ShadowLooper.idleMainLooper(1, TimeUnit.SECONDS);
+        LabelCanvas canvas = new LabelCanvas();
+        view.onDrawFloatingLabel(canvas);
+        assertNotNull("the label was not drawn", canvas.mText);
+        float textWidth = WIDTH - view.getPaddingLeft() - view.getPaddingRight();
+        assertTrue("the label fits the field, so this cannot tell",
+                canvas.mPaint.measureText(label) > textWidth);
+        assertTrue("the label was not ellipsized: " + canvas.mText, canvas.mText.endsWith("\u2026"));
+        assertTrue("the drawn label is wider than the field",
+                canvas.mPaint.measureText(canvas.mText) <= textWidth);
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void aLabelThatFitsOnlyOverTheButtonSlotIsDrawnInFull() {
+        Context context = new ContextThemeWrapper(ApplicationProvider.getApplicationContext(),
+                R.style.MoneyWalletAppTheme);
+        MaterialEditText view = new MaterialEditText(context, Robolectric.buildAttributeSet()
+                .addAttribute(R.attr.met_mode, "floatingLabel")
+                .addAttribute(R.attr.met_showCancelButton, "true").build());
+        view.setFloatingLabelText("Food");
+        view.setText("12.00");
+        view.measure(View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
+        view.layout(0, 0, WIDTH, HEIGHT);
+        ShadowLooper.idleMainLooper(1, TimeUnit.SECONDS);
+        assertEquals("the button slot is not held on the right", SIDE_PADDING + CANCEL_SLOT,
+                view.getPaddingRight());
+        // the label paint only comes out of a draw, so a short label is drawn first
+        LabelCanvas canvas = new LabelCanvas();
+        view.onDrawFloatingLabel(canvas);
+        assertNotNull("the label was not drawn", canvas.mText);
+        float textWidth = WIDTH - view.getPaddingLeft() - view.getPaddingRight();
+        String words = "Remaining under Home supplies, Garden tools, Kitchen appliances and Bathroom fittings";
+        int end = 1;
+        while (canvas.mPaint.measureText(words, 0, end) <= textWidth) {
+            end++;
+        }
+        String label = words.substring(0, end);
+        assertTrue("the label fits beside the button slot, so this cannot tell",
+                canvas.mPaint.measureText(label) > textWidth);
+        assertTrue("the label does not fit over the button slot either, so this cannot tell",
+                canvas.mPaint.measureText(label) < textWidth + CANCEL_SLOT);
+        view.setFloatingLabelText(label);
+        canvas = new LabelCanvas();
+        view.onDrawFloatingLabel(canvas);
+        assertEquals(label, canvas.mText);
+        assertTrue("the label fits over the button slot, so this cannot tell",
+                canvas.mPaint.measureText(words) > textWidth + CANCEL_SLOT);
+        view.setFloatingLabelText(words);
+        canvas = new LabelCanvas();
+        view.onDrawFloatingLabel(canvas);
+        assertTrue("the label was not ellipsized: " + canvas.mText, canvas.mText.endsWith("\u2026"));
+        assertTrue("the drawn label is wider than the field and the button slot",
+                canvas.mPaint.measureText(canvas.mText) <= textWidth + CANCEL_SLOT);
+    }
+
+    @Test
+    public void aLabelReachesAccessibilityAsTheHintWithoutBeingTheHint() {
+        assertTrue("the node has no hint text below API 26",
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
+        MaterialEditText labeled = labeledField("Food");
+        assertNull("the label was set as the hint", labeled.getHint());
+        assertEquals("Food", String.valueOf(labeled.createAccessibilityNodeInfo().getHintText()));
+        MaterialEditText withXmlHint = floatingLabelField("Rent");
+        assertEquals("Rent", String.valueOf(withXmlHint.createAccessibilityNodeInfo().getHintText()));
+    }
+
+    private static int wrappedHeight(MaterialEditText view) {
+        view.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        view.setText("12.00");
+        view.measure(View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        return view.getMeasuredHeight();
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void aLongLabelDoesNotMakeTheFieldTaller() {
+        String label = "Remaining under Home supplies, Garden tools, Kitchen appliances and Bathroom fittings";
+        int withShortLabel = wrappedHeight(labeledField("Rent"));
+        MaterialEditText view = labeledField(label);
+        assertTrue("the label fits one line of the text, so this cannot tell",
+                view.getPaint().measureText(label) > WIDTH);
+        assertEquals("the long label makes the field taller", withShortLabel, wrappedHeight(view));
     }
 }
