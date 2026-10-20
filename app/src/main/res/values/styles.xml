@@ -79,6 +79,7 @@
         <!-- Material3 turns the overlay on, and it would tint the drawer and app bar colors
              ThemeEngine paints. -->
         <item name="elevationOverlayEnabled">false</item>
+        <item name="appBarLayoutStyle">@style/MoneyWalletAppBarLayout</item>
     </style>
 
     <style name="MoneyWalletAppThemeDark" parent="Theme.Material3.Dark.NoActionBar">
@@ -133,6 +134,14 @@
         <item name="drawerArrowStyle">@style/MoneyWalletDrawerArrowStyle</item>
         <item name="switchStyle">@style/Widget.AppCompat.CompoundButton.Switch</item>
         <item name="elevationOverlayEnabled">false</item>
+        <item name="appBarLayoutStyle">@style/MoneyWalletAppBarLayout</item>
+    </style>
+
+    <!-- ThemeEngine paints the app bar. Material3 fades that paint to its own surface color once a
+         list scrolls under the bar, and the toolbar and tabs keep their own paint, so only the
+         strip behind the status bar and the side insets changed color. -->
+    <style name="MoneyWalletAppBarLayout" parent="Widget.Material3.AppBarLayout">
+        <item name="liftOnScrollColor">@null</item>
     </style>
 
     <!-- The deep dark mode paints the list content black, so only the background and surface
