@@ -20,6 +20,29 @@
 
 <changelog>
 
+    <version versionName="1.14.0" versionDate="Oct 21, 2026">
+        <change>[b]New![/b] Split one transaction across several categories. Split into categories in the transaction editor gives each part its own category, amount and note.</change>
+        <change>[b]New![/b] The app moves to Material 3. Under Settings, User interface, Appearance, Use system colors takes the colors from the wallpaper on phones that offer it.</change>
+        <change>[b]New![/b] Deep dark is true black, the header and keypads included, and its dialogs and menus get an outline.</change>
+        <change>[b]New![/b] Unconfirmed transactions show a clock mark in the list.</change>
+        <change>[b]New![/b] Russian and Spanish translations, taken from contributions to the original MoneyWallet.</change>
+        <change>The wallet, category and automatic category sort screens can be reordered with a screen reader or Switch Access, through Move up, Move down, Move to top and Move to bottom.</change>
+        <change>A phone held sideways uses the full width of the screen instead of a card in the middle.</change>
+        <change>With a screen reader or Switch Access on, opening People crashed the app.</change>
+        <change>A budget's transaction list now shows the transactions of every wallet the budget covers.</change>
+        <change>A budget's Used amount no longer counts unconfirmed transactions.</change>
+        <change>A transaction saved from a model's edit screen offered neither Duplicate nor Split. Ones saved before this release are fixed by the upgrade.</change>
+        <change>Saving any edit to an archived savings goal moved it out of the archive.</change>
+        <change>Changing a wallet's currency is refused while a savings goal and some of its deposits sit in two different wallets and it is one of them.</change>
+        <change>Deleting a recurring transaction asked about deleting a model. It now says the transactions it already added stay.</change>
+        <change>Some error messages could not be shown in Turkish.</change>
+        <change>About could come back blank after a split screen resize or a fold.</change>
+        <change>Before the first exchange rate download, the last update read 1 January 1970. It now reads Not updated yet.</change>
+        <change>Several screen reader labels named the wrong thing, such as Debt icon on a budget card.</change>
+        <change>At large font sizes, dates in the editors were cut short. They now wrap.</change>
+        <change>On a sort screen, leaving the app after dragging a row and then tapping Save kept the old order.</change>
+    </version>
+
     <version versionName="1.13.0" versionDate="Oct 7, 2026">
         <change>[b]New![/b] Search has a row of filter chips for text, category, people, status, wallet, amount and date, and the results can be sorted. Category, date and amount are no longer matched as typed text, use their chips.</change>
         <change>[b]New![/b] Choose a default wallet for new items, under Settings, User interface, Default wallet.</change>

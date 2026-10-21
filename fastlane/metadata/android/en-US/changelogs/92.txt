@@ -1,0 +1,3 @@
+New: split a transaction across several categories. Material 3, with a switch to take the colors from the wallpaper. Deep dark is true black. Unconfirmed transactions are marked in the list. Russian and Spanish translations.
+
+Fixes: People crashed with a screen reader on. A budget lists every wallet it covers and leaves unconfirmed transactions out of Used. Editing an archived savings goal no longer unarchives it. Long dates wrap at large font sizes.

@@ -8,6 +8,7 @@ Features:
 
 * Multiple wallets, each with its own balance, which you can put in named groups
 * Income and expense transactions with categories and notes
+* Split one transaction across several categories
 * Select several transactions and delete them together or move them to another wallet or category
 * Automatic categories, so a rule fills the category in from what you type
 * Budgets to keep categories on track
@@ -18,6 +19,7 @@ Features:
 * Overview charts and reports
 * Calendar view of your activity
 * A home screen widget showing one wallet's balance
+* Light, dark and true black themes, with the colors taken from your wallpaper if you like
 * Transaction templates and scheduled events
 * Local backup and restore, with a local-folder option you can sync using your own tools
 * Backup to your own WebDAV server, such as Nextcloud, ownCloud or a NAS, with no third party account
