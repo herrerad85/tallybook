@@ -11,9 +11,9 @@ Tallybook is a **separate app** from the original MoneyWallet. It uses a differe
 This path is verified. A backup made by the original MoneyWallet restores into Tallybook with full data fidelity, because Tallybook preserves the legacy backup format. The flow brings across your wallets, transactions, categories, budgets, and the rest:
 
 1. In the original **MoneyWallet**: open Settings and create a local **Backup**. If you set a backup password, remember it, you will need it to restore.
-2. Find the backup file in the backup folder the app used, and keep it somewhere safe (for example copy it to your computer, or to another folder on the device).
+2. Find the backup file in the folder you saved it to. Its name starts with `backup_` and the date, and it ends in `.mwbx`, or `.mwbs` if it has a password. Copy it to your computer to keep it safe, then use your phone's file manager to move it into a folder of its own, such as `Download/mwbackup/`. Recent Android versions won't let Tallybook open the `Download` folder itself, only a folder inside it.
 3. Install **Tallybook** (it installs alongside MoneyWallet, it does not overwrite it).
-4. In **Tallybook**: open Settings and **Restore** from that backup file, entering the password if one was set.
+4. In **Tallybook**, tap **Restore backup** on the first screen. If you already set Tallybook up, go to **Settings**, **Database**, **Backup services** instead. Pick **Local folder**, choose the folder that holds your backup, then tap the backup file and enter the password if one was set.
 5. Check that your wallets and recent transactions appear, then carry on in Tallybook.
 
 Keep MoneyWallet installed and your backup file safe until you are confident everything came across. This process does not delete anything from MoneyWallet.
