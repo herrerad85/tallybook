@@ -304,6 +304,18 @@ public class Contract {
         public static final String WALLET_IDS = "budget_wallet_ids";
         public static final String HAS_WALLET_IN_TOTAL = "budget_has_wallet_in_total";
         public static final String TAG = Schema.Budget.TAG;
+        /**
+         * The limits of the category budgets an Expenses budget holds, added up, read only, and
+         * null on a budget of any other type and on an Expenses budget that holds none. Only the
+         * query for one budget works it out; the list of budgets leaves it null. A category
+         * budget is held when it is not deleted, runs from the same start date to the same end
+         * date, covers at least one wallet and no wallet outside the Expenses budget, and covers
+         * at least one category, every one of them an expense category. A held budget is left out
+         * when another held budget covers each of its categories, directly or as their parent,
+         * and each of its wallets, and it does not cover that one in turn. Of two that cover each other, the larger limit
+         * is counted, and the lower id when the limits are equal.
+         */
+        public static final String CATEGORY_SUM = "budget_category_sum";
     }
 
     /**

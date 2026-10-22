@@ -3600,7 +3600,7 @@ import java.util.function.Supplier;
     /*package-local*/ Cursor getBudget(long id, String[] projection) {
         String selection = Schema.Budget.ID + " = ?";
         String[] selectionArgs = new String[]{String.valueOf(id)};
-        return getBudgets(projection, selection, selectionArgs, null);
+        return getBudgets(projection, selection, selectionArgs, null, true);
     }
 
     /**
@@ -3613,6 +3613,11 @@ import java.util.function.Supplier;
      * @return a cursor with zero or more rows.
      */
     /*package-local*/ Cursor getBudgets(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return getBudgets(projection, selection, selectionArgs, sortOrder, false);
+    }
+
+    private Cursor getBudgets(String[] projection, String selection, String[] selectionArgs, String sortOrder,
+                              boolean withCategorySum) {
         // The query can be modified to return the 'progress' column as a concatenation of currency
         // and sum of money for that currency that is useful if we decide to let the user set wallets
         // with different currencies inside the same budget.
@@ -3624,6 +3629,8 @@ import java.util.function.Supplier;
         // inside the same budget. If we found a simple solution for this in future we only need to
         // modify the part of the query where we sum the transaction amounts using the already provided
         // '_wallet_currency' column internal to the query (at the moment unused).
+        String categorySum = categoryBudgetSum("b." + Schema.Budget.START_DATE,
+                "b." + Schema.Budget.END_DATE, liveWalletsOf("b"));
         String subQuery = "SELECT " +
                 "b." + Schema.Budget.ID + " AS " + Contract.Budget.ID + ", " +
                 "b." + Schema.Budget.TYPE + " AS " + Contract.Budget.TYPE + ", " +
@@ -3653,6 +3660,8 @@ import java.util.function.Supplier;
                 "b." + Schema.Budget.RULE + " AS " + Contract.Budget.RULE + ", " +
                 "b." + Schema.Budget.RULE_START + " AS " + Contract.Budget.RULE_START + ", " +
                 "b." + Schema.Budget.TAG + " AS " + Contract.Budget.TAG + ", " +
+                "CASE WHEN b." + Schema.Budget.TYPE + " = " + Schema.BudgetType.EXPENSES + " THEN " +
+                (withCategorySum ? categorySum : "NULL") + " END AS " + Contract.Budget.CATEGORY_SUM + ", " +
                 "SUM(_progress) AS " + Contract.Budget.PROGRESS + "," +
                 "GROUP_CONCAT('<' || _wallet_id || '>') AS " + Contract.Budget.WALLET_IDS + "," +
                 "MAX(_wallet_total) AS " + Contract.Budget.HAS_WALLET_IN_TOTAL + " FROM(" +
@@ -6238,6 +6247,76 @@ import java.util.function.Supplier;
                 Schema.BudgetCategory.TABLE + " AS bc WHERE bc." + Schema.BudgetCategory.BUDGET +
                 " = " + budgetAlias + "." + Schema.Budget.ID + " AND bc." +
                 Schema.BudgetCategory.DELETED + " = 0)";
+    }
+
+    private static final String CATEGORY_BUDGET_DAYS = "(SELECT " + Schema.Budget.ID + ", " +
+            Schema.Budget.MONEY + ", DATE(" + Schema.Budget.START_DATE + ") AS _start_day, DATE(" +
+            Schema.Budget.END_DATE + ") AS _end_day FROM " + Schema.Budget.TABLE + " WHERE " +
+            Schema.Budget.TYPE + " = " + Schema.BudgetType.CATEGORY + " AND " + Schema.Budget.DELETED +
+            " = 0 LIMIT -1 OFFSET 0)";
+
+    private static String categoryBudgetSum(String startDate, String endDate, String wallets) {
+        return "(SELECT SUM(k." + Schema.Budget.MONEY + ") FROM " + CATEGORY_BUDGET_DAYS + " AS k WHERE " +
+                isCategoryBudgetInside("k", startDate, endDate, wallets) + " AND NOT EXISTS (SELECT 1 FROM " +
+                CATEGORY_BUDGET_DAYS + " AS a WHERE a." + Schema.Budget.ID + " != k." + Schema.Budget.ID +
+                " AND " + isCategoryBudgetInside("a", startDate, endDate, wallets) + " AND " +
+                coversCategoriesOf("a", "k") + " AND " + coversWalletsOf("a", "k") + " AND (NOT (" +
+                coversCategoriesOf("k", "a") + " AND " + coversWalletsOf("k", "a") + ") OR a." + Schema.Budget.MONEY + " > k." + Schema.Budget.MONEY + " OR (a." +
+                Schema.Budget.MONEY + " = k." + Schema.Budget.MONEY + " AND a." + Schema.Budget.ID +
+                " < k." + Schema.Budget.ID + "))))";
+    }
+
+    private static String isCategoryBudgetInside(String categoryAlias, String startDate, String endDate,
+                                                 String wallets) {
+        String k = categoryAlias + ".";
+        return k + "_start_day = DATE(" + startDate + ") AND " + k + "_end_day = DATE(" + endDate +
+                ") AND EXISTS " + liveWalletsOf(categoryAlias) +
+                " AND NOT EXISTS (SELECT 1 FROM " + Schema.Wallet.TABLE + " AS " + categoryAlias +
+                "_o WHERE " + categoryAlias + "_o." + Schema.Wallet.ID + " IN " +
+                liveWalletsOf(categoryAlias) + " AND " + categoryAlias + "_o." + Schema.Wallet.ID +
+                " NOT IN " + wallets + ") AND EXISTS " +
+                liveCategoriesOf(categoryAlias) + " AND NOT EXISTS (SELECT 1 FROM " +
+                Schema.Category.TABLE + " AS " + categoryAlias + "_t WHERE " + categoryAlias + "_t." +
+                Schema.Category.ID + " IN " + liveCategoriesOf(categoryAlias) + " AND " +
+                categoryAlias + "_t." + Schema.Category.TYPE + " != " + Schema.CategoryType.EXPENSE + ")";
+    }
+
+    private static String coversCategoriesOf(String coveringAlias, String coveredAlias) {
+        String u = coveredAlias + "_u.";
+        return "NOT EXISTS (SELECT 1 FROM " + Schema.Category.TABLE + " AS " + coveredAlias +
+                "_u WHERE " + u + Schema.Category.ID + " IN " + liveCategoriesOf(coveredAlias) +
+                " AND " + u + Schema.Category.ID + " NOT IN " + liveCategoriesOf(coveringAlias) +
+                " AND (" + u + Schema.Category.PARENT + " IS NULL OR " + u + Schema.Category.PARENT +
+                " NOT IN " + liveCategoriesOf(coveringAlias) + "))";
+    }
+
+    private static String coversWalletsOf(String coveringAlias, String coveredAlias) {
+        String v = coveredAlias + "_v.";
+        return "NOT EXISTS (SELECT 1 FROM " + Schema.Wallet.TABLE + " AS " + coveredAlias + "_v WHERE " +
+                v + Schema.Wallet.ID + " IN " + liveWalletsOf(coveredAlias) + " AND " + v +
+                Schema.Wallet.ID + " NOT IN " + liveWalletsOf(coveringAlias) + ")";
+    }
+
+    private static String liveWalletsOf(String budgetAlias) {
+        String bw = budgetAlias + "_bw";
+        String w = budgetAlias + "_w";
+        return "(SELECT " + bw + "." + Schema.BudgetWallet.WALLET + " FROM " +
+                Schema.BudgetWallet.TABLE + " AS " + bw + " JOIN " + Schema.Wallet.TABLE + " AS " + w +
+                " ON " + bw + "." + Schema.BudgetWallet.WALLET + " = " + w + "." + Schema.Wallet.ID +
+                " AND " + w + "." + Schema.Wallet.DELETED + " = 0 WHERE " + bw + "." +
+                Schema.BudgetWallet.BUDGET + " = " + budgetAlias + "." + Schema.Budget.ID + " AND " +
+                bw + "." + Schema.BudgetWallet.DELETED + " = 0)";
+    }
+
+    private static String liveCategoriesOf(String budgetAlias) {
+        String bc = budgetAlias + "_bc";
+        String c = budgetAlias + "_c";
+        return "(SELECT " + bc + "." + Schema.BudgetCategory.CATEGORY + " FROM " +
+                Schema.BudgetCategory.TABLE + " AS " + bc + " JOIN " + Schema.Category.TABLE + " AS " +
+                c + " ON " + bc + "." + Schema.BudgetCategory.CATEGORY + " = " + c + "." +
+                Schema.Category.ID + " AND " + c + "." + Schema.Category.DELETED + " = 0 WHERE " + bc +
+                "." + Schema.BudgetCategory.BUDGET + " = " + budgetAlias + "." + Schema.Budget.ID +
+                " AND " + bc + "." + Schema.BudgetCategory.DELETED + " = 0)";
     }
 
     /**
