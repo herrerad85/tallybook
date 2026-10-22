@@ -1285,15 +1285,297 @@ public class NewEditTransactionActivityTest {
         return list;
     }
 
+    @Test
+    public void anAddTransactionRequestFillsTheEditorAndOnlyTheSaveTapWritesIt() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        long work = insertCategory("Work", Contract.CategoryType.INCOME, null);
+        long salary = insertCategory("Salary", Contract.CategoryType.INCOME, work);
+        int before = countTransactions();
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "cASH");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "-1,234.56");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_CATEGORY, "salary");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_DESCRIPTION, "June pay");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_NOTE, "Paid early");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Cash", walletField(activity));
+                assertEquals(123456L, moneyPicker(activity).getCurrentMoney());
+                assertEquals(salary, categoryPicker(activity).getCurrentCategory().getId());
+                assertEquals("Salary", categoryField(activity));
+                assertEquals("June pay", descriptionField(activity));
+                assertEquals("Paid early", noteField(activity));
+                assertEquals(before, countTransactions());
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before + 1, countTransactions());
+        Cursor row = newestTransaction();
+        assertEquals(123456L, row.getLong(row.getColumnIndex(Contract.Transaction.MONEY)));
+        assertEquals(mEuroWallet, row.getLong(row.getColumnIndex(Contract.Transaction.WALLET_ID)));
+        assertEquals(salary, row.getLong(row.getColumnIndex(Contract.Transaction.CATEGORY_ID)));
+        assertEquals(Contract.Direction.INCOME, row.getInt(row.getColumnIndex(Contract.Transaction.DIRECTION)));
+        row.close();
+    }
+
+    @Test
+    public void aFloatAmountLandsTheSameAsAStringAmount() {
+        Intent asFloat = addTransactionIntent();
+        asFloat.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Cash");
+        asFloat.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, 12.5f);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(asFloat)) {
+            scenario.onActivity(activity -> assertEquals(1250L, moneyPicker(activity).getCurrentMoney()));
+        }
+        Intent asString = addTransactionIntent();
+        asString.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Cash");
+        asString.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "12.50");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(asString)) {
+            scenario.onActivity(activity -> assertEquals(1250L, moneyPicker(activity).getCurrentMoney()));
+        }
+    }
+
+    @Test
+    public void aRequestAmountIsRoundedToTheDecimalsOfTheWalletItNames() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        insertWallet("Yen", "JPY");
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Yen");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "1234.6");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Yen", walletField(activity));
+                assertEquals(1235L, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void aNameSeveralRowsCarryLeavesTheDefaultWalletAndNoCategory() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        insertWallet("CASH", "EUR");
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Cash");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_CATEGORY, "Groceries");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Bank", walletField(activity));
+                assertNull(categoryPicker(activity).getCurrentCategory());
+            });
+        }
+    }
+
+    @Test
+    public void aNameNoRowCarriesLeavesTheDefaultWalletAndNoCategory() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Purse");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_CATEGORY, "Travel");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Bank", walletField(activity));
+                assertNull(categoryPicker(activity).getCurrentCategory());
+            });
+        }
+    }
+
+    @Test
+    public void aSystemCategoryNameIsIgnored() {
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_CATEGORY,
+                categoryName(systemCategory(Contract.CategoryTag.SAVING_DEPOSIT)));
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertNull(categoryPicker(activity).getCurrentCategory()));
+        }
+    }
+
+    @Test
+    public void anAmountThatDoesNotReadLeavesZeroAndTheKeypadOpens() {
+        PreferenceManager.setAutoOpenCalculatorEnabled(true);
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Cash");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "twelve");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Cash", walletField(activity));
+                assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+                assertStartedCalculator(activity);
+            });
+        }
+    }
+
+    @Test
+    public void anArchivedWalletNameIsIgnored() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        insertArchivedWallet("Old", "EUR");
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Old");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals("Bank", walletField(activity)));
+        }
+    }
+
+    @Test
+    public void aDeletedRowThatSharesItsNameWithALiveOneIsIgnored() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        long salary = insertCategory("Salary", Contract.CategoryType.INCOME, null);
+        SQLiteDatabase db = SplitLedger.database(ApplicationProvider.getApplicationContext());
+        db.execSQL("UPDATE wallets SET deleted = 1 WHERE wallet_id = " + insertWallet("Cash", "EUR"));
+        db.execSQL("UPDATE categories SET deleted = 1 WHERE category_id = " +
+                insertCategory("Salary", Contract.CategoryType.INCOME, null));
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Cash");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_CATEGORY, "Salary");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Cash", walletField(activity));
+                assertEquals(salary, categoryPicker(activity).getCurrentCategory().getId());
+            });
+        }
+    }
+
+    @Test
+    public void theExtrasAreIgnoredWithoutTheAction() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        insertCategory("Salary", Contract.CategoryType.INCOME, null);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Cash");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "12.50");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_CATEGORY, "Salary");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_DESCRIPTION, "June pay");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_NOTE, "Paid early");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Bank", walletField(activity));
+                assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+                assertNull(categoryPicker(activity).getCurrentCategory());
+                assertEquals("", descriptionField(activity));
+                assertEquals("", noteField(activity));
+            });
+        }
+    }
+
+    @Test
+    public void anAddTransactionRequestWithNoExtrasOpensLikeANewTransaction() {
+        PreferenceManager.setDefaultWallet(mDollarWallet);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(addTransactionIntent())) {
+            scenario.onActivity(activity -> {
+                assertEquals("Bank", walletField(activity));
+                assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+                assertNull(categoryPicker(activity).getCurrentCategory());
+            });
+        }
+    }
+
+    @Test
+    public void aRequestAmountIsLeftAtZeroWhenNoWalletLoads() {
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.WALLET_ID, 999L);
+        intent.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "12.50");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("", walletField(activity));
+                assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void aRequestAmountIsLeftAtZeroOnAWalletWhoseCurrencyIsUnknown() {
+        insertWallet("Odd", "ZZZ");
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_WALLET, "Odd");
+        intent.putExtra(NewEditTransactionActivity.EXTRA_AMOUNT, "12.50");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals("Odd", walletField(activity));
+                assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void aRequestDescriptionARuleMatchesOpensOnTheRulesCategory() {
+        long cafe = insertCategory("Cafe", Contract.CategoryType.EXPENSE, null);
+        insertRule("coffee", cafe);
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_DESCRIPTION, "Morning coffee");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals(cafe, categoryPicker(activity).getCurrentCategory().getId());
+                assertEquals("Cafe", categoryField(activity));
+            });
+        }
+    }
+
+    @Test
+    public void theRuleFillAtOpenDoesNotRunAgainAfterARecreate() {
+        long cafe = insertCategory("Cafe", Contract.CategoryType.EXPENSE, null);
+        insertRule("coffee", cafe);
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_DESCRIPTION, "Lunch");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertNull(categoryPicker(activity).getCurrentCategory());
+                ((EditText) activity.findViewById(R.id.description_edit_text)).setText("Morning coffee");
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertEquals("Morning coffee", descriptionField(activity));
+                assertNull(categoryPicker(activity).getCurrentCategory());
+            });
+        }
+    }
+
+    @Test
+    public void aRuleFilledCategoryStillFollowsTheDescriptionAfterARecreate() {
+        long cafe = insertCategory("Cafe", Contract.CategoryType.EXPENSE, null);
+        insertRule("coffee", cafe);
+        Intent intent = addTransactionIntent();
+        intent.putExtra(NewEditTransactionActivity.EXTRA_DESCRIPTION, "Morning coffee");
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals(cafe, categoryPicker(activity).getCurrentCategory().getId()));
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                EditText description = activity.findViewById(R.id.description_edit_text);
+                description.setText("Lunch");
+                description.getOnFocusChangeListener().onFocusChange(description, false);
+                assertNull(categoryPicker(activity).getCurrentCategory());
+            });
+        }
+    }
+
     // fixtures
 
     private long insertCategory() {
+        return insertCategory("Groceries", Contract.CategoryType.EXPENSE, null);
+    }
+
+    private long insertCategory(String name, Contract.CategoryType type, Long parent) {
         ContentValues category = new ContentValues();
-        category.put(Contract.Category.NAME, "Groceries");
+        category.put(Contract.Category.NAME, name);
         category.put(Contract.Category.ICON, ICON);
-        category.put(Contract.Category.TYPE, Contract.CategoryType.EXPENSE.getValue());
+        category.put(Contract.Category.TYPE, type.getValue());
+        category.put(Contract.Category.PARENT, parent);
         category.put(Contract.Category.SHOW_REPORT, true);
         return ContentUris.parseId(mResolver.insert(DataContentProvider.CONTENT_CATEGORIES, category));
+    }
+
+    private void insertRule(String pattern, long category) {
+        ContentValues rule = new ContentValues();
+        rule.put(Contract.CategoryRule.PATTERN, pattern);
+        rule.put(Contract.CategoryRule.CATEGORY_ID, category);
+        mResolver.insert(DataContentProvider.CONTENT_CATEGORY_RULES, rule);
+    }
+
+    private String categoryName(long category) {
+        Cursor cursor = mResolver.query(ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, category),
+                new String[] {Contract.Category.NAME}, null, null, null);
+        assertTrue(cursor.moveToFirst());
+        String name = cursor.getString(0);
+        cursor.close();
+        return name;
     }
 
     private long insertPerson(String name) {
@@ -1578,6 +1860,12 @@ public class NewEditTransactionActivityTest {
         return intent;
     }
 
+    private static Intent addTransactionIntent() {
+        Intent intent = new Intent(NewEditTransactionActivity.ACTION_ADD_TRANSACTION);
+        intent.setClass(ApplicationProvider.getApplicationContext(), NewEditTransactionActivity.class);
+        return intent;
+    }
+
     private Intent savingIntent(int action) {
         Intent intent = newItemIntent();
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_SAVING);
@@ -1684,6 +1972,14 @@ public class NewEditTransactionActivityTest {
 
     private static String descriptionField(NewEditTransactionActivity activity) {
         return ((MaterialEditText) activity.findViewById(R.id.description_edit_text)).getTextAsString();
+    }
+
+    private static String categoryField(NewEditTransactionActivity activity) {
+        return ((MaterialEditText) activity.findViewById(R.id.category_edit_text)).getTextAsString();
+    }
+
+    private static String noteField(NewEditTransactionActivity activity) {
+        return ((MaterialEditText) activity.findViewById(R.id.note_edit_text)).getTextAsString();
     }
 
     private static void save(NewEditTransactionActivity activity) {

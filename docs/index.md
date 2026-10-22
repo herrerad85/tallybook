@@ -5,7 +5,7 @@ nav_order: 1
 
 # Tallybook usage guide
 
-Tallybook tracks what you spend and earn, wallet by wallet, on your own phone. This page takes each part of the app in the order you are likely to meet it. Quick answers are in the [FAQ](FAQ.md), and the import file layout is in [CSV import format](CSV.md).
+Tallybook tracks what you spend and earn, wallet by wallet, on your own phone. This page takes each part of the app in the order you are likely to meet it. Quick answers are in the [FAQ](FAQ.md), and the import file layout is in [CSV import format](CSV.md). Opening a new transaction from Tasker or another automation app is covered in [Adding transactions from another app](AUTOMATION.md).
 
 Most screens open from the navigation drawer, reached from the icon in the toolbar. **Settings, User interface, Drawer entries** hides sections you never use. Transactions and Settings always stay.
 

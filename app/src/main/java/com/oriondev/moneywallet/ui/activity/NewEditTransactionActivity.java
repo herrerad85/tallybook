@@ -69,6 +69,7 @@ import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.DefaultWallet;
 import com.oriondev.moneywallet.utils.IconLoader;
+import com.oriondev.moneywallet.utils.IntentExtras;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import java.util.ArrayList;
@@ -109,6 +110,17 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
      */
     public static final String WALLET_ID = "NewEditTransactionActivity::WalletId";
 
+    /**
+     * The action another app sends to open a new plain transaction filled in from the extras
+     * below, read on a new plain transaction only and saved only when the user taps save.
+     */
+    public static final String ACTION_ADD_TRANSACTION = "io.github.herrerad85.tallybook.action.ADD_TRANSACTION";
+    public static final String EXTRA_WALLET = "wallet";
+    public static final String EXTRA_AMOUNT = "amount";
+    public static final String EXTRA_CATEGORY = "category";
+    public static final String EXTRA_DESCRIPTION = "description";
+    public static final String EXTRA_NOTE = "note";
+
     public static final int TYPE_STANDARD = TransactionEditorRules.TYPE_STANDARD;
     public static final int TYPE_TRANSFER = TransactionEditorRules.TYPE_TRANSFER;
     public static final int TYPE_DEBT = TransactionEditorRules.TYPE_DEBT;
@@ -138,6 +150,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
 
     private static final String SS_RULES = "NewEditTransactionActivity::SavedState::Rules";
     private static final String SS_OPEN_CALCULATOR = "NewEditTransactionActivity::SavedState::OpenCalculator";
+    private static final String SS_CATEGORY_FILLED_BY_RULE = "NewEditTransactionActivity::SavedState::CategoryFilledByRule";
 
     private TextView mCurrencyTextView;
     private TextView mMoneyTextView;
@@ -170,8 +183,6 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     private TransactionEditorRules mRules = new TransactionEditorRules();
 
     // true while the category on screen is one the rules filled in and the user has not touched.
-    // It is not carried across a rotation, so a rotated editor treats the category as the user's
-    // and leaves it alone, which is the safe direction to fail in
     private boolean mCategoryFilledByRule;
 
     // set once on a fresh new item with no amount, when the user asked for the keypad to open by
@@ -587,7 +598,13 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                             Contract.Wallet.START_MONEY,
                             Contract.Wallet.TOTAL_MONEY
                     };
+                    boolean addTransaction = ACTION_ADD_TRANSACTION.equals(intent.getAction());
                     long currentWallet = intent.getLongExtra(WALLET_ID, DefaultWallet.resolveNewItemWallet(contentResolver));
+                    Long namedWallet = addTransaction
+                            ? IntentExtras.findWalletId(contentResolver, intent.getStringExtra(EXTRA_WALLET)) : null;
+                    if (namedWallet != null) {
+                        currentWallet = namedWallet;
+                    }
                     Cursor cursor;
                     if (currentWallet == PreferenceManager.TOTAL_WALLET_ID) {
                         Uri uri = DataContentProvider.CONTENT_WALLETS;
@@ -610,6 +627,15 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                             );
                         }
                         cursor.close();
+                    }
+                    if (addTransaction) {
+                        money = readAmountExtra(intent, wallet);
+                        Long categoryId = IntentExtras.findCategoryId(contentResolver, intent.getStringExtra(EXTRA_CATEGORY));
+                        if (categoryId != null) {
+                            category = readCategory(contentResolver, categoryId);
+                        }
+                        mDescriptionEditText.setText(intent.getStringExtra(EXTRA_DESCRIPTION));
+                        mNoteEditText.setText(intent.getStringExtra(EXTRA_NOTE));
                     }
                     // opened from a person, so that person is already attached and the user only
                     // has to pick a category, which is what decides income or expense.
@@ -959,6 +985,16 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         }
     }
 
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            fillCategoryFromRules();
+        } else {
+            mCategoryFilledByRule = savedInstanceState.getBoolean(SS_CATEGORY_FILLED_BY_RULE);
+        }
+    }
+
     /**
      * Opens the keypad here and not from onViewCreated, because the picker is added with a commit
      * that has not run yet by then. It runs after super.onResume, which is where the lock screen
@@ -1054,6 +1090,10 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         if (categoryId == null) {
             return null;
         }
+        return readCategory(contentResolver, categoryId);
+    }
+
+    private static Category readCategory(ContentResolver contentResolver, long categoryId) {
         Uri categoryUri = ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, categoryId);
         String[] projection = new String[] {
                 Contract.Category.ID,
@@ -1063,7 +1103,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                 Contract.Category.TAG
         };
         Category category = null;
-        cursor = contentResolver.query(categoryUri, projection, null, null, null);
+        Cursor cursor = contentResolver.query(categoryUri, projection, null, null, null);
         if (cursor != null) {
             if (cursor.moveToFirst()) {
                 category = new Category(
@@ -1099,6 +1139,14 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         return currencyIso;
     }
 
+    private static long readAmountExtra(Intent intent, Wallet wallet) {
+        Bundle extras = intent.getExtras();
+        if (wallet == null || wallet.getCurrency() == null || extras == null) {
+            return 0L;
+        }
+        return IntentExtras.readAmount(extras.get(EXTRA_AMOUNT), wallet.getCurrency().getDecimals());
+    }
+
     private void fillFieldsFromIntent(Intent intent) {
         // check if the activity has been started from outside the application and some
         // other app has provided an extra stream of uris to set as attachments
@@ -1125,6 +1173,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         super.onSaveInstanceState(outState);
         outState.putSerializable(SS_RULES, mRules);
         outState.putBoolean(SS_OPEN_CALCULATOR, mOpenCalculatorOnResume);
+        outState.putBoolean(SS_CATEGORY_FILLED_BY_RULE, mCategoryFilledByRule);
         mSplitPartsEditor.saveState(outState);
     }
 

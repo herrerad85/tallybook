@@ -68,6 +68,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="io.github.herrerad85.tallybook.action.ADD_TRANSACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <activity android:name=".ui.activity.NewEditTransferActivity" />
         <activity android:name=".ui.activity.NewEditCategoryActivity" />
