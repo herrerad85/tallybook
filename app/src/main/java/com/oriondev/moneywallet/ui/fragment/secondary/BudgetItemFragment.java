@@ -22,6 +22,7 @@ package com.oriondev.moneywallet.ui.fragment.secondary;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -44,6 +45,7 @@ import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.RecurrenceSetting;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SQLiteDataException;
 import com.oriondev.moneywallet.ui.activity.NewEditBudgetActivity;
 import com.oriondev.moneywallet.ui.activity.NewEditItemActivity;
 import com.oriondev.moneywallet.ui.activity.TransactionListActivity;
@@ -71,12 +73,15 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     private TextView mMoneyTextView;
 
     private TextView mTypeTextView;
+    private TextView mCategorySumTextView;
     private TextView mCategoryTextView;
     private TextView mStartDateTextView;
     private TextView mEndDateTextView;
     private TextView mWalletsTextView;
 
     private TextView mRecurrenceTextView;
+
+    private ContentValues mCategorySumAsLimit;
 
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
 
@@ -93,11 +98,32 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
         mProgressLayout = view.findViewById(R.id.secondary_panel_progress_wheel);
         mMainLayout = view.findViewById(R.id.secondary_panel_layout);
         mTypeTextView = view.findViewById(R.id.type_text_view);
+        mCategorySumTextView = view.findViewById(R.id.category_sum_text_view);
         mCategoryTextView = view.findViewById(R.id.category_text_view);
         mRecurrenceTextView = view.findViewById(R.id.recurrence_text_view);
         mStartDateTextView = view.findViewById(R.id.start_date_text_view);
         mEndDateTextView = view.findViewById(R.id.end_date_text_view);
         mWalletsTextView = view.findViewById(R.id.wallets_text_view);
+        mCategorySumTextView.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Activity activity = getActivity();
+                if (activity != null && mCategorySumAsLimit != null) {
+                    Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, getItemId());
+                    try {
+                        activity.getContentResolver().update(uri, mCategorySumAsLimit, null, null);
+                    } catch (SQLiteDataException e) {
+                        ThemedDialog.buildMaterialDialog(activity)
+                                .setTitle(R.string.title_error)
+                                .setMessage(R.string.error_input_invalid_multiple_wallets)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show();
+                    }
+                }
+            }
+
+        });
     }
 
     @Override
@@ -163,6 +189,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
             mCurrencyTextView.setText(null);
             mMoneyTextView.setText(null);
             mTypeTextView.setText(null);
+            mCategorySumTextView.setText(null);
             mCategoryTextView.setText(null);
             mStartDateTextView.setText(null);
             mEndDateTextView.setText(null);
@@ -190,7 +217,10 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                         Contract.Budget.START_DATE,
                         Contract.Budget.END_DATE,
                         Contract.Budget.RULE,
-                        Contract.Budget.RULE_START
+                        Contract.Budget.RULE_START,
+                        Contract.Budget.TAG,
+                        Contract.Budget.WALLET_IDS,
+                        Contract.Budget.CATEGORY_SUM
                 };
                 return new CursorLoader(activity, uri, projection, null, null, null);
             } else if (id == WALLETS_LOADER_ID) {
@@ -216,6 +246,25 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                 }
                 long money = cursor.getLong(cursor.getColumnIndex(Contract.Budget.MONEY));
                 mMoneyTextView.setText(mMoneyFormatter.getNotTintedString(currency, money, MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN));
+                int sumIndex = cursor.getColumnIndexOrThrow(Contract.Budget.CATEGORY_SUM);
+                mCategorySumAsLimit = null;
+                if (cursor.isNull(sumIndex)) {
+                    mCategorySumTextView.setVisibility(View.GONE);
+                } else {
+                    long sum = cursor.getLong(sumIndex);
+                    mCategorySumTextView.setText(mMoneyFormatter.getNotTintedString(currency, sum));
+                    mCategorySumTextView.setVisibility(View.VISIBLE);
+                    String tag = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.TAG));
+                    if (!Contract.Budget.TAG_FOLLOWS_CATEGORIES.equals(tag) && sum != money) {
+                        mCategorySumAsLimit = new ContentValues();
+                        mCategorySumAsLimit.put(Contract.Budget.TYPE, cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Budget.TYPE)));
+                        mCategorySumAsLimit.put(Contract.Budget.START_DATE, cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.START_DATE)));
+                        mCategorySumAsLimit.put(Contract.Budget.END_DATE, cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.END_DATE)));
+                        mCategorySumAsLimit.put(Contract.Budget.WALLET_IDS, cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.WALLET_IDS)));
+                        mCategorySumAsLimit.put(Contract.Budget.MONEY, sum);
+                    }
+                }
+                mCategorySumTextView.setClickable(mCategorySumAsLimit != null);
                 Contract.BudgetType budgetType = Contract.BudgetType.fromValue(cursor.getInt(cursor.getColumnIndex(Contract.Budget.TYPE)));
                 if (budgetType != null) {
                     switch (budgetType) {
