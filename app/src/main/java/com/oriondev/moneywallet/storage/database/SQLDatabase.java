@@ -6252,6 +6252,22 @@ import java.util.function.Supplier;
                 Schema.BudgetCategory.DELETED + " = 0)";
     }
 
+    /*package-local*/ Cursor getCategoryBudgetSum(String startDate, String endDate, String walletIds) {
+        StringBuilder wallets = new StringBuilder();
+        long[] ids = parseIds(walletIds);
+        if (ids != null) {
+            for (long id : ids) {
+                if (wallets.length() > 0) {
+                    wallets.append(",");
+                }
+                wallets.append(id);
+            }
+        }
+        String query = "SELECT " + categoryBudgetSum("p._start", "p._end", "(" + wallets + ")") +
+                " AS " + Contract.Budget.CATEGORY_SUM + " FROM (SELECT ? AS _start, ? AS _end) AS p";
+        return getReadableDatabase().rawQuery(query, new String[] {startDate, endDate});
+    }
+
     private static final String CATEGORY_BUDGET_DAYS = "(SELECT " + Schema.Budget.ID + ", " +
             Schema.Budget.MONEY + ", DATE(" + Schema.Budget.START_DATE + ") AS _start_day, DATE(" +
             Schema.Budget.END_DATE + ") AS _end_day FROM " + Schema.Budget.TABLE + " WHERE " +

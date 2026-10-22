@@ -137,6 +137,15 @@ public class BudgetCategorySumTest {
         assertEquals(Long.valueOf(777), longOf(1021, Contract.Budget.MONEY));
     }
 
+    @Test
+    public void theSumOfABudgetNotSavedYetFollowsTheDatesAndWalletsAskedFor() {
+        insertMatchingRules();
+        assertEquals(Long.valueOf(400), sumFor(JAN_START, JAN_END, "<" + CASH + ">,<" + BANK + ">"));
+        assertNull(sumFor(JAN_START, JAN_END, "<" + BANK + ">"));
+        assertNull(sumFor("2026-02-01", "2026-02-28", "<" + CASH + ">"));
+        assertNull(sumFor(JAN_START, JAN_END, null));
+    }
+
     private void followCategoryBudgets(long budget) {
         database(mContext).execSQL("UPDATE budgets SET budget_tag = ? WHERE budget_id = ?",
                 new Object[] {Contract.Budget.TAG_FOLLOWS_CATEGORIES, budget});
@@ -171,6 +180,14 @@ public class BudgetCategorySumTest {
             database(mContext).execSQL("INSERT INTO budget_categories (_budget, _category, uuid, " +
                     "last_edit, deleted) VALUES (?, ?, ?, 1, 0)",
                     new Object[] {id, category, "bc-" + id + "-" + category});
+        }
+    }
+
+    private Long sumFor(String start, String end, String walletIds) {
+        try (Cursor cursor = mContext.getContentResolver().query(DataContentProvider.CONTENT_BUDGET_CATEGORY_SUM,
+                null, null, new String[] {start, end, walletIds}, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.isNull(0) ? null : cursor.getLong(0);
         }
     }
 

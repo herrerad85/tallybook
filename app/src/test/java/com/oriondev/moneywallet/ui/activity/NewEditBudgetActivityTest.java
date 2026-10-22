@@ -1505,6 +1505,141 @@ public class NewEditBudgetActivityTest {
         }
     }
 
+    @Test
+    public void theFollowBoxLocksTheLimitToTheCategorySumAndSavesTheFlagUntilUnticked() {
+        long budget = insertBudget(Contract.BudgetType.EXPENSES, 300000L, "EUR", new long[] {mWalletA},
+                null, APRIL_START, APRIL_END, null, null, null);
+        insertBudget(Contract.BudgetType.CATEGORY, 4000L, "EUR", new long[] {mWalletA},
+                new long[] {mFood}, APRIL_START, APRIL_END, null, null, null);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.follow_category_budgets_checkbox).getVisibility());
+                assertFalse(checkBox(activity, R.id.follow_category_budgets_checkbox).isChecked());
+                assertTrue(activity.findViewById(R.id.money_text_view).isEnabled());
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(checkBox(activity, R.id.follow_category_budgets_checkbox).isChecked());
+                assertFalse(activity.findViewById(R.id.money_text_view).isEnabled());
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(Contract.Budget.TAG_FOLLOWS_CATEGORIES, tagOf(budget));
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                assertTrue(checkBox(activity, R.id.follow_category_budgets_checkbox).isChecked());
+                assertFalse(activity.findViewById(R.id.money_text_view).isEnabled());
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertTrue(activity.findViewById(R.id.money_text_view).isEnabled());
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertNull(tagOf(budget));
+    }
+
+    @Test
+    public void aRepeatingBudgetThatFollowsOpensAgainOnTheCategorySum() {
+        long budget = insertBudget(Contract.BudgetType.EXPENSES, 300000L, "EUR", new long[] {mWalletA},
+                null, APRIL_START, APRIL_END, monthlyOn(date(APRIL_START)).getRule(), APRIL_START, null);
+        insertBudget(Contract.BudgetType.CATEGORY, 4000L, "EUR", new long[] {mWalletA},
+                new long[] {mFood}, APRIL_START, APRIL_END, null, null, null);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                assertTrue(checkBox(activity, R.id.repeat_checkbox).isChecked());
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(Contract.Budget.TAG_FOLLOWS_CATEGORIES, tagOf(budget));
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                assertTrue(checkBox(activity, R.id.follow_category_budgets_checkbox).isChecked());
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+            });
+        }
+    }
+
+    @Test
+    public void aNewRecurrenceWhileFollowingRecomputesTheSum() {
+        long budget = insertBudget(Contract.BudgetType.EXPENSES, 300000L, "EUR", new long[] {mWalletA},
+                null, APRIL_START, APRIL_END, monthlyOn(date(APRIL_START)).getRule(), APRIL_START, null);
+        insertBudget(Contract.BudgetType.CATEGORY, 4000L, "EUR", new long[] {mWalletA},
+                new long[] {mFood}, APRIL_START, APRIL_END, null, null, null);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+                recurrencePicker(activity).onRecurrenceSettingChanged(weeklyEvery(date(APRIL_START), 1));
+                assertEquals(formattedMoney("EUR", 300000L), headerText(activity, R.id.money_text_view));
+            });
+        }
+    }
+
+    @Test
+    public void choosingTheCategoryTypeHidesAndClearsTheFollowBox() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.follow_category_budgets_checkbox).getVisibility());
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertFalse(activity.findViewById(R.id.money_text_view).isEnabled());
+                budgetTypePicker(activity).onBudgetTypeSelected(Contract.BudgetType.CATEGORY);
+                assertEquals(View.GONE, activity.findViewById(R.id.follow_category_budgets_checkbox).getVisibility());
+                assertFalse(checkBox(activity, R.id.follow_category_budgets_checkbox).isChecked());
+                assertTrue(activity.findViewById(R.id.money_text_view).isEnabled());
+            });
+        }
+    }
+
+    @Test
+    public void theSumFollowsThePickedDatesAndWalletsAndUntickingPutsBackTheLimit() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertBudget(Contract.BudgetType.CATEGORY, 4000L, "EUR", new long[] {mWalletA},
+                new long[] {mFood}, APRIL_START, APRIL_END, null, null, null);
+        insertBudget(Contract.BudgetType.CATEGORY, 20000L, "EUR", new long[] {mWalletB},
+                new long[] {mRent}, APRIL_START, APRIL_END, null, null, null);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                moneyPicker(activity).setMoney(300000L);
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(formattedMoney("EUR", 300000L), headerText(activity, R.id.money_text_view));
+                startDatePicker(activity).setCurrentDateTime(date(APRIL_START));
+                endDatePicker(activity).setCurrentDateTime(date(APRIL_END));
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+                startDatePicker(activity).setCurrentDateTime(date("2019-05-01"));
+                endDatePicker(activity).setCurrentDateTime(date("2019-05-31"));
+                assertEquals(formattedMoney("EUR", 300000L), headerText(activity, R.id.money_text_view));
+                startDatePicker(activity).setCurrentDateTime(date(APRIL_START));
+                endDatePicker(activity).setCurrentDateTime(date(APRIL_END));
+                assertEquals(formattedMoney("EUR", 4000L), headerText(activity, R.id.money_text_view));
+                walletsPicker(activity).onWalletsSelected(new Wallet[] {
+                        wallet(mWalletA, "Cash", "EUR"), wallet(mWalletB, "Bank", "EUR")});
+                assertEquals(formattedMoney("EUR", 24000L), headerText(activity, R.id.money_text_view));
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertEquals(formattedMoney("EUR", 24000L), headerText(activity, R.id.money_text_view));
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(formattedMoney("EUR", 300000L), headerText(activity, R.id.money_text_view));
+            });
+        }
+    }
+
     // expected figures
 
     /**
@@ -1958,6 +2093,15 @@ public class NewEditBudgetActivityTest {
         assertEquals(rule, row.getString(row.getColumnIndex(Contract.Budget.RULE)));
         assertEquals(ruleStart, row.getString(row.getColumnIndex(Contract.Budget.RULE_START)));
         row.close();
+    }
+
+    private String tagOf(long budgetId) {
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, budgetId);
+        Cursor cursor = mResolver.query(uri, new String[] {Contract.Budget.TAG}, null, null, null);
+        assertTrue(cursor.moveToFirst());
+        String tag = cursor.getString(0);
+        cursor.close();
+        return tag;
     }
 
     private String uuidOf(long budgetId) {

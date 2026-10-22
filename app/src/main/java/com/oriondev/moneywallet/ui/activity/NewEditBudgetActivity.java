@@ -88,11 +88,16 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
 
     private static final String SS_CLOSED_PERIOD = "NewEditBudgetActivity::SavedState::ClosedPeriod";
 
+    private static final String SS_LIMIT_BEFORE_FOLLOW = "NewEditBudgetActivity::SavedState::LimitBeforeFollow";
+
+    private static final float DIMMED_ALPHA = 0.5f;
+
     private TextView mCurrencyTextView;
     private TextView mMoneyTextView;
     private MaterialEditText mTypeEditText;
     private MaterialEditText mCategoryEditText;
     private CheckBox mRepeatCheckBox;
+    private CheckBox mFollowCheckBox;
     private MaterialEditText mRecurrenceEditText;
     private MaterialEditText mStartDateEditText;
     private MaterialEditText mEndDateEditText;
@@ -109,6 +114,8 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
     private boolean mAnchored;
 
     private boolean mClosedPeriod;
+
+    private Long mLimitBeforeFollow;
 
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
 
@@ -134,6 +141,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         mTypeEditText = view.findViewById(R.id.type_edit_text);
         mCategoryEditText = view.findViewById(R.id.category_edit_text);
         mRepeatCheckBox = view.findViewById(R.id.repeat_checkbox);
+        mFollowCheckBox = view.findViewById(R.id.follow_category_budgets_checkbox);
         mRecurrenceEditText = view.findViewById(R.id.recurrence_edit_text);
         mStartDateEditText = view.findViewById(R.id.start_date_edit_text);
         mEndDateEditText = view.findViewById(R.id.end_date_edit_text);
@@ -155,6 +163,9 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 mRecurrenceEditText.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 mStartDateEditText.setVisibility(isChecked ? View.GONE : View.VISIBLE);
                 mEndDateEditText.setVisibility(isChecked ? View.GONE : View.VISIBLE);
+                if (mFollowCheckBox.isChecked()) {
+                    showCategorySum();
+                }
             }
 
         });
@@ -172,6 +183,25 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 if (mRepeatCheckBox.isChecked() && startDate != null
                         && !mAnchored && !mRecurrencePicker.isChosen()) {
                     mRecurrencePicker.setCurrentSettings(rebuiltOn(startDate));
+                }
+            }
+
+        });
+        mFollowCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mMoneyTextView.setEnabled(!isChecked);
+                mMoneyTextView.setAlpha(isChecked ? DIMMED_ALPHA : 1f);
+                mCurrencyTextView.setAlpha(isChecked ? DIMMED_ALPHA : 1f);
+                if (isChecked) {
+                    if (mLimitBeforeFollow == null) {
+                        mLimitBeforeFollow = mMoneyPicker.getCurrentMoney();
+                    }
+                    showCategorySum();
+                } else if (mLimitBeforeFollow != null) {
+                    mMoneyPicker.setMoney(mLimitBeforeFollow);
+                    mLimitBeforeFollow = null;
                 }
             }
 
@@ -430,6 +460,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         String rule = null;
         Date ruleStart = null;
         Wallet[] wallets = null;
+        boolean follows = false;
         if (savedInstanceState == null) {
             ContentResolver contentResolver = getContentResolver();
             if (getMode() == Mode.EDIT_ITEM) {
@@ -444,7 +475,8 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                         Contract.Budget.END_DATE,
                         Contract.Budget.MONEY,
                         Contract.Budget.RULE,
-                        Contract.Budget.RULE_START
+                        Contract.Budget.RULE_START,
+                        Contract.Budget.TAG
                 };
                 Cursor cursor = contentResolver.query(uri, projection, null, null, null);
                 if (cursor != null) {
@@ -458,6 +490,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                         if (ruleStartString != null) {
                             ruleStart = DateUtils.getDateFromSQLDateString(ruleStartString);
                         }
+                        follows = Contract.Budget.TAG_FOLLOWS_CATEGORIES.equals(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.TAG)));
                     }
                     cursor.close();
                 }
@@ -577,10 +610,15 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         if (savedInstanceState == null) {
             mAnchored = ruleStart != null;
             mRepeatCheckBox.setChecked(repeats);
+            if (follows) {
+                mLimitBeforeFollow = money;
+            }
+            mFollowCheckBox.setChecked(follows);
             mClosedPeriod = !repeats && isSupersededPeriod();
         } else {
             mAnchored = savedInstanceState.getBoolean(SS_ANCHORED, false);
             mClosedPeriod = savedInstanceState.getBoolean(SS_CLOSED_PERIOD, false);
+            mLimitBeforeFollow = savedInstanceState.containsKey(SS_LIMIT_BEFORE_FOLLOW) ? savedInstanceState.getLong(SS_LIMIT_BEFORE_FOLLOW) : null;
         }
         // A period a repeating budget has already moved past is history. Offering to repeat this
         // one either puts a second schedule on the same chain, so that from the next period on the
@@ -818,11 +856,40 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         return getRepeatingPeriod();
     }
 
+    private void showCategorySum() {
+        if (mRepeatCheckBox.isChecked() && mRecurrencePicker.getCurrentSettings() == null) {
+            return;
+        }
+        Date[] period = mRepeatCheckBox.isChecked() ? periodToSave(getMode()) : new Date[] {
+                mStartDatePicker.getCurrentDateTime(), mEndDatePicker.getCurrentDateTime()};
+        if (period == null || period[0] == null || period[1] == null) {
+            return;
+        }
+        String[] selectionArgs = new String[] {DateUtils.getSQLDateString(period[0]),
+                DateUtils.getSQLDateString(period[1]), Contract.getObjectIds(mWalletsPicker.getCurrentWallets())};
+        Cursor cursor = getContentResolver().query(DataContentProvider.CONTENT_BUDGET_CATEGORY_SUM,
+                null, null, selectionArgs, null);
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst() && !cursor.isNull(0)) {
+                    mMoneyPicker.setMoney(cursor.getLong(0));
+                } else if (mLimitBeforeFollow != null) {
+                    mMoneyPicker.setMoney(mLimitBeforeFollow);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+    }
+
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(SS_ANCHORED, mAnchored);
         outState.putBoolean(SS_CLOSED_PERIOD, mClosedPeriod);
+        if (mLimitBeforeFollow != null) {
+            outState.putLong(SS_LIMIT_BEFORE_FOLLOW, mLimitBeforeFollow);
+        }
     }
 
     @Override
@@ -885,6 +952,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 }
             }
             contentValues.put(Contract.Budget.MONEY, mMoneyPicker.getCurrentMoney());
+            contentValues.put(Contract.Budget.TAG, mFollowCheckBox.isChecked() ? Contract.Budget.TAG_FOLLOWS_CATEGORIES : null);
             contentValues.put(Contract.Budget.WALLET_IDS, Contract.getObjectIds(mWalletsPicker.getCurrentWallets()));
             ContentResolver contentResolver = getContentResolver();
             try {
@@ -938,14 +1006,19 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
             case INCOMES:
                 mTypeEditText.setText(R.string.hint_incomes);
                 mCategoryEditText.setVisibility(View.GONE);
+                mFollowCheckBox.setChecked(false);
+                mFollowCheckBox.setVisibility(View.GONE);
                 break;
             case EXPENSES:
                 mTypeEditText.setText(R.string.hint_expenses);
                 mCategoryEditText.setVisibility(View.GONE);
+                mFollowCheckBox.setVisibility(View.VISIBLE);
                 break;
             case CATEGORY:
                 mTypeEditText.setText(R.string.hint_category);
                 mCategoryEditText.setVisibility(View.VISIBLE);
+                mFollowCheckBox.setChecked(false);
+                mFollowCheckBox.setVisibility(View.GONE);
                 break;
         }
     }
@@ -984,6 +1057,9 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 }
                 break;
         }
+        if (mFollowCheckBox.isChecked()) {
+            showCategorySum();
+        }
     }
 
     @Override
@@ -991,6 +1067,9 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         // what the schedule will be once it is saved, which is not always what the dialog just
         // handed back: a budget that is already anchored keeps the day it is anchored to
         mRecurrenceEditText.setText(scheduleToSave().getUserReadableString(this));
+        if (mFollowCheckBox.isChecked()) {
+            showCategorySum();
+        }
     }
 
     @Override
@@ -1008,6 +1087,9 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         } else {
             mWalletsEditText.setText(null);
             mMoneyPicker.setCurrency(null);
+        }
+        if (mFollowCheckBox.isChecked()) {
+            showCategorySum();
         }
     }
 }

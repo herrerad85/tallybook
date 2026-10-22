@@ -76,6 +76,12 @@ public class DataContentProvider extends ContentProvider {
      * lines it matched. The selection itself sees each line with the full total as its money.
      */
     public static final Uri CONTENT_CATEGORY_SHARES = Uri.parse("content://" + AUTHORITY + "/category_shares");
+    /**
+     * One row holding {@link Contract.Budget#CATEGORY_SUM} for an Expenses budget that is not
+     * saved yet. The selection arguments are its start date, its end date and its wallet ids in
+     * the form {@link Contract#getObjectIds} writes, and the selection itself is ignored.
+     */
+    public static final Uri CONTENT_BUDGET_CATEGORY_SUM = Uri.parse("content://" + AUTHORITY + "/budgets/category_sum");
 
     /**
      * Every uri above sits under this one. An observer registered here with descendants included
@@ -144,6 +150,7 @@ public class DataContentProvider extends ContentProvider {
     private static final int CATEGORY_LINE_LIST = 50;
     private static final int CATEGORY_SHARE_LIST = 51;
     private static final int TRANSACTION_SPLIT_LIST = 52;
+    private static final int BUDGET_CATEGORY_SUM = 53;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -173,6 +180,7 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "budgets/#/wallets", BUDGET_WALLETS);
         matcher.addURI(AUTHORITY, "budgets/#/categories", BUDGET_CATEGORIES);
         matcher.addURI(AUTHORITY, "budgets/#/transactions", BUDGET_TRANSACTION_LIST);
+        matcher.addURI(AUTHORITY, "budgets/category_sum", BUDGET_CATEGORY_SUM);
         matcher.addURI(AUTHORITY, "savings", SAVING_LIST);
         matcher.addURI(AUTHORITY, "savings/#", SAVING_ITEM);
         matcher.addURI(AUTHORITY, "savings/#/transactions", SAVING_TRANSACTION_LIST);
@@ -314,6 +322,9 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case BUDGET_CATEGORIES:
                 cursor = new MultiUriCursorWrapper(db().getBudgetCategories(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));
+                break;
+            case BUDGET_CATEGORY_SUM:
+                cursor = new MultiUriCursorWrapper(db().getCategoryBudgetSum(selectionArgs[0], selectionArgs[1], selectionArgs[2]));
                 break;
             case BUDGET_TRANSACTION_LIST:
                 cursor = new MultiUriCursorWrapper(db().getBudgetTransactions(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));

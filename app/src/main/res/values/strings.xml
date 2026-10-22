@@ -126,6 +126,7 @@
     <string name="hint_recurrence_invalid">"Invalid recurrence"</string>
     <string name="hint_budget_repeat">"Repeat this budget"</string>
     <string name="hint_category_budgets">"Category budgets"</string>
+    <string name="hint_budget_follow_category_budgets">"Use the category budgets inside it as the limit"</string>
     <string name="message_budget_period_superseded">"This budget has moved on to a later period since you opened it, so this one is now part of its history and cannot be set to repeat. Open the latest period instead."</string>
     <string name="error_input_invalid_budget_recurrence">"This recurrence never repeats, so it cannot set the length of a period"</string>
     <string name="hint_event">"Event"</string>
