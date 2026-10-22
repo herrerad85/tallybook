@@ -50,6 +50,19 @@
             tools:text="Budget type here" />
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
+            android:id="@+id/category_sum_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/material_activity_body_edit_text_margin_top"
+            android:layout_marginBottom="@dimen/material_activity_body_edit_text_margin_bottom"
+            android:visibility="gone"
+            app:mtv_mode="floatingLabel"
+            app:mtv_floatingLabelText="@string/hint_category_budgets"
+            app:mtv_leftIcon="@drawable/ic_table_large_24dp"
+            app:mtv_bottomLineEnabled="true"
+            tools:text="Category budget sum here" />
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
             android:id="@+id/category_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
