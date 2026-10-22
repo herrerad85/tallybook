@@ -124,6 +124,24 @@ public class BudgetCategorySumTest {
         assertEquals(Long.valueOf(350), categorySumOf(EXPENSES));
     }
 
+    @Test
+    public void aFlaggedExpensesBudgetReadsTheSumAsItsLimitAndFallsBackToItsStoredOne() {
+        insertMatchingRules();
+        insertBudget(1020, Schema.BudgetType.EXPENSES, JAN_START, JAN_END, 999, 0, EURO);
+        insertBudget(1021, Schema.BudgetType.EXPENSES, "2026-02-01", "2026-02-28", 777, 0, new long[] {YEN});
+        followCategoryBudgets(1020);
+        followCategoryBudgets(1021);
+        assertEquals(Long.valueOf(400), longOf(1020, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(999), longOf(EXPENSES, Contract.Budget.MONEY));
+        assertNull(categorySumOf(1021));
+        assertEquals(Long.valueOf(777), longOf(1021, Contract.Budget.MONEY));
+    }
+
+    private void followCategoryBudgets(long budget) {
+        database(mContext).execSQL("UPDATE budgets SET budget_tag = ? WHERE budget_id = ?",
+                new Object[] {Contract.Budget.TAG_FOLLOWS_CATEGORIES, budget});
+    }
+
     private void insertMatchingRules() {
         insertCategoryBudget(1002, 400, CASH_ONLY, GROCERIES);
         insertBudget(1003, Schema.BudgetType.CATEGORY, "2026-01-08", "2026-01-14", 50, 0, EURO, FUEL);
@@ -160,6 +178,14 @@ public class BudgetCategorySumTest {
         try (Cursor cursor = mContext.getContentResolver().query(
                 ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, budget),
                 new String[] {Contract.Budget.CATEGORY_SUM}, null, null, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.isNull(0) ? null : cursor.getLong(0);
+        }
+    }
+
+    private Long longOf(long budget, String column) {
+        try (Cursor cursor = mContext.getContentResolver().query(DataContentProvider.CONTENT_BUDGETS,
+                new String[] {column}, Contract.Budget.ID + " = ?", new String[] {String.valueOf(budget)}, null)) {
             assertTrue(cursor.moveToFirst());
             return cursor.isNull(0) ? null : cursor.getLong(0);
         }

@@ -16,6 +16,7 @@ import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.notification.NotificationContract;
@@ -196,6 +197,47 @@ public class RecurrenceHandlerIntentServiceTest {
         // the run did open a period, so the silence is not a run that did nothing
         assertTrue(countRows(DataContentProvider.CONTENT_BUDGETS) > before);
         assertTrue(mNotifications.getAllNotifications().isEmpty());
+    }
+
+    @Test
+    public void aRolledExpensesPeriodKeepsFollowingTheCategoryBudgetsInsideIt() {
+        String start = DateUtils.getSQLDateString(new Date(System.currentTimeMillis() - 70L * DAY));
+        String end = DateUtils.getSQLDateString(new Date(System.currentTimeMillis() - 40L * DAY));
+        ContentValues expenses = monthlyBudget(Contract.BudgetType.EXPENSES, 100000L, start, end);
+        expenses.put(Contract.Budget.TAG, Contract.Budget.TAG_FOLLOWS_CATEGORIES);
+        mResolver.insert(DataContentProvider.CONTENT_BUDGETS, expenses);
+        ContentValues category = monthlyBudget(Contract.BudgetType.CATEGORY, 30000L, start, end);
+        category.put(Contract.Budget.CATEGORY_IDS, "<" + mCategory + ">");
+        mResolver.insert(DataContentProvider.CONTENT_BUDGETS, category);
+        runTask();
+        SplitLedger.database(mContext).execSQL("UPDATE budgets SET budget_money = 45000 WHERE budget_type = ? " +
+                "AND budget_start_date > ?", new Object[] {Contract.BudgetType.CATEGORY.getValue(), start});
+        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_BUDGETS,
+                new String[] {Contract.Budget.START_DATE, Contract.Budget.TAG, Contract.Budget.MONEY},
+                Contract.Budget.TYPE + " = ? AND " + Contract.Budget.RULE + " IS NOT NULL",
+                new String[] {String.valueOf(Contract.BudgetType.EXPENSES.getValue())}, null);
+        assertNotNull(cursor);
+        try {
+            assertEquals(1, cursor.getCount());
+            assertTrue(cursor.moveToFirst());
+            assertTrue(start.compareTo(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.START_DATE))) < 0);
+            assertEquals(Contract.Budget.TAG_FOLLOWS_CATEGORIES, cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.TAG)));
+            assertEquals(45000L, cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.MONEY)));
+        } finally {
+            cursor.close();
+        }
+    }
+
+    private ContentValues monthlyBudget(Contract.BudgetType type, long money, String start, String end) {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Budget.TYPE, type.getValue());
+        values.put(Contract.Budget.MONEY, money);
+        values.put(Contract.Budget.WALLET_IDS, "<" + mWalletA + ">");
+        values.put(Contract.Budget.START_DATE, start);
+        values.put(Contract.Budget.END_DATE, end);
+        values.put(Contract.Budget.RULE, "FREQ=MONTHLY");
+        values.put(Contract.Budget.RULE_START, start);
+        return values;
     }
 
     private void runTask() {

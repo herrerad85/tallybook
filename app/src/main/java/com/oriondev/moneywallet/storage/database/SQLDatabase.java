@@ -3655,7 +3655,10 @@ import java.util.function.Supplier;
                 "c." + Schema.Category.TAG + " AS " + Contract.Budget.CATEGORY_TAG + ", " +
                 "b." + Schema.Budget.START_DATE + " AS " + Contract.Budget.START_DATE + ", " +
                 "b." + Schema.Budget.END_DATE + " AS " + Contract.Budget.END_DATE + ", " +
-                "b." + Schema.Budget.MONEY + " AS " + Contract.Budget.MONEY + ", " +
+                "CASE WHEN b." + Schema.Budget.TYPE + " = " + Schema.BudgetType.EXPENSES + " AND b." +
+                Schema.Budget.TAG + " = '" + Contract.Budget.TAG_FOLLOWS_CATEGORIES + "' THEN COALESCE(" +
+                categorySum + ", b." + Schema.Budget.MONEY + ") ELSE b." +
+                Schema.Budget.MONEY + " END AS " + Contract.Budget.MONEY + ", " +
                 "b." + Schema.Budget.CURRENCY + " AS " + Contract.Budget.CURRENCY + ", " +
                 "b." + Schema.Budget.RULE + " AS " + Contract.Budget.RULE + ", " +
                 "b." + Schema.Budget.RULE_START + " AS " + Contract.Budget.RULE_START + ", " +
