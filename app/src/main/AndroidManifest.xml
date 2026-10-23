@@ -193,6 +193,13 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+        <receiver android:name=".broadcast.AddTransactionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.github.herrerad85.tallybook.action.SAVE_TRANSACTION"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 

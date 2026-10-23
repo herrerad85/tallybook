@@ -82,4 +82,18 @@
 
     </com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory>
 
+    <com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory
+        android:title="@string/setting_category_utility_automation" >
+
+        <com.oriondev.moneywallet.ui.preference.ThemedSwitchPreference
+            android:key="automation_save"
+            android:title="@string/setting_title_automation_save"
+            android:persistent="false" />
+
+        <com.oriondev.moneywallet.ui.preference.ThemedPreference
+            android:key="automation_code"
+            android:title="@string/setting_title_automation_code"/>
+
+    </com.oriondev.moneywallet.ui.preference.ThemedPreferenceCategory>
+
 </androidx.preference.PreferenceScreen>

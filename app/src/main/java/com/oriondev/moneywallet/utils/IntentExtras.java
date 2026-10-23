@@ -20,8 +20,11 @@
 package com.oriondev.moneywallet.utils;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.database.Cursor;
+import android.net.Uri;
 
+import com.oriondev.moneywallet.model.Category;
 import com.oriondev.moneywallet.model.MoneyScale;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
@@ -31,8 +34,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
- * Readers for the extras another app puts on an intent: an amount, and the name of a wallet or
- * a category, which is matched ignoring case and only counts when exactly one row carries it.
+ * Readers for the extras another app puts on an intent: an amount, the name of a wallet or a
+ * category, which is matched ignoring case and only counts when exactly one row carries it, and
+ * the category the stored rules file a description under.
  */
 public class IntentExtras {
 
@@ -102,6 +106,61 @@ public class IntentExtras {
                 Contract.Category.TYPE + " != ?",
                 new String[] {String.valueOf(Contract.CategoryType.SYSTEM.getValue())}, null);
         return findSingleId(cursor, Contract.Category.ID, Contract.Category.NAME, name);
+    }
+
+    /**
+     * The category the stored rules file this description under, or null when none of them does.
+     * The description travels as one path segment, which is what carries a slash or a space in it
+     * through to the lookup whole.
+     *
+     * @param contentResolver resolver to read through.
+     * @param description the description of the transaction.
+     * @return the category, or null when no rule matches or its category is gone.
+     */
+    public static Category readCategoryNamedBy(ContentResolver contentResolver, String description) {
+        Uri matchUri = DataContentProvider.CONTENT_CATEGORY_RULES.buildUpon()
+                .appendPath("match")
+                .appendPath(description)
+                .build();
+        Long categoryId = null;
+        Cursor cursor = contentResolver.query(matchUri,
+                new String[] {Contract.CategoryRule.CATEGORY_ID}, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                categoryId = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.CategoryRule.CATEGORY_ID));
+            }
+            cursor.close();
+        }
+        if (categoryId == null) {
+            return null;
+        }
+        return readCategory(contentResolver, categoryId);
+    }
+
+    public static Category readCategory(ContentResolver contentResolver, long categoryId) {
+        Uri categoryUri = ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, categoryId);
+        String[] projection = new String[] {
+                Contract.Category.ID,
+                Contract.Category.NAME,
+                Contract.Category.ICON,
+                Contract.Category.TYPE,
+                Contract.Category.TAG
+        };
+        Category category = null;
+        Cursor cursor = contentResolver.query(categoryUri, projection, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                category = new Category(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Category.ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.NAME)),
+                        IconLoader.parse(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.ICON))),
+                        Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Category.TYPE))),
+                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.TAG))
+                );
+            }
+            cursor.close();
+        }
+        return category;
     }
 
     private static Long findSingleId(Cursor cursor, String idColumn, String nameColumn, String name) {

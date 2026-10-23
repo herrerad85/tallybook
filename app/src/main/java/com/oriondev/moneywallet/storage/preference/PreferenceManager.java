@@ -53,6 +53,8 @@ public class PreferenceManager {
     private static final String ASKED_NOTIFICATION_PERMISSION = "asked_notification_permission";
     private static final String CURRENT_LOCK_MODE = "current_lock_mode";
     private static final String CURRENT_LOCK_CODE = "current_lock_code";
+    private static final String AUTOMATION_SAVE = "automation_save";
+    private static final String AUTOMATION_CODE = "automation_code";
     private static final String LAST_LOCK_TIMESTAMP = "last_lock_timestamp";
     private static final String COLOR_INCOME = "color_income";
     private static final String COLOR_EXPENSE = "color_expense";
@@ -223,6 +225,14 @@ public class PreferenceManager {
         mPreferences.edit().putString(CURRENT_LOCK_CODE, code).apply();
     }
 
+    public static void setAutomationSaveEnabled(boolean enabled) {
+        mPreferences.edit().putBoolean(AUTOMATION_SAVE, enabled).apply();
+    }
+
+    public static void setAutomationCode(String code) {
+        mPreferences.edit().putString(AUTOMATION_CODE, code).apply();
+    }
+
     public static void setLastLockTime(long time) {
         mPreferences.edit().putLong(LAST_LOCK_TIMESTAMP, time).apply();
     }
@@ -346,6 +356,14 @@ public class PreferenceManager {
 
     public static String getCurrentLockCode() {
         return mPreferences.getString(CURRENT_LOCK_CODE, null);
+    }
+
+    public static boolean isAutomationSaveEnabled() {
+        return mPreferences.getBoolean(AUTOMATION_SAVE, false);
+    }
+
+    public static String getAutomationCode() {
+        return mPreferences.getString(AUTOMATION_CODE, null);
     }
 
     public static long getLastLockTime() {

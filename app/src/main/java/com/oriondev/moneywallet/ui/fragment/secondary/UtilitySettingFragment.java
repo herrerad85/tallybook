@@ -22,20 +22,25 @@ package com.oriondev.moneywallet.ui.fragment.secondary;
 import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.text.format.DateUtils;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.biometric.BiometricManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -44,6 +49,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.broadcast.AddTransactionReceiver;
 import com.oriondev.moneywallet.broadcast.LocalAction;
 import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.service.AbstractCurrencyRateDownloadIntentService;
@@ -54,6 +60,7 @@ import com.oriondev.moneywallet.ui.activity.CurrencyListActivity;
 import com.oriondev.moneywallet.ui.activity.LockActivity;
 import com.oriondev.moneywallet.ui.preference.ThemedInputPreference;
 import com.oriondev.moneywallet.ui.preference.ThemedListPreference;
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.Urls;
 import com.oriondev.moneywallet.utils.Utils;
@@ -92,6 +99,8 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
     private Preference mExchangeRateUpdatePreference;
     private Preference mCurrencyManagementPreference;
     private Preference mCategoryRulesPreference;
+    private SwitchPreferenceCompat mAutomationSavePreference;
+    private Preference mAutomationCodePreference;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -124,6 +133,8 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
         mExchangeRateUpdatePreference = findPreference("exchange_rate_update");
         mCurrencyManagementPreference = findPreference("currency_management");
         mCategoryRulesPreference = findPreference("category_rules");
+        mAutomationSavePreference = (SwitchPreferenceCompat) findPreference("automation_save");
+        mAutomationCodePreference = findPreference("automation_code");
         mMapTileServerPreference = (ThemedInputPreference) findPreference("map_tile_server");
         if (!MapViewWrapper.supportsCustomTileServer()) {
             PreferenceCategory mapCategory = (PreferenceCategory) findPreference("map_category");
@@ -179,6 +190,7 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
         setupCurrentExchangeRateService();
         setupCurrentExchangeRateCustomApiKey();
         setupCurrentExchangeRateUpdate();
+        setupCurrentAutomationSave();
         // attach a listener to get notified when values changes
         mDailyReminderPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
@@ -320,6 +332,32 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
                 if (activity != null) {
                     startActivity(new Intent(activity, CategoryRuleListActivity.class));
                 }
+                return false;
+            }
+
+        });
+        mAutomationSavePreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                if ((Boolean) newValue) {
+                    PreferenceManager.setAutomationCode(AddTransactionReceiver.newCode());
+                    PreferenceManager.setAutomationSaveEnabled(true);
+                    showAutomationCode();
+                } else {
+                    PreferenceManager.setAutomationSaveEnabled(false);
+                    PreferenceManager.setAutomationCode(null);
+                }
+                setupCurrentAutomationSave();
+                return false;
+            }
+
+        });
+        mAutomationCodePreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                showAutomationCode();
                 return false;
             }
 
@@ -495,6 +533,39 @@ public class UtilitySettingFragment extends PreferenceFragmentCompat {
         String summary = DateFormatter.getDateFromToday(new Date(timestamp));
         String fullSummary = getString(R.string.setting_summary_exchange_rate_update, summary);
         mExchangeRateUpdatePreference.setSummary(fullSummary);
+    }
+
+    private void setupCurrentAutomationSave() {
+        boolean enabled = PreferenceManager.isAutomationSaveEnabled();
+        mAutomationSavePreference.setChecked(enabled);
+        mAutomationCodePreference.setEnabled(enabled);
+    }
+
+    private void showAutomationCode() {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        final AlertDialog dialog = ThemedDialog.buildMaterialDialog(activity)
+                .setTitle(R.string.title_automation_code)
+                .setMessage(getString(R.string.message_automation_code, PreferenceManager.getAutomationCode()))
+                .setPositiveButton(R.string.action_copy, (d, which) -> copyAutomationCode(activity))
+                .setNeutralButton(R.string.action_new_code, null)
+                .show();
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            PreferenceManager.setAutomationCode(AddTransactionReceiver.newCode());
+            dialog.setMessage(getString(R.string.message_automation_code, PreferenceManager.getAutomationCode()));
+        });
+    }
+
+    private static void copyAutomationCode(Context context) {
+        ClipData clip = ClipData.newPlainText(context.getString(R.string.title_automation_code),
+                PreferenceManager.getAutomationCode());
+        PersistableBundle extras = new PersistableBundle();
+        extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
+        clip.getDescription().setExtras(extras);
+        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        clipboard.setPrimaryClip(clip);
     }
 
     @Override

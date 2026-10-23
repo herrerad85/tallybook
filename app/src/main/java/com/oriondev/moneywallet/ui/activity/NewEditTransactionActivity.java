@@ -632,7 +632,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                         money = readAmountExtra(intent, wallet);
                         Long categoryId = IntentExtras.findCategoryId(contentResolver, intent.getStringExtra(EXTRA_CATEGORY));
                         if (categoryId != null) {
-                            category = readCategory(contentResolver, categoryId);
+                            category = IntentExtras.readCategory(contentResolver, categoryId);
                         }
                         mDescriptionEditText.setText(intent.getStringExtra(EXTRA_DESCRIPTION));
                         mNoteEditText.setText(intent.getStringExtra(EXTRA_NOTE));
@@ -1052,7 +1052,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         }
         String description = mDescriptionEditText.getTextAsString();
         Category category = TextUtils.isEmpty(description) ? null
-                : readCategoryNamedBy(getContentResolver(), description);
+                : IntentExtras.readCategoryNamedBy(getContentResolver(), description);
         if (category == null && !mCategoryFilledByRule) {
             return;
         }
@@ -1060,63 +1060,6 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         // the flag, so the flag is set after the call and not before it
         mCategoryPicker.setCategory(category);
         mCategoryFilledByRule = category != null;
-    }
-
-    /**
-     * The category the stored rules file this description under, or null when none of them does.
-     * The description travels as one path segment, which is what carries a slash or a space in it
-     * through to the lookup whole.
-     *
-     * Read on the calling thread, which is how every other read in this editor is made.
-     *
-     * @param contentResolver resolver to read through.
-     * @param description text the user typed on the transaction.
-     * @return the category, or null when no rule matches or its category is gone.
-     */
-    private static Category readCategoryNamedBy(ContentResolver contentResolver, String description) {
-        Uri matchUri = DataContentProvider.CONTENT_CATEGORY_RULES.buildUpon()
-                .appendPath("match")
-                .appendPath(description)
-                .build();
-        Long categoryId = null;
-        Cursor cursor = contentResolver.query(matchUri,
-                new String[] {Contract.CategoryRule.CATEGORY_ID}, null, null, null);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                categoryId = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.CategoryRule.CATEGORY_ID));
-            }
-            cursor.close();
-        }
-        if (categoryId == null) {
-            return null;
-        }
-        return readCategory(contentResolver, categoryId);
-    }
-
-    private static Category readCategory(ContentResolver contentResolver, long categoryId) {
-        Uri categoryUri = ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, categoryId);
-        String[] projection = new String[] {
-                Contract.Category.ID,
-                Contract.Category.NAME,
-                Contract.Category.ICON,
-                Contract.Category.TYPE,
-                Contract.Category.TAG
-        };
-        Category category = null;
-        Cursor cursor = contentResolver.query(categoryUri, projection, null, null, null);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                category = new Category(
-                        cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Category.ID)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.NAME)),
-                        IconLoader.parse(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.ICON))),
-                        Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Category.TYPE))),
-                        cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.TAG))
-                );
-            }
-            cursor.close();
-        }
-        return category;
     }
 
     /**

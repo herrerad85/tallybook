@@ -626,6 +626,13 @@
     <string name="setting_summary_currency_management">"Add custom currencies"</string>
     <string name="setting_title_category_rules">"Automatic categories"</string>
     <string name="setting_summary_category_rules">"Set a category from the description"</string>
+    <string name="setting_category_utility_automation">"Automation"</string>
+    <string name="setting_title_automation_save">"Let automation apps save without a tap"</string>
+    <string name="setting_title_automation_code">"Show the code"</string>
+    <string name="title_automation_code">"Automation code"</string>
+    <string name="message_automation_code">"Put this code in the code extra of every save request. Any app that has it can add transactions while the switch is on.\n\n%1$s"</string>
+    <string name="action_copy">"Copy"</string>
+    <string name="action_new_code">"New code"</string>
     <string name="setting_subtitle_user_interface">"Personalize it as you want"</string>
     <string name="setting_subtitle_utility">"Setup the available tools"</string>
     <string name="setting_subtitle_database">"Manage your data"</string>
