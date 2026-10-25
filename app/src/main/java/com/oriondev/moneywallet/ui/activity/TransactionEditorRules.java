@@ -52,6 +52,8 @@ public class TransactionEditorRules implements Serializable {
     public static final int DEBT_RECEIVE = 2;
     public static final int DEBT_PAY_IN_FULL = 3;
     public static final int DEBT_RECEIVE_IN_FULL = 4;
+    public static final int DEBT_ADD_INTEREST_PAID = 5;
+    public static final int DEBT_ADD_INTEREST_RECEIVED = 6;
 
     public static final int SAVING_DEPOSIT = 1;
     public static final int SAVING_WITHDRAW = 2;
@@ -61,7 +63,7 @@ public class TransactionEditorRules implements Serializable {
     private Long mDebtId = null;
     private Long mSavingId = null;
     private boolean mSavingCompleted = false;
-    private boolean mDebtPayment = false;
+    private boolean mHeldToDebtCurrency = false;
     private boolean mRecurrent = false;
 
     public int getType() {
@@ -96,12 +98,12 @@ public class TransactionEditorRules implements Serializable {
         mSavingCompleted = savingCompleted;
     }
 
-    public boolean isDebtPayment() {
-        return mDebtPayment;
+    public boolean isHeldToDebtCurrency() {
+        return mHeldToDebtCurrency;
     }
 
-    public void setDebtPayment(boolean debtPayment) {
-        mDebtPayment = debtPayment;
+    public void setHeldToDebtCurrency(boolean heldToDebtCurrency) {
+        mHeldToDebtCurrency = heldToDebtCurrency;
     }
 
     public void setRecurrent(boolean recurrent) {
@@ -138,18 +140,26 @@ public class TransactionEditorRules implements Serializable {
     }
 
     /**
-     * A payment may go to any wallet held in the currency of the debt it pays. A debt's master
-     * transaction carries the same TYPE_DEBT and is told apart only by its category, and editing
-     * its wallet moves the debt itself through syncDebtOfMasterTransaction, so it is not limited.
+     * A payment or an interest row may go to any wallet held in the currency of its debt. A debt's
+     * master transaction carries the same TYPE_DEBT and is told apart only by its category, and
+     * editing its wallet moves the debt itself through syncDebtOfMasterTransaction, so it is not
+     * limited.
      */
     public boolean limitsWalletsToDebtCurrency() {
-        return mType == TYPE_DEBT && mDebtPayment;
+        return mType == TYPE_DEBT && mHeldToDebtCurrency;
     }
 
     /** Whether a category this row is filed under makes it a payment and not a debt's own row. */
     public static boolean isDebtPaymentTag(String categoryTag) {
         return Contract.CategoryTag.PAID_DEBT.equals(categoryTag)
                 || Contract.CategoryTag.PAID_CREDIT.equals(categoryTag);
+    }
+
+    /** Whether a category this row is filed under keeps it in the currency of its debt. */
+    public static boolean isHeldToDebtCurrency(String categoryTag) {
+        return isDebtPaymentTag(categoryTag)
+                || Contract.CategoryTag.DEBT_INTEREST.equals(categoryTag)
+                || Contract.CategoryTag.CREDIT_INTEREST.equals(categoryTag);
     }
 
     /**
@@ -160,9 +170,11 @@ public class TransactionEditorRules implements Serializable {
         switch (debtAction) {
             case DEBT_PAY:
             case DEBT_PAY_IN_FULL:
+            case DEBT_ADD_INTEREST_PAID:
                 return Contract.DebtType.DEBT;
             case DEBT_RECEIVE:
             case DEBT_RECEIVE_IN_FULL:
+            case DEBT_ADD_INTEREST_RECEIVED:
                 return Contract.DebtType.CREDIT;
             default:
                 return null;
@@ -182,16 +194,22 @@ public class TransactionEditorRules implements Serializable {
         return Math.max(target - Math.abs(progress), 0L);
     }
 
-    /** The category a new debt row is filed under, or null when the kind is not known. */
-    public static String debtCategoryTag(Contract.DebtType debtType) {
+    /**
+     * The category a new debt row is filed under, or null when the kind is not known. The kind
+     * comes from the debt row when it loads, so an interest action filed against a debt of the
+     * other kind still lands under that debt's own interest category.
+     */
+    public static String debtCategoryTag(Contract.DebtType debtType, int debtAction) {
         if (debtType == null) {
             return null;
         }
+        boolean interest = debtAction == DEBT_ADD_INTEREST_PAID
+                || debtAction == DEBT_ADD_INTEREST_RECEIVED;
         switch (debtType) {
             case DEBT:
-                return Contract.CategoryTag.PAID_DEBT;
+                return interest ? Contract.CategoryTag.DEBT_INTEREST : Contract.CategoryTag.PAID_DEBT;
             case CREDIT:
-                return Contract.CategoryTag.PAID_CREDIT;
+                return interest ? Contract.CategoryTag.CREDIT_INTEREST : Contract.CategoryTag.PAID_CREDIT;
             default:
                 return null;
         }

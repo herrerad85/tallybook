@@ -131,6 +131,8 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     public static final int DEBT_RECEIVE = TransactionEditorRules.DEBT_RECEIVE;
     public static final int DEBT_PAY_IN_FULL = TransactionEditorRules.DEBT_PAY_IN_FULL;
     public static final int DEBT_RECEIVE_IN_FULL = TransactionEditorRules.DEBT_RECEIVE_IN_FULL;
+    public static final int DEBT_ADD_INTEREST_PAID = TransactionEditorRules.DEBT_ADD_INTEREST_PAID;
+    public static final int DEBT_ADD_INTEREST_RECEIVED = TransactionEditorRules.DEBT_ADD_INTEREST_RECEIVED;
 
     public static final int SAVING_DEPOSIT = TransactionEditorRules.SAVING_DEPOSIT;
     public static final int SAVING_WITHDRAW = TransactionEditorRules.SAVING_WITHDRAW;
@@ -756,7 +758,8 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                     if (debtType == null) {
                         debtType = TransactionEditorRules.debtTypeFor(intent.getIntExtra(DEBT_ACTION, 0));
                     }
-                    String debtTag = TransactionEditorRules.debtCategoryTag(debtType);
+                    String debtTag = TransactionEditorRules.debtCategoryTag(debtType,
+                            intent.getIntExtra(DEBT_ACTION, 0));
                     if (debtTag != null) {
                         String[] whereArgs = new String[] {debtTag};
                         cursor = contentResolver.query(uri, projection, where, whereArgs, null);
@@ -939,7 +942,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
             mSplitPartsEditor.restoreState(savedInstanceState);
         }
         if (savedInstanceState == null && category != null) {
-            mRules.setDebtPayment(TransactionEditorRules.isDebtPaymentTag(category.getTag()));
+            mRules.setHeldToDebtCurrency(TransactionEditorRules.isHeldToDebtCurrency(category.getTag()));
         }
         // depending on the type we must hide pickers that are now allowed to be changed
         if (mRules.hidesCategoryField()) {

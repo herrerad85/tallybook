@@ -27,7 +27,7 @@ public class TransactionEditorRulesTest {
     private static TransactionEditorRules rules(int type, boolean debtPayment) {
         TransactionEditorRules rules = new TransactionEditorRules();
         rules.setType(type);
-        rules.setDebtPayment(debtPayment);
+        rules.setHeldToDebtCurrency(debtPayment);
         return rules;
     }
 
@@ -123,7 +123,7 @@ public class TransactionEditorRulesTest {
     @Test
     public void theDebtPaymentFlagStartsFalse() {
         assertFalse("a debt row the flag was never worked out for keeps its wallet field",
-                new TransactionEditorRules().isDebtPayment());
+                new TransactionEditorRules().isHeldToDebtCurrency());
     }
 
     // ---- what makes a row a payment --------------------------------------------------------
@@ -143,6 +143,25 @@ public class TransactionEditorRulesTest {
         assertFalse("a tag read off a name column, or a fifth constructor argument dropped, "
                 + "leaves this null", TransactionEditorRules.isDebtPaymentTag(null));
         assertFalse(TransactionEditorRules.isDebtPaymentTag("Groceries"));
+    }
+
+    @Test
+    public void interestIsNotAPayment() {
+        assertFalse(TransactionEditorRules.isDebtPaymentTag(read(Contract.CategoryTag.DEBT_INTEREST)));
+        assertFalse(TransactionEditorRules.isDebtPaymentTag(read(Contract.CategoryTag.CREDIT_INTEREST)));
+    }
+
+    @Test
+    public void paymentsAndInterestAreHeldToTheDebtsCurrency() {
+        assertTrue(TransactionEditorRules.isHeldToDebtCurrency(read(Contract.CategoryTag.PAID_DEBT)));
+        assertTrue(TransactionEditorRules.isHeldToDebtCurrency(read(Contract.CategoryTag.PAID_CREDIT)));
+        assertTrue(TransactionEditorRules.isHeldToDebtCurrency(read(Contract.CategoryTag.DEBT_INTEREST)));
+        assertTrue(TransactionEditorRules.isHeldToDebtCurrency(read(Contract.CategoryTag.CREDIT_INTEREST)));
+        assertFalse("editing a master transaction's wallet moves the debt itself",
+                TransactionEditorRules.isHeldToDebtCurrency(Contract.CategoryTag.DEBT));
+        assertFalse(TransactionEditorRules.isHeldToDebtCurrency(Contract.CategoryTag.CREDIT));
+        assertFalse(TransactionEditorRules.isHeldToDebtCurrency(null));
+        assertFalse(TransactionEditorRules.isHeldToDebtCurrency("Groceries"));
     }
 
     // ---- which category a new row is filed under -------------------------------------------
@@ -166,6 +185,14 @@ public class TransactionEditorRulesTest {
     }
 
     @Test
+    public void addingInterestNamesTheKindOfDebt() {
+        assertEquals(Contract.DebtType.DEBT,
+                TransactionEditorRules.debtTypeFor(TransactionEditorRules.DEBT_ADD_INTEREST_PAID));
+        assertEquals(Contract.DebtType.CREDIT,
+                TransactionEditorRules.debtTypeFor(TransactionEditorRules.DEBT_ADD_INTEREST_RECEIVED));
+    }
+
+    @Test
     public void onlyTheInFullActionsSettleInFull() {
         assertTrue(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_PAY_IN_FULL));
         assertTrue(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_RECEIVE_IN_FULL));
@@ -173,6 +200,9 @@ public class TransactionEditorRulesTest {
                 TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_PAY));
         assertFalse(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_RECEIVE));
         assertFalse(TransactionEditorRules.settlesInFull(0));
+        assertFalse("interest opens on nothing",
+                TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_ADD_INTEREST_PAID));
+        assertFalse(TransactionEditorRules.settlesInFull(TransactionEditorRules.DEBT_ADD_INTEREST_RECEIVED));
     }
 
     // ---- what settling a debt in full opens on ---------------------------------------------
@@ -197,12 +227,36 @@ public class TransactionEditorRulesTest {
 
     @Test
     public void eachKindOfDebtIsFiledUnderItsOwnPaidCategory() {
-        assertEquals(Contract.CategoryTag.PAID_DEBT,
-                TransactionEditorRules.debtCategoryTag(Contract.DebtType.DEBT));
-        assertEquals(Contract.CategoryTag.PAID_CREDIT,
-                TransactionEditorRules.debtCategoryTag(Contract.DebtType.CREDIT));
+        assertEquals(Contract.CategoryTag.PAID_DEBT, TransactionEditorRules
+                .debtCategoryTag(Contract.DebtType.DEBT, TransactionEditorRules.DEBT_PAY));
+        assertEquals(Contract.CategoryTag.PAID_DEBT, TransactionEditorRules
+                .debtCategoryTag(Contract.DebtType.DEBT, TransactionEditorRules.DEBT_PAY_IN_FULL));
+        assertEquals(Contract.CategoryTag.PAID_CREDIT, TransactionEditorRules
+                .debtCategoryTag(Contract.DebtType.CREDIT, TransactionEditorRules.DEBT_RECEIVE));
+        assertEquals("a launch naming no action is a payment, as it was before interest",
+                Contract.CategoryTag.PAID_CREDIT,
+                TransactionEditorRules.debtCategoryTag(Contract.DebtType.CREDIT, 0));
         assertNull("no kind, no category, and the editor runs no query",
-                TransactionEditorRules.debtCategoryTag(null));
+                TransactionEditorRules.debtCategoryTag(null, TransactionEditorRules.DEBT_PAY));
+    }
+
+    @Test
+    public void eachKindOfDebtFilesInterestUnderItsOwnInterestCategory() {
+        assertEquals(Contract.CategoryTag.DEBT_INTEREST, TransactionEditorRules
+                .debtCategoryTag(Contract.DebtType.DEBT, TransactionEditorRules.DEBT_ADD_INTEREST_PAID));
+        assertEquals(Contract.CategoryTag.CREDIT_INTEREST, TransactionEditorRules
+                .debtCategoryTag(Contract.DebtType.CREDIT, TransactionEditorRules.DEBT_ADD_INTEREST_RECEIVED));
+        assertNull(TransactionEditorRules
+                .debtCategoryTag(null, TransactionEditorRules.DEBT_ADD_INTEREST_PAID));
+    }
+
+    @Test
+    public void theDebtsOwnKindWinsOverTheInterestActionsKind() {
+        assertEquals("a debt's interest is an expense, whichever interest action opened it",
+                Contract.CategoryTag.DEBT_INTEREST, TransactionEditorRules
+                        .debtCategoryTag(Contract.DebtType.DEBT, TransactionEditorRules.DEBT_ADD_INTEREST_RECEIVED));
+        assertEquals(Contract.CategoryTag.CREDIT_INTEREST, TransactionEditorRules
+                .debtCategoryTag(Contract.DebtType.CREDIT, TransactionEditorRules.DEBT_ADD_INTEREST_PAID));
     }
 
     @Test
@@ -445,7 +499,7 @@ public class TransactionEditorRulesTest {
         before.setDebtId(7L);
         before.setSavingId(88L);
         before.setSavingCompleted(true);
-        before.setDebtPayment(true);
+        before.setHeldToDebtCurrency(true);
         TransactionEditorRules after = roundTrip(before);
         assertEquals(TransactionEditorRules.TYPE_DEBT, after.getType());
         assertEquals(Long.valueOf(7L), after.getDebtId());
@@ -453,7 +507,7 @@ public class TransactionEditorRulesTest {
                 + "how a lost saving id would read", Long.valueOf(88L), after.getSavingId());
         assertTrue(after.isSavingCompleted());
         assertTrue("losing this gives a payment its wallet field back on the next rotation",
-                after.isDebtPayment());
+                after.isHeldToDebtCurrency());
     }
 
     private static TransactionEditorRules roundTrip(TransactionEditorRules rules) throws Exception {

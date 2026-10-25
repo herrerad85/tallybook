@@ -481,6 +481,78 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
+    public void interestOnADebtIsAnExpenseHeldToTheDebtsCurrencyAndKeptOnReopen() {
+        assertInterestRow(Contract.DebtType.DEBT, NewEditTransactionActivity.DEBT_ADD_INTEREST_PAID,
+                Contract.CategoryTag.DEBT_INTEREST, Contract.Direction.EXPENSE);
+    }
+
+    @Test
+    public void interestOnACreditIsIncomeHeldToTheDebtsCurrencyAndKeptOnReopen() {
+        assertInterestRow(Contract.DebtType.CREDIT, NewEditTransactionActivity.DEBT_ADD_INTEREST_RECEIVED,
+                Contract.CategoryTag.CREDIT_INTEREST, Contract.Direction.INCOME);
+    }
+
+    @Test
+    public void interestPaidSentForACreditIsStillIncome() {
+        assertInterestRow(Contract.DebtType.CREDIT, NewEditTransactionActivity.DEBT_ADD_INTEREST_PAID,
+                Contract.CategoryTag.CREDIT_INTEREST, Contract.Direction.INCOME);
+    }
+
+    @Test
+    public void interestReceivedSentForADebtIsStillAnExpense() {
+        assertInterestRow(Contract.DebtType.DEBT, NewEditTransactionActivity.DEBT_ADD_INTEREST_RECEIVED,
+                Contract.CategoryTag.DEBT_INTEREST, Contract.Direction.EXPENSE);
+    }
+
+    private void assertInterestRow(Contract.DebtType type, int action, String tag, int direction) {
+        long debt = insertDebt(type, mEuroWallet, null, null);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(debtIntent(debt, action))) {
+            scenario.onActivity(activity -> {
+                assertEquals("interest opens on nothing", 0L, moneyPicker(activity).getCurrentMoney());
+                assertWalletPickerHeldToEuro(activity);
+                moneyPicker(activity).setMoney(300L);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        Cursor row = newestTransaction();
+        long id = row.getLong(row.getColumnIndex(Contract.Transaction.ID));
+        assertInterestValues(row, debt, tag, direction);
+        row.close();
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(id))) {
+            scenario.onActivity(activity -> {
+                assertWalletPickerHeldToEuro(activity);
+                moneyPicker(activity).setMoney(400L);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        row = newestTransaction();
+        assertEquals(id, row.getLong(row.getColumnIndex(Contract.Transaction.ID)));
+        assertEquals(400L, row.getLong(row.getColumnIndex(Contract.Transaction.MONEY)));
+        assertInterestValues(row, debt, tag, direction);
+        row.close();
+    }
+
+    private static void assertInterestValues(Cursor row, long debt, String tag, int direction) {
+        assertEquals(tag, row.getString(row.getColumnIndex(Contract.Transaction.CATEGORY_TAG)));
+        assertEquals(NewEditTransactionActivity.TYPE_DEBT, row.getInt(row.getColumnIndex(Contract.Transaction.TYPE)));
+        assertEquals(debt, row.getLong(row.getColumnIndex(Contract.Transaction.DEBT_ID)));
+        assertEquals(direction, row.getInt(row.getColumnIndex(Contract.Transaction.DIRECTION)));
+    }
+
+    private static void assertWalletPickerHeldToEuro(NewEditTransactionActivity activity) {
+        activity.findViewById(R.id.wallet_edit_text).performClick();
+        shadowOf(Looper.getMainLooper()).idle();
+        List<String> names = walletPickerNames(activity);
+        assertTrue(names.contains("Cash"));
+        assertFalse("an interest row counts toward its debt, so it stays in the debt's currency",
+                names.contains("Bank"));
+    }
+
+    @Test
     public void aDebtLaunchWithNoDebtRowFilesUnderTheActionItNames() {
         Intent intent = newItemIntent();
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
@@ -1719,13 +1791,17 @@ public class NewEditTransactionActivityTest {
     }
 
     private long insertDebt(long walletId, Long personId, Long placeId) {
+        return insertDebt(Contract.DebtType.DEBT, walletId, personId, placeId);
+    }
+
+    private long insertDebt(Contract.DebtType type, long walletId, Long personId, Long placeId) {
         ContentValues values = new ContentValues();
         if (personId != null) {
             values.put(Contract.Debt.PEOPLE_IDS,
                     Contract.getObjectIds(new Person[] {new Person(personId, "Bob", null)}));
         }
         values.put(Contract.Debt.PLACE_ID, placeId);
-        values.put(Contract.Debt.TYPE, Contract.DebtType.DEBT.getValue());
+        values.put(Contract.Debt.TYPE, type.getValue());
         values.put(Contract.Debt.ICON, ICON);
         values.put(Contract.Debt.DESCRIPTION, "Loan");
         values.put(Contract.Debt.DATE, DateUtils.getSQLDateString(daysFromNow(-3)));
