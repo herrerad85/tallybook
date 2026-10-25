@@ -260,6 +260,7 @@ public class Contract {
         public static final String MONEY = Schema.Debt.MONEY;
         public static final String ARCHIVED = Schema.Debt.ARCHIVED;
         public static final String PROGRESS = "debt_" + Schema.Alias.PROGRESS;
+        public static final String INTEREST = "debt_" + Schema.Alias.INTEREST;
         public static final String PEOPLE_IDS = "debt_person_ids";
         public static final String TAG = Schema.Debt.TAG;
         public static final String INSERT_MASTER_TRANSACTION = "action_insert_master_transaction";

@@ -231,6 +231,77 @@ public class DebtPaymentWalletCurrencyTest {
         assertEquals("USD", currencyOf(wallet));
     }
 
+    @Test
+    public void interestIntoAnotherWalletOfTheDebtsCurrencyIsAccepted() {
+        long interest = mDatabase.insertTransaction(interest(mOtherEuroWallet));
+        assertTrue(interest > 0);
+        assertEquals(mOtherEuroWallet, walletOf(interest));
+    }
+
+    @Test
+    public void interestIntoAWalletOfAnotherCurrencyIsRefusedAndWritesNothing() {
+        try {
+            mDatabase.insertTransaction(interest(mDollarWallet));
+            fail("Interest on a euro debt was filed in a dollar wallet");
+        } catch (SQLiteDataException e) {
+            assertEquals(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, e.getErrorCode());
+        }
+        assertEquals(0, paymentsOf(mDebt));
+    }
+
+    @Test
+    public void creditInterestIntoAWalletOfAnotherCurrencyIsRefusedAndWritesNothing() {
+        long credit = insertCredit(mEuroWallet);
+        ContentValues interest = interest(mDollarWallet);
+        interest.put(Contract.Transaction.DEBT_ID, credit);
+        interest.put(Contract.Transaction.CATEGORY_ID, systemCategory(Contract.CategoryTag.CREDIT_INTEREST));
+        interest.put(Contract.Transaction.DIRECTION, Contract.Direction.INCOME);
+        try {
+            mDatabase.insertTransaction(interest);
+            fail("Interest on a euro credit was filed in a dollar wallet");
+        } catch (SQLiteDataException e) {
+            assertEquals(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, e.getErrorCode());
+        }
+        assertEquals(0, paymentsOf(credit));
+    }
+
+    @Test
+    public void movingInterestToAWalletOfAnotherCurrencyIsRefused() {
+        long interest = mDatabase.insertTransaction(interest(mEuroWallet));
+        ContentValues moved = new ContentValues();
+        moved.put(Contract.Transaction.WALLET_ID, mDollarWallet);
+        try {
+            mDatabase.updateTransaction(interest, moved);
+            fail("Interest on a euro debt was moved to a dollar wallet");
+        } catch (SQLiteDataException e) {
+            assertEquals(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, e.getErrorCode());
+        }
+        assertEquals(mEuroWallet, walletOf(interest));
+    }
+
+    @Test
+    public void changingTheCurrencyOfTheWalletInterestSitsInIsRefused() {
+        assertTrue(mDatabase.insertTransaction(interest(mOtherEuroWallet)) > 0);
+        assertCurrencyChangeIsRefused(mOtherEuroWallet);
+    }
+
+    @Test
+    public void changingTheCurrencyOfTheWalletCreditInterestSitsInIsRefused() {
+        long credit = insertCredit(mEuroWallet);
+        ContentValues interest = interest(mOtherEuroWallet);
+        interest.put(Contract.Transaction.DEBT_ID, credit);
+        interest.put(Contract.Transaction.CATEGORY_ID, systemCategory(Contract.CategoryTag.CREDIT_INTEREST));
+        interest.put(Contract.Transaction.DIRECTION, Contract.Direction.INCOME);
+        assertTrue(mDatabase.insertTransaction(interest) > 0);
+        assertCurrencyChangeIsRefused(mOtherEuroWallet);
+    }
+
+    @Test
+    public void changingTheCurrencyOfTheDebtsWalletIsRefusedWhileInterestSitsElsewhere() {
+        assertTrue(mDatabase.insertTransaction(interest(mOtherEuroWallet)) > 0);
+        assertCurrencyChangeIsRefused(mEuroWallet);
+    }
+
     /** Tries to move a euro wallet to dollars and checks it is refused and still in euros. */
     private void assertCurrencyChangeIsRefused(long walletId) {
         ContentValues contentValues = new ContentValues();
@@ -258,6 +329,14 @@ public class DebtPaymentWalletCurrencyTest {
         contentValues.put(Contract.Transaction.DEBT_ID, mDebt);
         contentValues.put(Contract.Transaction.CONFIRMED, true);
         contentValues.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        return contentValues;
+    }
+
+    private ContentValues interest(long walletId) {
+        ContentValues contentValues = payment(walletId, "note");
+        contentValues.put(Contract.Transaction.MONEY, 40L);
+        contentValues.put(Contract.Transaction.DESCRIPTION, "interest");
+        contentValues.put(Contract.Transaction.CATEGORY_ID, systemCategory(Contract.CategoryTag.DEBT_INTEREST));
         return contentValues;
     }
 

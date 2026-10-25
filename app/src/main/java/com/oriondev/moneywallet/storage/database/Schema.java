@@ -40,6 +40,7 @@ package com.oriondev.moneywallet.storage.database;
     /*package-local*/ static final class Alias {
         /*package-local*/ static final String TOTAL_MONEY = "total_money";
         /*package-local*/ static final String PROGRESS = "progress";
+        /*package-local*/ static final String INTEREST = "interest";
         /*package-local*/ static final String CATEGORY_GROUP_ID = "category_group_id";
         /*package-local*/ static final String CATEGORY_GROUP_NAME = "category_group_name";
         /*package-local*/ static final String CATEGORY_GROUP_INDEX = "category_group_index";

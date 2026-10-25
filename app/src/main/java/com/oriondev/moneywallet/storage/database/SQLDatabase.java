@@ -1243,8 +1243,8 @@ import java.util.function.Supplier;
      *
      * @param contentValues object which contains all the column values.
      * @return the id of the created transaction if success, -1 if failure.
-     * @throws SQLiteDataException if it is a debt payment in a wallet of another currency than the
-     *                             debt's.
+     * @throws SQLiteDataException if it is a debt payment or interest in a wallet of another
+     *                             currency than the debt's.
      */
     /*package-local*/ long insertTransaction(ContentValues contentValues) {
         checkDebtPaymentWalletCurrency(contentValues.getAsLong(Contract.Transaction.DEBT_ID),
@@ -2977,10 +2977,12 @@ import java.util.function.Supplier;
                 Schema.Debt.ARCHIVED + " AS " + Contract.Debt.ARCHIVED + ", " +
                 Schema.Debt.TAG + " AS " + Contract.Debt.TAG + ", " +
                 "_debt_progress AS " + Contract.Debt.PROGRESS + ",\n" +
+                "_debt_interest AS " + Contract.Debt.INTEREST + ",\n" +
                 "GROUP_CONCAT('<' || _person_id || '>') AS " + Contract.Debt.PEOPLE_IDS + "\n" +
                 "FROM (\n" +
                 "\tSELECT d.*, w.*, p.*,\n" +
                 "\tt._debt_progress,\n" +
+                "\ti._debt_interest,\n" +
                 "\tpe.person_id AS _person_id\n" +
                 "\tFROM debts AS d\n" +
                 "\t\tLEFT JOIN debt_people AS dp ON d.debt_id = dp._debt AND dp.deleted = 0\n" +
@@ -2998,6 +3000,16 @@ import java.util.function.Supplier;
                 "\t\t\t) AND DATETIME(t.transaction_date) <= DATETIME('now', 'localtime')\n" +
                 "\t\t\tGROUP BY _debt_id\n" +
                 "\t\t) AS t ON t._debt_id = d.debt_id\n" +
+                "\t\tLEFT JOIN (\n" +
+                "\t\t\tSELECT transaction_debt AS _debt_id,\n" +
+                "\t\t\tSUM(((transaction_direction * 2) - 1) * transaction_money) AS _debt_interest\n" +
+                "\t\t\tFROM transactions AS t\n" +
+                "\t\t\tLEFT JOIN categories AS c ON t.transaction_category = c.category_id AND c.deleted = 0\n" +
+                "\t\t\tWHERE t.deleted = 0 AND t.transaction_confirmed = 1 AND c.category_tag IN ('" +
+                Schema.CategoryTag.DEBT_INTEREST + "', '" + Schema.CategoryTag.CREDIT_INTEREST + "')\n" +
+                "\t\t\tAND DATETIME(t.transaction_date) <= DATETIME('now', 'localtime')\n" +
+                "\t\t\tGROUP BY _debt_id\n" +
+                "\t\t) AS i ON i._debt_id = d.debt_id\n" +
                 "\t\tWHERE d.deleted = 0\n" +
                 ")\n" +
                 "GROUP BY debt_id";
@@ -4443,16 +4455,17 @@ import java.util.function.Supplier;
      * @param debtId id of the debt the row is filed against, or null.
      * @param categoryId id of the category the row is filed under, or null.
      * @param walletId id of the wallet the row names, or null.
-     * @throws SQLiteDataException if the row is a payment and its wallet is in a currency other
-     *                             than the one the debt's wallet is in.
+     * @throws SQLiteDataException if the row is a payment or interest and its wallet is in a
+     *                             currency other than the one the debt's wallet is in.
      */
     private void checkDebtPaymentWalletCurrency(Long debtId, Long categoryId, Long walletId) {
         if (debtId == null || categoryId == null || walletId == null) {
             return;
         }
-        Long paidDebtCategoryId = getSystemCategoryId(Schema.CategoryTag.PAID_DEBT);
-        Long paidCreditCategoryId = getSystemCategoryId(Schema.CategoryTag.PAID_CREDIT);
-        if (!categoryId.equals(paidDebtCategoryId) && !categoryId.equals(paidCreditCategoryId)) {
+        if (!categoryId.equals(getSystemCategoryId(Schema.CategoryTag.PAID_DEBT))
+                && !categoryId.equals(getSystemCategoryId(Schema.CategoryTag.PAID_CREDIT))
+                && !categoryId.equals(getSystemCategoryId(Schema.CategoryTag.DEBT_INTEREST))
+                && !categoryId.equals(getSystemCategoryId(Schema.CategoryTag.CREDIT_INTEREST))) {
             return;
         }
         Long debtWalletId = storedWallet(Schema.Debt.TABLE, Schema.Debt.ID, Schema.Debt.WALLET,
@@ -4467,7 +4480,7 @@ import java.util.function.Supplier;
             return;
         }
         String message = String.format(Locale.ENGLISH,
-                "Wallet (id: %d) is in %s and the debt (id: %d) it pays is in %s",
+                "Wallet (id: %d) is in %s and the debt (id: %d) it is filed against is in %s",
                 walletId, walletCurrency, debtId, debtCurrency);
         throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
     }
@@ -4480,13 +4493,15 @@ import java.util.function.Supplier;
      * too, since they join the sum once they are confirmed.
      *
      * @param walletId id of the wallet whose currency is changing.
-     * @throws SQLiteDataException if the wallet holds a payment whose debt is in another wallet,
-     *                             or a debt with a payment in another wallet.
+     * @throws SQLiteDataException if the wallet holds a payment or interest whose debt is in
+     *                             another wallet, or a debt with a payment or interest in another
+     *                             wallet.
      */
     private void checkSplitDebtPaymentWallet(long walletId) {
         if (isSplitWallet(Schema.Debt.TABLE, Schema.Transaction.DEBT, Schema.Debt.ID,
-                Schema.Debt.WALLET, Schema.Debt.DELETED, Schema.CategoryTag.PAID_DEBT,
-                Schema.CategoryTag.PAID_CREDIT, walletId)) {
+                Schema.Debt.WALLET, Schema.Debt.DELETED, walletId, Schema.CategoryTag.PAID_DEBT,
+                Schema.CategoryTag.PAID_CREDIT, Schema.CategoryTag.DEBT_INTEREST,
+                Schema.CategoryTag.CREDIT_INTEREST)) {
             String message = String.format(Locale.ENGLISH,
                     "Wallet (id: %d) holds a debt or a debt payment whose other half is in another wallet",
                     walletId);
@@ -4496,8 +4511,8 @@ import java.util.function.Supplier;
 
     private void checkSplitSavingWallet(long walletId) {
         if (isSplitWallet(Schema.Saving.TABLE, Schema.Transaction.SAVING, Schema.Saving.ID,
-                Schema.Saving.WALLET, Schema.Saving.DELETED, Schema.CategoryTag.SAVING_DEPOSIT,
-                Schema.CategoryTag.SAVING_WITHDRAW, walletId)) {
+                Schema.Saving.WALLET, Schema.Saving.DELETED, walletId,
+                Schema.CategoryTag.SAVING_DEPOSIT, Schema.CategoryTag.SAVING_WITHDRAW)) {
             String message = String.format(Locale.ENGLISH,
                     "Wallet (id: %d) holds a saving or a saving transaction whose other half is in another wallet",
                     walletId);
@@ -4509,22 +4524,24 @@ import java.util.function.Supplier;
      * A system category that cannot be found binds as the text null and matches no row.
      */
     private boolean isSplitWallet(String table, String ownerColumn, String idColumn,
-                                  String walletColumn, String deletedColumn, String firstTag,
-                                  String secondTag, long walletId) {
+                                  String walletColumn, String deletedColumn, long walletId,
+                                  String... tags) {
+        String[] args = new String[tags.length + 2];
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < tags.length; i++) {
+            placeholders.append(i == 0 ? "?" : ", ?");
+            args[i] = String.valueOf(getSystemCategoryId(tags[i]));
+        }
+        args[tags.length] = String.valueOf(walletId);
+        args[tags.length + 1] = String.valueOf(walletId);
         String query = "SELECT 1 FROM " + Schema.Transaction.TABLE + " AS t JOIN " + table +
                 " AS o ON t." + ownerColumn + " = o." + idColumn + " JOIN " +
                 Schema.Wallet.TABLE + " AS w ON o." + walletColumn + " = w." + Schema.Wallet.ID +
                 " WHERE t." + Schema.Transaction.DELETED + " = 0 AND o." + deletedColumn +
                 " = 0 AND w." + Schema.Wallet.DELETED + " = 0 AND t." +
-                Schema.Transaction.CATEGORY + " IN (?, ?) AND t." + Schema.Transaction.WALLET +
+                Schema.Transaction.CATEGORY + " IN (" + placeholders + ") AND t." + Schema.Transaction.WALLET +
                 " != o." + walletColumn + " AND (t." + Schema.Transaction.WALLET + " = ? OR o." +
                 walletColumn + " = ?) LIMIT 1";
-        String[] args = new String[] {
-                String.valueOf(getSystemCategoryId(firstTag)),
-                String.valueOf(getSystemCategoryId(secondTag)),
-                String.valueOf(walletId),
-                String.valueOf(walletId)
-        };
         Cursor cursor = getReadableDatabase().rawQuery(query, args);
         boolean split = false;
         if (cursor != null) {
