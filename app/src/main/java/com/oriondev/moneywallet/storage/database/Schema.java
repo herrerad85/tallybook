@@ -359,6 +359,8 @@ package com.oriondev.moneywallet.storage.database;
         /*package-local*/ static final String TAX = "system::tax";
         /*package-local*/ static final String SAVING_DEPOSIT = "system::deposit";
         /*package-local*/ static final String SAVING_WITHDRAW = "system::withdraw";
+        /*package-local*/ static final String DEBT_INTEREST = "system::debt_interest";
+        /*package-local*/ static final String CREDIT_INTEREST = "system::credit_interest";
     }
 
     /*package-local*/ static final class BudgetType {

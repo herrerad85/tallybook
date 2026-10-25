@@ -3200,12 +3200,12 @@ public class SearchScreenTest {
     }
 
     /**
-     * The names, then the nine system categories, which every fresh database holds.
+     * The names, then the eleven system categories, which every fresh database holds.
      */
     private static List<String> withSystem(String... names) {
         List<String> all = new ArrayList<>(Arrays.asList(names));
-        all.addAll(Arrays.asList("Credit", "Credit paid", "Debt", "Debt paid", "Deposit", "Tax",
-                "Transfer", "Transfer tax", "Withdraw"));
+        all.addAll(Arrays.asList("Credit", "Credit paid", "Debt", "Debt paid", "Deposit",
+                "Interest paid", "Interest received", "Tax", "Transfer", "Transfer tax", "Withdraw"));
         return all;
     }
 

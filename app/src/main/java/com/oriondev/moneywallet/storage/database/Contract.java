@@ -753,6 +753,8 @@ public class Contract {
         public static final String TAX = Schema.CategoryTag.TAX;
         public static final String SAVING_DEPOSIT = Schema.CategoryTag.SAVING_DEPOSIT;
         public static final String SAVING_WITHDRAW = Schema.CategoryTag.SAVING_WITHDRAW;
+        public static final String DEBT_INTEREST = Schema.CategoryTag.DEBT_INTEREST;
+        public static final String CREDIT_INTEREST = Schema.CategoryTag.CREDIT_INTEREST;
     }
 
     public enum DebtType {

@@ -76,7 +76,7 @@ import java.util.function.Supplier;
     private static final String TAG = "SQLDatabase";
 
     /*package-local*/ static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 10;
+    private static final int DATABASE_VERSION = 11;
 
     /**
      * The currencies whose shipped decimals were taken from the number of digits a country
@@ -493,6 +493,9 @@ import java.util.function.Supplier;
             db.update(Schema.Transaction.TABLE, transaction, Schema.Transaction.TYPE + " = ?",
                     new String[] {String.valueOf(Contract.TransactionType.MODEL)});
         }
+        if (oldVersion < 11) {
+            addSystemCategories(db);
+        }
     }
 
     /**
@@ -555,7 +558,7 @@ import java.util.function.Supplier;
 
     /**
      * Insert system categories inside the database. If a system category is already there,
-     * the operation is aborted. This method must be called whenever a new database is created
+     * it is skipped. This method must be called whenever a new database is created
      * or an update is performed in order to keep the system list updated.
      *
      * @param db instance of the database to write.
@@ -572,7 +575,7 @@ import java.util.function.Supplier;
             contentValues.put(Schema.Category.UUID, category.getUUID());
             contentValues.put(Schema.Category.LAST_EDIT, System.currentTimeMillis());
             contentValues.put(Schema.Category.DELETED, false);
-            db.insertWithOnConflict(Schema.Category.TABLE, null, contentValues, SQLiteDatabase.CONFLICT_ABORT);
+            db.insertWithOnConflict(Schema.Category.TABLE, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
         }
     }
 

@@ -106,10 +106,12 @@ public class Category implements Parcelable, Identifiable {
                         case Contract.CategoryTag.SAVING_DEPOSIT:
                         case Contract.CategoryTag.TAX:
                         case Contract.CategoryTag.TRANSFER_TAX:
+                        case Contract.CategoryTag.DEBT_INTEREST:
                             return 0;
                         case Contract.CategoryTag.DEBT:
                         case Contract.CategoryTag.PAID_CREDIT:
                         case Contract.CategoryTag.SAVING_WITHDRAW:
+                        case Contract.CategoryTag.CREDIT_INTEREST:
                             return 1;
                     }
                 }

@@ -198,9 +198,9 @@ public class AbstractDataImporterTest {
         // same answer, and nothing here can tell them apart.
         String[] expense = {Contract.CategoryTag.CREDIT, Contract.CategoryTag.PAID_DEBT,
                 Contract.CategoryTag.SAVING_DEPOSIT, Contract.CategoryTag.TAX,
-                Contract.CategoryTag.TRANSFER_TAX};
+                Contract.CategoryTag.TRANSFER_TAX, Contract.CategoryTag.DEBT_INTEREST};
         String[] income = {Contract.CategoryTag.DEBT, Contract.CategoryTag.PAID_CREDIT,
-                Contract.CategoryTag.SAVING_WITHDRAW};
+                Contract.CategoryTag.SAVING_WITHDRAW, Contract.CategoryTag.CREDIT_INTEREST};
         for (String tag : expense) {
             assertEquals(tag + " is an expense", 3L, AbstractDataImporter.chooseCategory(
                     cursorOver(row(3L, Contract.CategoryType.SYSTEM, tag)), Contract.Direction.EXPENSE));
@@ -224,8 +224,7 @@ public class AbstractDataImporterTest {
                 40L, AbstractDataImporter.chooseCategory(cursorOver(
                         row(8L, Contract.CategoryType.SYSTEM, Contract.CategoryTag.SAVING_DEPOSIT),
                         row(40L, Contract.CategoryType.INCOME, null)), Contract.Direction.INCOME));
-        assertEquals("the first candidate that holds the row wins, and the query orders them "
-                + "newest first",
+        assertEquals("the first candidate that holds the row wins",
                 40L, AbstractDataImporter.chooseCategory(cursorOver(
                         row(40L, Contract.CategoryType.EXPENSE, null),
                         row(8L, Contract.CategoryType.SYSTEM, Contract.CategoryTag.SAVING_DEPOSIT)),
@@ -330,6 +329,21 @@ public class AbstractDataImporterTest {
         assertEquals("the second income row did not reuse the income category the first made",
                 income, newestTransactionCategory());
         assertEquals(before + 1, countCategories());
+    }
+
+    @Test
+    public void aUserCategoryWinsOverTheSystemOneTheUpgradeAddedAfterIt() {
+        long paid = insertCategory("Interest paid", Contract.CategoryType.EXPENSE);
+        long received = insertCategory("Interest received", Contract.CategoryType.INCOME);
+        TestDatabases.reopenAtVersion(mContext, 10, "DELETE FROM categories WHERE category_tag IN "
+                + "('system::debt_interest', 'system::credit_interest')");
+        assertTrue(systemCategory(Contract.CategoryTag.DEBT_INTEREST) > paid);
+        assertTrue(systemCategory(Contract.CategoryTag.CREDIT_INTEREST) > received);
+
+        importRow("Interest paid", Contract.Direction.EXPENSE);
+        assertEquals(paid, newestTransactionCategory());
+        importRow("Interest received", Contract.Direction.INCOME);
+        assertEquals(received, newestTransactionCategory());
     }
 
     @Test

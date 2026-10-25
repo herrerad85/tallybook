@@ -400,7 +400,8 @@ public abstract class AbstractDataImporter {
                 String.valueOf(type.getValue()),
                 String.valueOf(Contract.CategoryType.SYSTEM.getValue())
         };
-        String sortOrder = Contract.Category.ID + " DESC";
+        String sortOrder = "(" + Contract.Category.TYPE + " = "
+                + Contract.CategoryType.SYSTEM.getValue() + "), " + Contract.Category.ID + " DESC";
         Cursor cursor = contentResolver.query(uri, projection, selection, selectionArgs, sortOrder);
         if (cursor != null) {
             try {
@@ -438,9 +439,11 @@ public abstract class AbstractDataImporter {
             Contract.CategoryTag.SAVING_DEPOSIT,
             Contract.CategoryTag.TAX,
             Contract.CategoryTag.TRANSFER_TAX,
+            Contract.CategoryTag.DEBT_INTEREST,
             Contract.CategoryTag.DEBT,
             Contract.CategoryTag.PAID_CREDIT,
-            Contract.CategoryTag.SAVING_WITHDRAW
+            Contract.CategoryTag.SAVING_WITHDRAW,
+            Contract.CategoryTag.CREDIT_INTEREST
     ));
 
     /**

@@ -44,11 +44,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The nine system categories are seeded once, at database create, with their names resolved
- * against whatever locale the app happened to be in. Almost everything that shows a category
- * reads that stored column, so those names keep the seeding language forever while the rest of
- * the app follows the current one. The exceptions are the recurrent transfer and transfer model
- * rows, which use the string resource directly and were always correct.
+ * The system categories are seeded once, at database create or in the upgrade that added them,
+ * with their names resolved against whatever locale the app happened to be in. Almost everything
+ * that shows a category reads that stored column, so those names keep the seeding language forever
+ * while the rest of the app follows the current one. The exceptions are the recurrent transfer and
+ * transfer model rows, which use the string resource directly and were always correct.
  *
  * This rewrites the stored name, and the icon glyph derived from it, on the rows it still
  * recognises as its own.

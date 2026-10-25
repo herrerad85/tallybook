@@ -199,7 +199,7 @@ public class SQLDatabaseUpgradeTest {
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
         // written out so that the next version bump has to come through here
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertSchemaMatchesAFreshInstall(upgraded);
@@ -212,8 +212,8 @@ public class SQLDatabaseUpgradeTest {
         // the default the app sorts and reads by, and the two budget rule columns come out empty,
         // whichever of those this run added and whichever the fixture arrived with
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE, null));
-        assertEquals("the upgrade neither seeds nor drops categories",
-                3L, count(upgraded, Schema.Category.TABLE, null));
+        assertEquals("the upgrade seeds the missing system categories and drops none",
+                14L, count(upgraded, Schema.Category.TABLE, null));
         assertEquals(5L, count(upgraded, Schema.Budget.TABLE, null));
         assertEquals(Long.valueOf(0L),
                 number(upgraded, "SELECT wallet_index FROM wallets WHERE wallet_id = 1"));
@@ -320,7 +320,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(2L, count(upgraded, Schema.CategoryRule.TABLE, null));
@@ -347,7 +347,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(2L, count(upgraded, Schema.Wallet.TABLE, "wallet_group IS NULL"));
         helper.close();
@@ -371,7 +371,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE, "wallet_group = 'Savings'"));
         assertEquals(1L, count(upgraded, Schema.Wallet.TABLE,
@@ -397,7 +397,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(0L, count(upgraded, "transaction_splits", null));
@@ -426,7 +426,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(2L, count(upgraded, "transaction_splits", null));
@@ -454,7 +454,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals(Long.valueOf(Contract.TransactionType.STANDARD), typeOf(upgraded, 910));
         assertEquals(Long.valueOf(Contract.TransactionType.TRANSFER), typeOf(upgraded, 911));
         assertEquals(Long.valueOf(Contract.TransactionType.DEBT), typeOf(upgraded, 912));
@@ -462,6 +462,53 @@ public class SQLDatabaseUpgradeTest {
         assertEquals(Long.valueOf(Contract.TransactionType.STANDARD), typeOf(upgraded, 914));
         assertEquals(Long.valueOf(EDIT),
                 number(upgraded, "SELECT last_edit FROM transactions WHERE transaction_id = 914"));
+        helper.close();
+    }
+
+    @Test
+    public void aDatabaseFromBeforeTheInterestCategoriesGetsThem() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        old.execSQL("DELETE FROM categories WHERE category_tag IN " +
+                "('system::debt_interest', 'system::credit_interest')");
+        old.execSQL("UPDATE categories SET last_edit = " + EDIT);
+        long paidDebt = number(old,
+                "SELECT category_id FROM categories WHERE category_tag = 'system::paid_debt'");
+        old.setVersion(10);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(11, upgraded.getVersion());
+        assertEquals(11L, count(upgraded, Schema.Category.TABLE,
+                "category_type = " + Schema.CategoryType.SYSTEM));
+        assertEquals(1L, count(upgraded, Schema.Category.TABLE,
+                "category_tag = 'system::debt_interest' AND category_name = 'Interest paid' " +
+                        "AND uuid = 'system-uuid-system::debt_interest'"));
+        assertEquals(1L, count(upgraded, Schema.Category.TABLE,
+                "category_tag = 'system::credit_interest' AND category_name = 'Interest received' " +
+                        "AND uuid = 'system-uuid-system::credit_interest'"));
+        assertEquals(9L, count(upgraded, Schema.Category.TABLE, "last_edit = " + EDIT));
+        assertEquals(Long.valueOf(paidDebt), number(upgraded,
+                "SELECT category_id FROM categories WHERE category_tag = 'system::paid_debt'"));
+        helper.close();
+    }
+
+    @Test
+    public void systemCategoriesSurviveTheUpgradeRunningASecondTime() {
+        SQLDatabase writer = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase old = writer.getWritableDatabase();
+        old.execSQL("UPDATE categories SET last_edit = " + EDIT);
+        old.setVersion(10);
+        writer.close();
+
+        SQLDatabase helper = new SQLDatabase(mContext, NAME);
+        SQLiteDatabase upgraded = helper.getWritableDatabase();
+
+        assertEquals(11, upgraded.getVersion());
+        assertEquals(11L, count(upgraded, Schema.Category.TABLE, null));
+        assertEquals(11L, count(upgraded, Schema.Category.TABLE, "last_edit = " + EDIT));
         helper.close();
     }
 
@@ -534,7 +581,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals("ok", text(upgraded, "PRAGMA integrity_check"));
         assertEquals(0L, count(upgraded, "pragma_foreign_key_check", null));
         assertEquals(7L, count(upgraded, Schema.BudgetCategory.TABLE, null));
@@ -640,7 +687,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -723,7 +770,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase second = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = second.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals(Long.valueOf(2L), decimalsOf(upgraded, "AMD"));
         assertEquals(Long.valueOf(15000000L), startMoneyOf(upgraded, 901));
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
@@ -746,7 +793,7 @@ public class SQLDatabaseUpgradeTest {
         SQLDatabase helper = new SQLDatabase(mContext, NAME);
         SQLiteDatabase upgraded = helper.getWritableDatabase();
 
-        assertEquals(10, upgraded.getVersion());
+        assertEquals(11, upgraded.getVersion());
         assertEquals(Long.valueOf(150000L), moneyOf(upgraded, 910));
         // two tables the rescale reaches after the parts, so a step that stopped at the missing
         // table would leave these where they were

@@ -112,8 +112,8 @@ public class NewEditBudgetActivityTest {
         mWalletA = insertWallet("Cash", "EUR");
         mWalletB = insertWallet("Bank", "EUR");
         mWalletD = insertWallet("Tokyo", "JPY");
-        // nine system categories already hold ids 1 to 9 and eleven throwaway rows carry that on
-        // to 20, so Rent is 21, Food 22, Snacks 23 and Salary 24, and none of them equals a wallet
+        // eleven system categories already hold ids 1 to 11 and eleven throwaway rows carry that on
+        // to 22, so Rent is 23, Food 24, Snacks 25 and Salary 26, and none of them equals a wallet
         // id. Rent goes in first so that the order the ids run in and the order the names run in
         // disagree, and an assertion cannot hold by accident of the names
         for (int i = 0; i < 11; i++) {

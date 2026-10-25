@@ -352,6 +352,8 @@
     <string name="system_category_generic_tax">Tax</string>
     <string name="system_category_saving_in">Deposit</string>
     <string name="system_category_saving_out">Withdraw</string>
+    <string name="system_category_debt_interest">Interest paid</string>
+    <string name="system_category_credit_interest">Interest received</string>
 
     <string name="default_category_tip">"Tip"</string>
     <string name="default_category_prize">"Prize"</string>

@@ -1,6 +1,7 @@
 package com.oriondev.moneywallet.storage.database;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
 import com.oriondev.moneywallet.utils.CurrencyManager;
 
@@ -24,6 +25,19 @@ public final class TestDatabases {
     public static void useFreshDatabase(Context context) {
         SQLDatabase.resetShared(context);
         CurrencyManager.invalidateCache(context);
+    }
+
+    /**
+     * Runs the statements on the shared database, stamps it with the given version and reopens
+     * it, so the next query runs the upgrade from that version the way an installed ledger does.
+     */
+    public static void reopenAtVersion(Context context, int version, String... statements) {
+        SQLiteDatabase database = SQLDatabase.getShared(context).getWritableDatabase();
+        for (String statement : statements) {
+            database.execSQL(statement);
+        }
+        database.setVersion(version);
+        SQLDatabase.resetShared(context);
     }
 
     /**

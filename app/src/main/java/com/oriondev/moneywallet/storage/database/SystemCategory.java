@@ -47,6 +47,8 @@ import java.util.List;
         mSystemCategories.add(new SystemCategory(R.string.system_category_generic_tax, Schema.CategoryTag.TAX, Utils.getRandomMDColor()));
         mSystemCategories.add(new SystemCategory(R.string.system_category_saving_in, Schema.CategoryTag.SAVING_DEPOSIT, Utils.getRandomMDColor()));
         mSystemCategories.add(new SystemCategory(R.string.system_category_saving_out, Schema.CategoryTag.SAVING_WITHDRAW, Utils.getRandomMDColor()));
+        mSystemCategories.add(new SystemCategory(R.string.system_category_debt_interest, Schema.CategoryTag.DEBT_INTEREST, Utils.getRandomMDColor()));
+        mSystemCategories.add(new SystemCategory(R.string.system_category_credit_interest, Schema.CategoryTag.CREDIT_INTEREST, Utils.getRandomMDColor()));
     }
 
     private final int mName;

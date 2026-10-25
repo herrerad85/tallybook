@@ -116,7 +116,8 @@ public class SearchCategoryLoaderTest {
     public void expenseParentsComeFirstThenIncomeThenTheSystemCategoriesWithChildrenUnderTheirParent() {
         List<SearchCategoryLoader.Entry> categories = new SearchCategoryLoader(mContext).loadInBackground();
         assertEquals(Arrays.asList("Food", "Salary", "Credit", "Credit paid", "Debt", "Debt paid",
-                "Deposit", "Tax", "Transfer", "Transfer tax", "Withdraw"), names(categories));
+                "Deposit", "Interest paid", "Interest received", "Tax", "Transfer", "Transfer tax",
+                "Withdraw"), names(categories));
         assertEquals(Arrays.asList("Dining", "Groceries"), names(categories.get(0).getChildren()));
         for (SearchCategoryLoader.Entry category : categories.subList(2, categories.size())) {
             assertEquals(Contract.CategoryType.SYSTEM, category.getType());
