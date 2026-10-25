@@ -17,231 +17,262 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.utils;
+package com.oriondev.moneywallet.utils
 
-import org.dmfs.rfc5545.DateTime;
+import org.dmfs.rfc5545.DateTime
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
+import java.text.DateFormat
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by andrea on 03/03/18.
  */
 
-public class DateUtils {
+object DateUtils {
 
-    private static final String SQL_DATE = "yyyy-MM-dd";
-    private static final String SQL_DATETIME = "yyyy-MM-dd HH:mm:ss";
-    private static final String FILENAME_DATETIME = "yyyy-MM-dd_HH-mm-ss";
+    private const val SQL_DATE = "yyyy-MM-dd"
+    private const val SQL_DATETIME = "yyyy-MM-dd HH:mm:ss"
+    private const val FILENAME_DATETIME = "yyyy-MM-dd_HH-mm-ss"
 
-    public static Date getDateFromSQLDateString(String date) {
-        DateFormat dateFormat = new SimpleDateFormat(SQL_DATE, Locale.ENGLISH);
+    @JvmStatic
+    fun getDateFromSQLDateString(date: String?): Date {
+        val dateFormat: DateFormat = SimpleDateFormat(SQL_DATE, Locale.ENGLISH)
         try {
-            return dateFormat.parse(date);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+            return dateFormat.parse(date)
+        } catch (e: ParseException) {
+            throw RuntimeException(e)
         }
     }
 
-    public static Date getDateFromSQLDateTimeString(String dateTime) {
-        DateFormat dateFormat = new SimpleDateFormat(SQL_DATETIME, Locale.ENGLISH);
+    @JvmStatic
+    fun getDateFromSQLDateTimeString(dateTime: String?): Date {
+        val dateFormat: DateFormat = SimpleDateFormat(SQL_DATETIME, Locale.ENGLISH)
         try {
-            return dateFormat.parse(dateTime);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+            return dateFormat.parse(dateTime)
+        } catch (e: ParseException) {
+            throw RuntimeException(e)
         }
     }
 
-    public static String getDateTimeString(Date date, String pattern) {
-        DateFormat format = new SimpleDateFormat(pattern, Locale.ENGLISH);
-        return format.format(date);
+    @JvmStatic
+    fun getDateTimeString(date: Date?, pattern: String?): String {
+        val format: DateFormat = SimpleDateFormat(pattern, Locale.ENGLISH)
+        return format.format(date)
     }
 
-    public static String getSQLDateString(Date date) {
-        DateFormat format = new SimpleDateFormat(SQL_DATE, Locale.ENGLISH);
-        return format.format(date);
+    @JvmStatic
+    fun getSQLDateString(date: Date?): String {
+        val format: DateFormat = SimpleDateFormat(SQL_DATE, Locale.ENGLISH)
+        return format.format(date)
     }
 
-    public static String getSQLDateTimeString(Date date) {
-        DateFormat format = new SimpleDateFormat(SQL_DATETIME, Locale.ENGLISH);
-        return format.format(date);
+    @JvmStatic
+    fun getSQLDateTimeString(date: Date?): String {
+        val format: DateFormat = SimpleDateFormat(SQL_DATETIME, Locale.ENGLISH)
+        return format.format(date)
     }
 
-    public static String getSQLDateTimeString(long millis) {
-        DateFormat format = new SimpleDateFormat(SQL_DATETIME, Locale.ENGLISH);
-        return format.format(new Date(millis));
+    @JvmStatic
+    fun getSQLDateTimeString(millis: Long): String {
+        val format: DateFormat = SimpleDateFormat(SQL_DATETIME, Locale.ENGLISH)
+        return format.format(Date(millis))
     }
 
-    public static String getFilenameDateTimeString(Date date) {
-        DateFormat format = new SimpleDateFormat(FILENAME_DATETIME, Locale.ENGLISH);
-        return format.format(date);
+    @JvmStatic
+    fun getFilenameDateTimeString(date: Date?): String {
+        val format: DateFormat = SimpleDateFormat(FILENAME_DATETIME, Locale.ENGLISH)
+        return format.format(date)
     }
 
-    public static Date setTime(Date date, int hour, int minute, int second, int millis) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        return setTime(calendar, hour, minute, second, millis);
+    @JvmStatic
+    fun setTime(date: Date?, hour: Int, minute: Int, second: Int, millis: Int): Date {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return setTime(calendar, hour, minute, second, millis)
     }
 
-    public static Date setTime(Calendar calendar, int hour, int minute, int second, int millis) {
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
-        calendar.set(Calendar.SECOND, second);
-        calendar.set(Calendar.MILLISECOND, millis);
-        return calendar.getTime();
+    @JvmStatic
+    fun setTime(calendar: Calendar?, hour: Int, minute: Int, second: Int, millis: Int): Date {
+        calendar!!.set(Calendar.HOUR_OF_DAY, hour)
+        calendar.set(Calendar.MINUTE, minute)
+        calendar.set(Calendar.SECOND, second)
+        calendar.set(Calendar.MILLISECOND, millis)
+        return calendar.time
     }
 
-    public static Date setDayOfMonth(Calendar calendar, int day) {
-        calendar.set(Calendar.DAY_OF_MONTH, day);
-        return calendar.getTime();
+    @JvmStatic
+    fun setDayOfMonth(calendar: Calendar?, day: Int): Date {
+        calendar!!.set(Calendar.DAY_OF_MONTH, day)
+        return calendar.time
     }
 
-    public static Date setMonth(Calendar calendar, int month) {
-        calendar.set(Calendar.MONTH, month);
-        return calendar.getTime();
+    @JvmStatic
+    fun setMonth(calendar: Calendar?, month: Int): Date {
+        calendar!!.set(Calendar.MONTH, month)
+        return calendar.time
     }
 
-    public static Date setDayAndMonth(Calendar calendar, int day, int month) {
-        calendar.set(Calendar.DAY_OF_MONTH, day);
-        calendar.set(Calendar.MONTH, month);
-        return calendar.getTime();
+    @JvmStatic
+    fun setDayAndMonth(calendar: Calendar?, day: Int, month: Int): Date {
+        calendar!!.set(Calendar.DAY_OF_MONTH, day)
+        calendar.set(Calendar.MONTH, month)
+        return calendar.time
     }
 
-    public static Date getFirstDateOfWeek(Calendar calendar) {
-        return getFirstDateOfWeek(calendar, calendar.getFirstDayOfWeek());
+    @JvmStatic
+    fun getFirstDateOfWeek(calendar: Calendar?): Date {
+        return getFirstDateOfWeek(calendar, calendar!!.firstDayOfWeek)
     }
 
-    public static Date getFirstDateOfWeek(Calendar calendar, int firstDayOfWeek) {
-        int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+    @JvmStatic
+    fun getFirstDateOfWeek(calendar: Calendar?, firstDayOfWeek: Int): Date {
+        val currentDayOfWeek = calendar!!.get(Calendar.DAY_OF_WEEK)
         if (currentDayOfWeek < firstDayOfWeek) {
             // move to week before
-            calendar.add(Calendar.WEEK_OF_YEAR, -1);
+            calendar.add(Calendar.WEEK_OF_YEAR, -1)
         }
-        calendar.set(Calendar.DAY_OF_WEEK, firstDayOfWeek);
-        return calendar.getTime();
+        calendar.set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
+        return calendar.time
     }
 
-    public static Date getDate(int year, int month, int day) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day);
-        return calendar.getTime();
+    @JvmStatic
+    fun getDate(year: Int, month: Int, day: Int): Date {
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month, day)
+        return calendar.time
     }
 
-    public static Date addDays(Calendar calendar, int days) {
-        calendar.add(Calendar.DAY_OF_MONTH, days);
-        return calendar.getTime();
+    @JvmStatic
+    fun addDays(calendar: Calendar?, days: Int): Date {
+        calendar!!.add(Calendar.DAY_OF_MONTH, days)
+        return calendar.time
     }
 
-    public static Date addMonths(Calendar calendar, int months) {
-        calendar.add(Calendar.MONTH, months);
-        return calendar.getTime();
+    @JvmStatic
+    fun addMonths(calendar: Calendar?, months: Int): Date {
+        calendar!!.add(Calendar.MONTH, months)
+        return calendar.time
     }
 
-    public static Date addMonthAndDay(Calendar calendar, int months, int days) {
-        calendar.add(Calendar.MONTH, months);
-        calendar.add(Calendar.DAY_OF_MONTH, days);
-        return calendar.getTime();
+    @JvmStatic
+    fun addMonthAndDay(calendar: Calendar?, months: Int, days: Int): Date {
+        calendar!!.add(Calendar.MONTH, months)
+        calendar.add(Calendar.DAY_OF_MONTH, days)
+        return calendar.time
     }
 
-    public static boolean isBeforeToday(Date date) {
-        Calendar calendar = Calendar.getInstance();
-        setTime(calendar, 0, 0, 0, 0);
-        return date.getTime() < calendar.getTimeInMillis();
+    @JvmStatic
+    fun isBeforeToday(date: Date?): Boolean {
+        val calendar = Calendar.getInstance()
+        setTime(calendar, 0, 0, 0, 0)
+        return date!!.time < calendar.timeInMillis
     }
 
-    public static boolean isBeforeNow(Date date) {
-        return date.compareTo(new Date()) == -1;
+    @JvmStatic
+    fun isBeforeNow(date: Date?): Boolean {
+        return date!!.compareTo(Date()) == -1
     }
 
-    public static boolean isAfter(Date date1, Date date2) {
-        return date1.compareTo(date2) == 1;
+    @JvmStatic
+    fun isAfter(date1: Date?, date2: Date?): Boolean {
+        return date1!!.compareTo(date2) == 1
     }
 
-    public static boolean isAfterEqual(Date date1, Date date2) {
-        return date1.compareTo(date2) != -1;
+    @JvmStatic
+    fun isAfterEqual(date1: Date?, date2: Date?): Boolean {
+        return date1!!.compareTo(date2) != -1
     }
 
-    public static boolean isBefore(Date date1, Date date2) {
-        return date1.compareTo(date2) == -1;
+    @JvmStatic
+    fun isBefore(date1: Date?, date2: Date?): Boolean {
+        return date1!!.compareTo(date2) == -1
     }
 
-    public static boolean isBeforeEqual(Date date1, Date date2) {
-        return date1.compareTo(date2) != 1;
+    @JvmStatic
+    fun isBeforeEqual(date1: Date?, date2: Date?): Boolean {
+        return date1!!.compareTo(date2) != 1
     }
 
-    public static boolean isTheSameDay(Date start, Date end) {
-        Calendar calendar1 = getCalendar(start);
-        Calendar calendar2 = getCalendar(end);
+    @JvmStatic
+    fun isTheSameDay(start: Date?, end: Date?): Boolean {
+        val calendar1 = getCalendar(start)
+        val calendar2 = getCalendar(end)
         return calendar1.get(Calendar.YEAR) == calendar2.get(Calendar.YEAR) &&
                 calendar1.get(Calendar.MONTH) == calendar2.get(Calendar.MONTH) &&
-                calendar1.get(Calendar.DAY_OF_MONTH) == calendar2.get(Calendar.DAY_OF_MONTH);
+                calendar1.get(Calendar.DAY_OF_MONTH) == calendar2.get(Calendar.DAY_OF_MONTH)
     }
 
-    public static boolean isTheSameDayAndHour(Date start, Date end) {
-        Calendar calendar1 = getCalendar(start);
-        Calendar calendar2 = getCalendar(end);
+    @JvmStatic
+    fun isTheSameDayAndHour(start: Date?, end: Date?): Boolean {
+        val calendar1 = getCalendar(start)
+        val calendar2 = getCalendar(end)
         return calendar1.get(Calendar.YEAR) == calendar2.get(Calendar.YEAR) &&
                 calendar1.get(Calendar.MONTH) == calendar2.get(Calendar.MONTH) &&
                 calendar1.get(Calendar.DAY_OF_MONTH) == calendar2.get(Calendar.DAY_OF_MONTH) &&
-                calendar1.get(Calendar.HOUR_OF_DAY) == calendar2.get(Calendar.HOUR_OF_DAY);
+                calendar1.get(Calendar.HOUR_OF_DAY) == calendar2.get(Calendar.HOUR_OF_DAY)
     }
 
-    public static int getDaysBetween(Date start, Date end) {
-        return (int)( (Math.abs(end.getTime() - start.getTime())) / (1000 * 60 * 60 * 24));
+    @JvmStatic
+    fun getDaysBetween(start: Date?, end: Date?): Int {
+        return ((Math.abs(end!!.time - start!!.time)) / (1000 * 60 * 60 * 24)).toInt()
     }
 
     /**
      * The number of calendar days from one date to the other, negative when the second date is
-     * the earlier one. The months are zero based, the way {@link Calendar} numbers them.
+     * the earlier one. The months are zero based, the way [Calendar] numbers them.
      *
      * Counted in UTC, where every day is 24 hours long. Subtracting two local timestamps and
      * dividing by 24 hours does not answer this, because a zone whose offset grew between the two
      * dates leaves the span short of a whole number of days and the division truncates.
      */
-    public static int getCalendarDaysBetween(int fromYear, int fromMonth, int fromDay,
-                                             int toYear, int toMonth, int toDay) {
-        long span = utcMidnight(toYear, toMonth, toDay) - utcMidnight(fromYear, fromMonth, fromDay);
-        return (int) (span / TimeUnit.DAYS.toMillis(1));
+    @JvmStatic
+    fun getCalendarDaysBetween(fromYear: Int, fromMonth: Int, fromDay: Int,
+                               toYear: Int, toMonth: Int, toDay: Int): Int {
+        val span = utcMidnight(toYear, toMonth, toDay) - utcMidnight(fromYear, fromMonth, fromDay)
+        return (span / TimeUnit.DAYS.toMillis(1)).toInt()
     }
 
-    private static long utcMidnight(int year, int month, int day) {
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-        calendar.set(year, month, day);
-        return calendar.getTimeInMillis();
+    private fun utcMidnight(year: Int, month: Int, day: Int): Long {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        calendar.clear()
+        calendar.set(year, month, day)
+        return calendar.timeInMillis
     }
 
-    public static Calendar getCalendar(Date date) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        return calendar;
+    @JvmStatic
+    fun getCalendar(date: Date?): Calendar {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return calendar
     }
 
-    public static DateTime getFixedDateTime(Date date) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        return new DateTime(
+    @JvmStatic
+    fun getFixedDateTime(date: Date?): DateTime {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return DateTime(
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)
-        );
+        )
     }
 
-    public static Date getFixedDate(DateTime dateTime) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.YEAR, dateTime.getYear());
-        calendar.set(Calendar.MONTH, dateTime.getMonth());
-        calendar.set(Calendar.DAY_OF_MONTH, dateTime.getDayOfMonth());
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime();
+    @JvmStatic
+    fun getFixedDate(dateTime: DateTime?): Date {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.YEAR, dateTime!!.year)
+        calendar.set(Calendar.MONTH, dateTime.month)
+        calendar.set(Calendar.DAY_OF_MONTH, dateTime.dayOfMonth)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.time
     }
 }
