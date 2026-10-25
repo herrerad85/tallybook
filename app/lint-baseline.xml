@@ -47,28 +47,6 @@
 
     <issue
         id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                return builder.toUpperCase();"
-        errorLine2="                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/utils/IconLoader.java"
-            line="46"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                return trimmed.substring(0, 1).toUpperCase();"
-        errorLine2="                                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/utils/IconLoader.java"
-            line="48"
-            column="48"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
         errorLine1="            final String extension = name.substring(lastDot + 1).toLowerCase();"
         errorLine2="                                                                 ~~~~~~~~~~~">

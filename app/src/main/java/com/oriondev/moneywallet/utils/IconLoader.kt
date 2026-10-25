@@ -17,74 +17,83 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.utils;
+package com.oriondev.moneywallet.utils
 
-import android.text.TextUtils;
-import android.widget.ImageView;
+import android.text.TextUtils
+import android.widget.ImageView
 
-import com.oriondev.moneywallet.model.ColorIcon;
-import com.oriondev.moneywallet.model.Icon;
-import com.oriondev.moneywallet.model.VectorIcon;
+import com.oriondev.moneywallet.model.ColorIcon
+import com.oriondev.moneywallet.model.Icon
+import com.oriondev.moneywallet.model.VectorIcon
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
+
+import java.util.Locale
 
 /**
  * Created by andrea on 27/01/18.
  */
 
-public class IconLoader {
+object IconLoader {
 
-    public static final Icon UNKNOWN = new ColorIcon("#FFC107", "?");
+    @JvmField
+    val UNKNOWN: Icon = ColorIcon("#FFC107", "?")
 
-    public static String getColorIconString(String source) {
-        String trimmed = source != null ? source.trim().replaceAll(" +", " ") : null;
+    @JvmStatic
+    fun getColorIconString(source: String?): String {
+        val trimmed = if (source != null) source.trim { it <= ' ' }.replace(" +".toRegex(), " ") else null
         if (!TextUtils.isEmpty(trimmed)) {
-            String[] parts = trimmed.split(" ");
-            if (parts.length >= 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
-                String builder = String.valueOf(parts[0].charAt(0)) + parts[1].charAt(0);
-                return builder.toUpperCase();
+            val parts = trimmed!!.split(" ").dropLastWhile { it.isEmpty() }
+            if (parts.size >= 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
+                val builder = parts[0][0].toString() + parts[1][0]
+                return builder.uppercase(Locale.getDefault())
             } else {
-                return trimmed.substring(0, 1).toUpperCase();
+                return trimmed.substring(0, 1).uppercase(Locale.getDefault())
             }
         }
-        return "?";
+        return "?"
     }
 
-    public static Icon parse(String icon) {
+    @JvmStatic
+    fun parse(icon: String?): Icon? {
         if (icon != null) {
             try {
-                JSONObject object = new JSONObject(icon);
-                switch (Icon.getType(object)) {
-                    case RESOURCE:
-                        return new VectorIcon(object);
-                    case COLOR:
-                        return new ColorIcon(object);
+                val jsonObject = JSONObject(icon)
+                when (Icon.getType(jsonObject)!!) {
+                    Icon.Type.RESOURCE ->
+                        return VectorIcon(jsonObject)
+                    Icon.Type.COLOR ->
+                        return ColorIcon(jsonObject)
                 }
-            } catch (JSONException e) {
+            } catch (e: JSONException) {
                 // TODO keep track?
-                e.printStackTrace();
+                e.printStackTrace()
             }
         }
-        return null;
+        return null
     }
 
-    public static void parseAndLoad(String encoded, ImageView imageView) {
-        loadInto(parse(encoded), imageView);
+    @JvmStatic
+    fun parseAndLoad(encoded: String?, imageView: ImageView?) {
+        loadInto(parse(encoded), imageView)
     }
 
-    public static void parseAndLoad(String encoded, Icon fallback, ImageView imageView) {
-        loadInto(parse(encoded), fallback, imageView);
+    @JvmStatic
+    fun parseAndLoad(encoded: String?, fallback: Icon?, imageView: ImageView?) {
+        loadInto(parse(encoded), fallback, imageView)
     }
 
-    public static void loadInto(Icon icon, ImageView imageView) {
-        loadInto(icon, UNKNOWN, imageView);
+    @JvmStatic
+    fun loadInto(icon: Icon?, imageView: ImageView?) {
+        loadInto(icon, UNKNOWN, imageView)
     }
 
-    public static void loadInto(Icon icon, Icon fallback, ImageView imageView) {
+    @JvmStatic
+    fun loadInto(icon: Icon?, fallback: Icon?, imageView: ImageView?) {
         if (icon == null || !icon.apply(imageView)) {
             if (fallback != null) {
-                fallback.apply(imageView);
+                fallback.apply(imageView)
             }
         }
     }
