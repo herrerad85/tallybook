@@ -422,7 +422,7 @@ public class CurrencyManagerSourceTest {
             for (File child : children) {
                 if (child.isDirectory()) {
                     found.addAll(sourceFiles(child));
-                } else if (child.getName().endsWith(".java")) {
+                } else if (child.getName().endsWith(".java") || child.getName().endsWith(".kt")) {
                     found.add(child);
                 }
             }
