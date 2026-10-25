@@ -17,25 +17,25 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.broadcast;
+package com.oriondev.moneywallet.broadcast
 
 /**
  * Created by andrea on 03/04/18.
  */
-public class Message {
+object Message {
 
-    public static final String ITEM_ID = "LocalBroadCast::Message::ItemId";
-    public static final String ITEM_TYPE = "LocalBroadCast::Message::ItemType";
+    const val ITEM_ID = "LocalBroadCast::Message::ItemId"
+    const val ITEM_TYPE = "LocalBroadCast::Message::ItemType"
 
-    public static final int TYPE_TRANSACTION = 1;
-    public static final int TYPE_TRANSFER = 2;
-    public static final int TYPE_CATEGORY = 3;
-    public static final int TYPE_DEBT = 4;
-    public static final int TYPE_BUDGET = 5;
-    public static final int TYPE_SAVING = 6;
-    public static final int TYPE_EVENT = 7;
-    public static final int TYPE_RECURRENT_TRANSACTION = 8;
-    public static final int TYPE_RECURRENT_TRANSFER = 9;
-    public static final int TYPE_TRANSACTION_MODEL = 10;
-    public static final int TYPE_TRANSFER_MODEL = 11;
+    const val TYPE_TRANSACTION = 1
+    const val TYPE_TRANSFER = 2
+    const val TYPE_CATEGORY = 3
+    const val TYPE_DEBT = 4
+    const val TYPE_BUDGET = 5
+    const val TYPE_SAVING = 6
+    const val TYPE_EVENT = 7
+    const val TYPE_RECURRENT_TRANSACTION = 8
+    const val TYPE_RECURRENT_TRANSFER = 9
+    const val TYPE_TRANSACTION_MODEL = 10
+    const val TYPE_TRANSFER_MODEL = 11
 }
