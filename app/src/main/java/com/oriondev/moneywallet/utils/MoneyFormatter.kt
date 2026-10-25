@@ -17,281 +17,295 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.utils;
+package com.oriondev.moneywallet.utils
 
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
-import android.widget.TextView;
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.widget.TextView
 
-import com.oriondev.moneywallet.model.CurrencyUnit;
-import com.oriondev.moneywallet.model.Money;
-import com.oriondev.moneywallet.model.MoneyScale;
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
-import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.model.CurrencyUnit
+import com.oriondev.moneywallet.model.Money
+import com.oriondev.moneywallet.model.MoneyScale
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
 
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.Map;
+import java.math.RoundingMode
+import java.text.DecimalFormat
+import java.text.NumberFormat
 
 /**
  * Created by andrea on 23/01/18.
  */
-public class MoneyFormatter {
+class MoneyFormatter {
 
-    private static final int DEFAULT_MIN_INTEGER_DIGITS = 1;
-    private static final int DEFAULT_MIN_FRACTION_DIGITS_STANDARD = 2;
-    private static final int DEFAULT_MAX_FRACTION_DIGITS_STANDARD = 2;
-    private static final int DEFAULT_MIN_FRACTION_DIGITS_ROUNDING = 0;
-    private static final int DEFAULT_MAX_FRACTION_DIGITS_ROUNDING = 0;
-    private static final int DEFAULT_DIVIDER_POW = 2;
+    private var mCurrencyEnabled: Boolean
+    private var mGroupDigitEnabled: Boolean
+    private var mRoundDecimalsEnabled: Boolean
+    private var mShowSymbolEnabled: Boolean
+    private var mDivider: String = DIVIDER_TEXT
+    private var mFormatter: NumberFormat
 
-    private final static String EMPTY_TEXT = " --- ";
-    private final static String DIVIDER_TEXT = " - ";
-
-    private boolean mCurrencyEnabled;
-    private boolean mGroupDigitEnabled;
-    private boolean mRoundDecimalsEnabled;
-    private boolean mShowSymbolEnabled;
-    private String mDivider = DIVIDER_TEXT;
-    private NumberFormat mFormatter;
-
-    public enum CurrencyMode {
+    enum class CurrencyMode {
         ALWAYS_SHOWN,
         ALWAYS_HIDDEN,
         USER_PREFERENCE
     }
 
-    public enum TintMode {
+    enum class TintMode {
         AUTO_DETECT,
         INCOME,
         EXPENSE
     }
 
-    public enum FlowMode {
+    enum class FlowMode {
         FORCE_POSITIVE,
         FORCE_NEGATIVE,
         AUTO_DETECT
     }
 
-    public static MoneyFormatter getInstance() {
-        return new MoneyFormatter();
+    companion object {
+
+        private const val DEFAULT_MIN_INTEGER_DIGITS = 1
+        private const val DEFAULT_MIN_FRACTION_DIGITS_STANDARD = 2
+        private const val DEFAULT_MAX_FRACTION_DIGITS_STANDARD = 2
+        private const val DEFAULT_MIN_FRACTION_DIGITS_ROUNDING = 0
+        private const val DEFAULT_MAX_FRACTION_DIGITS_ROUNDING = 0
+        private const val DEFAULT_DIVIDER_POW = 2
+
+        private const val EMPTY_TEXT = " --- "
+        private const val DIVIDER_TEXT = " - "
+
+        @JvmStatic
+        fun getInstance(): MoneyFormatter {
+            return MoneyFormatter()
+        }
+
+        @JvmStatic
+        fun normalize(money: Long, decimals: Int, finalDecimals: Int): Long {
+            val offset = finalDecimals - decimals
+            return normalize(money, offset)
+        }
+
+        @JvmStatic
+        fun normalize(money: Long, decimalOffset: Int): Long {
+            return MoneyScale.rescale(money, decimalOffset)
+        }
     }
 
-    public static long normalize(long money, int decimals, int finalDecimals) {
-        int offset = finalDecimals - decimals;
-        return normalize(money, offset);
+    private constructor() {
+        mCurrencyEnabled = PreferenceManager.isCurrencyEnabled()
+        mGroupDigitEnabled = PreferenceManager.isGroupDigitEnabled()
+        mRoundDecimalsEnabled = PreferenceManager.isRoundDecimalsEnabled()
+        mShowSymbolEnabled = PreferenceManager.isShowPlusMinusSymbolEnabled()
+        mFormatter = DecimalFormat.getInstance()
+        mFormatter.minimumIntegerDigits = DEFAULT_MIN_INTEGER_DIGITS
     }
 
-    public static long normalize(long money, int decimalOffset) {
-        return MoneyScale.rescale(money, decimalOffset);
-    }
-
-    private MoneyFormatter() {
-        mCurrencyEnabled = PreferenceManager.isCurrencyEnabled();
-        mGroupDigitEnabled = PreferenceManager.isGroupDigitEnabled();
-        mRoundDecimalsEnabled = PreferenceManager.isRoundDecimalsEnabled();
-        mShowSymbolEnabled = PreferenceManager.isShowPlusMinusSymbolEnabled();
-        mFormatter = DecimalFormat.getInstance();
-        mFormatter.setMinimumIntegerDigits(DEFAULT_MIN_INTEGER_DIGITS);
-    }
-
-    private int colorIn() {
+    private fun colorIn(): Int {
         return ThemeEngine.getTheme().getVisibleColor(PreferenceManager.getCurrentIncomeColor(),
-                PreferenceManager.getDefaultColorIncome());
+                PreferenceManager.getDefaultColorIncome())
     }
 
-    private int colorOut() {
+    private fun colorOut(): Int {
         return ThemeEngine.getTheme().getVisibleColor(PreferenceManager.getCurrentExpenseColor(),
-                PreferenceManager.getDefaultColorExpense());
+                PreferenceManager.getDefaultColorExpense())
     }
 
-    public void setCurrencyEnabled(boolean enabled) {
-        mCurrencyEnabled = enabled;
+    fun setCurrencyEnabled(enabled: Boolean) {
+        mCurrencyEnabled = enabled
     }
 
-    public void setGroupDigitEnabled(boolean enabled) {
-        mGroupDigitEnabled = enabled;
+    fun setGroupDigitEnabled(enabled: Boolean) {
+        mGroupDigitEnabled = enabled
     }
 
-    public void setRoundDecimalsEnabled(boolean enabled) {
-        mRoundDecimalsEnabled = enabled;
+    fun setRoundDecimalsEnabled(enabled: Boolean) {
+        mRoundDecimalsEnabled = enabled
     }
 
-    public void setShowSymbolEnabled(boolean enabled) {
-        mShowSymbolEnabled = enabled;
+    fun setShowSymbolEnabled(enabled: Boolean) {
+        mShowSymbolEnabled = enabled
     }
 
     /**
      * What goes between the currencies of an amount that holds more than one.
      */
-    public void setDivider(String divider) {
-        mDivider = divider;
+    fun setDivider(divider: String) {
+        mDivider = divider
     }
 
-    public boolean isCurrencyEnabled() {
-        return mCurrencyEnabled;
+    fun isCurrencyEnabled(): Boolean {
+        return mCurrencyEnabled
     }
 
-    public boolean isGroupDigitEnabled() {
-        return mGroupDigitEnabled;
+    fun isGroupDigitEnabled(): Boolean {
+        return mGroupDigitEnabled
     }
 
-    public boolean isRoundDecimalsEnabled() {
-        return mRoundDecimalsEnabled;
+    fun isRoundDecimalsEnabled(): Boolean {
+        return mRoundDecimalsEnabled
     }
 
-    public boolean isShowSymbolEnabled() {
-        return mShowSymbolEnabled;
+    fun isShowSymbolEnabled(): Boolean {
+        return mShowSymbolEnabled
     }
 
-    public String getNotTintedString(Money money) {
-        StringBuilder builder = new StringBuilder();
-        int numberOfCurrencies = money.getNumberOfCurrencies();
+    fun getNotTintedString(money: Money?): String {
+        val builder = StringBuilder()
+        val numberOfCurrencies = money!!.numberOfCurrencies
         if (numberOfCurrencies == 0) {
-            builder.append(EMPTY_TEXT);
+            builder.append(EMPTY_TEXT)
         } else {
-            CurrencyMode currencyMode = money.getNumberOfCurrencies() > 1 ? CurrencyMode.ALWAYS_SHOWN : CurrencyMode.USER_PREFERENCE;
-            for (Map.Entry<String, Long> entry : money.getCurrencyMoneys().entrySet()) {
-                if (builder.length() > 0) {
-                    builder.append(mDivider);
+            val currencyMode = if (money.numberOfCurrencies > 1) CurrencyMode.ALWAYS_SHOWN else CurrencyMode.USER_PREFERENCE
+            for (entry in money.currencyMoneys.entries) {
+                if (builder.length > 0) {
+                    builder.append(mDivider)
                 }
-                CurrencyUnit currencyUnit = CurrencyManager.getCurrency(entry.getKey());
-                long currencyMoney = entry.getValue();
-                builder.append(getNotTintedString(currencyUnit, currencyMoney, currencyMode, FlowMode.AUTO_DETECT));
+                val currencyUnit = CurrencyManager.getCurrency(entry.key)
+                val currencyMoney: Long = entry.value
+                builder.append(getNotTintedString(currencyUnit, currencyMoney, currencyMode, FlowMode.AUTO_DETECT))
             }
         }
-        return builder.toString();
+        return builder.toString()
     }
 
-    public String getNotTintedString(CurrencyUnit currencyUnit, long money) {
-        return getNotTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, FlowMode.AUTO_DETECT);
+    fun getNotTintedString(currencyUnit: CurrencyUnit?, money: Long): String {
+        return getNotTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, FlowMode.AUTO_DETECT)
     }
 
-    public String getNotTintedString(CurrencyUnit currencyUnit, long money, CurrencyMode currencyMode) {
-        return getNotTintedString(currencyUnit, money, currencyMode, FlowMode.AUTO_DETECT);
+    fun getNotTintedString(currencyUnit: CurrencyUnit?, money: Long, currencyMode: CurrencyMode?): String {
+        return getNotTintedString(currencyUnit, money, currencyMode, FlowMode.AUTO_DETECT)
     }
 
-    private String getNotTintedString(CurrencyUnit currencyUnit, long money, CurrencyMode currencyMode, FlowMode flowMode) {
-        StringBuilder builder = new StringBuilder();
-        double divider;
+    private fun getNotTintedString(currencyUnit: CurrencyUnit?, money: Long, currencyMode: CurrencyMode?, flowMode: FlowMode): String {
+        val builder = StringBuilder()
+        val divider: Double
         if (currencyUnit != null) {
-            mFormatter.setMinimumFractionDigits(currencyUnit.getDecimals());
-            mFormatter.setMaximumFractionDigits(currencyUnit.getDecimals());
-            divider = Math.pow(10, currencyUnit.getDecimals());
-            if (currencyMode == CurrencyMode.ALWAYS_SHOWN || (currencyMode == CurrencyMode.USER_PREFERENCE && mCurrencyEnabled)) {
-                builder.append(currencyUnit.getSymbol());
-                builder.append(" ");
+            mFormatter.minimumFractionDigits = currencyUnit.decimals
+            mFormatter.maximumFractionDigits = currencyUnit.decimals
+            divider = Math.pow(10.0, currencyUnit.decimals.toDouble())
+            if (currencyMode === CurrencyMode.ALWAYS_SHOWN || (currencyMode === CurrencyMode.USER_PREFERENCE && mCurrencyEnabled)) {
+                builder.append(currencyUnit.symbol)
+                builder.append(" ")
             }
         } else {
-            mFormatter.setMinimumFractionDigits(DEFAULT_MIN_FRACTION_DIGITS_STANDARD);
-            mFormatter.setMaximumFractionDigits(DEFAULT_MAX_FRACTION_DIGITS_STANDARD);
-            divider = Math.pow(10, DEFAULT_DIVIDER_POW);
+            mFormatter.minimumFractionDigits = DEFAULT_MIN_FRACTION_DIGITS_STANDARD
+            mFormatter.maximumFractionDigits = DEFAULT_MAX_FRACTION_DIGITS_STANDARD
+            divider = Math.pow(10.0, DEFAULT_DIVIDER_POW.toDouble())
         }
-        mFormatter.setGroupingUsed(mGroupDigitEnabled);
+        mFormatter.isGroupingUsed = mGroupDigitEnabled
         if (mRoundDecimalsEnabled) {
-            mFormatter.setMinimumFractionDigits(DEFAULT_MIN_FRACTION_DIGITS_ROUNDING);
-            mFormatter.setMaximumFractionDigits(DEFAULT_MAX_FRACTION_DIGITS_ROUNDING);
-            mFormatter.setRoundingMode(RoundingMode.HALF_UP);
+            mFormatter.minimumFractionDigits = DEFAULT_MIN_FRACTION_DIGITS_ROUNDING
+            mFormatter.maximumFractionDigits = DEFAULT_MAX_FRACTION_DIGITS_ROUNDING
+            mFormatter.roundingMode = RoundingMode.HALF_UP
         }
-        if (flowMode == FlowMode.FORCE_NEGATIVE || (flowMode == FlowMode.AUTO_DETECT && money < 0L)) {
-            builder.append("-");
+        if (flowMode === FlowMode.FORCE_NEGATIVE || (flowMode === FlowMode.AUTO_DETECT && money < 0L)) {
+            builder.append("-")
         } else if (mShowSymbolEnabled) {
-            builder.append("+");
+            builder.append("+")
         }
-        builder.append(mFormatter.format((double) Math.abs(money) / divider));
-        return builder.toString();
+        builder.append(mFormatter.format(Math.abs(money).toDouble() / divider))
+        return builder.toString()
     }
 
-    public SpannableStringBuilder getTintedString(Money money) {
-        return getTintedString(money, TintMode.AUTO_DETECT);
+    fun getTintedString(money: Money?): SpannableStringBuilder {
+        return getTintedString(money, TintMode.AUTO_DETECT)
     }
 
-    public SpannableStringBuilder getTintedString(Money money, TintMode tintMode) {
-        SpannableStringBuilder builder = new SpannableStringBuilder();
-        int numberOfCurrencies = money.getNumberOfCurrencies();
+    fun getTintedString(money: Money?, tintMode: TintMode): SpannableStringBuilder {
+        val builder = SpannableStringBuilder()
+        val numberOfCurrencies = money!!.numberOfCurrencies
         if (numberOfCurrencies == 0) {
-            SpannableString emptyString = new SpannableString(EMPTY_TEXT);
-            emptyString.setSpan(new ForegroundColorSpan(ThemeEngine.getTheme().getTextColorPrimary()), 0, emptyString.length(), 0);
-            builder.append(emptyString);
+            val emptyString = SpannableString(EMPTY_TEXT)
+            emptyString.setSpan(ForegroundColorSpan(ThemeEngine.getTheme().textColorPrimary), 0, emptyString.length, 0)
+            builder.append(emptyString)
         } else {
-            CurrencyMode currencyMode = money.getNumberOfCurrencies() > 1 ? CurrencyMode.ALWAYS_SHOWN : CurrencyMode.USER_PREFERENCE;
-            for (Map.Entry<String, Long> entry : money.getCurrencyMoneys().entrySet()) {
-                if (builder.length() > 0) {
-                    SpannableString divider = new SpannableString(mDivider);
-                    divider.setSpan(new ForegroundColorSpan(ThemeEngine.getTheme().getTextColorPrimary()), 0, divider.length(), 0);
-                    builder.append(divider);
+            val currencyMode = if (money.numberOfCurrencies > 1) CurrencyMode.ALWAYS_SHOWN else CurrencyMode.USER_PREFERENCE
+            for (entry in money.currencyMoneys.entries) {
+                if (builder.length > 0) {
+                    val divider = SpannableString(mDivider)
+                    divider.setSpan(ForegroundColorSpan(ThemeEngine.getTheme().textColorPrimary), 0, divider.length, 0)
+                    builder.append(divider)
                 }
-                CurrencyUnit currencyUnit = CurrencyManager.getCurrency(entry.getKey());
-                long currencyMoney = entry.getValue();
-                builder.append(getTintedString(currencyUnit, currencyMoney, currencyMode, tintMode));
+                val currencyUnit = CurrencyManager.getCurrency(entry.key)
+                val currencyMoney: Long = entry.value
+                builder.append(getTintedString(currencyUnit, currencyMoney, currencyMode, tintMode))
             }
         }
-        return builder;
+        return builder
     }
 
-    public SpannableString getTintedString(CurrencyUnit currencyUnit, long money) {
-        return getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.AUTO_DETECT);
+    fun getTintedString(currencyUnit: CurrencyUnit?, money: Long): SpannableString {
+        return getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.AUTO_DETECT)
     }
 
-    public SpannableString getTintedString(CurrencyUnit currencyUnit, long money, CurrencyMode currencyMode) {
-        return getTintedString(currencyUnit, money, currencyMode, TintMode.AUTO_DETECT);
+    fun getTintedString(currencyUnit: CurrencyUnit?, money: Long, currencyMode: CurrencyMode?): SpannableString {
+        return getTintedString(currencyUnit, money, currencyMode, TintMode.AUTO_DETECT)
     }
 
-    private SpannableString getTintedString(CurrencyUnit currencyUnit, long money, CurrencyMode currencyMode, TintMode tintMode) {
-        FlowMode flowMode = mShowSymbolEnabled ? getFlowModeFromTintMode(tintMode) : FlowMode.FORCE_POSITIVE;
-        String notTinted = getNotTintedString(currencyUnit, money, currencyMode, flowMode);
-        SpannableString spannableString = new SpannableString(notTinted);
-        if (tintMode == TintMode.AUTO_DETECT) {
-            spannableString.setSpan(new ForegroundColorSpan(money < 0L ? colorOut() : colorIn()), 0, notTinted.length(), 0);
-        } else if (tintMode == TintMode.INCOME) {
-            spannableString.setSpan(new ForegroundColorSpan(colorIn()), 0, notTinted.length(), 0);
-        } else if (tintMode == TintMode.EXPENSE) {
-            spannableString.setSpan(new ForegroundColorSpan(colorOut()), 0, notTinted.length(), 0);
+    private fun getTintedString(currencyUnit: CurrencyUnit?, money: Long, currencyMode: CurrencyMode?, tintMode: TintMode): SpannableString {
+        val flowMode = if (mShowSymbolEnabled) getFlowModeFromTintMode(tintMode) else FlowMode.FORCE_POSITIVE
+        val notTinted = getNotTintedString(currencyUnit, money, currencyMode, flowMode)
+        val spannableString = SpannableString(notTinted)
+        if (tintMode === TintMode.AUTO_DETECT) {
+            spannableString.setSpan(ForegroundColorSpan(if (money < 0L) colorOut() else colorIn()), 0, notTinted.length, 0)
+        } else if (tintMode === TintMode.INCOME) {
+            spannableString.setSpan(ForegroundColorSpan(colorIn()), 0, notTinted.length, 0)
+        } else if (tintMode === TintMode.EXPENSE) {
+            spannableString.setSpan(ForegroundColorSpan(colorOut()), 0, notTinted.length, 0)
         }
-        return spannableString;
+        return spannableString
     }
 
-    private FlowMode getFlowModeFromTintMode(TintMode tintMode) {
-        switch (tintMode) {
-            case INCOME:
-                return FlowMode.FORCE_POSITIVE;
-            case EXPENSE:
-                return FlowMode.FORCE_NEGATIVE;
+    private fun getFlowModeFromTintMode(tintMode: TintMode): FlowMode {
+        when (tintMode) {
+            TintMode.INCOME ->
+                return FlowMode.FORCE_POSITIVE
+            TintMode.EXPENSE ->
+                return FlowMode.FORCE_NEGATIVE
+            else -> {}
         }
-        return FlowMode.AUTO_DETECT;
+        return FlowMode.AUTO_DETECT
     }
 
-    public void applyNotTinted(TextView textView, Money money) {
-        textView.setText(getNotTintedString(money));
+    fun applyNotTinted(textView: TextView?, money: Money?) {
+        val text = getNotTintedString(money)
+        textView!!.text = text
     }
 
-    public void applyNotTinted(TextView textView, CurrencyUnit currencyUnit, long money) {
-        textView.setText(getNotTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, FlowMode.AUTO_DETECT));
+    fun applyNotTinted(textView: TextView?, currencyUnit: CurrencyUnit?, money: Long) {
+        val text = getNotTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, FlowMode.AUTO_DETECT)
+        textView!!.text = text
     }
 
-    public void applyTinted(TextView textView, Money money) {
-        textView.setText(getTintedString(money), TextView.BufferType.SPANNABLE);
+    fun applyTinted(textView: TextView?, money: Money?) {
+        val text = getTintedString(money)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
     }
 
-    public void applyTinted(TextView textView, CurrencyUnit currencyUnit, long money) {
-        textView.setText(getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.AUTO_DETECT), TextView.BufferType.SPANNABLE);
+    fun applyTinted(textView: TextView?, currencyUnit: CurrencyUnit?, money: Long) {
+        val text = getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.AUTO_DETECT)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
     }
 
-    public void applyTintedIncome(TextView textView, Money money) {
-        textView.setText(getTintedString(money, TintMode.INCOME), TextView.BufferType.SPANNABLE);
+    fun applyTintedIncome(textView: TextView?, money: Money?) {
+        val text = getTintedString(money, TintMode.INCOME)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
     }
 
-    public void applyTintedIncome(TextView textView, CurrencyUnit currencyUnit, long money) {
-        textView.setText(getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.INCOME), TextView.BufferType.SPANNABLE);
+    fun applyTintedIncome(textView: TextView?, currencyUnit: CurrencyUnit?, money: Long) {
+        val text = getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.INCOME)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
     }
 
-    public void applyTintedExpense(TextView textView, Money money) {
-        textView.setText(getTintedString(money, TintMode.EXPENSE), TextView.BufferType.SPANNABLE);
+    fun applyTintedExpense(textView: TextView?, money: Money?) {
+        val text = getTintedString(money, TintMode.EXPENSE)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
     }
 
-    public void applyTintedExpense(TextView textView, CurrencyUnit currencyUnit, long money) {
-        textView.setText(getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.EXPENSE), TextView.BufferType.SPANNABLE);
+    fun applyTintedExpense(textView: TextView?, currencyUnit: CurrencyUnit?, money: Long) {
+        val text = getTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, TintMode.EXPENSE)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
     }
 }
