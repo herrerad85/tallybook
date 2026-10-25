@@ -17,19 +17,16 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.broadcast;
+package com.oriondev.moneywallet.broadcast
 
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
-import android.content.Context;
-import android.util.Log;
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
+import android.content.Context
+import android.util.Log
 
-import com.oriondev.moneywallet.service.AutoBackupJobService;
-import com.oriondev.moneywallet.storage.preference.BackendManager;
-
-import java.util.ArrayList;
-import java.util.Set;
+import com.oriondev.moneywallet.service.AutoBackupJobService
+import com.oriondev.moneywallet.storage.preference.BackendManager
 
 /**
  * Created by andrea on 27/11/18.
@@ -38,12 +35,12 @@ import java.util.Set;
  * an older build does not survive the update that removes it. The name is kept so that the
  * change moving the auto backup to the scheduler does not also touch every caller.
  */
-public class AutoBackupBroadcastReceiver {
+object AutoBackupBroadcastReceiver {
 
-    private static final int MILLIS_IN_HOUR = 1000 * 60 * 60;
-    private static final int JOB_ID = 3565;
-    private static final long MINIMUM_LATENCY_MILLIS = 60 * 1000;
-    private static final String TAG = "AutoBackup";
+    private const val MILLIS_IN_HOUR = 1000 * 60 * 60
+    private const val JOB_ID = 3565
+    private const val MINIMUM_LATENCY_MILLIS: Long = 60 * 1000
+    private const val TAG = "AutoBackup"
 
     /**
      * Queue the next auto backup sweep with the job scheduler. This never runs the sweep
@@ -51,8 +48,9 @@ public class AutoBackupBroadcastReceiver {
      * it inline is what made this method and the sweep call each other, so a backend that
      * failed without moving its timestamp forward recursed until the process was killed.
      */
-    public static void scheduleAutoBackupTask(Context context) {
-        scheduleAutoBackupTask(context, true);
+    @JvmStatic
+    fun scheduleAutoBackupTask(context: Context?) {
+        scheduleAutoBackupTask(context, true)
     }
 
     /**
@@ -63,36 +61,37 @@ public class AutoBackupBroadcastReceiver {
      * to run the sweep, Application.onCreate runs first, so an unconditional call there kills
      * the sweep before onStartJob is ever reached.
      */
-    public static void ensureAutoBackupTaskScheduled(Context context) {
-        scheduleAutoBackupTask(context, false);
+    @JvmStatic
+    fun ensureAutoBackupTaskScheduled(context: Context) {
+        scheduleAutoBackupTask(context, false)
     }
 
-    private static void scheduleAutoBackupTask(Context context, boolean replaceExisting) {
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    private fun scheduleAutoBackupTask(context: Context?, replaceExisting: Boolean) {
+        val jobScheduler = context!!.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler?
         if (jobScheduler == null) {
-            return;
+            return
         }
-        Set<String> backendIdSet = BackendManager.getAutoBackupEnabledServices();
+        val backendIdSet: Set<String>? = BackendManager.getAutoBackupEnabledServices()
         if (backendIdSet == null || backendIdSet.isEmpty()) {
             // Nothing enabled, so drop any job left over from when something was.
-            jobScheduler.cancel(JOB_ID);
-            return;
+            jobScheduler.cancel(JOB_ID)
+            return
         }
         if (!replaceExisting && jobScheduler.getPendingJob(JOB_ID) != null) {
-            return;
+            return
         }
-        Long nextTimestamp = null;
+        var nextTimestamp: Long? = null
         // Copy first: getStringSet hands back its own live instance, and disabling a backend
         // elsewhere in the app removes an element from it while this loop is walking it.
-        for (String backendId : new ArrayList<>(backendIdSet)) {
-            long lastTimestamp = BackendManager.getAutoBackupLastTime(backendId);
-            long nextOccurrence = lastTimestamp + intervalMillis(backendId);
+        for (backendId in ArrayList(backendIdSet)) {
+            val lastTimestamp: Long = BackendManager.getAutoBackupLastTime(backendId)
+            val nextOccurrence: Long = lastTimestamp + intervalMillis(backendId)
             if (nextTimestamp == null || nextOccurrence < nextTimestamp) {
-                nextTimestamp = nextOccurrence;
+                nextTimestamp = nextOccurrence
             }
         }
-        long latency = Math.max(nextTimestamp - System.currentTimeMillis(), MINIMUM_LATENCY_MILLIS);
-        ComponentName service = new ComponentName(context, AutoBackupJobService.class);
+        val latency: Long = Math.max(nextTimestamp!! - System.currentTimeMillis(), MINIMUM_LATENCY_MILLIS)
+        val service = ComponentName(context, AutoBackupJobService::class.java)
         // No network constraint. WiFi only is a per backend setting and this is one job for
         // every enabled backend, so a job level constraint could only ever apply when they all
         // agree. None of the network types available at this minSdk names a transport, and the
@@ -101,12 +100,12 @@ public class AutoBackupBroadcastReceiver {
         // would release it into a skip. A real WiFi requirement needs setRequiredNetwork, which
         // is API 28. The sweep reads the transport itself instead, which covers a mix of
         // backends as well.
-        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, service)
+        val jobInfo = JobInfo.Builder(JOB_ID, service)
                 .setMinimumLatency(latency)
                 .setPersisted(true)
-                .build();
-        jobScheduler.schedule(jobInfo);
-        Log.d(TAG, "Auto backup sweep queued in " + latency + " ms");
+                .build()
+        jobScheduler.schedule(jobInfo)
+        Log.d(TAG, "Auto backup sweep queued in " + latency + " ms")
     }
 
     /**
@@ -114,8 +113,9 @@ public class AutoBackupBroadcastReceiver {
      * but a zero or negative value read from anywhere else would make every occurrence due
      * for ever, and the walk to the most recent passed occurrence would never terminate.
      */
-    public static long intervalMillis(String backendId) {
-        return Math.max((long) BackendManager.getAutoBackupHoursOffset(backendId), 1L) * MILLIS_IN_HOUR;
+    @JvmStatic
+    fun intervalMillis(backendId: String?): Long {
+        return Math.max(BackendManager.getAutoBackupHoursOffset(backendId).toLong(), 1L) * MILLIS_IN_HOUR
     }
 
 }
