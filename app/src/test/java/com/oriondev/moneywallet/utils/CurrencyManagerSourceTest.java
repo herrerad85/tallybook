@@ -361,7 +361,7 @@ public class CurrencyManagerSourceTest {
                 "service/BackupHandlerIntentService.java",
                 "service/UpgradeLegacyEditionIntentService.java",
                 "ui/activity/NewEditCurrencyActivity.java",
-                "App.java",
+                "moneywallet/App.kt",
         };
         List<String> callers = new ArrayList<>();
         List<File> files = new ArrayList<>();
