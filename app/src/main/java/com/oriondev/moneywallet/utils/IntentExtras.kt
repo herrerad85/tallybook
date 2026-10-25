@@ -17,31 +17,28 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.utils;
+package com.oriondev.moneywallet.utils
 
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.database.Cursor;
-import android.net.Uri;
+import android.content.ContentResolver
+import android.content.ContentUris
+import android.database.Cursor
+import android.net.Uri
 
-import com.oriondev.moneywallet.model.Category;
-import com.oriondev.moneywallet.model.MoneyScale;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-import com.oriondev.moneywallet.storage.database.data.csv.CsvImportMapping;
+import com.oriondev.moneywallet.model.Category
+import com.oriondev.moneywallet.model.MoneyScale
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.storage.database.data.csv.CsvImportMapping
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.math.BigDecimal
+import java.math.BigInteger
 
 /**
  * Readers for the extras another app puts on an intent: an amount, the name of a wallet or a
  * category, which is matched ignoring case and only counts when exactly one row carries it, and
  * the category the stored rules file a description under.
  */
-public class IntentExtras {
-
-    private IntentExtras() {
-    }
+object IntentExtras {
 
     /**
      * The amount an extra holds, in minor units of a currency with these decimals, rounded and
@@ -50,32 +47,33 @@ public class IntentExtras {
      * type, one that does not read, one whose text is longer than 40 characters, or no extra at
      * all.
      */
-    public static long readAmount(Object extra, int decimals) {
+    @JvmStatic
+    fun readAmount(extra: Any?, decimals: Int): Long {
         try {
-            if (!(extra instanceof CharSequence || extra instanceof Integer || extra instanceof Long
-                    || extra instanceof Short || extra instanceof Byte || extra instanceof Float
-                    || extra instanceof Double || extra instanceof BigDecimal
-                    || extra instanceof BigInteger)) {
-                return 0L;
+            if (!(extra is CharSequence || extra is Int || extra is Long
+                    || extra is Short || extra is Byte || extra is Float
+                    || extra is Double || extra is BigDecimal
+                    || extra is BigInteger)) {
+                return 0L
             }
-            BigInteger unscaled = extra instanceof BigDecimal ? ((BigDecimal) extra).unscaledValue()
-                    : extra instanceof BigInteger ? (BigInteger) extra : null;
+            val unscaled = if (extra is BigDecimal) extra.unscaledValue()
+                    else if (extra is BigInteger) extra else null
             if (unscaled != null && unscaled.bitLength() > 133) {
-                return 0L;
+                return 0L
             }
-            String text = extra instanceof Number ? extra.toString() : String.valueOf(extra).trim();
-            if (text.length() > 40) {
-                return 0L;
+            val text = if (extra is Number) extra.toString() else extra.toString().trim { it <= ' ' }
+            if (text.length > 40) {
+                return 0L
             }
-            BigDecimal amount = extra instanceof Number ? new BigDecimal(text)
-                    : CsvImportMapping.parseAmount(text, false);
-            int magnitude = amount.precision() - amount.scale();
+            val amount = if (extra is Number) BigDecimal(text)
+                    else CsvImportMapping.parseAmount(text, false)
+            val magnitude = amount.precision() - amount.scale()
             if (magnitude > 19 || magnitude < -decimals) {
-                return 0L;
+                return 0L
             }
-            return MoneyScale.toMinorUnitsRounded(amount.abs(), decimals);
-        } catch (RuntimeException e) {
-            return 0L;
+            return MoneyScale.toMinorUnitsRounded(amount.abs(), decimals)
+        } catch (e: RuntimeException) {
+            return 0L
         }
     }
 
@@ -83,29 +81,31 @@ public class IntentExtras {
      * The id of the one wallet that is not archived and carries this name, or null when none or
      * several do.
      */
-    public static Long findWalletId(ContentResolver contentResolver, String name) {
+    @JvmStatic
+    fun findWalletId(contentResolver: ContentResolver?, name: String?): Long? {
         if (name == null) {
-            return null;
+            return null
         }
-        Cursor cursor = contentResolver.query(DataContentProvider.CONTENT_WALLETS,
-                new String[] {Contract.Wallet.ID, Contract.Wallet.NAME},
-                Contract.Wallet.ARCHIVED + " = 0", null, null);
-        return findSingleId(cursor, Contract.Wallet.ID, Contract.Wallet.NAME, name);
+        val cursor: Cursor? = contentResolver!!.query(DataContentProvider.CONTENT_WALLETS,
+                arrayOf(Contract.Wallet.ID, Contract.Wallet.NAME),
+                Contract.Wallet.ARCHIVED + " = 0", null, null)
+        return findSingleId(cursor, Contract.Wallet.ID, Contract.Wallet.NAME, name)
     }
 
     /**
      * The id of the one income or expense category, parent or child, that carries this name, or
      * null when none or several do.
      */
-    public static Long findCategoryId(ContentResolver contentResolver, String name) {
+    @JvmStatic
+    fun findCategoryId(contentResolver: ContentResolver?, name: String?): Long? {
         if (name == null) {
-            return null;
+            return null
         }
-        Cursor cursor = contentResolver.query(DataContentProvider.CONTENT_CATEGORIES,
-                new String[] {Contract.Category.ID, Contract.Category.NAME},
+        val cursor: Cursor? = contentResolver!!.query(DataContentProvider.CONTENT_CATEGORIES,
+                arrayOf(Contract.Category.ID, Contract.Category.NAME),
                 Contract.Category.TYPE + " != ?",
-                new String[] {String.valueOf(Contract.CategoryType.SYSTEM.getValue())}, null);
-        return findSingleId(cursor, Contract.Category.ID, Contract.Category.NAME, name);
+                arrayOf(Contract.CategoryType.SYSTEM.getValue().toString()), null)
+        return findSingleId(cursor, Contract.Category.ID, Contract.Category.NAME, name)
     }
 
     /**
@@ -117,68 +117,70 @@ public class IntentExtras {
      * @param description the description of the transaction.
      * @return the category, or null when no rule matches or its category is gone.
      */
-    public static Category readCategoryNamedBy(ContentResolver contentResolver, String description) {
-        Uri matchUri = DataContentProvider.CONTENT_CATEGORY_RULES.buildUpon()
+    @JvmStatic
+    fun readCategoryNamedBy(contentResolver: ContentResolver?, description: String?): Category? {
+        val matchUri: Uri = DataContentProvider.CONTENT_CATEGORY_RULES.buildUpon()
                 .appendPath("match")
                 .appendPath(description)
-                .build();
-        Long categoryId = null;
-        Cursor cursor = contentResolver.query(matchUri,
-                new String[] {Contract.CategoryRule.CATEGORY_ID}, null, null, null);
+                .build()
+        var categoryId: Long? = null
+        val cursor: Cursor? = contentResolver!!.query(matchUri,
+                arrayOf(Contract.CategoryRule.CATEGORY_ID), null, null, null)
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                categoryId = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.CategoryRule.CATEGORY_ID));
+                categoryId = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.CategoryRule.CATEGORY_ID))
             }
-            cursor.close();
+            cursor.close()
         }
         if (categoryId == null) {
-            return null;
+            return null
         }
-        return readCategory(contentResolver, categoryId);
+        return readCategory(contentResolver, categoryId)
     }
 
-    public static Category readCategory(ContentResolver contentResolver, long categoryId) {
-        Uri categoryUri = ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, categoryId);
-        String[] projection = new String[] {
+    @JvmStatic
+    fun readCategory(contentResolver: ContentResolver?, categoryId: Long): Category? {
+        val categoryUri: Uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_CATEGORIES, categoryId)
+        val projection = arrayOf(
                 Contract.Category.ID,
                 Contract.Category.NAME,
                 Contract.Category.ICON,
                 Contract.Category.TYPE,
                 Contract.Category.TAG
-        };
-        Category category = null;
-        Cursor cursor = contentResolver.query(categoryUri, projection, null, null, null);
+        )
+        var category: Category? = null
+        val cursor: Cursor? = contentResolver!!.query(categoryUri, projection, null, null, null)
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                category = new Category(
+                category = Category(
                         cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Category.ID)),
                         cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.NAME)),
                         IconLoader.parse(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.ICON))),
                         Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Category.TYPE))),
                         cursor.getString(cursor.getColumnIndexOrThrow(Contract.Category.TAG))
-                );
+                )
             }
-            cursor.close();
+            cursor.close()
         }
-        return category;
+        return category
     }
 
-    private static Long findSingleId(Cursor cursor, String idColumn, String nameColumn, String name) {
+    private fun findSingleId(cursor: Cursor?, idColumn: String, nameColumn: String, name: String): Long? {
         if (cursor == null) {
-            return null;
+            return null
         }
-        Long id = null;
-        int matches = 0;
+        var id: Long? = null
+        var matches = 0
         try {
             while (cursor.moveToNext()) {
-                if (name.equalsIgnoreCase(cursor.getString(cursor.getColumnIndexOrThrow(nameColumn)))) {
-                    id = cursor.getLong(cursor.getColumnIndexOrThrow(idColumn));
-                    matches++;
+                if (name.equals(cursor.getString(cursor.getColumnIndexOrThrow(nameColumn)), ignoreCase = true)) {
+                    id = cursor.getLong(cursor.getColumnIndexOrThrow(idColumn))
+                    matches++
                 }
             }
         } finally {
-            cursor.close();
+            cursor.close()
         }
-        return matches == 1 ? id : null;
+        return if (matches == 1) id else null
     }
 }
