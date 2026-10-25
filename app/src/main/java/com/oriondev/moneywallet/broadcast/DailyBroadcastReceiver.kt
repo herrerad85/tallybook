@@ -17,82 +17,85 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.broadcast;
+package com.oriondev.moneywallet.broadcast
 
-import android.app.AlarmManager;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import androidx.core.app.NotificationCompat;
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
-import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity;
-import com.oriondev.moneywallet.ui.notification.NotificationContract;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
+import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity
+import com.oriondev.moneywallet.ui.notification.NotificationContract
 
-import java.util.Calendar;
+import java.util.Calendar
 
 /**
  * Created by andrea on 28/07/18.
  */
-public class DailyBroadcastReceiver extends BroadcastReceiver {
+class DailyBroadcastReceiver : BroadcastReceiver() {
 
-    public static void scheduleDailyNotification(Context context) {
-        int hour = PreferenceManager.getCurrentDailyReminder();
-        if (hour != PreferenceManager.DAILY_REMINDER_DISABLED) {
-            scheduleDailyNotification(context, hour);
-        }
-    }
+    companion object {
 
-    public static void scheduleDailyNotification(Context context, int hour) {
-        PendingIntent pendingIntent = createNotificationIntent(context);
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Service.ALARM_SERVICE);
-        if (alarmManager != null) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(Calendar.HOUR_OF_DAY, hour);
-            calendar.set(Calendar.MINUTE, 0);
-            long firstWakeUp = calendar.getTimeInMillis();
-            long now = System.currentTimeMillis();
-            if (firstWakeUp < now) {
-                firstWakeUp += AlarmManager.INTERVAL_DAY;
+        @JvmStatic
+        fun scheduleDailyNotification(context: Context) {
+            val hour: Int = PreferenceManager.getCurrentDailyReminder()
+            if (hour != PreferenceManager.DAILY_REMINDER_DISABLED) {
+                scheduleDailyNotification(context, hour)
             }
-            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstWakeUp, AlarmManager.INTERVAL_DAY, pendingIntent);
         }
-    }
 
-    public static void cancelDailyNotification(Context context) {
-        PendingIntent pendingIntent = createNotificationIntent(context);
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Service.ALARM_SERVICE);
-        if (alarmManager != null) {
-            alarmManager.cancel(pendingIntent);
+        @JvmStatic
+        fun scheduleDailyNotification(context: Context?, hour: Int) {
+            val pendingIntent = createNotificationIntent(context)
+            val alarmManager = context!!.getSystemService(Service.ALARM_SERVICE) as AlarmManager?
+            if (alarmManager != null) {
+                val calendar = Calendar.getInstance()
+                calendar.set(Calendar.HOUR_OF_DAY, hour)
+                calendar.set(Calendar.MINUTE, 0)
+                var firstWakeUp: Long = calendar.timeInMillis
+                val now: Long = System.currentTimeMillis()
+                if (firstWakeUp < now) {
+                    firstWakeUp += AlarmManager.INTERVAL_DAY
+                }
+                alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstWakeUp, AlarmManager.INTERVAL_DAY, pendingIntent)
+            }
         }
+
+        @JvmStatic
+        fun cancelDailyNotification(context: Context?) {
+            val pendingIntent = createNotificationIntent(context)
+            val alarmManager = context!!.getSystemService(Service.ALARM_SERVICE) as AlarmManager?
+            if (alarmManager != null) {
+                alarmManager.cancel(pendingIntent)
+            }
+        }
+
+        private fun createNotificationIntent(context: Context?) =
+                PendingIntent.getBroadcast(context, 0, Intent(context, DailyBroadcastReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    private static PendingIntent createNotificationIntent(Context context) {
-        Intent intent = new Intent(context, DailyBroadcastReceiver.class);
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        Intent i = new Intent(context, NewEditTransactionActivity.class);
-        PendingIntent pending = PendingIntent.getActivity(context, 0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, NotificationContract.NOTIFICATION_CHANNEL_REMINDER)
+    override fun onReceive(context: Context, intent: Intent) {
+        val i = Intent(context, NewEditTransactionActivity::class.java)
+        val pending: PendingIntent? = PendingIntent.getActivity(context, 0, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val builder = NotificationCompat.Builder(context, NotificationContract.NOTIFICATION_CHANNEL_REMINDER)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(context.getString(R.string.notification_title_daily_reminder_title))
                 .setContentText(context.getString(R.string.notification_title_daily_reminder_text))
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notification_title_daily_reminder_text)))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notification_title_daily_reminder_text)))
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setAutoCancel(true)
-                .setContentIntent(pending);
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                .setContentIntent(pending)
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
         if (notificationManager != null) {
-            notificationManager.notify(NotificationContract.NOTIFICATION_ID_REMINDER, builder.build());
+            notificationManager.notify(NotificationContract.NOTIFICATION_ID_REMINDER, builder.build())
         }
         // reschedule the notification for the next time
-        scheduleDailyNotification(context, PreferenceManager.getCurrentDailyReminder());
+        scheduleDailyNotification(context, PreferenceManager.getCurrentDailyReminder())
     }
 }
