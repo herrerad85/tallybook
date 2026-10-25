@@ -17,107 +17,106 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.utils;
+package com.oriondev.moneywallet.utils
 
-import android.os.Bundle;
+import android.os.Bundle
 
-import androidx.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting
 
-import com.oriondev.moneywallet.model.CurrencyUnit;
-import com.oriondev.moneywallet.model.MoneyScale;
+import com.oriondev.moneywallet.model.CurrencyUnit
+import com.oriondev.moneywallet.model.MoneyScale
 
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
+import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
 
 /**
  * Created by andrea on 31/03/18.
  */
-public class EquationSolver {
+class EquationSolver {
 
-    private static final String SS_FIRST_NUMBER = "EquationSolver::SavedState::FirstNumber";
-    private static final String SS_SECOND_NUMBER = "EquationSolver::SavedState::SecondNumber";
-    private static final String SS_OPERATION_NUMBER = "EquationSolver::SavedState::Operation";
-    private static final String SS_CURRENCY = "EquationSolver::SavedState::Currency";
-    private static final String SS_COMPUTED = "EquationSolver::SavedState::Computed";
+    private val mController: Controller?
 
-    private final Controller mController;
-
-    @VisibleForTesting
-    /*package-local*/ String mFirstNumber;
-    @VisibleForTesting
-    /*package-local*/ String mSecondNumber;
-    @VisibleForTesting
-    /*package-local*/ Operation mOperation;
-    @VisibleForTesting
-    /*package-local*/ CurrencyUnit mCurrency;
+    @field:VisibleForTesting
+    @JvmField
+    internal var mFirstNumber: String? = null
+    @field:VisibleForTesting
+    @JvmField
+    internal var mSecondNumber: String? = null
+    @field:VisibleForTesting
+    @JvmField
+    internal var mOperation: Operation? = null
+    @field:VisibleForTesting
+    @JvmField
+    internal var mCurrency: CurrencyUnit? = null
     /**
      * True while mFirstNumber holds an answer an operation produced rather than a number the
      * keypad typed. getResult rounds an answer to the currency scale and leaves a typed number
      * to toMinorUnits, which truncates whatever will not fit.
      */
-    @VisibleForTesting
-    /*package-local*/ boolean mComputed;
+    @field:VisibleForTesting
+    @JvmField
+    internal var mComputed: Boolean = false
 
-    public EquationSolver(Bundle savedInstanceState, Controller controller) {
-        mController = controller;
+    constructor(savedInstanceState: Bundle?, controller: Controller?) {
+        mController = controller
         if (savedInstanceState != null) {
-            mFirstNumber = savedInstanceState.getString(SS_FIRST_NUMBER, "0");
-            mSecondNumber = savedInstanceState.getString(SS_SECOND_NUMBER, null);
-            mOperation = (Operation) savedInstanceState.getSerializable(SS_OPERATION_NUMBER);
-            mCurrency = savedInstanceState.getParcelable(SS_CURRENCY);
-            mComputed = savedInstanceState.getBoolean(SS_COMPUTED, false);
+            mFirstNumber = savedInstanceState.getString(SS_FIRST_NUMBER, "0")
+            mSecondNumber = savedInstanceState.getString(SS_SECOND_NUMBER, null)
+            mOperation = savedInstanceState.getSerializable(SS_OPERATION_NUMBER) as Operation?
+            mCurrency = savedInstanceState.getParcelable(SS_CURRENCY)
+            mComputed = savedInstanceState.getBoolean(SS_COMPUTED, false)
         } else {
-            mFirstNumber = "0";
-            mSecondNumber = null;
-            mOperation = null;
-            mCurrency = null;
-            mComputed = false;
+            mFirstNumber = "0"
+            mSecondNumber = null
+            mOperation = null
+            mCurrency = null
+            mComputed = false
         }
-        updateDisplaySafely();
+        updateDisplaySafely()
     }
 
-    public void setValue(CurrencyUnit currency, long money) {
+    fun setValue(currency: CurrencyUnit?, money: Long) {
         // Scale taken through CurrencyManager for the reason getResult gives.
-        int decimals = CurrencyManager.getDecimals(currency);
+        val decimals = CurrencyManager.getDecimals(currency)
         if (money != 0L && decimals > 0) {
-            mFirstNumber = MoneyScale.toHumanAmount(money, decimals).toPlainString();
+            mFirstNumber = MoneyScale.toHumanAmount(money, decimals).toPlainString()
         } else {
-            mFirstNumber = String.valueOf(money);
+            mFirstNumber = money.toString()
         }
-        mSecondNumber = null;
-        mOperation = null;
-        mCurrency = currency;
-        mComputed = false;
-        updateDisplaySafely();
+        mSecondNumber = null
+        mOperation = null
+        mCurrency = currency
+        mComputed = false
+        updateDisplaySafely()
     }
 
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putString(SS_FIRST_NUMBER, mFirstNumber);
-        outState.putString(SS_SECOND_NUMBER, mSecondNumber);
-        outState.putSerializable(SS_OPERATION_NUMBER, mOperation);
+    fun onSaveInstanceState(outState: Bundle?) {
+        outState!!.putString(SS_FIRST_NUMBER, mFirstNumber)
+        outState.putString(SS_SECOND_NUMBER, mSecondNumber)
+        outState.putSerializable(SS_OPERATION_NUMBER, mOperation)
         // The constructor reads this key back, and the activity only calls setValue when there is
         // no saved state, so leaving the currency out made getResult return the typed number
         // rather than its minor units after a rotation: 12.50 came back as 12, not 1250.
-        outState.putParcelable(SS_CURRENCY, mCurrency);
+        outState.putParcelable(SS_CURRENCY, mCurrency)
         // Same trap as the currency above: a key the bundle does not carry comes back as the
         // default, so an answer still on the display after a rotation would be truncated rather
         // than rounded when it reaches the ledger.
-        outState.putBoolean(SS_COMPUTED, mComputed);
+        outState.putBoolean(SS_COMPUTED, mComputed)
     }
 
-    public void clear() {
-        mFirstNumber = "0";
-        mSecondNumber = null;
-        mOperation = null;
-        mComputed = false;
-        updateDisplaySafely();
+    fun clear() {
+        mFirstNumber = "0"
+        mSecondNumber = null
+        mOperation = null
+        mComputed = false
+        updateDisplaySafely()
     }
 
-    public void appendOperation(Operation operation) {
+    fun appendOperation(operation: Operation?) {
         if (mOperation == null || execute(false)) {
-            mOperation = operation;
-            updateDisplaySafely();
+            mOperation = operation
+            updateDisplaySafely()
         }
     }
 
@@ -128,147 +127,141 @@ public class EquationSolver {
      * with the three character operator span pointing at its start. An index outside the display
      * means the end of the display.
      */
-    private Target locate(int cursor) {
-        int first = firstLength();
+    private fun locate(cursor: Int): Target {
+        val first = firstLength()
         if (mOperation == null) {
-            return new Target(true, cursor < 0 || cursor > first ? first : cursor);
+            return Target(true, if (cursor < 0 || cursor > first) first else cursor)
         }
-        int second = mSecondNumber == null ? 0 : mSecondNumber.length();
-        int end = first + 3 + second;
-        int at = cursor < 0 || cursor > end ? end : cursor;
+        val second = mSecondNumber?.length ?: 0
+        val end = first + 3 + second
+        val at = if (cursor < 0 || cursor > end) end else cursor
         if (at <= first) {
-            return new Target(true, at);
+            return Target(true, at)
         }
-        return new Target(false, Math.max(at - first - 3, 0));
+        return Target(false, Math.max(at - first - 3, 0))
     }
 
-    private int firstLength() {
-        return mFirstNumber == null ? 0 : mFirstNumber.length();
+    private fun firstLength(): Int {
+        return mFirstNumber?.length ?: 0
     }
 
-    private int cursorOf(Target target, int offset) {
-        return target.mFirst ? offset : firstLength() + 3 + offset;
+    private fun cursorOf(target: Target, offset: Int): Int {
+        return if (target.mFirst) offset else firstLength() + 3 + offset
     }
 
-    private void store(Target target, String number) {
+    private fun store(target: Target, number: String?) {
         if (target.mFirst) {
-            clearComputedIfValueChanged(number);
-            mFirstNumber = number;
+            clearComputedIfValueChanged(number)
+            mFirstNumber = number
         } else {
-            mSecondNumber = number;
+            mSecondNumber = number
         }
     }
 
-    public int insertPoint(int cursor) {
-        Target target = locate(cursor);
-        String number = target.mFirst ? mFirstNumber : mSecondNumber;
-        int offset = target.mOffset;
-        if (number == null || number.isEmpty() || number.equals("0")) {
-            number = "0.";
-            offset = 2;
+    fun insertPoint(cursor: Int): Int {
+        val target = locate(cursor)
+        var number = if (target.mFirst) mFirstNumber else mSecondNumber
+        var offset = target.mOffset
+        if (number == null || number.isEmpty() || number == "0") {
+            number = "0."
+            offset = 2
         } else if (!number.contains(".")) {
-            int sign = number.startsWith("-") ? 1 : 0;
+            val sign = if (number.startsWith("-")) 1 else 0
             if (offset <= sign) {
                 // A point typed in front of the digits opens a fraction instead of splitting one.
-                number = number.substring(0, sign) + "0." + number.substring(sign);
-                offset = sign + 2;
+                number = number.substring(0, sign) + "0." + number.substring(sign)
+                offset = sign + 2
             } else {
-                number = number.substring(0, offset) + "." + number.substring(offset);
-                offset++;
+                number = number.substring(0, offset) + "." + number.substring(offset)
+                offset++
             }
         }
-        store(target, number);
-        updateDisplaySafely();
-        return cursorOf(target, offset);
+        store(target, number)
+        updateDisplaySafely()
+        return cursorOf(target, offset)
     }
 
-    public int insertNumber(String digit, int cursor) {
-        Target target = locate(cursor);
-        String number = target.mFirst ? mFirstNumber : mSecondNumber;
-        int offset = target.mOffset;
-        if (number == null || number.isEmpty() || number.equals("0")) {
-            number = digit.equals("000") ? "0" : digit;
-            offset = number.length();
+    fun insertNumber(digit: String, cursor: Int): Int {
+        val target = locate(cursor)
+        var number = if (target.mFirst) mFirstNumber else mSecondNumber
+        var offset = target.mOffset
+        if (number == null || number.isEmpty() || number == "0") {
+            number = if (digit == "000") "0" else digit
+            offset = number.length
         } else {
             if (number.startsWith("-") && offset == 0) {
                 // A digit typed in front of a sign belongs after it.
-                offset = 1;
+                offset = 1
             }
-            number = number.substring(0, offset) + digit + number.substring(offset);
-            offset += digit.length();
+            number = number.substring(0, offset) + digit + number.substring(offset)
+            offset += digit.length
         }
-        store(target, number);
-        updateDisplaySafely();
-        return cursorOf(target, offset);
+        store(target, number)
+        updateDisplaySafely()
+        return cursorOf(target, offset)
     }
 
-    public int backspace(int cursor) {
-        Target target = locate(cursor);
-        String number = target.mFirst ? mFirstNumber : mSecondNumber;
-        int offset = target.mOffset;
-        boolean atOperator = false;
+    fun backspace(cursor: Int): Int {
+        val target = locate(cursor)
+        var number = if (target.mFirst) mFirstNumber else mSecondNumber
+        var offset = target.mOffset
+        var atOperator = false
         if (offset == 0) {
             if (!target.mFirst && (number == null || number.isEmpty())) {
                 // Nothing left of the second number to delete, so the operator goes instead.
-                mOperation = null;
-                mSecondNumber = null;
-                atOperator = true;
+                mOperation = null
+                mSecondNumber = null
+                atOperator = true
             } else if (!target.mFirst) {
                 // Nothing to delete here, so the cursor steps back over the operator instead.
-                atOperator = true;
+                atOperator = true
             }
         } else {
-            number = number.substring(0, offset - 1) + number.substring(offset);
-            offset--;
+            number = number!!.substring(0, offset - 1) + number.substring(offset)
+            offset--
             if (target.mFirst && number.isEmpty()) {
-                number = "0";
-                offset = 1;
+                number = "0"
+                offset = 1
             }
-            store(target, number);
+            store(target, number)
         }
-        updateDisplaySafely();
-        return atOperator ? firstLength() : cursorOf(target, offset);
+        updateDisplaySafely()
+        return if (atOperator) firstLength() else cursorOf(target, offset)
     }
 
-    public boolean isPendingOperation() {
-        return mOperation != null;
+    fun isPendingOperation(): Boolean {
+        return mOperation != null
     }
 
-    public boolean execute(boolean fireCallback) {
-        BigDecimal first = parseNumber(mFirstNumber);
-        BigDecimal second = parseNumber(mSecondNumber);
+    fun execute(fireCallback: Boolean): Boolean {
+        val first = parseNumber(mFirstNumber)
+        val second = parseNumber(mSecondNumber)
         try {
-            BigDecimal result;
-            switch (mOperation) {
-                case ADDITION:
-                    result = first.add(second);
-                    break;
-                case SUBTRACTION:
-                    result = first.subtract(second);
-                    break;
-                case MULTIPLICATION:
-                    result = first.multiply(second);
-                    break;
-                case DIVISION:
+            val result: BigDecimal
+            when (mOperation!!) {
+                Operation.ADDITION ->
+                    result = first.add(second)
+                Operation.SUBTRACTION ->
+                    result = first.subtract(second)
+                Operation.MULTIPLICATION ->
+                    result = first.multiply(second)
+                Operation.DIVISION ->
                     // divide(divisor, roundingMode) returns a value whose scale is the dividend's,
                     // so a 10 typed with no decimals rounded 10 / 4 to 2. Divide at 16 significant
                     // digits instead. Narrowing to the currency scale here would narrow every step
                     // of a chain rather than the answer: with a zero decimal currency, 10.0 / 4 * 4
                     // would give 8. getResult narrows the finished equation once.
-                    result = first.divide(second, MathContext.DECIMAL64);
-                    break;
-                default:
-                    result = BigDecimal.valueOf(0);
-                    break;
+                    result = first.divide(second, MathContext.DECIMAL64)
             }
             // String.valueOf renders a small enough result in scientific notation, the product
             // 0.001 * 0.0001 as 1E-7, and the next keypress appends to whatever string lands here.
-            mFirstNumber = result.toPlainString();
-            if (mFirstNumber.endsWith(".0")) {
-                mFirstNumber = mFirstNumber.substring(0, mFirstNumber.length() - 2);
+            var firstNumber = result.toPlainString()
+            if (firstNumber.endsWith(".0")) {
+                firstNumber = firstNumber.substring(0, firstNumber.length - 2)
             }
-            mSecondNumber = null;
-            mOperation = null;
+            mFirstNumber = firstNumber
+            mSecondNumber = null
+            mOperation = null
             // An operation that hands the amount back unchanged has computed nothing the ledger
             // can see, and the display still reads the number that was there before it. The equals
             // key runs the equation whether or not a second number was entered, and appendOperation
@@ -277,37 +270,37 @@ public class EquationSolver {
             // multiplying by one land in the same place: leave the flag as it was found, so a typed
             // amount stays typed and an answer stays an answer.
             if (result.compareTo(first) != 0) {
-                mComputed = true;
+                mComputed = true
             }
             if (fireCallback) {
-                updateDisplaySafely();
+                updateDisplaySafely()
             }
-            return true;
-        } catch (ArithmeticException ignore) {
-            ignore.printStackTrace();
+            return true
+        } catch (ignore: ArithmeticException) {
+            ignore.printStackTrace()
         }
-        return false;
+        return false
     }
 
-    public long getResult() {
+    fun getResult(): Long {
         if (isPendingOperation() && !execute(false)) {
             // Error occurred during calculation
-            return 0L;
+            return 0L
         }
-        BigDecimal parsedNumber = parseNumber(mFirstNumber);
+        var parsedNumber = parseNumber(mFirstNumber)
         // A currency this installation cannot resolve is worth two decimals here, which is what
         // CurrencyManager.getDecimals answers for a null one and what MoneyFormatter divides the
         // same row by when it cannot resolve it either. This used to return the typed number as
         // if it were already minor units, so a wallet naming a missing currency stored a typed
         // 12.50 as 12, which MoneyFormatter then renders as 0.12.
-        int decimals = CurrencyManager.getDecimals(mCurrency);
+        val decimals = CurrencyManager.getDecimals(mCurrency)
         if (mComputed) {
             // An answer is rounded to the currency scale, so 20.00 / 3 stores 667. A typed
             // number falls through to toMinorUnits, which truncates what will not fit: 64.9 on a
             // zero decimal currency stays 64, as the entry tests pin.
-            parsedNumber = parsedNumber.setScale(decimals, RoundingMode.HALF_EVEN);
+            parsedNumber = parsedNumber.setScale(decimals, RoundingMode.HALF_EVEN)
         }
-        return MoneyScale.toMinorUnits(parsedNumber, decimals);
+        return MoneyScale.toMinorUnits(parsedNumber, decimals)
     }
 
     /**
@@ -316,70 +309,67 @@ public class EquationSolver {
      * backspacing one off it, leaves the display reading the same amount, and a keypress that
      * changes nothing does not retype what is there.
      */
-    private void clearComputedIfValueChanged(String number) {
+    private fun clearComputedIfValueChanged(number: String?) {
         if (parseNumber(number).compareTo(parseNumber(mFirstNumber)) != 0) {
-            mComputed = false;
+            mComputed = false
         }
     }
 
-    private BigDecimal parseNumber(String number) {
-        String safe = number == null || number.isEmpty() ? "0" : number;
+    private fun parseNumber(number: String?): BigDecimal {
+        var safe = if (number == null || number.isEmpty()) "0" else number
         if (safe.endsWith(".")) {
-            safe = safe.substring(0, safe.length() - 1);
+            safe = safe.substring(0, safe.length - 1)
         }
         try {
-            return new BigDecimal(safe);
-        } catch (NumberFormatException ignore) {}
-        return BigDecimal.valueOf(0);
+            return BigDecimal(safe)
+        } catch (ignore: NumberFormatException) {}
+        return BigDecimal.valueOf(0L)
     }
 
-    private static class Target {
+    private class Target(val mFirst: Boolean, val mOffset: Int)
 
-        private final boolean mFirst;
-        private final int mOffset;
-
-        private Target(boolean first, int offset) {
-            mFirst = first;
-            mOffset = offset;
-        }
-    }
-
-    public enum Operation {
+    enum class Operation {
         ADDITION,
         SUBTRACTION,
         MULTIPLICATION,
         DIVISION
     }
 
-    private void updateDisplaySafely() {
+    private fun updateDisplaySafely() {
         if (mController != null) {
-            StringBuilder builder = new StringBuilder();
-            builder.append(mFirstNumber);
+            val builder = StringBuilder()
+            builder.append(mFirstNumber)
             if (mOperation != null) {
-                switch (mOperation) {
-                    case ADDITION:
-                        builder.append(" + ");
-                        break;
-                    case SUBTRACTION:
-                        builder.append(" − ");
-                        break;
-                    case MULTIPLICATION:
-                        builder.append(" × ");
-                        break;
-                    case DIVISION:
-                        builder.append(" ÷ ");
-                        break;
+                when (mOperation) {
+                    Operation.ADDITION ->
+                        builder.append(" + ")
+                    Operation.SUBTRACTION ->
+                        builder.append(" − ")
+                    Operation.MULTIPLICATION ->
+                        builder.append(" × ")
+                    Operation.DIVISION ->
+                        builder.append(" ÷ ")
+                    null -> {}
                 }
                 if (mSecondNumber != null) {
-                    builder.append(mSecondNumber);
+                    builder.append(mSecondNumber)
                 }
             }
-            mController.onUpdateDisplay(builder.toString());
+            mController.onUpdateDisplay(builder.toString())
         }
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onUpdateDisplay(String text);
+        fun onUpdateDisplay(text: String)
+    }
+
+    companion object {
+
+        private const val SS_FIRST_NUMBER = "EquationSolver::SavedState::FirstNumber"
+        private const val SS_SECOND_NUMBER = "EquationSolver::SavedState::SecondNumber"
+        private const val SS_OPERATION_NUMBER = "EquationSolver::SavedState::Operation"
+        private const val SS_CURRENCY = "EquationSolver::SavedState::Currency"
+        private const val SS_COMPUTED = "EquationSolver::SavedState::Computed"
     }
 }
