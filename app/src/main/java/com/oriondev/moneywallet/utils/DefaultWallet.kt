@@ -17,14 +17,14 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.utils;
+package com.oriondev.moneywallet.utils
 
-import android.content.ContentResolver;
-import android.database.Cursor;
+import android.content.ContentResolver
+import android.database.Cursor
 
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
 
 /**
  * Picks the wallet a new item opens on. The wallet chosen in settings wins whenever it exists and
@@ -32,42 +32,40 @@ import com.oriondev.moneywallet.storage.preference.PreferenceManager;
  * wallet that is neither archived nor deleted. Otherwise TOTAL_WALLET_ID is returned, which hands
  * the choice to the editor's existing Total branch.
  */
-public class DefaultWallet {
+object DefaultWallet {
 
-    private DefaultWallet() {
-    }
-
-    public static long resolveNewItemWallet(ContentResolver resolver) {
-        long configured = PreferenceManager.getDefaultWallet();
+    @JvmStatic
+    fun resolveNewItemWallet(resolver: ContentResolver?): Long {
+        val configured = PreferenceManager.getDefaultWallet()
         if (configured != PreferenceManager.NO_DEFAULT_WALLET && isUsable(resolver, configured)) {
-            return configured;
+            return configured
         }
-        long current = PreferenceManager.getCurrentWallet();
+        val current = PreferenceManager.getCurrentWallet()
         if (current != PreferenceManager.TOTAL_WALLET_ID
                 && current != PreferenceManager.NO_CURRENT_WALLET && isUsable(resolver, current)) {
-            return current;
+            return current
         }
-        return PreferenceManager.TOTAL_WALLET_ID;
+        return PreferenceManager.TOTAL_WALLET_ID
     }
 
     // The collection uri, not wallets/#: the item route drops the selection and would report an
     // archived wallet as usable, so the fallback would never fire. The collection query also
     // excludes deleted rows in its own base filter.
-    private static boolean isUsable(ContentResolver resolver, long walletId) {
-        Cursor cursor = resolver.query(
+    private fun isUsable(resolver: ContentResolver?, walletId: Long): Boolean {
+        val cursor: Cursor? = resolver!!.query(
                 DataContentProvider.CONTENT_WALLETS,
-                new String[]{Contract.Wallet.ID},
+                arrayOf(Contract.Wallet.ID),
                 Contract.Wallet.ID + " = ? AND " + Contract.Wallet.ARCHIVED + " = 0",
-                new String[]{String.valueOf(walletId)},
+                arrayOf(walletId.toString()),
                 null
-        );
+        )
         if (cursor != null) {
             try {
-                return cursor.moveToFirst();
+                return cursor.moveToFirst()
             } finally {
-                cursor.close();
+                cursor.close()
             }
         }
-        return false;
+        return false
     }
 }
