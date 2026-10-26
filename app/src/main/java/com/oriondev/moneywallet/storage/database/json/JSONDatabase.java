@@ -25,7 +25,7 @@ package com.oriondev.moneywallet.storage.database.json;
 /*package-local*/ class JSONDatabase {
 
     /*package-local*/ static final int MIN_SUPPORTED_VERSION = 1;
-    /*package-local*/ static final int MAX_SUPPORTED_VERSION = 5;
+    /*package-local*/ static final int MAX_SUPPORTED_VERSION = 6;
 
     // version 3 adds the budget_categories array, so that a budget covering more than one
     // category keeps every one of them through a backup. A release that predates it refuses a
@@ -37,7 +37,7 @@ package com.oriondev.moneywallet.storage.database.json;
     // version 5 adds the transaction_splits array, so that the parts a transaction is split into
     // survive a restore. A release that predates it refuses a version 5 file by its header
     // instead of failing part way through the arrays.
-    /*package-local*/ static final int VERSION = 5;
+    /*package-local*/ static final int VERSION = 6;
 
     /*package-local*/ static class Header {
         /*package-local*/ static final String OBJECT = "header";

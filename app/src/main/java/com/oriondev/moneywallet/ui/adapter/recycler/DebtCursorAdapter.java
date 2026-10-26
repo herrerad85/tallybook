@@ -59,6 +59,7 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
     private int mIndexDescription;
     private int mIndexMoney;
     private int mIndexProgress;
+    private int mIndexInterest;
     private int mIndexCurrency;
     private int mIndexExpirationDate;
     private int mIndexArchived;
@@ -86,6 +87,7 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         mIndexDescription = cursor.getColumnIndex(Contract.Debt.DESCRIPTION);
         mIndexMoney = cursor.getColumnIndex(Contract.Debt.MONEY);
         mIndexProgress = cursor.getColumnIndex(Contract.Debt.PROGRESS);
+        mIndexInterest = cursor.getColumnIndex(Contract.Debt.INTEREST);
         mIndexCurrency = cursor.getColumnIndex(Contract.Debt.WALLET_CURRENCY);
         mIndexExpirationDate = cursor.getColumnIndex(Contract.Debt.EXPIRATION_DATE);
         mIndexArchived = cursor.getColumnIndex(Contract.Debt.ARCHIVED);
@@ -170,6 +172,18 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         } else {
             holder.mProgressTextView.setText(R.string.relative_string_debt_completed);
         }
+        long interest = Math.abs(cursor.getLong(mIndexInterest));
+        if (interest == 0L || debtType == null) {
+            holder.mInterestTextView.setVisibility(View.GONE);
+        } else {
+            holder.mInterestTextView.setVisibility(View.VISIBLE);
+            Context context = holder.mInterestTextView.getContext();
+            String interestText = mMoneyFormatter.getNotTintedString(currency, interest);
+            int format = debtType == Contract.DebtType.CREDIT
+                    ? R.string.relative_string_credit_interest_received
+                    : R.string.relative_string_debt_interest_paid;
+            holder.mInterestTextView.setText(context.getString(format, interestText));
+        }
         if (cursor.isNull(mIndexExpirationDate)) {
             holder.mRemainingDaysTextView.setVisibility(View.GONE);
         } else {
@@ -236,10 +250,12 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         private TextView mMoneyTextView;
         private MaterialProgressBar mProgressBar;
         private TextView mProgressTextView;
+        private TextView mInterestTextView;
         private TextView mRemainingDaysTextView;
         private TextView mPlaceTextView;
         private View mButtonLayoutFix;
         private ViewGroup mButtonLayout;
+        private CardButton mAddInterestButton;
         private CardButton mPayButton;
         private CardButton mReceiveButton;
         private CardButton mPayInFullButton;
@@ -252,15 +268,18 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mProgressBar = itemView.findViewById(R.id.progress_bar);
             mProgressTextView = itemView.findViewById(R.id.money_progress_text_view);
+            mInterestTextView = itemView.findViewById(R.id.interest_text_view);
             mRemainingDaysTextView = itemView.findViewById(R.id.remaining_days_text_view);
             mPlaceTextView = itemView.findViewById(R.id.place_text_view);
             mButtonLayoutFix = itemView.findViewById(R.id.button_bar_empty_fix);
             mButtonLayout = itemView.findViewById(R.id.button_bar_layout);
+            mAddInterestButton = itemView.findViewById(R.id.add_interest_button);
             mPayButton = itemView.findViewById(R.id.pay_button);
             mReceiveButton = itemView.findViewById(R.id.receive_button);
             mPayInFullButton = itemView.findViewById(R.id.pay_in_full_button);
             mReceiveInFullButton = itemView.findViewById(R.id.receive_in_full_button);
             itemView.setOnClickListener(this);
+            mAddInterestButton.setOnClickListener(this);
             mPayButton.setOnClickListener(this);
             mReceiveButton.setOnClickListener(this);
             mPayInFullButton.setOnClickListener(this);
@@ -274,7 +293,10 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
                 Cursor cursor = getSafeCursor(position);
                 if (cursor != null) {
                     long id = cursor.getLong(mIndexId);
-                    if (view == mPayButton) {
+                    if (view == mAddInterestButton) {
+                        Contract.DebtType debtType = Contract.DebtType.fromValue(cursor.getInt(mIndexDebtType));
+                        mActionListener.onAddInterestClick(id, debtType);
+                    } else if (view == mPayButton) {
                         mActionListener.onPayClick(id);
                     } else if (view == mReceiveButton) {
                         mActionListener.onReceiveClick(id);
@@ -301,5 +323,7 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         void onPayInFullClick(long id);
 
         void onReceiveInFullClick(long id);
+
+        void onAddInterestClick(long id, Contract.DebtType debtType);
     }
 }

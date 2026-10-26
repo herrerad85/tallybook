@@ -113,7 +113,7 @@ public class TransactionSplitTest {
         // the header is what an older release reads to refuse this file, and the parts have to sit
         // right after the transactions they name
         String json = readDatabaseJson(backup);
-        assertEquals(5, new JSONObject(json).getJSONObject("header").getInt("version_code"));
+        assertEquals(6, new JSONObject(json).getJSONObject("header").getInt("version_code"));
         int transactions = json.indexOf("\"transactions\"");
         int splits = json.indexOf("\"transaction_splits\"");
         int people = json.indexOf("\"transaction_people\"");
@@ -166,13 +166,22 @@ public class TransactionSplitTest {
         assertEquals(0L, count("transaction_splits", null));
     }
 
+    @Test
+    public void aVersionFiveBackupStillRestores() throws Exception {
+        File backup = writeBackup(5);
+        restore(backup);
+        assertEquals(1L, count("transactions", "uuid = 'old-transaction' AND " +
+                "transaction_money = 1234"));
+        assertEquals(0L, count("transaction_splits", null));
+    }
+
     /**
      * A file from a release newer than this one is refused by its header before any row is read,
      * which is what a release that predates parts does to a version 5 file.
      */
     @Test
     public void aBackupFromANewerReleaseIsRefusedByItsHeader() throws Exception {
-        File backup = writeBackup(6);
+        File backup = writeBackup(7);
         try {
             restore(backup);
             fail("a backup newer than this release was restored");
@@ -180,7 +189,8 @@ public class TransactionSplitTest {
             assertTrue(expected.getMessage(), expected.getMessage().contains("newer version"));
         }
         // nothing reached the staging file, and the ledger it would have replaced is untouched
-        assertEquals(0L, count("transaction_splits", null));
+        assertEquals(0L, count("currencies", null));
+        assertEquals(0L, count("wallets", null));
         DataContentProvider.closeStagingDatabase();
         assertEquals(PARTS.length, count("transaction_splits", null));
     }
@@ -323,8 +333,8 @@ public class TransactionSplitTest {
     }
 
     /**
-     * A backup file as a release writing the given version would, holding one wallet, one category
-     * and one transaction and every other array empty. Up to version 4 there is no array of parts.
+     * A backup file as a release writing the given version would, holding one currency, one wallet,
+     * one category and one transaction and every other array empty. Up to version 4 there is no array of parts.
      */
     private File writeBackup(int version) throws Exception {
         String[] arrays = {"currencies", "wallets", "categories", "events", "places", "people",
@@ -336,7 +346,10 @@ public class TransactionSplitTest {
         StringBuilder json = new StringBuilder("{\"header\":{\"version_code\":" + version + "}");
         for (String array : arrays) {
             json.append(",\"").append(array).append("\":[");
-            if ("wallets".equals(array)) {
+            if ("currencies".equals(array)) {
+                json.append("{\"iso\":\"XTS\",\"name\":\"Test\",\"symbol\":\"X\",\"decimals\":2," +
+                        "\"last_edit\":" + EDIT + "}");
+            } else if ("wallets".equals(array)) {
                 json.append("{\"id\":\"old-wallet\",\"name\":\"Cash\",\"currency\":\"EUR\"," +
                         "\"start_money\":0,\"last_edit\":" + EDIT + "}");
             } else if ("categories".equals(array)) {
@@ -351,6 +364,9 @@ public class TransactionSplitTest {
                         "\"last_edit\":" + EDIT + "}");
             }
             json.append("]");
+            if ("transactions".equals(array) && version >= 5) {
+                json.append(",\"transaction_splits\":[]");
+            }
         }
         json.append("}");
         File backup = new File(mContext.getCacheDir(), "version" + version + ".mwbx");

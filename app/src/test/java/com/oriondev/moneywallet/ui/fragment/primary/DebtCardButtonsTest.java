@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.database.MatrixCursor;
 import android.view.ContextThemeWrapper;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +37,8 @@ import com.oriondev.moneywallet.storage.wrapper.DebtHeaderCursor;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
 import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity;
 import com.oriondev.moneywallet.ui.adapter.recycler.DebtCursorAdapter;
+import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,13 +50,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.robolectric.Shadows.shadowOf;
 
 /**
- * The debt card's own half of settling in full, which is the choice of which of its four buttons
+ * The debt card's own half of settling in full, which is the choice of which of its five buttons
  * a row shows and what the button a user taps sends to the editor. The amount the editor then
  * opens on is decided and pinned elsewhere, and nothing but the card decides these two things.
  *
  * A row is built here the way the list builds one, so a visibility rule that offered settling in
  * full on a debt already paid off, or a button wired to the wrong action constant, fails here.
- * Every visibility case reads all four buttons, so a rule that turned one on for the wrong kind
+ * Every visibility case reads all five buttons, so a rule that turned one on for the wrong kind
  * of row cannot pass by going unread.
  */
 @RunWith(RobolectricTestRunner.class)
@@ -74,6 +77,7 @@ public class DebtCardButtonsTest {
             Contract.Debt.DESCRIPTION,
             Contract.Debt.MONEY,
             Contract.Debt.PROGRESS,
+            Contract.Debt.INTEREST,
             Contract.Debt.WALLET_CURRENCY,
             Contract.Debt.EXPIRATION_DATE,
             Contract.Debt.ARCHIVED,
@@ -93,31 +97,31 @@ public class DebtCardButtonsTest {
     public void aDebtStillBeingPaidOffOffersPayAndPayInFull() {
         onCard(Contract.DebtType.DEBT, 10000L, -2500L, false, 1, (activity, card) ->
                 // a debt's payments sum negative and the card reads them as an amount paid
-                assertButtons(card, View.VISIBLE, View.VISIBLE, View.GONE, View.GONE));
+                assertButtons(card, View.VISIBLE, View.VISIBLE, View.VISIBLE, View.GONE, View.GONE));
     }
 
     @Test
     public void aDebtPaidOffKeepsPayAndDropsPayInFull() {
         onCard(Contract.DebtType.DEBT, 10000L, -10000L, true, 1, (activity, card) ->
-                assertButtons(card, View.VISIBLE, View.GONE, View.GONE, View.GONE));
+                assertButtons(card, View.VISIBLE, View.VISIBLE, View.GONE, View.GONE, View.GONE));
     }
 
     @Test
     public void aDebtPaidPastItsTargetDropsPayInFull() {
         onCard(Contract.DebtType.DEBT, 10000L, -12000L, true, 1, (activity, card) ->
-                assertButtons(card, View.VISIBLE, View.GONE, View.GONE, View.GONE));
+                assertButtons(card, View.VISIBLE, View.VISIBLE, View.GONE, View.GONE, View.GONE));
     }
 
     @Test
     public void aCreditStillBeingRepaidOffersReceiveAndReceiveInFull() {
         onCard(Contract.DebtType.CREDIT, 10000L, 2500L, false, 1, (activity, card) ->
-                assertButtons(card, View.GONE, View.GONE, View.VISIBLE, View.VISIBLE));
+                assertButtons(card, View.VISIBLE, View.GONE, View.GONE, View.VISIBLE, View.VISIBLE));
     }
 
     @Test
     public void aCreditRepaidKeepsReceiveAndDropsReceiveInFull() {
         onCard(Contract.DebtType.CREDIT, 10000L, 10000L, true, 1, (activity, card) ->
-                assertButtons(card, View.GONE, View.GONE, View.VISIBLE, View.GONE));
+                assertButtons(card, View.VISIBLE, View.GONE, View.GONE, View.VISIBLE, View.GONE));
     }
 
     @Test
@@ -125,10 +129,62 @@ public class DebtCardButtonsTest {
         // the provider sums payments through a LEFT JOIN, so a debt nobody has paid against
         // reaches the card with no progress at all
         onCard(Contract.DebtType.DEBT, 10000L, null, false, 1, (activity, card) ->
-                assertButtons(card, View.VISIBLE, View.VISIBLE, View.GONE, View.GONE));
+                assertButtons(card, View.VISIBLE, View.VISIBLE, View.VISIBLE, View.GONE, View.GONE));
+    }
+
+    @Test
+    public void anArchivedDebtHidesTheButtonBar() {
+        onCard(Contract.DebtType.DEBT, 10000L, -10000L, -500L, true, true, 1, (activity, card) ->
+                assertEquals(View.GONE, card.findViewById(R.id.button_bar_layout).getVisibility()));
+    }
+
+    @Test
+    public void aDebtWithInterestShowsTheInterestPaid() {
+        onCard(Contract.DebtType.DEBT, 10000L, -2500L, -420L, false, false, 1, (activity, card) ->
+                assertInterestLine(card, R.string.relative_string_debt_interest_paid, 420L));
+    }
+
+    @Test
+    public void aCreditWithInterestShowsTheInterestReceived() {
+        onCard(Contract.DebtType.CREDIT, 10000L, 2500L, 250L, false, false, 1, (activity, card) ->
+                assertInterestLine(card, R.string.relative_string_credit_interest_received, 250L));
+    }
+
+    @Test
+    public void aDebtPaidOffStillShowsItsInterest() {
+        onCard(Contract.DebtType.DEBT, 10000L, -10000L, -420L, false, true, 1, (activity, card) ->
+                assertInterestLine(card, R.string.relative_string_debt_interest_paid, 420L));
+    }
+
+    @Test
+    public void aDebtWithNoInterestHidesTheLine() {
+        onCard(Contract.DebtType.DEBT, 10000L, -2500L, null, false, false, 1, (activity, card) ->
+                assertEquals(View.GONE, card.findViewById(R.id.interest_text_view).getVisibility()));
+    }
+
+    @Test
+    public void interestThatNetsToZeroHidesTheLine() {
+        onCard(Contract.DebtType.CREDIT, 10000L, 2500L, 0L, false, false, 1, (activity, card) ->
+                assertEquals(View.GONE, card.findViewById(R.id.interest_text_view).getVisibility()));
     }
 
     // ---- what each button sends the editor --------------------------------------------------
+
+    @Test
+    public void addInterestOnADebtAsksForInterestPaid() {
+        onCard(Contract.DebtType.DEBT, 10000L, -2500L, false, 2, (activity, card) -> {
+            card.findViewById(R.id.add_interest_button).performClick();
+            assertEditorOpened(activity, NewEditTransactionActivity.DEBT_ADD_INTEREST_PAID);
+        });
+    }
+
+    @Test
+    public void addInterestOnACreditAsksForInterestReceived() {
+        onCard(Contract.DebtType.CREDIT, 10000L, 2500L, false, 2, (activity, card) -> {
+            card.findViewById(R.id.add_interest_button).performClick();
+            assertEditorOpened(activity, NewEditTransactionActivity.DEBT_ADD_INTEREST_RECEIVED);
+        });
+    }
 
     @Test
     public void payInFullOnADebtAsksTheEditorToSettleInFull() {
@@ -173,6 +229,11 @@ public class DebtCardButtonsTest {
      */
     private void onCard(Contract.DebtType debtType, long money, Long progress, boolean settled,
                         int position, CardCheck check) {
+        onCard(debtType, money, progress, null, false, settled, position, check);
+    }
+
+    private void onCard(Contract.DebtType debtType, long money, Long progress, Long interest,
+                        boolean archived, boolean settled, int position, CardCheck check) {
         try (ActivityScenario<BackupListActivity> scenario =
                      ActivityScenario.launch(BackupListActivity.class)) {
             scenario.onActivity(activity -> {
@@ -183,7 +244,7 @@ public class DebtCardButtonsTest {
                         .commitNow();
                 DebtCursorAdapter adapter = new DebtCursorAdapter(fragment);
                 adapter.changeCursor(new DebtHeaderCursor(
-                        threeRows(debtType, money, progress, settled), debtType));
+                        threeRows(debtType, money, progress, interest, archived, settled), debtType));
                 check.run(activity, cardOf(adapter, position));
             });
         }
@@ -200,12 +261,12 @@ public class DebtCardButtonsTest {
      * bound last instead of the row that was tapped carries a different id and fails.
      */
     private static MatrixCursor threeRows(Contract.DebtType debtType, long money, Long progress,
-                                          boolean settled) {
+                                          Long interest, boolean archived, boolean settled) {
         MatrixCursor cursor = new MatrixCursor(COLUMNS);
         for (long id : new long[] {DEBT_ID, SECOND_DEBT_ID, THIRD_DEBT_ID}) {
             cursor.addRow(new Object[] {
-                    id, debtType.getValue(), ICON, "Rent", money, progress, "EUR", null, 0,
-                    null, null, settled ? 1 : 0
+                    id, debtType.getValue(), ICON, "Rent", money, progress, interest, "EUR", null,
+                    archived ? 1 : 0, null, null, settled ? 1 : 0
             });
         }
         return cursor;
@@ -225,8 +286,10 @@ public class DebtCardButtonsTest {
         return card;
     }
 
-    private static void assertButtons(View card, int pay, int payInFull, int receive,
-                                      int receiveInFull) {
+    private static void assertButtons(View card, int addInterest, int pay, int payInFull,
+                                      int receive, int receiveInFull) {
+        assertEquals("add_interest_button", addInterest,
+                card.findViewById(R.id.add_interest_button).getVisibility());
         assertEquals("pay_button", pay, card.findViewById(R.id.pay_button).getVisibility());
         assertEquals("pay_in_full_button", payInFull,
                 card.findViewById(R.id.pay_in_full_button).getVisibility());
@@ -234,6 +297,14 @@ public class DebtCardButtonsTest {
                 card.findViewById(R.id.receive_button).getVisibility());
         assertEquals("receive_in_full_button", receiveInFull,
                 card.findViewById(R.id.receive_in_full_button).getVisibility());
+    }
+
+    private static void assertInterestLine(View card, int format, long interest) {
+        TextView line = card.findViewById(R.id.interest_text_view);
+        assertEquals(View.VISIBLE, line.getVisibility());
+        String money = MoneyFormatter.getInstance().getNotTintedString(
+                CurrencyManager.getCurrency("EUR"), interest);
+        assertEquals(card.getContext().getString(format, money), line.getText().toString());
     }
 
     private static void assertEditorOpened(BackupListActivity activity, int debtAction) {

@@ -89,6 +89,7 @@ public class DebtListFragment extends CursorListFragment implements DebtCursorAd
                     Contract.Debt.DESCRIPTION,
                     Contract.Debt.MONEY,
                     Contract.Debt.PROGRESS,
+                    Contract.Debt.INTEREST,
                     Contract.Debt.WALLET_CURRENCY,
                     Contract.Debt.EXPIRATION_DATE,
                     Contract.Debt.ARCHIVED,
@@ -186,6 +187,17 @@ public class DebtListFragment extends CursorListFragment implements DebtCursorAd
         intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
         intent.putExtra(NewEditTransactionActivity.DEBT_ID, id);
         intent.putExtra(NewEditTransactionActivity.DEBT_ACTION, NewEditTransactionActivity.DEBT_RECEIVE_IN_FULL);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onAddInterestClick(long id, Contract.DebtType debtType) {
+        Intent intent = new Intent(getActivity(), NewEditTransactionActivity.class);
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_DEBT);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ID, id);
+        intent.putExtra(NewEditTransactionActivity.DEBT_ACTION, debtType == Contract.DebtType.CREDIT
+                ? NewEditTransactionActivity.DEBT_ADD_INTEREST_RECEIVED
+                : NewEditTransactionActivity.DEBT_ADD_INTEREST_PAID);
         startActivity(intent);
     }
 

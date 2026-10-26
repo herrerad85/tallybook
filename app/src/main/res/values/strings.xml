@@ -73,6 +73,7 @@
     <string name="action_pay_debt_in_full">"Pay in full"</string>
     <string name="action_receive_debt_in_full">"Receive in full"</string>
     <string name="action_receive_debt">"Receive"</string>
+    <string name="action_add_debt_interest">"Add interest"</string>
     <string name="action_withdraw">"Withdraw"</string>
     <string name="action_deposit">"Deposit"</string>
     <string name="action_withdraw_everything">"Withdraw everything"</string>
@@ -371,6 +372,8 @@
     <string name="relative_string_will_end_on">"Will end on: %s"</string>
     <string name="relative_string_money_to_settle_debt">"%s left to settle this debt"</string>
     <string name="relative_string_debt_completed">"This debt has been completed"</string>
+    <string name="relative_string_debt_interest_paid">"%s interest paid"</string>
+    <string name="relative_string_credit_interest_received">"%s interest received"</string>
     <string name="relative_string_expired_on">"Expired on: %s"</string>
     <string name="relative_string_will_expire_on">"Will expired on: %s"</string>
     <string name="relative_string_version_name">"Version %s"</string>

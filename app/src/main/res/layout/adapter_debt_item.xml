@@ -127,6 +127,17 @@
                 tools:text="€ 32,15 to settle this debt" />
 
             <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+                android:id="@+id/interest_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:visibility="gone"
+                app:theme_textColor="textColorSecondary"
+                tools:text="€ 4,20 interest paid" />
+
+            <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
                 android:id="@+id/remaining_days_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -167,21 +178,27 @@
             android:layout_height="@dimen/material_component_lists_card_action_button_padding"
             android:visibility="gone" />
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/button_bar_layout"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/material_component_lists_card_action_button_height"
+            android:layout_height="wrap_content"
             android:padding="@dimen/material_component_lists_card_action_button_padding"
-            android:orientation="horizontal"
-            android:gravity="end"
             style="?android:attr/buttonBarStyle" >
+
+            <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
+                android:id="@+id/add_interest_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="36dp"
+                android:text="@string/action_add_debt_interest"
+                android:background="?attr/selectableItemBackground"
+                style="?android:attr/buttonBarButtonStyle" />
 
             <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
                 android:id="@+id/pay_in_full_button"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="@dimen/material_component_lists_card_action_button_padding"
-                android:layout_marginStart="@dimen/material_component_lists_card_action_button_padding"
+                android:layout_height="wrap_content"
+                android:minHeight="36dp"
                 android:text="@string/action_pay_debt_in_full"
                 android:background="?attr/selectableItemBackground"
                 style="?android:attr/buttonBarButtonStyle" />
@@ -189,9 +206,8 @@
             <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
                 android:id="@+id/receive_in_full_button"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="@dimen/material_component_lists_card_action_button_padding"
-                android:layout_marginStart="@dimen/material_component_lists_card_action_button_padding"
+                android:layout_height="wrap_content"
+                android:minHeight="36dp"
                 android:text="@string/action_receive_debt_in_full"
                 android:background="?attr/selectableItemBackground"
                 style="?android:attr/buttonBarButtonStyle" />
@@ -199,9 +215,8 @@
             <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
                 android:id="@+id/pay_button"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="@dimen/material_component_lists_card_action_button_padding"
-                android:layout_marginStart="@dimen/material_component_lists_card_action_button_padding"
+                android:layout_height="wrap_content"
+                android:minHeight="36dp"
                 android:text="@string/action_pay_debt"
                 android:background="?attr/selectableItemBackground"
                 style="?android:attr/buttonBarButtonStyle" />
@@ -209,14 +224,26 @@
             <com.oriondev.moneywallet.ui.view.theme.ThemedCardButton
                 android:id="@+id/receive_button"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="@dimen/material_component_lists_card_action_button_padding"
-                android:layout_marginStart="@dimen/material_component_lists_card_action_button_padding"
+                android:layout_height="wrap_content"
+                android:minHeight="36dp"
                 android:text="@string/action_receive_debt"
                 android:background="?attr/selectableItemBackground"
                 style="?android:attr/buttonBarButtonStyle" />
 
-        </LinearLayout>
+            <androidx.constraintlayout.helper.widget.Flow
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:constraint_referenced_ids="add_interest_button,pay_in_full_button,receive_in_full_button,pay_button,receive_button"
+                app:flow_horizontalBias="1"
+                app:flow_horizontalGap="@dimen/material_component_lists_card_action_button_padding"
+                app:flow_horizontalStyle="packed"
+                app:flow_wrapMode="chain"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>
 
