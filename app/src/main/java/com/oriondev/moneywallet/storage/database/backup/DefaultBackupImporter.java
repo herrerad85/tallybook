@@ -50,6 +50,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
     @Override
     public void importDatabase(@NonNull File temporaryFolder) throws ImportException {
         DatabaseImporter importer = null;
+        boolean completed = false;
         try {
             ZipFile zipFile = new ZipFile(getBackupFile());
             if (!zipFile.isValidZipFile()) {
@@ -98,11 +99,18 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
             importer.importAttachments(contentResolver);
             importer.importTransactionAttachments(contentResolver);
             importer.importTransferAttachments(contentResolver);
+            completed = true;
         } catch (ZipException e) {
             throw new ImportException(e.getMessage());
         } finally {
             if (importer != null) {
-                importer.close();
+                if (completed) {
+                    importer.close();
+                } else {
+                    try {
+                        importer.close();
+                    } catch (ImportException ignore) {}
+                }
             }
         }
     }
