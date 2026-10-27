@@ -612,6 +612,7 @@ public class JSONDatabaseImporter implements DatabaseImporter {
                     long id = SQLDatabaseImporter.insert(contentResolver, transferAttachment);
                 }
                 mReader.endArray();
+                mReader.endObject();
             } else {
                 throw new ImportException("Wrong array name (expected = 'transfer_attachments')");
             }

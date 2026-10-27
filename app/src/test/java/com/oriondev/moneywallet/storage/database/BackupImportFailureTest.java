@@ -33,6 +33,14 @@ import static org.junit.Assert.fail;
 public class BackupImportFailureTest {
 
     private static final String DATABASE_ENTRY = "databases/database.json";
+    private static final String[] ARRAYS = {"currencies", "wallets", "categories", "events",
+            "places", "people", "event_people", "debts", "debt_people", "budgets",
+            "budget_wallets", "budget_categories", "category_rules", "savings",
+            "recurrent_transactions", "recurrent_transfers", "transactions",
+            "transaction_splits", "transaction_people", "transaction_models", "transfers",
+            "transfer_people", "transfer_models", "attachments", "transaction_attachment",
+            "transfer_attachment"};
+
     private Context mContext;
 
     @Before
@@ -81,6 +89,21 @@ public class BackupImportFailureTest {
         String message = restoreFailure(backup);
 
         assertTrue(message, message.contains("invalid CRC"));
+    }
+
+    @Test
+    public void aValidBackupEndingOnAReadBoundaryIsRestored() throws Exception {
+        StringBuilder tail = new StringBuilder();
+        for (String array : ARRAYS) {
+            tail.append(",\"").append(array).append("\":[]");
+        }
+        tail.append('}');
+        String head = "{\"header\":{\"version_code\":6}";
+        char[] padding = new char[8193 - head.length() - tail.length()];
+        Arrays.fill(padding, ' ');
+        File backup = zipJson("boundary.mwbx", head + new String(padding) + tail);
+
+        new DefaultBackupImporter(mContext, backup, null).importDatabase(importFolder());
     }
 
     private String restoreFailure(File backup) throws Exception {

@@ -54,6 +54,10 @@ import java.io.InputStreamReader;
         mReader.endArray();
     }
 
+    /*package-local*/ void endObject() throws IOException {
+        mReader.endObject();
+    }
+
     /*package-local*/ boolean hasArrayAnotherObject() throws IOException {
         return mReader.peek() != JsonToken.END_ARRAY;
     }
