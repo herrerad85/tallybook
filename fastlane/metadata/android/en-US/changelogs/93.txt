@@ -1,0 +1,3 @@
+New: Add interest on a debt card, filed under the new Interest paid and Interest received categories. Apps such as Tasker can open a filled in new transaction, or save one without a tap once Settings, Utilities, Automation is on.
+
+Fixes: restoring a backup from a newer version asks you to update instead of showing a CRC error. Debt card buttons wrap at large font sizes. A backup from this version can't be restored on 1.14.0 or older.

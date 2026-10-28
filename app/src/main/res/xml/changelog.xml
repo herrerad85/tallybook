@@ -20,6 +20,15 @@
 
 <changelog>
 
+    <version versionName="1.15.0" versionDate="Oct 28, 2026">
+        <change>[b]New![/b] Add interest on a debt card files the interest as its own transaction, under the new Interest paid category for a debt or Interest received for a credit. Interest never counts toward paying the debt off, and the card shows the interest so far.</change>
+        <change>[b]New![/b] Apps such as Tasker can open a filled in new transaction, naming the wallet and category.</change>
+        <change>[b]New![/b] Apps such as Tasker can save a transaction without a tap once Settings, Utilities, Automation is turned on. Every request has to carry the code shown there, and the transaction is saved unconfirmed.</change>
+        <change>The buttons on a debt card wrap onto a second row when they do not fit, and a label at a large font size is no longer cut off.</change>
+        <change>Restoring a backup made by a newer version now asks you to update the app instead of reporting an invalid CRC.</change>
+        <change>A backup made by this version cannot be restored on 1.14.0 or older.</change>
+    </version>
+
     <version versionName="1.14.0" versionDate="Oct 21, 2026">
         <change>[b]New![/b] Split one transaction across several categories. Split into categories in the transaction editor gives each part its own category, amount and note.</change>
         <change>[b]New![/b] The app moves to Material 3. Under Settings, User interface, Appearance, Use system colors takes the colors from the wallpaper on phones that offer it.</change>
