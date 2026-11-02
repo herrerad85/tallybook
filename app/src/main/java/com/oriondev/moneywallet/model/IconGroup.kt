@@ -17,32 +17,30 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
-
-import java.util.List;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 12/08/18.
  */
-public class IconGroup {
+class IconGroup {
 
-    private final String mGroupName;
-    private final List<Icon> mGroupIcons;
+    private val mGroupName: String?
+    private val mGroupIcons: MutableList<Icon>
 
-    public IconGroup(String name, List<Icon> iconList) {
-        mGroupName = name;
-        mGroupIcons = iconList;
+    constructor(name: String?, iconList: MutableList<Icon>) {
+        mGroupName = name
+        mGroupIcons = iconList
     }
 
-    public String getGroupName() {
-        return mGroupName;
+    fun getGroupName(): String? {
+        return mGroupName
     }
 
-    public List<Icon> getGroupIcons() {
-        return mGroupIcons;
+    fun getGroupIcons(): MutableList<Icon> {
+        return mGroupIcons
     }
 
-    public int size() {
-        return mGroupIcons.size();
+    fun size(): Int {
+        return mGroupIcons.size
     }
 }
