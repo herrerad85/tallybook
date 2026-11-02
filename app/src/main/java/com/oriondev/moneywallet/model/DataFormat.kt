@@ -1,9 +1,9 @@
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 20/12/18.
  */
-public enum DataFormat {
+enum class DataFormat {
     CSV,
     XLS,
     PDF
