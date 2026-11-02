@@ -17,26 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 03/03/18.
  */
-public class Pair<L, R> {
+class Pair<L, R> {
 
-    private final L mL;
-    private final R mR;
+    private val mL: L
+    private val mR: R
 
-    public Pair(L l, R r) {
-        mL = l;
-        mR = r;
+    constructor(l: L, r: R) {
+        mL = l
+        mR = r
     }
 
-    public L getL() {
-        return mL;
+    fun getL(): L {
+        return mL
     }
 
-    public R getR() {
-        return mR;
+    fun getR(): R {
+        return mR
     }
 }
