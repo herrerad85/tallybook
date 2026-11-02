@@ -17,101 +17,95 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.os.Parcel;
-import android.os.Parcelable;
-import androidx.annotation.ColorInt;
-import android.widget.ImageView;
+import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.os.Parcel
+import android.os.Parcelable
+import androidx.annotation.ColorInt
+import android.widget.ImageView
 
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
-import com.oriondev.moneywallet.ui.drawable.DotMatrixDrawable;
-import com.oriondev.moneywallet.ui.drawable.TextDrawable;
-import com.oriondev.moneywallet.utils.Utils;
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
+import com.oriondev.moneywallet.ui.drawable.DotMatrixDrawable
+import com.oriondev.moneywallet.ui.drawable.TextDrawable
+import com.oriondev.moneywallet.utils.Utils
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * Created by andrea on 23/01/18.
  */
-public class ColorIcon extends Icon {
+class ColorIcon : Icon {
 
-    private static final String COLOR = "color";
-    private static final String NAME = "name";
+    private val mColor: String?
+    private val mName: String?
 
-    private final String mColor;
-    private final String mName;
-
-    public ColorIcon(JSONObject jsonObject) throws JSONException {
-        mColor = jsonObject.getString(COLOR);
-        mName = jsonObject.optString(NAME);
+    @Throws(JSONException::class)
+    constructor(jsonObject: JSONObject?) {
+        mColor = jsonObject!!.getString(COLOR)
+        mName = jsonObject.optString(NAME)
     }
 
-    public ColorIcon(int color, String name) {
-        mColor = Utils.getHexColor(color);
-        mName = name;
+    constructor(color: Int, name: String?) {
+        mColor = Utils.getHexColor(color)
+        mName = name
     }
 
-    public ColorIcon(String color, String name) {
-        mColor = color;
-        mName = name;
+    constructor(color: String?, name: String?) {
+        mColor = color
+        mName = name
     }
 
-    public ColorIcon(ColorIcon icon, String name) {
-        mColor = icon.mColor;
-        mName = name;
+    constructor(icon: ColorIcon, name: String?) {
+        mColor = icon.mColor
+        mName = name
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected ColorIcon(Parcel source) {
-        mColor = source.readString();
-        mName = source.readString();
+    @Suppress("WeakerAccess")
+    protected constructor(source: Parcel) {
+        mColor = source.readString()
+        mName = source.readString()
     }
 
-    @Override
-    public Type getType() {
-        return Type.COLOR;
+    override fun getType(): Type {
+        return Type.COLOR
     }
 
-    @Override
-    protected void writeJSON(JSONObject jsonObject) throws JSONException {
-        jsonObject.put(COLOR, mColor);
-        jsonObject.put(NAME, mName);
+    @Throws(JSONException::class)
+    override fun writeJSON(jsonObject: JSONObject) {
+        jsonObject.put(COLOR, mColor)
+        jsonObject.put(NAME, mName)
     }
 
-    @Override
-    public boolean apply(ImageView imageView) {
-        Drawable drawable = getDrawable();
-        imageView.setImageDrawable(drawable);
-        return true;
+    override fun apply(imageView: ImageView?): Boolean {
+        val drawable = getDrawable()
+        imageView!!.setImageDrawable(drawable)
+        return true
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mColor);
-        dest.writeString(mName);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(mColor)
+        dest.writeString(mName)
     }
 
     @ColorInt
-    public int getColor() {
-        return Color.parseColor(mColor);
+    fun getColor(): Int {
+        return Color.parseColor(mColor)
     }
 
-    @Override
-    public Drawable getDrawable(Context context) {
-        return getDrawable();
+    override fun getDrawable(context: Context?): Drawable? {
+        return getDrawable()
     }
 
-    public Drawable getDrawable() {
-        int backgroundColor = getColor();
+    fun getDrawable(): Drawable? {
+        val backgroundColor = getColor()
         if (PreferenceManager.isDotMatrixIconsEnabled()) {
-            Drawable dotMatrix = DotMatrixDrawable.forText(mName, backgroundColor);
+            val dotMatrix: Drawable? = DotMatrixDrawable.forText(mName, backgroundColor)
             if (dotMatrix != null) {
-                return dotMatrix;
+                return dotMatrix
             }
         }
         return TextDrawable.builder()
@@ -120,19 +114,24 @@ public class ColorIcon extends Icon {
                     .height(60)
                     .textColor(Utils.getBestColor(backgroundColor))
                 .endConfig()
-                .buildRound(mName, getColor());
+                .buildRound(mName, getColor())
     }
 
-    public static final Parcelable.Creator<ColorIcon> CREATOR = new Parcelable.Creator<ColorIcon>() {
+    companion object {
 
-        @Override
-        public ColorIcon createFromParcel(Parcel source) {
-            return new ColorIcon(source);
-        }
+        private const val COLOR = "color"
+        private const val NAME = "name"
 
-        @Override
-        public ColorIcon[] newArray(int size) {
-            return new ColorIcon[size];
+        @JvmField
+        val CREATOR: Parcelable.Creator<ColorIcon> = object : Parcelable.Creator<ColorIcon> {
+
+            override fun createFromParcel(source: Parcel): ColorIcon {
+                return ColorIcon(source)
+            }
+
+            override fun newArray(size: Int): Array<ColorIcon?> {
+                return arrayOfNulls(size)
+            }
         }
-    };
+    }
 }
