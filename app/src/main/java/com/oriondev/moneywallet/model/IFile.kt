@@ -17,22 +17,22 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcelable;
+import android.os.Parcelable
 
 /**
  * Created by andre on 21/03/2018.
  */
-public interface IFile extends Parcelable {
+interface IFile : Parcelable {
 
-    String getName();
+    fun getName(): String?
 
-    String getExtension();
+    fun getExtension(): String?
 
-    boolean isDirectory();
+    fun isDirectory(): Boolean
 
-    long getSize();
+    fun getSize(): Long
 
-    String encodeToString();
+    fun encodeToString(): String?
 }
