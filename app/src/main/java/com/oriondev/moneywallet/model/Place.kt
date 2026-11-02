@@ -17,113 +17,113 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
 /**
  * Created by andrea on 10/03/18.
  */
 
-public class Place implements Parcelable {
+class Place : Parcelable {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
-    private final String mAddress;
-    private final Double mLatitude;
-    private final Double mLongitude;
+    private val mId: Long
+    private val mName: String?
+    private val mIcon: Icon?
+    private val mAddress: String?
+    private val mLatitude: Double?
+    private val mLongitude: Double?
 
-    public Place(long id, String name, Icon icon, String address, Double latitude, Double longitude) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mAddress = address;
-        mLatitude = latitude;
-        mLongitude = longitude;
+    constructor(id: Long, name: String?, icon: Icon?, address: String?, latitude: Double?, longitude: Double?) {
+        mId = id
+        mName = name
+        mIcon = icon
+        mAddress = address
+        mLatitude = latitude
+        mLongitude = longitude
     }
 
-    public Place(long id, String name, Icon icon, String address, Coordinates coordinates) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mAddress = address;
-        mLatitude = coordinates != null ? coordinates.getLatitude() : null;
-        mLongitude = coordinates != null ? coordinates.getLongitude() : null;
+    constructor(id: Long, name: String?, icon: Icon?, address: String?, coordinates: Coordinates?) {
+        mId = id
+        mName = name
+        mIcon = icon
+        mAddress = address
+        mLatitude = if (coordinates != null) coordinates.latitude else null
+        mLongitude = if (coordinates != null) coordinates.longitude else null
     }
 
-    public long getId() {
-        return mId;
+    fun getId(): Long {
+        return mId
     }
 
-    public String getName() {
-        return mName;
+    fun getName(): String? {
+        return mName
     }
 
-    public String getAddress() {
-        return mAddress;
+    fun getAddress(): String? {
+        return mAddress
     }
 
-    public boolean hasCoordinates() {
-        return mLatitude != null && mLongitude != null;
+    fun hasCoordinates(): Boolean {
+        return mLatitude != null && mLongitude != null
     }
 
-    public Coordinates getCoordinates() {
-        return hasCoordinates() ? new Coordinates(mLatitude, mLongitude) : null;
+    fun getCoordinates(): Coordinates? {
+        return if (hasCoordinates()) Coordinates(mLatitude!!, mLongitude!!) else null
     }
 
-    protected Place(Parcel in) {
-        mId = in.readLong();
-        mName = in.readString();
-        mIcon = in.readParcelable(Icon.class.getClassLoader());
-        mAddress = in.readString();
-        if (in.readByte() == 0) {
-            mLatitude = null;
+    protected constructor(source: Parcel) {
+        mId = source.readLong()
+        mName = source.readString()
+        mIcon = source.readParcelable(Icon::class.java.classLoader)
+        mAddress = source.readString()
+        if (source.readByte().toInt() == 0) {
+            mLatitude = null
         } else {
-            mLatitude = in.readDouble();
+            mLatitude = source.readDouble()
         }
-        if (in.readByte() == 0) {
-            mLongitude = null;
+        if (source.readByte().toInt() == 0) {
+            mLongitude = null
         } else {
-            mLongitude = in.readDouble();
+            mLongitude = source.readDouble()
         }
     }
 
-    public static final Creator<Place> CREATOR = new Creator<Place>() {
-        @Override
-        public Place createFromParcel(Parcel in) {
-            return new Place(in);
-        }
-
-        @Override
-        public Place[] newArray(int size) {
-            return new Place[size];
-        }
-    };
-
-    @Override
-    public int describeContents() {
-        return 0;
+    override fun describeContents(): Int {
+        return 0
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(mId);
-        dest.writeString(mName);
-        dest.writeParcelable(mIcon, flags);
-        dest.writeString(mAddress);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeLong(mId)
+        dest.writeString(mName)
+        dest.writeParcelable(mIcon, flags)
+        dest.writeString(mAddress)
         if (mLatitude == null) {
-            dest.writeByte((byte) 0);
+            dest.writeByte(0.toByte())
         } else {
-            dest.writeByte((byte) 1);
-            dest.writeDouble(mLatitude);
+            dest.writeByte(1.toByte())
+            dest.writeDouble(mLatitude)
         }
         if (mLongitude == null) {
-            dest.writeByte((byte) 0);
+            dest.writeByte(0.toByte())
         } else {
-            dest.writeByte((byte) 1);
-            dest.writeDouble(mLongitude);
+            dest.writeByte(1.toByte())
+            dest.writeDouble(mLongitude)
+        }
+    }
+
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Place> = object : Parcelable.Creator<Place> {
+            override fun createFromParcel(source: Parcel): Place {
+                return Place(source)
+            }
+
+            override fun newArray(size: Int): Array<Place?> {
+                return arrayOfNulls(size)
+            }
         }
     }
 }
