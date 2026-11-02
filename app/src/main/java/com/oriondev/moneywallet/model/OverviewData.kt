@@ -17,48 +17,46 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.RadarData;
-
-import java.util.List;
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.RadarData
 
 /**
  * Created by andrea on 17/08/18.
  */
-public class OverviewData {
+class OverviewData {
 
-    private final BarData mBarData;
-    private final LineData mLineData;
-    private final RadarData mRadarData;
-    private final List<PeriodMoney> mPeriodMoneyList;
+    private val mBarData: BarData?
+    private val mLineData: LineData?
+    private val mRadarData: RadarData?
+    private val mPeriodMoneyList: MutableList<PeriodMoney>
 
-    public OverviewData(BarData barData, LineData lineData, RadarData radarData, List<PeriodMoney> periodMoneyList) {
-        mBarData = barData;
-        mLineData = lineData;
-        mRadarData = radarData;
-        mPeriodMoneyList = periodMoneyList;
+    constructor(barData: BarData?, lineData: LineData?, radarData: RadarData?, periodMoneyList: MutableList<PeriodMoney>) {
+        mBarData = barData
+        mLineData = lineData
+        mRadarData = radarData
+        mPeriodMoneyList = periodMoneyList
     }
 
-    public BarData getBarData() {
-        return mBarData;
+    fun getBarData(): BarData? {
+        return mBarData
     }
 
-    public LineData getLineData() {
-        return mLineData;
+    fun getLineData(): LineData? {
+        return mLineData
     }
 
-    public RadarData getRadarData() {
-        return mRadarData;
+    fun getRadarData(): RadarData? {
+        return mRadarData
     }
 
-    public PeriodMoney getPeriodMoney(int index) {
-        return mPeriodMoneyList.get(index);
+    fun getPeriodMoney(index: Int): PeriodMoney {
+        return mPeriodMoneyList.get(index)
     }
 
-    public int getPeriodCount() {
-        return mPeriodMoneyList.size();
+    fun getPeriodCount(): Int {
+        return mPeriodMoneyList.size
     }
 }
