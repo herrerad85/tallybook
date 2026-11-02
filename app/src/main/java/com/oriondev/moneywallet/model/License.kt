@@ -17,97 +17,75 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 31/03/18.
  */
-public class License {
+class License {
 
-    private final String mName;
-    private final String mAuthor;
-    private final String mWebsite;
-    private final String mVersion;
-    private final String mCopyright;
-    private final Type mType;
+    private val mName: String?
+    private val mAuthor: String?
+    private val mWebsite: String?
+    private val mVersion: String?
+    private val mCopyright: String?
+    private val mType: Type
 
-    public License(String name, String author, String website, String version, String copyright, String type) {
-        mName = name;
-        mAuthor = author;
-        mWebsite = website;
-        mVersion = version;
-        mCopyright = copyright;
-        mType = parse(type);
+    constructor(name: String?, author: String?, website: String?, version: String?, copyright: String?, type: String?) {
+        mName = name
+        mAuthor = author
+        mWebsite = website
+        mVersion = version
+        mCopyright = copyright
+        mType = parse(type)
     }
 
-    public String getName() {
-        return mName;
+    fun getName(): String? {
+        return mName
     }
 
-    public String getAuthor() {
-        return mAuthor;
+    fun getAuthor(): String? {
+        return mAuthor
     }
 
-    public String getUrl() {
-        return mWebsite;
+    fun getUrl(): String? {
+        return mWebsite
     }
 
-    public String getVersion() {
-        return mVersion;
+    fun getVersion(): String? {
+        return mVersion
     }
 
-    public String getCopyright() {
-        return mCopyright;
+    fun getCopyright(): String? {
+        return mCopyright
     }
 
-    public Type getType() {
-        return mType;
+    fun getType(): Type {
+        return mType
     }
 
-    public String getTypeName() {
-        switch (mType) {
-            case APACHE:
-                return "Apache License";
-            case MIT:
-                return "MIT License";
-            case ISC:
-                return "ISC License";
-            case GPL3:
-                return "GNU GPLv3";
-            case GPL2:
-                return "GNU GPLv2";
-            case AGPL:
-                return "GNU Affero GPL";
-            case CUSTOM:
-                return "Custom License";
-            default:
-                return "Unknown license";
+    fun getTypeName(): String {
+        when (mType) {
+            Type.APACHE ->
+                return "Apache License"
+            Type.MIT ->
+                return "MIT License"
+            Type.ISC ->
+                return "ISC License"
+            Type.GPL3 ->
+                return "GNU GPLv3"
+            Type.GPL2 ->
+                return "GNU GPLv2"
+            Type.AGPL ->
+                return "GNU Affero GPL"
+            Type.CUSTOM ->
+                return "Custom License"
+            else ->
+                return "Unknown license"
         }
     }
 
-    private static Type parse(String type) {
-        if (type != null) {
-            switch (type) {
-                case "MIT":
-                    return Type.MIT;
-                case "ISC":
-                    return Type.ISC;
-                case "APACHE":
-                    return Type.APACHE;
-                case "GPL2":
-                    return Type.GPL2;
-                case "GPL3":
-                    return Type.GPL3;
-                case "AGPL":
-                    return Type.AGPL;
-                case "CUSTOM":
-                    return Type.CUSTOM;
-            }
-        }
-        return Type.UNKNOWN;
-    }
-
-    public enum Type {
+    enum class Type {
         UNKNOWN,
         CUSTOM,
         APACHE,
@@ -116,5 +94,30 @@ public class License {
         AGPL,
         MIT,
         ISC
+    }
+
+    companion object {
+
+        private fun parse(type: String?): Type {
+            if (type != null) {
+                when (type) {
+                    "MIT" ->
+                        return Type.MIT
+                    "ISC" ->
+                        return Type.ISC
+                    "APACHE" ->
+                        return Type.APACHE
+                    "GPL2" ->
+                        return Type.GPL2
+                    "GPL3" ->
+                        return Type.GPL3
+                    "AGPL" ->
+                        return Type.AGPL
+                    "CUSTOM" ->
+                        return Type.CUSTOM
+                }
+            }
+            return Type.UNKNOWN
+        }
     }
 }
