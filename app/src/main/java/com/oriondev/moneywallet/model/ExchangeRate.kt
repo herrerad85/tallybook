@@ -17,40 +17,40 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.utils.CurrencyManager
 
 /**
  * Created by andre on 24/03/2018.
  */
-public class ExchangeRate {
+class ExchangeRate {
 
-    private final String mCurrency1;
-    private final String mCurrency2;
-    private final double mRate;
-    private final long mTimestamp;
+    private val mCurrency1: String?
+    private val mCurrency2: String?
+    private val mRate: Double
+    private val mTimestamp: Long
 
-    public ExchangeRate(String currency1, String currency2, double rate, long timestamp) {
-        mCurrency1 = currency1;
-        mCurrency2 = currency2;
-        mRate = rate;
-        mTimestamp = timestamp;
+    constructor(currency1: String?, currency2: String?, rate: Double, timestamp: Long) {
+        mCurrency1 = currency1
+        mCurrency2 = currency2
+        mRate = rate
+        mTimestamp = timestamp
     }
 
-    public CurrencyUnit getCurrency1() {
-        return CurrencyManager.getCurrency(mCurrency1);
+    fun getCurrency1(): CurrencyUnit? {
+        return CurrencyManager.getCurrency(mCurrency1)
     }
 
-    public CurrencyUnit getCurrency2() {
-        return CurrencyManager.getCurrency(mCurrency2);
+    fun getCurrency2(): CurrencyUnit? {
+        return CurrencyManager.getCurrency(mCurrency2)
     }
 
-    public double getRate() {
-        return mRate;
+    fun getRate(): Double {
+        return mRate
     }
 
-    public long getTimestamp() {
-        return mTimestamp;
+    fun getTimestamp(): Long {
+        return mTimestamp
     }
 }
