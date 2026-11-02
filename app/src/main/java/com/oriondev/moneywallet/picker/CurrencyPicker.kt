@@ -17,131 +17,126 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.model.CurrencyUnit;
-import com.oriondev.moneywallet.ui.activity.CurrencyListActivity;
-import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.model.CurrencyUnit
+import com.oriondev.moneywallet.ui.activity.CurrencyListActivity
+import com.oriondev.moneywallet.utils.CurrencyManager
 
 /**
  * Created by andrea on 02/02/18.
  */
-public class CurrencyPicker extends Fragment {
+class CurrencyPicker : Fragment() {
 
-    private static final String SS_CURRENT_CURRENCY = "CurrencyPicker::SavedState::CurrentCurrency";
-    private static final String ARG_DEFAULT_CURRENCY = "CurrencyPicker::Arguments::DefaultCurrency";
+    companion object {
 
-    private static final int REQUEST_CURRENCY_PICKER = 56;
+        private const val SS_CURRENT_CURRENCY = "CurrencyPicker::SavedState::CurrentCurrency"
+        private const val ARG_DEFAULT_CURRENCY = "CurrencyPicker::Arguments::DefaultCurrency"
 
-    private Controller mController;
+        private const val REQUEST_CURRENCY_PICKER = 56
 
-    private CurrencyUnit mCurrentCurrency;
-
-    public static CurrencyPicker createPicker(FragmentManager fragmentManager, String tag) {
-        return createPicker(fragmentManager, tag, CurrencyManager.getDefaultCurrency());
-    }
-
-    public static CurrencyPicker createPicker(FragmentManager fragmentManager, String tag, CurrencyUnit defaultCurrency) {
-        CurrencyPicker currencyPicker = (CurrencyPicker) fragmentManager.findFragmentByTag(tag);
-        if (currencyPicker == null) {
-            currencyPicker = new CurrencyPicker();
-            Bundle arguments = new Bundle();
-            arguments.putParcelable(ARG_DEFAULT_CURRENCY, defaultCurrency);
-            currencyPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(currencyPicker, tag).commit();
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?): CurrencyPicker {
+            return createPicker(fragmentManager, tag, CurrencyManager.getDefaultCurrency())
         }
-        return currencyPicker;
-    }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultCurrency: CurrencyUnit?): CurrencyPicker {
+            var currencyPicker = fragmentManager.findFragmentByTag(tag) as CurrencyPicker?
+            if (currencyPicker == null) {
+                currencyPicker = CurrencyPicker()
+                val arguments = Bundle()
+                arguments.putParcelable(ARG_DEFAULT_CURRENCY, defaultCurrency)
+                currencyPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(currencyPicker, tag).commit()
+            }
+            return currencyPicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private var mController: Controller? = null
+
+    private var mCurrentCurrency: CurrencyUnit? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mCurrentCurrency = savedInstanceState.getParcelable(SS_CURRENT_CURRENCY);
+            mCurrentCurrency = savedInstanceState.getParcelable(SS_CURRENT_CURRENCY)
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mCurrentCurrency = arguments.getParcelable(ARG_DEFAULT_CURRENCY);
+                mCurrentCurrency = arguments.getParcelable(ARG_DEFAULT_CURRENCY)
             } else {
-                mCurrentCurrency = CurrencyManager.getDefaultCurrency();
+                mCurrentCurrency = CurrencyManager.getDefaultCurrency()
             }
         }
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onCurrencyChanged(getTag(), mCurrentCurrency);
-        }
+    private fun fireCallbackSafely() {
+        mController?.onCurrencyChanged(tag, mCurrentCurrency)
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(SS_CURRENT_CURRENCY, mCurrentCurrency);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(SS_CURRENT_CURRENCY, mCurrentCurrency)
     }
 
-    public void setCurrency(CurrencyUnit currency) {
-        mCurrentCurrency = currency;
-        fireCallbackSafely();
+    fun setCurrency(currency: CurrencyUnit?) {
+        mCurrentCurrency = currency
+        fireCallbackSafely()
     }
 
-    public boolean isSelected() {
-        return mCurrentCurrency != null;
+    fun isSelected(): Boolean {
+        return mCurrentCurrency != null
     }
 
-    public CurrencyUnit getCurrentCurrency() {
-        return mCurrentCurrency;
+    fun getCurrentCurrency(): CurrencyUnit? {
+        return mCurrentCurrency
     }
 
-    public void showPicker() {
-        Intent intent = new Intent(getActivity(), CurrencyListActivity.class);
-        intent.putExtra(CurrencyListActivity.ACTIVITY_MODE, CurrencyListActivity.CURRENCY_PICKER);
-        startActivityForResult(intent, REQUEST_CURRENCY_PICKER);
+    fun showPicker() {
+        val intent = Intent(activity, CurrencyListActivity::class.java)
+        intent.putExtra(CurrencyListActivity.ACTIVITY_MODE, CurrencyListActivity.CURRENCY_PICKER)
+        startActivityForResult(intent, REQUEST_CURRENCY_PICKER)
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (requestCode == REQUEST_CURRENCY_PICKER) {
             if (resultCode == Activity.RESULT_OK) {
-                mCurrentCurrency = intent.getParcelableExtra(CurrencyListActivity.RESULT_CURRENCY);
-                fireCallbackSafely();
+                mCurrentCurrency = intent!!.getParcelableExtra(CurrencyListActivity.RESULT_CURRENCY)
+                fireCallbackSafely()
             }
         } else {
-            super.onActivityResult(requestCode, resultCode, intent);
+            super.onActivityResult(requestCode, resultCode, intent)
         }
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onCurrencyChanged(String tag, CurrencyUnit currency);
+        fun onCurrencyChanged(tag: String?, currency: CurrencyUnit?)
     }
 }
