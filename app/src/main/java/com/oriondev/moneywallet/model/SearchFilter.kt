@@ -17,50 +17,46 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.text.TextUtils;
+import android.os.Parcel
+import android.os.Parcelable
+import android.text.TextUtils
 
-import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.database.Contract
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.ArrayList
+import java.util.Calendar
+import java.util.Collections
+import java.util.Locale
+import java.util.TimeZone
+import java.util.TreeMap
+import java.util.TreeSet
 
 /**
  * The state of the search screen: one criterion per type, each unset when null or empty, and
  * whether a transaction has to meet all of the set ones or any of them. It turns into a
- * selection over the columns of {@link Contract.Transaction}, and the sort into its order.
+ * selection over the columns of [Contract.Transaction], and the sort into its order.
  */
-public class SearchFilter implements Parcelable {
+class SearchFilter : Parcelable {
 
-    public enum Match {
+    enum class Match {
         ALL, ANY
     }
 
-    public enum AmountOp {
+    enum class AmountOp {
         EXACTLY, AT_LEAST, AT_MOST, BETWEEN
     }
 
-    public enum AmountSide {
+    enum class AmountSide {
         EITHER, OUT, IN
     }
 
-    public enum Status {
+    enum class Status {
         UNCONFIRMED, CONFIRMED
     }
 
@@ -68,7 +64,7 @@ public class SearchFilter implements Parcelable {
      * The order of the results, each tied on the id so rows with equal keys hold still across
      * reloads. The amount sorts lead with the currency, so each currency's rows run together.
      */
-    public enum Sort {
+    enum class Sort(private val mOrderBy: String) {
         NEWEST(Contract.Transaction.DATE + " DESC, " + Contract.Transaction.ID + " DESC"),
         OLDEST(Contract.Transaction.DATE + " ASC, " + Contract.Transaction.ID + " ASC"),
         CATEGORY(Contract.Transaction.CATEGORY_NAME + " COLLATE LOCALIZED ASC, "
@@ -78,398 +74,393 @@ public class SearchFilter implements Parcelable {
         SMALLEST(Contract.Transaction.WALLET_CURRENCY + " ASC, " + Contract.Transaction.MONEY + " ASC, "
                 + Contract.Transaction.DATE + " DESC, " + Contract.Transaction.ID + " DESC");
 
-        private final String mOrderBy;
-
-        Sort(String orderBy) {
-            mOrderBy = orderBy;
+        fun getOrderBy(): String {
+            return mOrderBy
         }
 
-        public String getOrderBy() {
-            return mOrderBy;
-        }
-
-        public boolean isByAmount() {
-            return this == LARGEST || this == SMALLEST;
+        fun isByAmount(): Boolean {
+            return this === LARGEST || this === SMALLEST
         }
     }
 
-    private static final BigDecimal LONG_MIN = BigDecimal.valueOf(Long.MIN_VALUE);
-    private static final BigDecimal LONG_MAX = BigDecimal.valueOf(Long.MAX_VALUE);
+    private var mMatch: Match? = Match.ALL
+    private val mCategoryIds: TreeSet<Long> = TreeSet()
+    private var mAmountOp: AmountOp? = null
+    private var mAmountSide: AmountSide? = null
+    private var mAmount: BigDecimal? = null
+    private var mAmountTo: BigDecimal? = null
+    private var mDateFrom: String? = null
+    private var mDateTo: String? = null
+    private var mText: String? = null
+    private val mPeopleIds: TreeSet<Long> = TreeSet()
+    private var mStatus: Status? = null
+    private val mWalletIds: TreeSet<Long> = TreeSet()
+    private var mTransfersOnly: Boolean = false
+    private var mSort: Sort? = Sort.NEWEST
 
-    private Match mMatch = Match.ALL;
-    private final TreeSet<Long> mCategoryIds = new TreeSet<>();
-    private AmountOp mAmountOp;
-    private AmountSide mAmountSide;
-    private BigDecimal mAmount;
-    private BigDecimal mAmountTo;
-    private String mDateFrom;
-    private String mDateTo;
-    private String mText;
-    private final TreeSet<Long> mPeopleIds = new TreeSet<>();
-    private Status mStatus;
-    private final TreeSet<Long> mWalletIds = new TreeSet<>();
-    private boolean mTransfersOnly;
-    private Sort mSort = Sort.NEWEST;
-
-    public SearchFilter() {
+    constructor() {
     }
 
-    protected SearchFilter(Parcel in) {
-        mMatch = (Match) in.readSerializable();
-        readIds(in, mCategoryIds);
-        mAmountOp = (AmountOp) in.readSerializable();
-        mAmountSide = (AmountSide) in.readSerializable();
-        mAmount = readDecimal(in);
-        mAmountTo = readDecimal(in);
-        mDateFrom = in.readString();
-        mDateTo = in.readString();
-        mText = in.readString();
-        readIds(in, mPeopleIds);
-        mStatus = (Status) in.readSerializable();
-        readIds(in, mWalletIds);
-        mTransfersOnly = in.readByte() != 0;
-        mSort = (Sort) in.readSerializable();
+    protected constructor(source: Parcel) {
+        mMatch = source.readSerializable() as Match?
+        readIds(source, mCategoryIds)
+        mAmountOp = source.readSerializable() as AmountOp?
+        mAmountSide = source.readSerializable() as AmountSide?
+        mAmount = readDecimal(source)
+        mAmountTo = readDecimal(source)
+        mDateFrom = source.readString()
+        mDateTo = source.readString()
+        mText = source.readString()
+        readIds(source, mPeopleIds)
+        mStatus = source.readSerializable() as Status?
+        readIds(source, mWalletIds)
+        mTransfersOnly = source.readByte().toInt() != 0
+        mSort = source.readSerializable() as Sort?
     }
 
-    public static final Creator<SearchFilter> CREATOR = new Creator<SearchFilter>() {
-        @Override
-        public SearchFilter createFromParcel(Parcel in) {
-            return new SearchFilter(in);
-        }
-
-        @Override
-        public SearchFilter[] newArray(int size) {
-            return new SearchFilter[size];
-        }
-    };
-
-    public Match getMatch() {
-        return mMatch;
+    fun getMatch(): Match? {
+        return mMatch
     }
 
-    public void setMatch(Match match) {
-        mMatch = match;
+    fun setMatch(match: Match?) {
+        mMatch = match
     }
 
-    public Set<Long> getCategoryIds() {
-        return Collections.unmodifiableSet(mCategoryIds);
+    fun getCategoryIds(): Set<Long> {
+        return Collections.unmodifiableSet(mCategoryIds)
     }
 
-    public void setCategoryIds(Collection<Long> ids) {
-        mCategoryIds.clear();
-        mCategoryIds.addAll(ids);
+    fun setCategoryIds(ids: Collection<Long>?) {
+        mCategoryIds.clear()
+        mCategoryIds.addAll(ids!!)
     }
 
-    public AmountOp getAmountOp() {
-        return mAmountOp;
+    fun getAmountOp(): AmountOp? {
+        return mAmountOp
     }
 
-    public AmountSide getAmountSide() {
-        return mAmountSide;
+    fun getAmountSide(): AmountSide? {
+        return mAmountSide
     }
 
-    public BigDecimal getAmount() {
-        return mAmount;
+    fun getAmount(): BigDecimal? {
+        return mAmount
     }
 
-    public BigDecimal getAmountTo() {
-        return mAmountTo;
+    fun getAmountTo(): BigDecimal? {
+        return mAmountTo
     }
 
     /**
      * @param op the comparison, or null to unset the amount.
      * @param side which direction of money counts.
      * @param amount the typed number, in major units of each wallet's currency.
-     * @param amountTo the other end, read only by {@link AmountOp#BETWEEN}, in either order.
+     * @param amountTo the other end, read only by [AmountOp.BETWEEN], in either order.
      */
-    public void setAmount(AmountOp op, AmountSide side, BigDecimal amount, BigDecimal amountTo) {
-        if (amount == null || (op == AmountOp.BETWEEN && amountTo == null)) {
-            op = null;
+    fun setAmount(op: AmountOp?, side: AmountSide?, amount: BigDecimal?, amountTo: BigDecimal?) {
+        var op = op
+        if (amount == null || (op === AmountOp.BETWEEN && amountTo == null)) {
+            op = null
         }
-        mAmountOp = op;
-        mAmountSide = op != null ? side : null;
-        mAmount = op != null ? amount : null;
-        mAmountTo = op == AmountOp.BETWEEN ? amountTo : null;
+        mAmountOp = op
+        mAmountSide = if (op != null) side else null
+        mAmount = if (op != null) amount else null
+        mAmountTo = if (op === AmountOp.BETWEEN) amountTo else null
     }
 
-    public boolean isAmountSet() {
-        return mAmountOp != null;
+    fun isAmountSet(): Boolean {
+        return mAmountOp != null
     }
 
-    public String getDateFrom() {
-        return mDateFrom;
+    fun getDateFrom(): String? {
+        return mDateFrom
     }
 
-    public String getDateTo() {
-        return mDateTo;
+    fun getDateTo(): String? {
+        return mDateTo
     }
 
     /**
      * @param from first day, as the day part of a stored date, or null for no lower end.
      * @param to last day, as the day part of a stored date, or null for no upper end.
      */
-    public void setDates(String from, String to) {
-        mDateFrom = from;
-        mDateTo = to;
+    fun setDates(from: String?, to: String?) {
+        mDateFrom = from
+        mDateTo = to
     }
 
-    public String getText() {
-        return mText;
+    fun getText(): String? {
+        return mText
     }
 
-    public void setText(String text) {
-        String trimmed = text != null ? text.trim() : null;
-        mText = TextUtils.isEmpty(trimmed) ? null : trimmed;
+    fun setText(text: String?) {
+        val trimmed: String? = if (text != null) text.trim { it <= ' ' } else null
+        mText = if (TextUtils.isEmpty(trimmed)) null else trimmed
     }
 
-    public Set<Long> getPeopleIds() {
-        return Collections.unmodifiableSet(mPeopleIds);
+    fun getPeopleIds(): Set<Long> {
+        return Collections.unmodifiableSet(mPeopleIds)
     }
 
-    public void setPeopleIds(Collection<Long> ids) {
-        mPeopleIds.clear();
-        mPeopleIds.addAll(ids);
+    fun setPeopleIds(ids: Collection<Long>?) {
+        mPeopleIds.clear()
+        mPeopleIds.addAll(ids!!)
     }
 
-    public Status getStatus() {
-        return mStatus;
+    fun getStatus(): Status? {
+        return mStatus
     }
 
-    public void setStatus(Status status) {
-        mStatus = status;
+    fun setStatus(status: Status?) {
+        mStatus = status
     }
 
-    public Set<Long> getWalletIds() {
-        return Collections.unmodifiableSet(mWalletIds);
+    fun getWalletIds(): Set<Long> {
+        return Collections.unmodifiableSet(mWalletIds)
     }
 
-    public boolean isTransfersOnly() {
-        return mTransfersOnly;
+    fun isTransfersOnly(): Boolean {
+        return mTransfersOnly
     }
 
-    public void setWallets(Collection<Long> ids, boolean transfersOnly) {
-        mWalletIds.clear();
-        mWalletIds.addAll(ids);
-        mTransfersOnly = transfersOnly;
+    fun setWallets(ids: Collection<Long>?, transfersOnly: Boolean) {
+        mWalletIds.clear()
+        mWalletIds.addAll(ids!!)
+        mTransfersOnly = transfersOnly
     }
 
-    public Sort getSort() {
-        return mSort;
+    fun getSort(): Sort? {
+        return mSort
     }
 
-    public void setSort(Sort sort) {
-        mSort = sort;
+    fun setSort(sort: Sort?) {
+        mSort = sort
     }
 
-    public SearchFilter copy() {
-        Parcel parcel = Parcel.obtain();
+    fun copy(): SearchFilter {
+        val parcel = Parcel.obtain()
         try {
-            writeToParcel(parcel, 0);
-            parcel.setDataPosition(0);
-            return new SearchFilter(parcel);
+            writeToParcel(parcel, 0)
+            parcel.setDataPosition(0)
+            return SearchFilter(parcel)
         } finally {
-            parcel.recycle();
+            parcel.recycle()
         }
     }
 
     /**
-     * The selection for {@link Contract.Transaction} rows meeting this filter.
+     * The selection for [Contract.Transaction] rows meeting this filter.
      *
      * @param decimals decimals of every currency in use, keyed by iso code; read only when the
      *                 amount is set.
      * @return the selection and its arguments, both null when no type is set.
      */
-    public Pair<String, String[]> toSelection(Map<String, Integer> decimals) {
-        List<String> clauses = new ArrayList<>();
-        List<String> args = new ArrayList<>();
+    fun toSelection(decimals: Map<String, Int>?): Pair<String?, Array<String?>?> {
+        val clauses: MutableList<String> = ArrayList()
+        val args: MutableList<String?> = ArrayList()
         if (!mCategoryIds.isEmpty()) {
-            clauses.add(Contract.Transaction.CATEGORY_ID + " IN (" + placeholders(mCategoryIds.size()) + ")");
-            addIds(args, mCategoryIds);
+            clauses.add(Contract.Transaction.CATEGORY_ID + " IN (" + placeholders(mCategoryIds.size) + ")")
+            addIds(args, mCategoryIds)
         }
         if (mAmountOp != null) {
-            clauses.add(amountClause(decimals, args));
+            clauses.add(amountClause(decimals, args))
         }
         if (mDateFrom != null || mDateTo != null) {
-            clauses.add(dateClause(args));
+            clauses.add(dateClause(args))
         }
         if (mText != null) {
-            String[] columns = new String[] {Contract.Transaction.DESCRIPTION,
+            val columns = arrayOf(Contract.Transaction.DESCRIPTION,
                     Contract.Transaction.NOTE, Contract.Transaction.EVENT_NAME,
-                    Contract.Transaction.PLACE_NAME};
-            List<String> terms = new ArrayList<>();
-            for (String column : columns) {
-                terms.add("instr(lower(" + column + "), lower(?)) > 0");
-                args.add(mText);
+                    Contract.Transaction.PLACE_NAME)
+            val terms: MutableList<String> = ArrayList()
+            for (column in columns) {
+                terms.add("instr(lower(" + column + "), lower(?)) > 0")
+                args.add(mText)
             }
-            clauses.add(TextUtils.join(" OR ", terms));
+            clauses.add(TextUtils.join(" OR ", terms))
         }
         if (!mPeopleIds.isEmpty()) {
-            List<String> terms = new ArrayList<>();
-            for (Long id : mPeopleIds) {
-                terms.add(Contract.Transaction.PEOPLE_IDS + " LIKE ?");
-                args.add("%<" + id + ">%");
+            val terms: MutableList<String> = ArrayList()
+            for (id in mPeopleIds) {
+                terms.add(Contract.Transaction.PEOPLE_IDS + " LIKE ?")
+                args.add("%<" + id + ">%")
             }
-            terms.add(Contract.transferSideWithPeopleSelection(mPeopleIds.size()));
-            addIds(args, mPeopleIds);
-            clauses.add(TextUtils.join(" OR ", terms));
+            terms.add(Contract.transferSideWithPeopleSelection(mPeopleIds.size))
+            addIds(args, mPeopleIds)
+            clauses.add(TextUtils.join(" OR ", terms))
         }
         if (mStatus != null) {
-            clauses.add(Contract.Transaction.CONFIRMED + " = ?");
-            args.add(mStatus == Status.CONFIRMED ? "1" : "0");
+            clauses.add(Contract.Transaction.CONFIRMED + " = ?")
+            args.add(if (mStatus === Status.CONFIRMED) "1" else "0")
         }
         if (!mWalletIds.isEmpty() || mTransfersOnly) {
-            List<String> terms = new ArrayList<>();
+            val terms: MutableList<String> = ArrayList()
             if (!mWalletIds.isEmpty()) {
-                terms.add(Contract.Transaction.WALLET_ID + " IN (" + placeholders(mWalletIds.size()) + ")");
-                addIds(args, mWalletIds);
+                terms.add(Contract.Transaction.WALLET_ID + " IN (" + placeholders(mWalletIds.size) + ")")
+                addIds(args, mWalletIds)
             }
             if (mTransfersOnly) {
-                terms.add(Contract.Transaction.TYPE + " = ?");
-                args.add(String.valueOf(Contract.TransactionType.TRANSFER));
+                terms.add(Contract.Transaction.TYPE + " = ?")
+                args.add(Contract.TransactionType.TRANSFER.toString())
             }
-            clauses.add(TextUtils.join(" AND ", terms));
+            clauses.add(TextUtils.join(" AND ", terms))
         }
         if (clauses.isEmpty()) {
-            return new Pair<>(null, null);
+            return Pair(null, null)
         }
-        String selection = "(" + TextUtils.join(mMatch == Match.ANY ? ") OR (" : ") AND (", clauses) + ")";
-        return new Pair<>(selection, args.toArray(new String[0]));
+        val selection = "(" + TextUtils.join(if (mMatch === Match.ANY) ") OR (" else ") AND (", clauses) + ")"
+        return Pair(selection, args.toTypedArray())
     }
 
-    private String amountClause(Map<String, Integer> decimals, List<String> args) {
-        List<String> terms = new ArrayList<>();
-        for (Map.Entry<String, Integer> currency : new TreeMap<>(decimals).entrySet()) {
-            BigDecimal amount = mAmount.movePointRight(currency.getValue());
-            String iso = currency.getKey();
-            switch (mAmountOp) {
-                case EXACTLY:
+    private fun amountClause(decimals: Map<String, Int>?, args: MutableList<String?>): String {
+        val terms: MutableList<String> = ArrayList()
+        for (currency in TreeMap(decimals).entries) {
+            val amount = mAmount!!.movePointRight(currency.value)
+            val iso: String = currency.key
+            when (mAmountOp!!) {
+                AmountOp.EXACTLY -> {
                     if (amount.remainder(BigDecimal.ONE).signum() == 0) {
-                        terms.add(currencyTerm("= ?"));
-                        addBounds(args, iso, amount);
+                        terms.add(currencyTerm("= ?"))
+                        addBounds(args, iso, amount)
                     }
-                    break;
-                case AT_LEAST:
-                    terms.add(currencyTerm(">= ?"));
-                    addBounds(args, iso, amount.setScale(0, RoundingMode.CEILING));
-                    break;
-                case AT_MOST:
-                    terms.add(currencyTerm("<= ?"));
-                    addBounds(args, iso, amount.setScale(0, RoundingMode.FLOOR));
-                    break;
-                case BETWEEN:
-                    BigDecimal other = mAmountTo.movePointRight(currency.getValue());
-                    terms.add(currencyTerm("BETWEEN ? AND ?"));
+                }
+                AmountOp.AT_LEAST -> {
+                    terms.add(currencyTerm(">= ?"))
+                    addBounds(args, iso, amount.setScale(0, RoundingMode.CEILING))
+                }
+                AmountOp.AT_MOST -> {
+                    terms.add(currencyTerm("<= ?"))
+                    addBounds(args, iso, amount.setScale(0, RoundingMode.FLOOR))
+                }
+                AmountOp.BETWEEN -> {
+                    val other = mAmountTo!!.movePointRight(currency.value)
+                    terms.add(currencyTerm("BETWEEN ? AND ?"))
                     addBounds(args, iso, amount.min(other).setScale(0, RoundingMode.CEILING),
-                            amount.max(other).setScale(0, RoundingMode.FLOOR));
-                    break;
+                            amount.max(other).setScale(0, RoundingMode.FLOOR))
+                }
             }
         }
         // Without a clause an amount no wallet can hold would match every row in All mode.
         if (terms.isEmpty()) {
-            return "0";
+            return "0"
         }
-        String clause = TextUtils.join(" OR ", terms);
-        if (mAmountSide == AmountSide.OUT || mAmountSide == AmountSide.IN) {
-            clause = "(" + clause + ") AND " + Contract.Transaction.DIRECTION + " = ?";
-            args.add(String.valueOf(mAmountSide == AmountSide.OUT
-                    ? Contract.Direction.EXPENSE : Contract.Direction.INCOME));
+        var clause = TextUtils.join(" OR ", terms)
+        if (mAmountSide === AmountSide.OUT || mAmountSide === AmountSide.IN) {
+            clause = "(" + clause + ") AND " + Contract.Transaction.DIRECTION + " = ?"
+            args.add((if (mAmountSide === AmountSide.OUT)
+                    Contract.Direction.EXPENSE else Contract.Direction.INCOME).toString())
         }
-        return clause;
+        return clause
     }
 
-    private String dateClause(List<String> args) {
-        String from = mDateFrom;
-        String to = mDateTo;
+    private fun dateClause(args: MutableList<String?>): String {
+        var from = mDateFrom
+        var to = mDateTo
         if (from != null && to != null && from.compareTo(to) > 0) {
-            from = mDateTo;
-            to = mDateFrom;
+            from = mDateTo
+            to = mDateFrom
         }
-        List<String> terms = new ArrayList<>();
+        val terms: MutableList<String> = ArrayList()
         if (from != null) {
-            terms.add(Contract.Transaction.DATE + " >= ?");
-            args.add(from + " 00:00:00");
+            terms.add(Contract.Transaction.DATE + " >= ?")
+            args.add(from + " 00:00:00")
         }
         if (to != null) {
-            terms.add(Contract.Transaction.DATE + " < ?");
-            args.add(nextDay(to) + " 00:00:00");
+            terms.add(Contract.Transaction.DATE + " < ?")
+            args.add(nextDay(to) + " 00:00:00")
         }
-        return TextUtils.join(" AND ", terms);
+        return TextUtils.join(" AND ", terms)
     }
 
-    private static String currencyTerm(String comparison) {
-        return "(" + Contract.Transaction.WALLET_CURRENCY + " = ? AND " + Contract.Transaction.MONEY + " " + comparison + ")";
+    override fun describeContents(): Int {
+        return 0
     }
 
-    private static void addBounds(List<String> args, String iso, BigDecimal... bounds) {
-        args.add(iso);
-        for (BigDecimal bound : bounds) {
-            args.add(String.valueOf(bound.max(LONG_MIN).min(LONG_MAX).longValueExact()));
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeSerializable(mMatch)
+        dest.writeLongArray(toArray(mCategoryIds))
+        dest.writeSerializable(mAmountOp)
+        dest.writeSerializable(mAmountSide)
+        dest.writeString(if (mAmount != null) mAmount.toString() else null)
+        dest.writeString(if (mAmountTo != null) mAmountTo.toString() else null)
+        dest.writeString(mDateFrom)
+        dest.writeString(mDateTo)
+        dest.writeString(mText)
+        dest.writeLongArray(toArray(mPeopleIds))
+        dest.writeSerializable(mStatus)
+        dest.writeLongArray(toArray(mWalletIds))
+        dest.writeByte((if (mTransfersOnly) 1 else 0).toByte())
+        dest.writeSerializable(mSort)
+    }
+
+    companion object {
+
+        private val LONG_MIN: BigDecimal = BigDecimal.valueOf(Long.MIN_VALUE)
+        private val LONG_MAX: BigDecimal = BigDecimal.valueOf(Long.MAX_VALUE)
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<SearchFilter> = object : Parcelable.Creator<SearchFilter> {
+            override fun createFromParcel(source: Parcel): SearchFilter {
+                return SearchFilter(source)
+            }
+
+            override fun newArray(size: Int): Array<SearchFilter?> {
+                return arrayOfNulls(size)
+            }
         }
-    }
 
-    private static String nextDay(String day) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US);
-        try {
-            calendar.setTime(format.parse(day));
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("Not a yyyy-MM-dd day: " + day, e);
+        private fun currencyTerm(comparison: String): String {
+            return "(" + Contract.Transaction.WALLET_CURRENCY + " = ? AND " + Contract.Transaction.MONEY + " " + comparison + ")"
         }
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        return format.format(calendar.getTime());
-    }
 
-    private static String placeholders(int count) {
-        return TextUtils.join(", ", Collections.nCopies(count, "?"));
-    }
-
-    private static void addIds(List<String> args, Set<Long> ids) {
-        for (Long id : ids) {
-            args.add(String.valueOf(id));
+        private fun addBounds(args: MutableList<String?>, iso: String, vararg bounds: BigDecimal) {
+            args.add(iso)
+            for (bound in bounds) {
+                args.add(bound.max(LONG_MIN).min(LONG_MAX).longValueExact().toString())
+            }
         }
-    }
 
-    private static long[] toArray(Set<Long> ids) {
-        long[] array = new long[ids.size()];
-        int i = 0;
-        for (Long id : ids) {
-            array[i++] = id;
+        private fun nextDay(day: String): String {
+            val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            format.timeZone = TimeZone.getTimeZone("UTC")
+            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US)
+            try {
+                calendar.time = format.parse(day)
+            } catch (e: ParseException) {
+                throw IllegalArgumentException("Not a yyyy-MM-dd day: " + day, e)
+            }
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+            return format.format(calendar.time)
         }
-        return array;
-    }
 
-    private static void readIds(Parcel in, Set<Long> ids) {
-        for (long id : in.createLongArray()) {
-            ids.add(id);
+        private fun placeholders(count: Int): String {
+            return TextUtils.join(", ", Collections.nCopies(count, "?"))
         }
-    }
 
-    private static BigDecimal readDecimal(Parcel in) {
-        String value = in.readString();
-        return value != null ? new BigDecimal(value) : null;
-    }
+        private fun addIds(args: MutableList<String?>, ids: Set<Long>) {
+            for (id in ids) {
+                args.add(id.toString())
+            }
+        }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
+        private fun toArray(ids: Set<Long>): LongArray {
+            val array = LongArray(ids.size)
+            var i = 0
+            for (id in ids) {
+                array[i++] = id
+            }
+            return array
+        }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeSerializable(mMatch);
-        dest.writeLongArray(toArray(mCategoryIds));
-        dest.writeSerializable(mAmountOp);
-        dest.writeSerializable(mAmountSide);
-        dest.writeString(mAmount != null ? mAmount.toString() : null);
-        dest.writeString(mAmountTo != null ? mAmountTo.toString() : null);
-        dest.writeString(mDateFrom);
-        dest.writeString(mDateTo);
-        dest.writeString(mText);
-        dest.writeLongArray(toArray(mPeopleIds));
-        dest.writeSerializable(mStatus);
-        dest.writeLongArray(toArray(mWalletIds));
-        dest.writeByte((byte) (mTransfersOnly ? 1 : 0));
-        dest.writeSerializable(mSort);
+        private fun readIds(source: Parcel, ids: MutableSet<Long>) {
+            for (id in source.createLongArray()!!) {
+                ids.add(id)
+            }
+        }
+
+        private fun readDecimal(source: Parcel): BigDecimal? {
+            val value = source.readString()
+            return if (value != null) BigDecimal(value) else null
+        }
     }
 }
