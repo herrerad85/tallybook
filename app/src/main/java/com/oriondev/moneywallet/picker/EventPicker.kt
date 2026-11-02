@@ -17,126 +17,120 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.content.Context;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.content.Context
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.model.Event;
-import com.oriondev.moneywallet.ui.fragment.dialog.EventPickerDialog;
+import com.oriondev.moneywallet.model.Event
+import com.oriondev.moneywallet.ui.fragment.dialog.EventPickerDialog
 
-import java.util.Date;
+import java.util.Date
 
 /**
  * Created by andrea on 10/03/18.
  */
-public class EventPicker extends Fragment implements EventPickerDialog.Callback {
+class EventPicker : Fragment(), EventPickerDialog.Callback {
 
-    private static final String SS_CURRENT_EVENT = "EventPicker::SavedState::CurrentEvent";
+    private var mController: Controller? = null
 
-    private static final String ARG_DEFAULT_EVENT = "EventPicker::Arguments::DefaultEvent";
+    private var mCurrentEvent: Event? = null
 
-    private Controller mController;
+    private var mEventPickerDialog: EventPickerDialog? = null
 
-    private Event mCurrentEvent;
+    companion object {
 
-    private EventPickerDialog mEventPickerDialog;
+        private const val SS_CURRENT_EVENT = "EventPicker::SavedState::CurrentEvent"
 
-    public static EventPicker createPicker(FragmentManager fragmentManager, String tag, Event defaultEvent) {
-        EventPicker eventPicker = (EventPicker) fragmentManager.findFragmentByTag(tag);
-        if (eventPicker == null) {
-            eventPicker = new EventPicker();
-            Bundle arguments = new Bundle();
-            arguments.putParcelable(ARG_DEFAULT_EVENT, defaultEvent);
-            eventPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(eventPicker, tag).commit();
-        }
-        return eventPicker;
-    }
+        private const val ARG_DEFAULT_EVENT = "EventPicker::Arguments::DefaultEvent"
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultEvent: Event?): EventPicker {
+            var eventPicker = fragmentManager.findFragmentByTag(tag) as EventPicker?
+            if (eventPicker == null) {
+                eventPicker = EventPicker()
+                val arguments = Bundle()
+                arguments.putParcelable(ARG_DEFAULT_EVENT, defaultEvent)
+                eventPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(eventPicker, tag).commit()
+            }
+            return eventPicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mCurrentEvent = savedInstanceState.getParcelable(SS_CURRENT_EVENT);
+            mCurrentEvent = savedInstanceState.getParcelable(SS_CURRENT_EVENT)
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mCurrentEvent = arguments.getParcelable(ARG_DEFAULT_EVENT);
+                mCurrentEvent = arguments.getParcelable(ARG_DEFAULT_EVENT)
             }
         }
-        mEventPickerDialog = (EventPickerDialog) getChildFragmentManager().findFragmentByTag(getDialogTag());
+        mEventPickerDialog = childFragmentManager.findFragmentByTag(getDialogTag()) as EventPickerDialog?
         if (mEventPickerDialog == null) {
-            mEventPickerDialog = EventPickerDialog.newInstance();
+            mEventPickerDialog = EventPickerDialog.newInstance()
         }
-        mEventPickerDialog.setCallback(this);
+        mEventPickerDialog!!.setCallback(this)
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onEventChanged(getTag(), mCurrentEvent);
-        }
+    private fun fireCallbackSafely() {
+        mController?.onEventChanged(tag, mCurrentEvent)
     }
 
-    private String getDialogTag() {
-        return getTag() + "::DialogFragment";
+    private fun getDialogTag(): String {
+        return tag + "::DialogFragment"
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(SS_CURRENT_EVENT, mCurrentEvent);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(SS_CURRENT_EVENT, mCurrentEvent)
     }
 
-    public boolean isSelected() {
-        return mCurrentEvent != null;
+    fun isSelected(): Boolean {
+        return mCurrentEvent != null
     }
 
-    public void setCurrentEvent(Event event) {
-        mCurrentEvent = event;
-        fireCallbackSafely();
+    fun setCurrentEvent(event: Event?) {
+        mCurrentEvent = event
+        fireCallbackSafely()
     }
 
-    public Event getCurrentEvent() {
-        return mCurrentEvent;
+    fun getCurrentEvent(): Event? {
+        return mCurrentEvent
     }
 
-    public void showPicker(Date filterDate) {
-        mEventPickerDialog.showPicker(getChildFragmentManager(), getDialogTag(), mCurrentEvent, filterDate);
+    fun showPicker(filterDate: Date?) {
+        mEventPickerDialog!!.showPicker(childFragmentManager, getDialogTag(), mCurrentEvent, filterDate)
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    @Override
-    public void onEventSelected(Event event) {
-        mCurrentEvent = event;
-        fireCallbackSafely();
+    override fun onEventSelected(event: Event?) {
+        mCurrentEvent = event
+        fireCallbackSafely()
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onEventChanged(String tag, Event event);
+        fun onEventChanged(tag: String?, event: Event?)
     }
 }
