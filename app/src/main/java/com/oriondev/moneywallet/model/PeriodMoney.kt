@@ -17,41 +17,41 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import com.oriondev.moneywallet.utils.DateUtils;
+import com.oriondev.moneywallet.utils.DateUtils
 
-import java.util.Date;
+import java.util.Date
 
 /**
  * Created by andrea on 14/08/18.
  */
-public class PeriodMoney {
+class PeriodMoney {
 
-    private final Date mStartDate;
-    private final Date mEndDate;
-    private final Money mIncomes;
-    private final Money mExpenses;
-    private final Money mNetIncomes;
-    private final Money mTransfers;
+    private val mStartDate: Date?
+    private val mEndDate: Date?
+    private val mIncomes: Money
+    private val mExpenses: Money
+    private val mNetIncomes: Money
+    private val mTransfers: Money
 
-    public PeriodMoney(Date startDate, Date endDate) {
-        mStartDate = startDate;
-        mEndDate = endDate;
-        mIncomes = new Money();
-        mExpenses = new Money();
-        mNetIncomes = new Money();
-        mTransfers = new Money();
+    constructor(startDate: Date?, endDate: Date?) {
+        mStartDate = startDate
+        mEndDate = endDate
+        mIncomes = Money()
+        mExpenses = Money()
+        mNetIncomes = Money()
+        mTransfers = Money()
     }
 
-    public void addIncome(String currency, long money) {
-        mIncomes.addMoney(currency, money);
-        mNetIncomes.addMoney(currency, money);
+    fun addIncome(currency: String?, money: Long) {
+        mIncomes.addMoney(currency, money)
+        mNetIncomes.addMoney(currency, money)
     }
 
-    public void addExpense(String currency, long money) {
-        mExpenses.addMoney(currency, money);
-        mNetIncomes.removeMoney(currency, money);
+    fun addExpense(currency: String?, money: Long) {
+        mExpenses.addMoney(currency, money)
+        mNetIncomes.removeMoney(currency, money)
     }
 
     /**
@@ -63,41 +63,41 @@ public class PeriodMoney {
      * screen that counts it. The two bar series do not, so a period that only moved money draws
      * both bars at nothing over a net that moved, and this is the figure that says why.
      */
-    public void addTransfer(String currency, long money, boolean incoming) {
+    fun addTransfer(currency: String?, money: Long, incoming: Boolean) {
         if (incoming) {
-            mNetIncomes.addMoney(currency, money);
-            mTransfers.addMoney(currency, money);
+            mNetIncomes.addMoney(currency, money)
+            mTransfers.addMoney(currency, money)
         } else {
-            mNetIncomes.removeMoney(currency, money);
-            mTransfers.removeMoney(currency, money);
+            mNetIncomes.removeMoney(currency, money)
+            mTransfers.removeMoney(currency, money)
         }
     }
 
-    public Date getStartDate() {
-        return mStartDate;
+    fun getStartDate(): Date? {
+        return mStartDate
     }
 
-    public Date getEndDate() {
-        return mEndDate;
+    fun getEndDate(): Date? {
+        return mEndDate
     }
 
-    public Money getIncomes() {
-        return mIncomes;
+    fun getIncomes(): Money {
+        return mIncomes
     }
 
-    public Money getExpenses() {
-        return mExpenses;
+    fun getExpenses(): Money {
+        return mExpenses
     }
 
-    public Money getNetIncomes() {
-        return mNetIncomes;
+    fun getNetIncomes(): Money {
+        return mNetIncomes
     }
 
-    public Money getTransfers() {
-        return mTransfers;
+    fun getTransfers(): Money {
+        return mTransfers
     }
 
-    public boolean isTimeRange() {
-        return DateUtils.isTheSameDayAndHour(mStartDate, mEndDate);
+    fun isTimeRange(): Boolean {
+        return DateUtils.isTheSameDayAndHour(mStartDate, mEndDate)
     }
 }
