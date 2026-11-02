@@ -17,113 +17,112 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.os.Parcel;
-import android.os.Parcelable;
-import androidx.annotation.DrawableRes;
-import androidx.core.content.ContextCompat;
-import android.widget.ImageView;
+import android.content.Context
+import android.graphics.drawable.Drawable
+import android.os.Parcel
+import android.os.Parcelable
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
+import android.widget.ImageView
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
-import com.oriondev.moneywallet.ui.drawable.DotMatrixDrawable;
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
+import com.oriondev.moneywallet.ui.drawable.DotMatrixDrawable
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * Created by andrea on 23/01/18.
  */
-public class VectorIcon extends Icon {
+class VectorIcon : Icon {
 
-    private static final String RESOURCE = "resource";
+    private val mResourceName: String?
 
-    private final String mResourceName;
-
-    public VectorIcon(JSONObject jsonObject) throws JSONException {
-        mResourceName = jsonObject.getString(RESOURCE);
+    @Throws(JSONException::class)
+    constructor(jsonObject: JSONObject?) {
+        mResourceName = jsonObject!!.getString(RESOURCE)
     }
 
-    protected VectorIcon(Parcel source) {
-        mResourceName = source.readString();
+    protected constructor(source: Parcel) {
+        mResourceName = source.readString()
     }
 
-    @Override
-    public Type getType() {
-        return Type.RESOURCE;
+    override fun getType(): Type {
+        return Type.RESOURCE
     }
 
-    @Override
-    protected void writeJSON(JSONObject jsonObject) throws JSONException {
-        jsonObject.put(RESOURCE, mResourceName);
+    @Throws(JSONException::class)
+    override fun writeJSON(jsonObject: JSONObject) {
+        jsonObject.put(RESOURCE, mResourceName)
     }
 
-    @Override
-    public Drawable getDrawable(Context context) {
-        Drawable dotMatrix = getDotMatrix(context);
+    override fun getDrawable(context: Context?): Drawable? {
+        val dotMatrix = getDotMatrix(context)
         if (dotMatrix != null) {
-            return dotMatrix;
+            return dotMatrix
         }
-        int drawableId = getDrawableId(context, mResourceName);
+        val drawableId = getDrawableId(context, mResourceName)
         if (drawableId > 0) {
-            return ContextCompat.getDrawable(context, drawableId);
+            return ContextCompat.getDrawable(context!!, drawableId)
         }
-        return null;
+        return null
     }
 
-    @Override
-    public boolean apply(ImageView imageView) {
-        Drawable dotMatrix = getDotMatrix(imageView.getContext());
+    override fun apply(imageView: ImageView?): Boolean {
+        val dotMatrix = getDotMatrix(imageView!!.context)
         if (dotMatrix != null) {
             // a row recycled from a classic icon may still have a Glide load in flight
-            Glide.with(imageView).clear(imageView);
-            imageView.setImageDrawable(dotMatrix);
-            return true;
+            Glide.with(imageView).clear(imageView)
+            imageView.setImageDrawable(dotMatrix)
+            return true
         }
-        int resourceId = getResource(imageView.getContext());
+        val resourceId = getResource(imageView.context)
         if (resourceId > 0) {
             Glide.with(imageView)
                     .load(resourceId)
-                    .transition(new DrawableTransitionOptions().crossFade())
-                    .into(imageView);
-            return true;
+                    .transition(DrawableTransitionOptions().crossFade())
+                    .into(imageView)
+            return true
         } else {
-            return false;
+            return false
         }
     }
 
-    private Drawable getDotMatrix(Context context) {
-        return PreferenceManager.isDotMatrixIconsEnabled() ? DotMatrixDrawable.forResource(context, mResourceName) : null;
+    private fun getDotMatrix(context: Context?): Drawable? {
+        return if (PreferenceManager.isDotMatrixIconsEnabled()) DotMatrixDrawable.forResource(context, mResourceName) else null
     }
 
     @DrawableRes
-    public int getResource(Context context) {
-        return getDrawableId(context, mResourceName);
+    fun getResource(context: Context?): Int {
+        return getDrawableId(context, mResourceName)
     }
 
-    public String getResourceName() {
-        return mResourceName;
+    fun getResourceName(): String? {
+        return mResourceName
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mResourceName);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(mResourceName)
     }
 
-    public static final Parcelable.Creator<VectorIcon> CREATOR = new Parcelable.Creator<VectorIcon>() {
+    companion object {
 
-        @Override
-        public VectorIcon createFromParcel(Parcel source) {
-            return new VectorIcon(source);
+        private const val RESOURCE = "resource"
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<VectorIcon> = object : Parcelable.Creator<VectorIcon> {
+
+            override fun createFromParcel(source: Parcel): VectorIcon {
+                return VectorIcon(source)
+            }
+
+            override fun newArray(size: Int): Array<VectorIcon?> {
+                return arrayOfNulls(size)
+            }
         }
-
-        @Override
-        public VectorIcon[] newArray(int size) {
-            return new VectorIcon[size];
-        }
-    };
+    }
 }
