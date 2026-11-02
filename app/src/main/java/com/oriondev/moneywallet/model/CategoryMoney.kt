@@ -17,50 +17,49 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayList
 
 /**
  * Created by andrea on 13/08/18.
  */
-public class CategoryMoney {
+class CategoryMoney {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
-    private final Money mMoney;
-    private final List<CategoryMoney> mChildren = new ArrayList<>();
+    private val mId: Long
+    private val mName: String?
+    private val mIcon: Icon?
+    private val mMoney: Money
+    private val mChildren: MutableList<CategoryMoney> = ArrayList()
 
-    public CategoryMoney(long id, String name, Icon icon, Money money) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mMoney = money;
+    constructor(id: Long, name: String?, icon: Icon?, money: Money) {
+        mId = id
+        mName = name
+        mIcon = icon
+        mMoney = money
     }
 
-    public List<CategoryMoney> getChildren() {
-        return mChildren;
+    fun getChildren(): MutableList<CategoryMoney> {
+        return mChildren
     }
 
-    public void addChild(CategoryMoney child) {
-        mChildren.add(child);
+    fun addChild(child: CategoryMoney) {
+        mChildren.add(child)
     }
 
-    public long getId() {
-        return mId;
+    fun getId(): Long {
+        return mId
     }
 
-    public String getName() {
-        return mName;
+    fun getName(): String? {
+        return mName
     }
 
-    public Icon getIcon() {
-        return mIcon;
+    fun getIcon(): Icon? {
+        return mIcon
     }
 
-    public Money getMoney() {
-        return mMoney;
+    fun getMoney(): Money {
+        return mMoney
     }
 }
