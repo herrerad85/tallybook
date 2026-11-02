@@ -17,87 +17,80 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File
 
 /**
  * Created by andre on 21/03/2018.
  */
-public class LocalFile implements IFile {
+class LocalFile : IFile {
 
-    private final File mFile;
+    private val mFile: File
 
-    public LocalFile(File file) {
-        mFile = file;
+    constructor(file: File) {
+        mFile = file
     }
 
-    public LocalFile(String encoded) {
-        mFile = new File(encoded);
+    constructor(encoded: String?) {
+        mFile = File(encoded)
     }
 
-    private LocalFile(Parcel in) {
-        mFile = new File(in.readString());
+    private constructor(source: Parcel) {
+        mFile = File(source.readString())
     }
 
-    public static final Creator<LocalFile> CREATOR = new Creator<LocalFile>() {
-        @Override
-        public LocalFile createFromParcel(Parcel in) {
-            return new LocalFile(in);
+    override fun getName(): String? {
+        return mFile.name
+    }
+
+    override fun getExtension(): String? {
+        val index = mFile.name.lastIndexOf(".")
+        return if (index >= 0) mFile.name.substring(index) else null
+    }
+
+    override fun isDirectory(): Boolean {
+        return mFile.isDirectory
+    }
+
+    override fun getSize(): Long {
+        return mFile.length()
+    }
+
+    override fun encodeToString(): String? {
+        return mFile.path
+    }
+
+    fun getFile(): File {
+        return mFile
+    }
+
+    fun getLocalPath(): String? {
+        return mFile.path
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(mFile.path)
+    }
+
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<LocalFile> = object : Parcelable.Creator<LocalFile> {
+            override fun createFromParcel(source: Parcel): LocalFile {
+                return LocalFile(source)
+            }
+
+            override fun newArray(size: Int): Array<LocalFile?> {
+                return arrayOfNulls(size)
+            }
         }
-
-        @Override
-        public LocalFile[] newArray(int size) {
-            return new LocalFile[size];
-        }
-    };
-
-    @Override
-    public String getName() {
-        return mFile.getName();
-    }
-
-    @Override
-    public String getExtension() {
-        int index = mFile.getName().lastIndexOf(".");
-        return index >= 0 ? mFile.getName().substring(index) : null;
-    }
-
-    @Override
-    public boolean isDirectory() {
-        return mFile.isDirectory();
-    }
-
-    @Override
-    public long getSize() {
-        return mFile.length();
-    }
-
-    @Override
-    public String encodeToString() {
-        return mFile.getPath();
-    }
-
-    public File getFile() {
-        return mFile;
-    }
-
-    public String getLocalPath() {
-        return mFile.getPath();
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mFile.getPath());
     }
 }
