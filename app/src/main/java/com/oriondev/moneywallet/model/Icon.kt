@@ -17,85 +17,87 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.os.Parcelable;
-import android.widget.ImageView;
+import android.content.Context
+import android.graphics.drawable.Drawable
+import android.os.Parcelable
+import android.widget.ImageView
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * Created by andrea on 23/01/18.
  */
-public abstract class Icon implements Parcelable {
+abstract class Icon protected constructor() : Parcelable {
 
-    private static final String TYPE = "type";
-
-    public enum Type {
+    enum class Type(private val mType: String) {
         RESOURCE("resource"),
         COLOR("color");
 
-        private final String mType;
-
-        Type(String type) {
-            mType = type;
+        override fun toString(): String {
+            return mType
         }
 
-        @Override
-        public String toString() {
-            return mType;
-        }
+        companion object {
 
-        public static Type get(String type) {
-            if (type != null) {
-                switch (type) {
-                    case "resource":
-                        return RESOURCE;
-                    case "color":
-                        return COLOR;
+            @JvmStatic
+            fun get(type: String?): Type? {
+                if (type != null) {
+                    when (type) {
+                        "resource" ->
+                            return RESOURCE
+                        "color" ->
+                            return COLOR
+                    }
                 }
+                return null
             }
-            return null;
         }
     }
 
-    /*package-local*/ Icon() {
+    abstract fun getType(): Type
 
-    }
+    @Throws(JSONException::class)
+    protected abstract fun writeJSON(jsonObject: JSONObject)
 
-    public abstract Type getType();
+    abstract fun getDrawable(context: Context?): Drawable?
 
-    protected abstract void writeJSON(JSONObject jsonObject) throws JSONException;
+    abstract fun apply(imageView: ImageView?): Boolean
 
-    public abstract Drawable getDrawable(Context context);
-
-    public abstract boolean apply(ImageView imageView);
-
-    public final String toString() {
+    final override fun toString(): String {
         try {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put(TYPE, getType().toString());
-            writeJSON(jsonObject);
-            return jsonObject.toString();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            val jsonObject = JSONObject()
+            jsonObject.put(TYPE, getType().toString())
+            writeJSON(jsonObject)
+            return unchecked<String>(jsonObject.toString())
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
-        return null;
+        return unchecked<String>(null)
     }
 
-    public static Type getType(JSONObject jsonObject) throws JSONException {
-        return Type.get(jsonObject.getString(TYPE));
+    companion object {
+
+        private const val TYPE = "type"
+
+        @Suppress("UNCHECKED_CAST")
+        private fun <T> unchecked(value: T?): T = value as T
+
+        @JvmStatic
+        @Throws(JSONException::class)
+        fun getType(jsonObject: JSONObject?): Type? {
+            return Type.get(jsonObject!!.getString(TYPE))
+        }
+
+        @JvmStatic
+        fun getDrawableId(context: Context?, resource: String?): Int {
+            return context!!.resources.getIdentifier(resource, "drawable", context.packageName)
+        }
     }
 
-    public static int getDrawableId(Context context, String resource) {
-        return context.getResources().getIdentifier(resource, "drawable", context.getPackageName());
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
+    override fun describeContents(): Int {
+        return 0
     }
 }
