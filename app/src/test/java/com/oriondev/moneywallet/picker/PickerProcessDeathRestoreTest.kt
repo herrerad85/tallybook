@@ -47,8 +47,8 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = true)
         try {
             val restored = personPicker(second)
-            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.getId() })
-            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
+            assertEquals(listOf(1L, 2L), restored.getCurrentPeople()!!.map { it!!.getId() })
+            assertEquals(listOf("Ann", "Bob"), restored.getCurrentPeople()!!.map { it!!.getName() })
         } finally {
             second.close()
         }
@@ -64,8 +64,8 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = false)
         try {
             val restored = personPicker(second)
-            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.getId() })
-            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
+            assertEquals(listOf(1L, 2L), restored.getCurrentPeople()!!.map { it!!.getId() })
+            assertEquals(listOf("Ann", "Bob"), restored.getCurrentPeople()!!.map { it!!.getName() })
         } finally {
             second.close()
         }
@@ -122,11 +122,11 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = true)
         try {
             val restored = personPicker(second)
-            assertNull(restored.currentPeople)
+            assertNull(restored.getCurrentPeople())
             val restoredDialog = restored.childFragmentManager.findFragmentByTag(PERSON_DIALOG_TAG) as PeoplePickerDialog
             confirm(restoredDialog.dialog as AlertDialog)
-            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.getId() })
-            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
+            assertEquals(listOf(1L, 2L), restored.getCurrentPeople()!!.map { it!!.getId() })
+            assertEquals(listOf("Ann", "Bob"), restored.getCurrentPeople()!!.map { it!!.getName() })
         } finally {
             second.close()
         }

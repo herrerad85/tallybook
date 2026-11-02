@@ -17,128 +17,123 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.content.Context;
-import android.os.Bundle;
-import android.os.Parcelable;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.content.Context
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.model.Person;
-import com.oriondev.moneywallet.ui.fragment.dialog.PeoplePickerDialog;
+import com.oriondev.moneywallet.model.Person
+import com.oriondev.moneywallet.ui.fragment.dialog.PeoplePickerDialog
 
-import java.util.Arrays;
+import java.util.Arrays
 
 /**
  * Created by andrea on 10/03/18.
  */
-public class PersonPicker extends Fragment implements PeoplePickerDialog.Callback {
+class PersonPicker : Fragment(), PeoplePickerDialog.Callback {
 
-    private static final String SS_CURRENT_PEOPLE = "PersonPicker::SavedState::CurrentPeople";
+    private var mController: Controller? = null
 
-    private static final String ARG_DEFAULT_PEOPLE = "PersonPicker::Arguments::DefaultPeople";
+    private var mCurrentPeople: Array<Person?>? = null
 
-    private Controller mController;
+    private var mPeoplePickerDialog: PeoplePickerDialog? = null
 
-    private Person[] mCurrentPeople;
+    companion object {
 
-    private PeoplePickerDialog mPeoplePickerDialog;
+        private const val SS_CURRENT_PEOPLE = "PersonPicker::SavedState::CurrentPeople"
 
-    public static PersonPicker createPicker(FragmentManager fragmentManager, String tag, Person[] defaultPeople) {
-        PersonPicker personPicker = (PersonPicker) fragmentManager.findFragmentByTag(tag);
-        if (personPicker == null) {
-            personPicker = new PersonPicker();
-            Bundle arguments = new Bundle();
-            arguments.putParcelableArray(ARG_DEFAULT_PEOPLE, defaultPeople);
-            personPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(personPicker, tag).commit();
-        }
-        return personPicker;
-    }
+        private const val ARG_DEFAULT_PEOPLE = "PersonPicker::Arguments::DefaultPeople"
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultPeople: Array<Person?>?): PersonPicker {
+            var personPicker = fragmentManager.findFragmentByTag(tag) as PersonPicker?
+            if (personPicker == null) {
+                personPicker = PersonPicker()
+                val arguments = Bundle()
+                arguments.putParcelableArray(ARG_DEFAULT_PEOPLE, defaultPeople)
+                personPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(personPicker, tag).commit()
+            }
+            return personPicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            Parcelable[] people = savedInstanceState.getParcelableArray(SS_CURRENT_PEOPLE);
-            mCurrentPeople = people != null ? Arrays.copyOf(people, people.length, Person[].class) : null;
+            mCurrentPeople = savedInstanceState.getParcelableArray(SS_CURRENT_PEOPLE)?.let {
+                Arrays.copyOf(it, it.size, Array<Person?>::class.java)
+            }
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mCurrentPeople = (Person[]) arguments.getParcelableArray(ARG_DEFAULT_PEOPLE);
+                mCurrentPeople = arguments.getParcelableArray(ARG_DEFAULT_PEOPLE) as Array<Person?>?
             }
         }
-        mPeoplePickerDialog = (PeoplePickerDialog) getChildFragmentManager().findFragmentByTag(getDialogTag());
+        mPeoplePickerDialog = childFragmentManager.findFragmentByTag(getDialogTag()) as PeoplePickerDialog?
         if (mPeoplePickerDialog == null) {
-            mPeoplePickerDialog = PeoplePickerDialog.newInstance();
+            mPeoplePickerDialog = PeoplePickerDialog.newInstance()
         }
-        mPeoplePickerDialog.setCallback(this);
+        mPeoplePickerDialog!!.setCallback(this)
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private String getDialogTag() {
-        return getTag() + "::DialogFragment";
+    private fun getDialogTag(): String {
+        return tag + "::DialogFragment"
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onPeopleChanged(getTag(), mCurrentPeople);
-        }
+    private fun fireCallbackSafely() {
+        mController?.onPeopleChanged(tag, mCurrentPeople)
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelableArray(SS_CURRENT_PEOPLE, mCurrentPeople);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelableArray(SS_CURRENT_PEOPLE, mCurrentPeople)
     }
 
-    public boolean isSelected() {
-        return mCurrentPeople != null && mCurrentPeople.length > 0;
+    fun isSelected(): Boolean {
+        val currentPeople = mCurrentPeople
+        return currentPeople != null && currentPeople.size > 0
     }
 
-    public void setPeople(Person[] people) {
-        mCurrentPeople = people;
-        fireCallbackSafely();
+    fun setPeople(people: Array<Person?>?) {
+        mCurrentPeople = people
+        fireCallbackSafely()
     }
 
-    public Person[] getCurrentPeople() {
-        return mCurrentPeople;
+    fun getCurrentPeople(): Array<Person?>? {
+        return mCurrentPeople
     }
 
-    public void showPicker() {
-        mPeoplePickerDialog.showPicker(getChildFragmentManager(), getDialogTag(), mCurrentPeople);
+    fun showPicker() {
+        mPeoplePickerDialog!!.showPicker(childFragmentManager, getDialogTag(), mCurrentPeople)
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    @Override
-    public void onPeopleSelected(Person[] people) {
-        mCurrentPeople = people;
-        fireCallbackSafely();
+    override fun onPeopleSelected(people: Array<Person?>?) {
+        mCurrentPeople = people
+        fireCallbackSafely()
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onPeopleChanged(String tag, Person[] people);
+        fun onPeopleChanged(tag: String?, people: Array<Person?>?)
     }
 }
