@@ -17,501 +17,293 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.content.Context;
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.utils.DateFormatter;
-import com.oriondev.moneywallet.utils.DateUtils;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.utils.DateFormatter
+import com.oriondev.moneywallet.utils.DateUtils
 
-import org.dmfs.rfc5545.DateTime;
-import org.dmfs.rfc5545.Weekday;
-import org.dmfs.rfc5545.recur.Freq;
-import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException;
-import org.dmfs.rfc5545.recur.RecurrenceRule;
-import org.dmfs.rfc5545.recur.RecurrenceRuleIterator;
+import org.dmfs.rfc5545.DateTime
+import org.dmfs.rfc5545.Weekday
+import org.dmfs.rfc5545.recur.Freq
+import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException
+import org.dmfs.rfc5545.recur.RecurrenceRule
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.ArrayList
+import java.util.Calendar
+import java.util.Date
+import java.util.Objects
 
 /**
  * Created by andrea on 07/11/18.
  */
-public class RecurrenceSetting implements Parcelable {
+class RecurrenceSetting : Parcelable {
 
-    public static final int TYPE_DAILY = 1;
-    public static final int TYPE_WEEKLY = 2;
-    public static final int TYPE_MONTHLY = 3;
-    public static final int TYPE_YEARLY = 4;
+    private var mStartDate: Date?
+    private var mRecurrenceRule: RecurrenceRule
 
-    public static final int FLAG_MONTHLY_SAME_DAY = 1;
-
-    /** February is the shortest month, so the 28th is the last day every month is sure to have. */
-    private static final int LAST_DAY_EVERY_MONTH_HAS = 28;
-
-    public static final int END_FOREVER = 1;
-    public static final int END_UNTIL = 2;
-    public static final int END_FOR = 3;
-
-    private Date mStartDate;
-    private RecurrenceRule mRecurrenceRule;
-
-    public RecurrenceSetting(Date startDate, int type) {
-        mStartDate = startDate;
-        mRecurrenceRule = new RecurrenceRule(getFreq(type));
+    constructor(startDate: Date?, type: Int) {
+        mStartDate = startDate
+        mRecurrenceRule = RecurrenceRule(getFreq(type))
     }
 
-    public RecurrenceSetting(Date startDate, String rule) {
-        mStartDate = startDate;
+    constructor(startDate: Date?, rule: String?) {
+        mStartDate = startDate
         try {
-            mRecurrenceRule = new RecurrenceRule(rule);
-        } catch (InvalidRecurrenceRuleException ignore) {
-            mRecurrenceRule = new RecurrenceRule(Freq.DAILY);
+            mRecurrenceRule = RecurrenceRule(rule)
+        } catch (ignore: InvalidRecurrenceRuleException) {
+            mRecurrenceRule = RecurrenceRule(Freq.DAILY)
         }
     }
 
-    public static RecurrenceSetting build(Date startDate, String rule) throws InvalidRecurrenceRuleException {
-        RecurrenceRule recurrenceRule = new RecurrenceRule(rule);
-        return new RecurrenceSetting(startDate, rule);
+    private constructor(startDate: Date?, recurrenceRule: RecurrenceRule) {
+        mStartDate = startDate
+        mRecurrenceRule = recurrenceRule
     }
 
-    private RecurrenceSetting(Date startDate, RecurrenceRule recurrenceRule) {
-        mStartDate = startDate;
-        mRecurrenceRule = recurrenceRule;
-    }
-
-    private RecurrenceSetting(Parcel in) {
+    private constructor(source: Parcel) {
         try {
-            mStartDate = (Date) in.readSerializable();
-            mRecurrenceRule = new RecurrenceRule(in.readString());
-        } catch (InvalidRecurrenceRuleException e) {
-            throw new RuntimeException(e);
+            mStartDate = source.readSerializable() as Date?
+            mRecurrenceRule = RecurrenceRule(source.readString())
+        } catch (e: InvalidRecurrenceRuleException) {
+            throw RuntimeException(e)
         }
     }
 
-    public int getType() {
-        switch (mRecurrenceRule.getFreq()) {
-            case DAILY:
-                return TYPE_DAILY;
-            case WEEKLY:
-                return TYPE_WEEKLY;
-            case MONTHLY:
-                return TYPE_MONTHLY;
-            case YEARLY:
-                return TYPE_YEARLY;
-            default:
-                return TYPE_DAILY;
+    fun getType(): Int {
+        when (mRecurrenceRule.freq!!) {
+            Freq.DAILY ->
+                return TYPE_DAILY
+            Freq.WEEKLY ->
+                return TYPE_WEEKLY
+            Freq.MONTHLY ->
+                return TYPE_MONTHLY
+            Freq.YEARLY ->
+                return TYPE_YEARLY
+            else ->
+                return TYPE_DAILY
         }
     }
 
-    public Date getStartDate() {
-        return mStartDate;
+    fun getStartDate(): Date? {
+        return mStartDate
     }
 
-    public int getOffsetValue() {
-        return mRecurrenceRule.getInterval();
+    fun getOffsetValue(): Int {
+        return mRecurrenceRule.interval
     }
 
-    public boolean[] getWeekDays() {
-        boolean[] weekDays = new boolean[] {false, false, false, false, false, false, false};
-        List<RecurrenceRule.WeekdayNum> weekdayNumList = mRecurrenceRule.getByDayPart();
-        if (weekdayNumList != null && weekdayNumList.size() > 0) {
-            for (RecurrenceRule.WeekdayNum weekdayNum : weekdayNumList) {
-                switch (weekdayNum.weekday) {
-                    case SU:
-                        weekDays[0] = true;
-                        break;
-                    case MO:
-                        weekDays[1] = true;
-                        break;
-                    case TU:
-                        weekDays[2] = true;
-                        break;
-                    case WE:
-                        weekDays[3] = true;
-                        break;
-                    case TH:
-                        weekDays[4] = true;
-                        break;
-                    case FR:
-                        weekDays[5] = true;
-                        break;
-                    case SA:
-                        weekDays[6] = true;
-                        break;
+    fun getWeekDays(): BooleanArray {
+        val weekDays = booleanArrayOf(false, false, false, false, false, false, false)
+        val weekdayNumList: List<RecurrenceRule.WeekdayNum>? = mRecurrenceRule.byDayPart
+        if (weekdayNumList != null && weekdayNumList.size > 0) {
+            for (weekdayNum in weekdayNumList) {
+                when (weekdayNum.weekday!!) {
+                    Weekday.SU ->
+                        weekDays[0] = true
+                    Weekday.MO ->
+                        weekDays[1] = true
+                    Weekday.TU ->
+                        weekDays[2] = true
+                    Weekday.WE ->
+                        weekDays[3] = true
+                    Weekday.TH ->
+                        weekDays[4] = true
+                    Weekday.FR ->
+                        weekDays[5] = true
+                    Weekday.SA ->
+                        weekDays[6] = true
                 }
             }
         } else {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(mStartDate);
-            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-            weekDays[dayOfWeek - 1] = true;
+            val calendar = Calendar.getInstance()
+            calendar.time = mStartDate
+            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+            weekDays[dayOfWeek - 1] = true
         }
-        return weekDays;
+        return weekDays
     }
 
-    public int getMonthDay() {
-        return FLAG_MONTHLY_SAME_DAY;
+    fun getMonthDay(): Int {
+        return FLAG_MONTHLY_SAME_DAY
     }
 
-    public int getEndType() {
-        if (mRecurrenceRule.isInfinite()) {
-            return END_FOREVER;
-        } else if (mRecurrenceRule.getUntil() != null) {
-            return END_UNTIL;
+    fun getEndType(): Int {
+        if (mRecurrenceRule.isInfinite) {
+            return END_FOREVER
+        } else if (mRecurrenceRule.until != null) {
+            return END_UNTIL
         } else {
-            return END_FOR;
+            return END_FOR
         }
     }
 
-    public Date getEndDate() {
-        DateTime dateTime = mRecurrenceRule.getUntil();
-        return dateTime != null ? new Date(dateTime.getTimestamp()) : mStartDate;
+    fun getEndDate(): Date? {
+        val dateTime: DateTime? = mRecurrenceRule.until
+        return if (dateTime != null) Date(dateTime.timestamp) else mStartDate
     }
 
-    public int getOccurrenceValue() {
-        Integer integer = mRecurrenceRule.getCount();
-        return integer != null ? integer : 1;
+    fun getOccurrenceValue(): Int {
+        val integer: Int? = mRecurrenceRule.count
+        return if (integer != null) integer else 1
     }
 
-    public String getRule() {
-        return mRecurrenceRule.toString();
+    fun getRule(): String {
+        return mRecurrenceRule.toString()
     }
 
-    public static final Creator<RecurrenceSetting> CREATOR = new Creator<RecurrenceSetting>() {
+    override fun describeContents(): Int {
+        return 0
+    }
 
-        @Override
-        public RecurrenceSetting createFromParcel(Parcel in) {
-            return new RecurrenceSetting(in);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeSerializable(mStartDate)
+        dest.writeString(mRecurrenceRule.toString())
+    }
+
+    fun getUserReadableString(context: Context?): String {
+        val builder = StringBuilder()
+        val offset = mRecurrenceRule.interval
+        when (mRecurrenceRule.freq!!) {
+            Freq.DAILY -> {
+                if (offset <= 1) {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_day))
+                } else {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_n_days, offset))
+                }
+            }
+            Freq.WEEKLY -> {
+                if (offset <= 1) {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_week))
+                } else {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_n_weeks, offset))
+                }
+                val weekDays = getWeekDays()
+                if (weekDays[0]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_sunday))}
+                if (weekDays[1]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_monday))}
+                if (weekDays[2]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_tuesday))}
+                if (weekDays[3]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_wednesday))}
+                if (weekDays[4]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_thursday))}
+                if (weekDays[5]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_friday))}
+                if (weekDays[6]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_saturday))}
+            }
+            Freq.MONTHLY -> {
+                if (offset <= 1) {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_month))
+                } else {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_n_months, offset))
+                }
+            }
+            Freq.YEARLY -> {
+                if (offset <= 1) {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_year))
+                } else {
+                    builder.append(context!!.getString(R.string.recurrence_hint_repeat_every_n_years, offset))
+                }
+            }
+            else -> {}
         }
-
-        @Override
-        public RecurrenceSetting[] newArray(int size) {
-            return new RecurrenceSetting[size];
-        }
-
-    };
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeSerializable(mStartDate);
-        dest.writeString(mRecurrenceRule.toString());
-    }
-
-    public String getUserReadableString(Context context) {
-        StringBuilder builder = new StringBuilder();
-        int offset = mRecurrenceRule.getInterval();
-        switch (mRecurrenceRule.getFreq()) {
-            case DAILY:
-                if (offset <= 1) {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_day));
-                } else {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_n_days, offset));
-                }
-                break;
-            case WEEKLY:
-                if (offset <= 1) {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_week));
-                } else {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_n_weeks, offset));
-                }
-                boolean[] weekDays = getWeekDays();
-                if (weekDays[0]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_sunday));}
-                if (weekDays[1]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_monday));}
-                if (weekDays[2]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_tuesday));}
-                if (weekDays[3]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_wednesday));}
-                if (weekDays[4]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_thursday));}
-                if (weekDays[5]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_friday));}
-                if (weekDays[6]) {builder.append(context.getString(R.string.recurrence_hint_repeat_weekly_saturday));}
-                break;
-            case MONTHLY:
-                if (offset <= 1) {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_month));
-                } else {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_n_months, offset));
-                }
-                break;
-            case YEARLY:
-                if (offset <= 1) {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_year));
-                } else {
-                    builder.append(context.getString(R.string.recurrence_hint_repeat_every_n_years, offset));
-                }
-                break;
-        }
-        String formattedStartDate = DateFormatter.getFormattedDate(mStartDate);
-        builder.append(context.getString(R.string.recurrence_hint_repeat_starting_from, formattedStartDate));
-        if (mRecurrenceRule.isInfinite()) {
-            builder.append(context.getString(R.string.recurrence_hint_repeat_forever));
-        } else if (mRecurrenceRule.getUntil() != null) {
-            Date endDate = new Date(mRecurrenceRule.getUntil().getTimestamp());
-            String formattedEndDate = DateFormatter.getFormattedDate(endDate);
-            builder.append(context.getString(R.string.recurrence_hint_repeat_until, formattedEndDate));
+        val formattedStartDate = DateFormatter.getFormattedDate(mStartDate)
+        builder.append(context!!.getString(R.string.recurrence_hint_repeat_starting_from, formattedStartDate))
+        if (mRecurrenceRule.isInfinite) {
+            builder.append(context.getString(R.string.recurrence_hint_repeat_forever))
+        } else if (mRecurrenceRule.until != null) {
+            val endDate = Date(mRecurrenceRule.until.timestamp)
+            val formattedEndDate = DateFormatter.getFormattedDate(endDate)
+            builder.append(context.getString(R.string.recurrence_hint_repeat_until, formattedEndDate))
         } else {
-            int occurrences = mRecurrenceRule.getCount();
+            val occurrences: Int = mRecurrenceRule.count
             if (occurrences <= 1) {
-                builder.append(context.getString(R.string.recurrence_hint_repeat_for_one_occurrence));
+                builder.append(context.getString(R.string.recurrence_hint_repeat_for_one_occurrence))
             } else {
-                builder.append(context.getString(R.string.recurrence_hint_repeat_for_n_occurrence, occurrences));
+                builder.append(context.getString(R.string.recurrence_hint_repeat_for_n_occurrence, occurrences))
             }
         }
-        return builder.toString();
+        return builder.toString()
     }
 
-    public Date getNextOccurrence(Date lastOccurrence) {
-        DateTime startDateTime = DateUtils.getFixedDateTime(mStartDate);
-        DateTime lastOccurrenceDateTime = DateUtils.getFixedDateTime(lastOccurrence);
-        DateTime nextOccurrenceDateTime = null;
-        RecurrenceRuleIterator iterator = mRecurrenceRule.iterator(startDateTime);
+    fun getNextOccurrence(lastOccurrence: Date?): Date? {
+        val startDateTime = DateUtils.getFixedDateTime(mStartDate)
+        val lastOccurrenceDateTime = DateUtils.getFixedDateTime(lastOccurrence)
+        var nextOccurrenceDateTime: DateTime? = null
+        val iterator = mRecurrenceRule.iterator(startDateTime)
         while (iterator.hasNext()) {
-            DateTime nextInstance = iterator.nextDateTime();
+            val nextInstance = iterator.nextDateTime()
             if (nextInstance.after(lastOccurrenceDateTime)) {
-                nextOccurrenceDateTime = nextInstance;
-                break;
+                nextOccurrenceDateTime = nextInstance
+                break
             }
         }
-        return nextOccurrenceDateTime != null ? DateUtils.getFixedDate(nextOccurrenceDateTime) : null;
+        return if (nextOccurrenceDateTime != null) DateUtils.getFixedDate(nextOccurrenceDateTime) else null
     }
 
     /**
-     * Immutable result of {@link #computeOccurrences(String, Date, Date)}: the occurrence dates
+     * Immutable result of [computeOccurrences]: the occurrence dates
      * that have come due inside the window, plus the values the LAST_OCCURRENCE and
      * NEXT_OCCURRENCE columns must be updated to afterwards. Every date is already normalised
-     * through {@link DateUtils#getFixedDate(DateTime)}, so callers only format and store it.
+     * through [DateUtils.getFixedDate], so callers only format and store it.
      */
-    public static class OccurrenceUpdate {
+    class OccurrenceUpdate private constructor(occurrenceDates: List<Date>, lastOccurrence: Date?, nextOccurrence: Date?) {
 
-        private final List<Date> mOccurrenceDates;
-        private final Date mLastOccurrence;
-        private final Date mNextOccurrence;
-
-        private OccurrenceUpdate(List<Date> occurrenceDates, Date lastOccurrence, Date nextOccurrence) {
-            mOccurrenceDates = occurrenceDates;
-            mLastOccurrence = lastOccurrence;
-            mNextOccurrence = nextOccurrence;
-        }
+        private val mOccurrenceDates: List<Date> = occurrenceDates
+        private val mLastOccurrence: Date? = lastOccurrence
+        private val mNextOccurrence: Date? = nextOccurrence
 
         /**
          * The occurrence dates, in chronological order, for which a ledger row must be inserted.
          */
-        public List<Date> getOccurrenceDates() {
-            return mOccurrenceDates;
+        fun getOccurrenceDates(): List<Date> {
+            return mOccurrenceDates
         }
 
         /**
          * The value the LAST_OCCURRENCE column must be set to: the last due occurrence, or the
          * seed itself when nothing came due.
          */
-        public Date getLastOccurrence() {
-            return mLastOccurrence;
+        fun getLastOccurrence(): Date? {
+            return mLastOccurrence
         }
 
         /**
          * The value the NEXT_OCCURRENCE column must be set to: the first instance after the
          * window, or null when the rule is exhausted (or failed to parse).
          */
-        public Date getNextOccurrence() {
-            return mNextOccurrence;
+        fun getNextOccurrence(): Date? {
+            return mNextOccurrence
         }
-    }
 
-    /**
-     * Pure, Android-free computation of the recurrence occurrences that have come due, extracted
-     * verbatim from the loop that {@code RecurrenceHandlerIntentService} used to run inline.
-     *
-     * The rfc5545 iterator is seeded from {@code seedDate} (the stored next occurrence), which per
-     * RFC 5545 is itself the first instance produced. Every instance that is not strictly after
-     * {@code now} (that is, {@code !instance.after(now)}) is collected as due and becomes the new
-     * last occurrence; the first instance strictly after {@code now} becomes the next occurrence
-     * and stops the walk. When the rule exhausts (UNTIL / COUNT) or fails to parse, the next
-     * occurrence is null and the last occurrence stays at the seed, exactly as the service behaved.
-     *
-     * The rule is parsed here from its raw string rather than through a {@link RecurrenceSetting}
-     * instance, so an invalid rule yields no occurrences instead of silently falling back to a
-     * daily rule the way the {@code (Date, String)} constructor does.
-     *
-     * @param rule     the RFC 5545 recurrence rule string stored on the row
-     * @param seedDate the stored next occurrence used to seed the iterator (inclusive first instance)
-     * @param now      the moment the window closes at, compared at day granularity
-     * @return the due occurrence dates and the updated last / next occurrence values
-     */
-    public static OccurrenceUpdate computeOccurrences(String rule, Date seedDate, Date now) {
-        List<Date> occurrenceDates = new ArrayList<>();
-        DateTime currentDateTime = DateUtils.getFixedDateTime(now);
-        DateTime startDateTime = DateUtils.getFixedDateTime(seedDate);
-        DateTime lastOccurrence = DateUtils.getFixedDateTime(seedDate);
-        DateTime nextOccurrence = null;
-        try {
-            RecurrenceRule recurrenceRule = new RecurrenceRule(rule);
-            RecurrenceRuleIterator iterator = recurrenceRule.iterator(startDateTime);
-            while (iterator.hasNext()) {
-                DateTime nextInstance = iterator.nextDateTime();
-                if (!nextInstance.after(currentDateTime)) {
-                    occurrenceDates.add(DateUtils.getFixedDate(nextInstance));
-                    lastOccurrence = nextInstance;
-                } else {
-                    nextOccurrence = nextInstance;
-                    break;
-                }
+        internal companion object {
+
+            @JvmSynthetic
+            internal fun create(occurrenceDates: List<Date>, lastOccurrence: Date?, nextOccurrence: Date?): OccurrenceUpdate {
+                return OccurrenceUpdate(occurrenceDates, lastOccurrence, nextOccurrence)
             }
-        } catch (InvalidRecurrenceRuleException ignore) {
-            // leave nextOccurrence null so the row is not processed again, matching the old service
         }
-        return new OccurrenceUpdate(
-                occurrenceDates,
-                DateUtils.getFixedDate(lastOccurrence),
-                nextOccurrence != null ? DateUtils.getFixedDate(nextOccurrence) : null
-        );
     }
 
-    /**
-     * Where an edited recurrence resumes, as an SQL date string, or null when the rule it now
-     * carries is exhausted. Every date argument is an SQL date string as stored on the row.
-     *
-     * When neither the rule nor the start date moved, the stored pointer is handed back
-     * untouched. An edit to an amount, a description or a category cannot then step over
-     * occurrences that have come due and have not yet been written to the ledger, and that
-     * matters here because the recurrence service only ever walks forward from this pointer, so
-     * an occurrence it has been moved past is never written.
-     *
-     * When the schedule itself moved, the pointer becomes the first instance of the new rule
-     * after {@code now}, seeded from the new start date so the rule keeps the anchor its own
-     * fields are relative to. Occurrences the old rule left owed are not carried across, since
-     * the new rule need not contain them at all.
-     *
-     * @param oldRule           rule currently stored on the row.
-     * @param oldStartDate      start date currently stored on the row.
-     * @param oldNextOccurrence pointer currently stored on the row, possibly already past.
-     * @param newRule           rule the editor is saving.
-     * @param newStartDate      start date the editor is saving.
-     * @param now               the moment the edit is being saved at.
-     * @return the value the NEXT_OCCURRENCE column must be set to.
-     */
-    public static String resumeAfterEdit(String oldRule, String oldStartDate, String oldNextOccurrence,
-                                         String newRule, String newStartDate, Date now) {
-        if (Objects.equals(oldRule, newRule) && Objects.equals(oldStartDate, newStartDate)) {
-            return oldNextOccurrence;
-        }
-        Date startDate = DateUtils.getDateFromSQLDateString(newStartDate);
-        Date nextOccurrence = computeOccurrences(newRule, startDate, now).getNextOccurrence();
-        return nextOccurrence != null ? DateUtils.getSQLDateString(nextOccurrence) : null;
-    }
+    class Builder(startDate: Date?, type: Int) {
 
-    /**
-     * The first instance of {@code rule} strictly after {@code after}, counted from
-     * {@code anchor}.
-     *
-     * The anchor is where the schedule was set to begin, and it has to be the seed: a rule only
-     * carries the day it repeats on when that day is written into the rule itself, which is true
-     * of a monthly rule and of nothing else. Seeding a weekly rule at the day a budget's current
-     * period happens to start would repeat it on that weekday, and seeding one that repeats every
-     * second month would put it on the wrong months, whatever the schedule says it does.
-     *
-     * @param rule   the RFC 5545 recurrence rule string stored on the row.
-     * @param anchor the day the schedule is anchored to.
-     * @param after  the day to find the first instance beyond.
-     * @return the next instance, or null when the rule is exhausted or fails to parse.
-     */
-    public static Date nextInstanceAfter(String rule, Date anchor, Date after) {
-        DateTime afterDateTime = DateUtils.getFixedDateTime(after);
-        try {
-            RecurrenceRuleIterator iterator = new RecurrenceRule(rule).iterator(DateUtils.getFixedDateTime(anchor));
-            while (iterator.hasNext()) {
-                DateTime instance = iterator.nextDateTime();
-                if (instance.after(afterDateTime)) {
-                    return DateUtils.getFixedDate(instance);
-                }
-            }
-        } catch (InvalidRecurrenceRuleException ignore) {
-            // an unparseable rule has no further instance, so the caller stops repeating
-        }
-        return null;
-    }
+        private var mStartDate: Date? = startDate
+        private var mRecurrenceRule: RecurrenceRule = RecurrenceRule(getFreq(type))
 
-    /**
-     * The last day covered by a period that begins on {@code start}: the day before the next
-     * instance of {@code rule} counted from {@code anchor}. A monthly schedule anchored to the
-     * 15th therefore runs the 15th to the 14th, which is what makes the period follow the
-     * schedule instead of a fixed day count.
-     *
-     * @param rule   the RFC 5545 recurrence rule string stored on the row.
-     * @param anchor the day the schedule is anchored to.
-     * @param start  the first day of the period.
-     * @return the last day of the period, or null when the rule produces no further instance.
-     */
-    public static Date periodEnd(String rule, Date anchor, Date start) {
-        Date next = nextInstanceAfter(rule, anchor, start);
-        return next != null ? DateUtils.addDays(DateUtils.getCalendar(next), -1) : null;
-    }
-
-    /**
-     * The first period of {@code rule} whose last day is not already behind {@code now}, as the
-     * pair {start, end}. A schedule anchored in the past therefore lands on the period it is in
-     * today instead of on the one it began with, which is what stops an editor writing a period
-     * that finished long ago and leaving the roll forward to open every period since.
-     *
-     * @param rule  the RFC 5545 recurrence rule string.
-     * @param start the day the schedule is anchored to.
-     * @param now   the day to land on.
-     * @return the pair {start, end}, or null when the rule produces no period at all.
-     */
-    public static Date[] periodOn(String rule, Date start, Date now) {
-        DateTime nowDateTime = DateUtils.getFixedDateTime(now);
-        try {
-            RecurrenceRuleIterator iterator = new RecurrenceRule(rule).iterator(DateUtils.getFixedDateTime(start));
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            DateTime periodStart = iterator.nextDateTime();
-            while (iterator.hasNext()) {
-                DateTime nextStart = iterator.nextDateTime();
-                if (nextStart.after(nowDateTime)) {
-                    Date end = DateUtils.addDays(DateUtils.getCalendar(DateUtils.getFixedDate(nextStart)), -1);
-                    return new Date[] {DateUtils.getFixedDate(periodStart), end};
-                }
-                periodStart = nextStart;
-            }
-        } catch (InvalidRecurrenceRuleException ignore) {
-            // a rule that does not parse has no period, and the caller refuses it
-        }
-        return null;
-    }
-
-    public static class Builder {
-
-        private Date mStartDate;
-        private RecurrenceRule mRecurrenceRule;
-
-        public Builder(Date startDate, int type) {
-            mStartDate = startDate;
-            mRecurrenceRule = new RecurrenceRule(getFreq(type));
+        fun setOffset(offset: Int) {
+            mRecurrenceRule.interval = offset
         }
 
-        public void setOffset(int offset) {
-            mRecurrenceRule.setInterval(offset);
-        }
-
-        public void setRepeatWeekDay(boolean[] weekDays) {
-            List<RecurrenceRule.WeekdayNum> weekdayNumList = new ArrayList<>();
-            if (weekDays[0]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.SU));}
-            if (weekDays[1]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.MO));}
-            if (weekDays[2]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.TU));}
-            if (weekDays[3]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.WE));}
-            if (weekDays[4]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.TH));}
-            if (weekDays[5]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.FR));}
-            if (weekDays[6]) {weekdayNumList.add(new RecurrenceRule.WeekdayNum(0, Weekday.SA));}
-            mRecurrenceRule.setByDayPart(weekdayNumList);
+        fun setRepeatWeekDay(weekDays: BooleanArray?) {
+            val weekdayNumList: MutableList<RecurrenceRule.WeekdayNum> = ArrayList()
+            if (weekDays!![0]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.SU))}
+            if (weekDays[1]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.MO))}
+            if (weekDays[2]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.TU))}
+            if (weekDays[3]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.WE))}
+            if (weekDays[4]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.TH))}
+            if (weekDays[5]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.FR))}
+            if (weekDays[6]) {weekdayNumList.add(RecurrenceRule.WeekdayNum(0, Weekday.SA))}
+            mRecurrenceRule.setByDayPart(weekdayNumList)
         }
 
         /**
@@ -524,19 +316,19 @@ public class RecurrenceSetting implements Parcelable {
          * months. Every day from the 1st to the 28th is unaffected, since the day it names always
          * comes before the last day of the month or is the last day of the month.
          */
-        public void setRepeatSameMonthDay() {
+        fun setRepeatSameMonthDay() {
             try {
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(mStartDate);
-                int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+                val calendar = Calendar.getInstance()
+                calendar.time = mStartDate
+                val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
                 if (dayOfMonth > LAST_DAY_EVERY_MONTH_HAS) {
-                    mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTHDAY, dayOfMonth, -1);
-                    mRecurrenceRule.setByPart(RecurrenceRule.Part.BYSETPOS, 1);
+                    mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTHDAY, dayOfMonth, -1)
+                    mRecurrenceRule.setByPart(RecurrenceRule.Part.BYSETPOS, 1)
                 } else {
-                    mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTHDAY, dayOfMonth);
+                    mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTHDAY, dayOfMonth)
                 }
-            } catch (InvalidRecurrenceRuleException e) {
-                throw new RuntimeException(e);
+            } catch (e: InvalidRecurrenceRuleException) {
+                throw RuntimeException(e)
             }
         }
 
@@ -547,48 +339,252 @@ public class RecurrenceSetting implements Parcelable {
          * every year that is not a leap year, so a budget anchored to it covers four years with
          * one year of money.
          */
-        public void setRepeatSameYearDay() {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(mStartDate);
+        fun setRepeatSameYearDay() {
+            val calendar = Calendar.getInstance()
+            calendar.time = mStartDate
             if (calendar.get(Calendar.MONTH) != Calendar.FEBRUARY
                     || calendar.get(Calendar.DAY_OF_MONTH) <= LAST_DAY_EVERY_MONTH_HAS) {
-                return;
+                return
             }
             try {
                 // the library counts months from zero here and writes them from one, so passing
                 // Calendar.FEBRUARY is what puts BYMONTH=2 in the rule
-                mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTH, Calendar.FEBRUARY);
-                mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTHDAY, calendar.get(Calendar.DAY_OF_MONTH), -1);
-                mRecurrenceRule.setByPart(RecurrenceRule.Part.BYSETPOS, 1);
-            } catch (InvalidRecurrenceRuleException e) {
-                throw new RuntimeException(e);
+                mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTH, Calendar.FEBRUARY)
+                mRecurrenceRule.setByPart(RecurrenceRule.Part.BYMONTHDAY, calendar.get(Calendar.DAY_OF_MONTH), -1)
+                mRecurrenceRule.setByPart(RecurrenceRule.Part.BYSETPOS, 1)
+            } catch (e: InvalidRecurrenceRuleException) {
+                throw RuntimeException(e)
             }
         }
 
-        public void setEndFor(int occurrences) {
-            mRecurrenceRule.setCount(occurrences);
+        fun setEndFor(occurrences: Int) {
+            mRecurrenceRule.setCount(occurrences)
         }
 
-        public void setEndUntil(Date endDate) {
-            mRecurrenceRule.setUntil(DateUtils.getFixedDateTime(endDate));
+        fun setEndUntil(endDate: Date?) {
+            mRecurrenceRule.until = DateUtils.getFixedDateTime(endDate)
         }
 
-        public RecurrenceSetting build() {
-            return new RecurrenceSetting(mStartDate, mRecurrenceRule);
+        fun build(): RecurrenceSetting {
+            return RecurrenceSetting(mStartDate, mRecurrenceRule)
         }
     }
 
-    private static Freq getFreq(int type) {
-        switch (type) {
-            case TYPE_DAILY:
-                return Freq.DAILY;
-            case TYPE_WEEKLY:
-                return Freq.WEEKLY;
-            case TYPE_MONTHLY:
-                return Freq.MONTHLY;
-            case TYPE_YEARLY:
-                return Freq.YEARLY;
+    companion object {
+
+        const val TYPE_DAILY = 1
+        const val TYPE_WEEKLY = 2
+        const val TYPE_MONTHLY = 3
+        const val TYPE_YEARLY = 4
+
+        const val FLAG_MONTHLY_SAME_DAY = 1
+
+        /** February is the shortest month, so the 28th is the last day every month is sure to have. */
+        private const val LAST_DAY_EVERY_MONTH_HAS = 28
+
+        const val END_FOREVER = 1
+        const val END_UNTIL = 2
+        const val END_FOR = 3
+
+        @JvmStatic
+        @Throws(InvalidRecurrenceRuleException::class)
+        fun build(startDate: Date?, rule: String?): RecurrenceSetting {
+            val recurrenceRule = RecurrenceRule(rule)
+            return RecurrenceSetting(startDate, rule)
         }
-        return Freq.DAILY;
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<RecurrenceSetting> = object : Parcelable.Creator<RecurrenceSetting> {
+
+            override fun createFromParcel(source: Parcel): RecurrenceSetting {
+                return RecurrenceSetting(source)
+            }
+
+            override fun newArray(size: Int): Array<RecurrenceSetting?> {
+                return arrayOfNulls(size)
+            }
+
+        }
+
+        /**
+         * Pure, Android-free computation of the recurrence occurrences that have come due, extracted
+         * verbatim from the loop that `RecurrenceHandlerIntentService` used to run inline.
+         *
+         * The rfc5545 iterator is seeded from `seedDate` (the stored next occurrence), which per
+         * RFC 5545 is itself the first instance produced. Every instance that is not strictly after
+         * `now` (that is, `!instance.after(now)`) is collected as due and becomes the new
+         * last occurrence; the first instance strictly after `now` becomes the next occurrence
+         * and stops the walk. When the rule exhausts (UNTIL / COUNT) or fails to parse, the next
+         * occurrence is null and the last occurrence stays at the seed, exactly as the service behaved.
+         *
+         * The rule is parsed here from its raw string rather than through a [RecurrenceSetting]
+         * instance, so an invalid rule yields no occurrences instead of silently falling back to a
+         * daily rule the way the `(Date, String)` constructor does.
+         *
+         * @param rule     the RFC 5545 recurrence rule string stored on the row
+         * @param seedDate the stored next occurrence used to seed the iterator (inclusive first instance)
+         * @param now      the moment the window closes at, compared at day granularity
+         * @return the due occurrence dates and the updated last / next occurrence values
+         */
+        @JvmStatic
+        fun computeOccurrences(rule: String?, seedDate: Date?, now: Date?): OccurrenceUpdate {
+            val occurrenceDates: MutableList<Date> = ArrayList()
+            val currentDateTime = DateUtils.getFixedDateTime(now)
+            val startDateTime = DateUtils.getFixedDateTime(seedDate)
+            var lastOccurrence = DateUtils.getFixedDateTime(seedDate)
+            var nextOccurrence: DateTime? = null
+            try {
+                val recurrenceRule = RecurrenceRule(rule)
+                val iterator = recurrenceRule.iterator(startDateTime)
+                while (iterator.hasNext()) {
+                    val nextInstance = iterator.nextDateTime()
+                    if (!nextInstance.after(currentDateTime)) {
+                        occurrenceDates.add(DateUtils.getFixedDate(nextInstance))
+                        lastOccurrence = nextInstance
+                    } else {
+                        nextOccurrence = nextInstance
+                        break
+                    }
+                }
+            } catch (ignore: InvalidRecurrenceRuleException) {
+                // leave nextOccurrence null so the row is not processed again, matching the old service
+            }
+            return OccurrenceUpdate.create(
+                    occurrenceDates,
+                    DateUtils.getFixedDate(lastOccurrence),
+                    if (nextOccurrence != null) DateUtils.getFixedDate(nextOccurrence) else null
+            )
+        }
+
+        /**
+         * Where an edited recurrence resumes, as an SQL date string, or null when the rule it now
+         * carries is exhausted. Every date argument is an SQL date string as stored on the row.
+         *
+         * When neither the rule nor the start date moved, the stored pointer is handed back
+         * untouched. An edit to an amount, a description or a category cannot then step over
+         * occurrences that have come due and have not yet been written to the ledger, and that
+         * matters here because the recurrence service only ever walks forward from this pointer, so
+         * an occurrence it has been moved past is never written.
+         *
+         * When the schedule itself moved, the pointer becomes the first instance of the new rule
+         * after `now`, seeded from the new start date so the rule keeps the anchor its own
+         * fields are relative to. Occurrences the old rule left owed are not carried across, since
+         * the new rule need not contain them at all.
+         *
+         * @param oldRule           rule currently stored on the row.
+         * @param oldStartDate      start date currently stored on the row.
+         * @param oldNextOccurrence pointer currently stored on the row, possibly already past.
+         * @param newRule           rule the editor is saving.
+         * @param newStartDate      start date the editor is saving.
+         * @param now               the moment the edit is being saved at.
+         * @return the value the NEXT_OCCURRENCE column must be set to.
+         */
+        @JvmStatic
+        fun resumeAfterEdit(oldRule: String?, oldStartDate: String?, oldNextOccurrence: String?,
+                            newRule: String?, newStartDate: String?, now: Date?): String? {
+            if (Objects.equals(oldRule, newRule) && Objects.equals(oldStartDate, newStartDate)) {
+                return oldNextOccurrence
+            }
+            val startDate = DateUtils.getDateFromSQLDateString(newStartDate)
+            val nextOccurrence = computeOccurrences(newRule, startDate, now).getNextOccurrence()
+            return if (nextOccurrence != null) DateUtils.getSQLDateString(nextOccurrence) else null
+        }
+
+        /**
+         * The first instance of `rule` strictly after `after`, counted from
+         * `anchor`.
+         *
+         * The anchor is where the schedule was set to begin, and it has to be the seed: a rule only
+         * carries the day it repeats on when that day is written into the rule itself, which is true
+         * of a monthly rule and of nothing else. Seeding a weekly rule at the day a budget's current
+         * period happens to start would repeat it on that weekday, and seeding one that repeats every
+         * second month would put it on the wrong months, whatever the schedule says it does.
+         *
+         * @param rule   the RFC 5545 recurrence rule string stored on the row.
+         * @param anchor the day the schedule is anchored to.
+         * @param after  the day to find the first instance beyond.
+         * @return the next instance, or null when the rule is exhausted or fails to parse.
+         */
+        @JvmStatic
+        fun nextInstanceAfter(rule: String?, anchor: Date?, after: Date?): Date? {
+            val afterDateTime = DateUtils.getFixedDateTime(after)
+            try {
+                val iterator = RecurrenceRule(rule).iterator(DateUtils.getFixedDateTime(anchor))
+                while (iterator.hasNext()) {
+                    val instance = iterator.nextDateTime()
+                    if (instance.after(afterDateTime)) {
+                        return DateUtils.getFixedDate(instance)
+                    }
+                }
+            } catch (ignore: InvalidRecurrenceRuleException) {
+                // an unparseable rule has no further instance, so the caller stops repeating
+            }
+            return null
+        }
+
+        /**
+         * The last day covered by a period that begins on `start`: the day before the next
+         * instance of `rule` counted from `anchor`. A monthly schedule anchored to the
+         * 15th therefore runs the 15th to the 14th, which is what makes the period follow the
+         * schedule instead of a fixed day count.
+         *
+         * @param rule   the RFC 5545 recurrence rule string stored on the row.
+         * @param anchor the day the schedule is anchored to.
+         * @param start  the first day of the period.
+         * @return the last day of the period, or null when the rule produces no further instance.
+         */
+        @JvmStatic
+        fun periodEnd(rule: String?, anchor: Date?, start: Date?): Date? {
+            val next = nextInstanceAfter(rule, anchor, start)
+            return if (next != null) DateUtils.addDays(DateUtils.getCalendar(next), -1) else null
+        }
+
+        /**
+         * The first period of `rule` whose last day is not already behind `now`, as the
+         * pair {start, end}. A schedule anchored in the past therefore lands on the period it is in
+         * today instead of on the one it began with, which is what stops an editor writing a period
+         * that finished long ago and leaving the roll forward to open every period since.
+         *
+         * @param rule  the RFC 5545 recurrence rule string.
+         * @param start the day the schedule is anchored to.
+         * @param now   the day to land on.
+         * @return the pair {start, end}, or null when the rule produces no period at all.
+         */
+        @JvmStatic
+        fun periodOn(rule: String?, start: Date?, now: Date?): Array<Date>? {
+            val nowDateTime = DateUtils.getFixedDateTime(now)
+            try {
+                val iterator = RecurrenceRule(rule).iterator(DateUtils.getFixedDateTime(start))
+                if (!iterator.hasNext()) {
+                    return null
+                }
+                var periodStart = iterator.nextDateTime()
+                while (iterator.hasNext()) {
+                    val nextStart = iterator.nextDateTime()
+                    if (nextStart.after(nowDateTime)) {
+                        val end = DateUtils.addDays(DateUtils.getCalendar(DateUtils.getFixedDate(nextStart)), -1)
+                        return arrayOf(DateUtils.getFixedDate(periodStart), end)
+                    }
+                    periodStart = nextStart
+                }
+            } catch (ignore: InvalidRecurrenceRuleException) {
+                // a rule that does not parse has no period, and the caller refuses it
+            }
+            return null
+        }
+
+        private fun getFreq(type: Int): Freq {
+            when (type) {
+                TYPE_DAILY ->
+                    return Freq.DAILY
+                TYPE_WEEKLY ->
+                    return Freq.WEEKLY
+                TYPE_MONTHLY ->
+                    return Freq.MONTHLY
+                TYPE_YEARLY ->
+                    return Freq.YEARLY
+            }
+            return Freq.DAILY
+        }
     }
 }
