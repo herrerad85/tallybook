@@ -17,125 +17,119 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.content.Context;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.content.Context
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.model.Place;
-import com.oriondev.moneywallet.ui.fragment.dialog.PlacePickerDialog;
+import com.oriondev.moneywallet.model.Place
+import com.oriondev.moneywallet.ui.fragment.dialog.PlacePickerDialog
 
 /**
  * Created by andrea on 10/03/18.
  */
 
-public class PlacePicker extends Fragment implements PlacePickerDialog.Callback {
+class PlacePicker : Fragment(), PlacePickerDialog.Callback {
 
-    private static final String SS_CURRENT_PLACE = "PlacePicker::SavedState::CurrentPlace";
+    private var mController: Controller? = null
 
-    private static final String ARG_DEFAULT_PLACE = "PlacePicker::Arguments::DefaultPlace";
+    private var mCurrentPlace: Place? = null
 
-    private Controller mController;
+    private var mPlacePickerDialog: PlacePickerDialog? = null
 
-    private Place mCurrentPlace;
+    companion object {
 
-    private PlacePickerDialog mPlacePickerDialog;
+        private const val SS_CURRENT_PLACE = "PlacePicker::SavedState::CurrentPlace"
 
-    public static PlacePicker createPicker(FragmentManager fragmentManager, String tag, Place defaultPlace) {
-        PlacePicker placePicker = (PlacePicker) fragmentManager.findFragmentByTag(tag);
-        if (placePicker == null) {
-            placePicker = new PlacePicker();
-            Bundle arguments = new Bundle();
-            arguments.putParcelable(ARG_DEFAULT_PLACE, defaultPlace);
-            placePicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(placePicker, tag).commit();
-        }
-        return placePicker;
-    }
+        private const val ARG_DEFAULT_PLACE = "PlacePicker::Arguments::DefaultPlace"
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultPlace: Place?): PlacePicker {
+            var placePicker = fragmentManager.findFragmentByTag(tag) as PlacePicker?
+            if (placePicker == null) {
+                placePicker = PlacePicker()
+                val arguments = Bundle()
+                arguments.putParcelable(ARG_DEFAULT_PLACE, defaultPlace)
+                placePicker.arguments = arguments
+                fragmentManager.beginTransaction().add(placePicker, tag).commit()
+            }
+            return placePicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mCurrentPlace = savedInstanceState.getParcelable(SS_CURRENT_PLACE);
+            mCurrentPlace = savedInstanceState.getParcelable(SS_CURRENT_PLACE)
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mCurrentPlace = arguments.getParcelable(ARG_DEFAULT_PLACE);
+                mCurrentPlace = arguments.getParcelable(ARG_DEFAULT_PLACE)
             }
         }
-        mPlacePickerDialog = (PlacePickerDialog) getChildFragmentManager().findFragmentByTag(getDialogTag());
+        mPlacePickerDialog = childFragmentManager.findFragmentByTag(getDialogTag()) as PlacePickerDialog?
         if (mPlacePickerDialog == null) {
-            mPlacePickerDialog = PlacePickerDialog.newInstance();
+            mPlacePickerDialog = PlacePickerDialog.newInstance()
         }
-        mPlacePickerDialog.setCallback(this);
+        mPlacePickerDialog!!.setCallback(this)
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onPlaceChanged(getTag(), mCurrentPlace);
-        }
+    private fun fireCallbackSafely() {
+        mController?.onPlaceChanged(tag, mCurrentPlace)
     }
 
-    private String getDialogTag() {
-        return getTag() + "::DialogFragment";
+    private fun getDialogTag(): String {
+        return tag + "::DialogFragment"
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(SS_CURRENT_PLACE, mCurrentPlace);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(SS_CURRENT_PLACE, mCurrentPlace)
     }
 
-    public boolean isSelected() {
-        return mCurrentPlace != null;
+    fun isSelected(): Boolean {
+        return mCurrentPlace != null
     }
 
-    public void setCurrentPlace(Place place) {
-        mCurrentPlace = place;
-        fireCallbackSafely();
+    fun setCurrentPlace(place: Place?) {
+        mCurrentPlace = place
+        fireCallbackSafely()
     }
 
-    public Place getCurrentPlace() {
-        return mCurrentPlace;
+    fun getCurrentPlace(): Place? {
+        return mCurrentPlace
     }
 
-    public void showPicker() {
-        mPlacePickerDialog.showPicker(getChildFragmentManager(), getDialogTag(), mCurrentPlace);
+    fun showPicker() {
+        mPlacePickerDialog!!.showPicker(childFragmentManager, getDialogTag(), mCurrentPlace)
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    @Override
-    public void onPlaceSelected(Place place) {
-        mCurrentPlace = place;
-        fireCallbackSafely();
+    override fun onPlaceSelected(place: Place?) {
+        mCurrentPlace = place
+        fireCallbackSafely()
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onPlaceChanged(String tag, Place place);
+        fun onPlaceChanged(tag: String?, place: Place?)
     }
 }
