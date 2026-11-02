@@ -17,121 +17,115 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.content.Context;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.content.Context
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.ui.fragment.dialog.BudgetTypePickerDialog;
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.ui.fragment.dialog.BudgetTypePickerDialog
 
 /**
  * Created by andrea on 12/03/18.
  */
-public class BudgetTypePicker extends Fragment implements BudgetTypePickerDialog.Callback {
+class BudgetTypePicker : Fragment(), BudgetTypePickerDialog.Callback {
 
-    private static final String SS_CURRENT_TYPE = "BudgetTypePicker::SavedState::CurrentType";
+    private var mController: Controller? = null
 
-    private static final String ARG_DEFAULT_TYPE = "BudgetTypePicker::Arguments::DefaultType";
+    private var mCurrentType: Contract.BudgetType? = null
 
-    private Controller mController;
+    private var mBudgetTypePickerDialog: BudgetTypePickerDialog? = null
 
-    private Contract.BudgetType mCurrentType;
+    companion object {
 
-    private BudgetTypePickerDialog mBudgetTypePickerDialog;
+        private const val SS_CURRENT_TYPE = "BudgetTypePicker::SavedState::CurrentType"
 
-    public static BudgetTypePicker createPicker(FragmentManager fragmentManager, String tag, Contract.BudgetType defaultType) {
-        BudgetTypePicker budgetTypePicker = (BudgetTypePicker) fragmentManager.findFragmentByTag(tag);
-        if (budgetTypePicker == null) {
-            budgetTypePicker = new BudgetTypePicker();
-            Bundle arguments = new Bundle();
-            arguments.putSerializable(ARG_DEFAULT_TYPE, defaultType);
-            budgetTypePicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(budgetTypePicker, tag).commit();
-        }
-        return budgetTypePicker;
-    }
+        private const val ARG_DEFAULT_TYPE = "BudgetTypePicker::Arguments::DefaultType"
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultType: Contract.BudgetType?): BudgetTypePicker {
+            var budgetTypePicker = fragmentManager.findFragmentByTag(tag) as BudgetTypePicker?
+            if (budgetTypePicker == null) {
+                budgetTypePicker = BudgetTypePicker()
+                val arguments = Bundle()
+                arguments.putSerializable(ARG_DEFAULT_TYPE, defaultType)
+                budgetTypePicker.arguments = arguments
+                fragmentManager.beginTransaction().add(budgetTypePicker, tag).commit()
+            }
+            return budgetTypePicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mCurrentType = (Contract.BudgetType) savedInstanceState.getSerializable(SS_CURRENT_TYPE);
+            mCurrentType = savedInstanceState.getSerializable(SS_CURRENT_TYPE) as Contract.BudgetType?
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mCurrentType = (Contract.BudgetType) arguments.getSerializable(ARG_DEFAULT_TYPE);
+                mCurrentType = arguments.getSerializable(ARG_DEFAULT_TYPE) as Contract.BudgetType?
             } else {
-                mCurrentType = Contract.BudgetType.EXPENSES;
+                mCurrentType = Contract.BudgetType.EXPENSES
             }
         }
-        mBudgetTypePickerDialog = (BudgetTypePickerDialog) getChildFragmentManager().findFragmentByTag(getDialogTag());
+        mBudgetTypePickerDialog = childFragmentManager.findFragmentByTag(getDialogTag()) as BudgetTypePickerDialog?
         if (mBudgetTypePickerDialog == null) {
-            mBudgetTypePickerDialog = BudgetTypePickerDialog.newInstance();
+            mBudgetTypePickerDialog = BudgetTypePickerDialog.newInstance()
         }
-        mBudgetTypePickerDialog.setCallback(this);
+        mBudgetTypePickerDialog!!.setCallback(this)
     }
 
-    private String getDialogTag() {
-        return getTag() + "::DialogFragment";
+    private fun getDialogTag(): String {
+        return tag + "::DialogFragment"
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onTypeChanged(getTag(), mCurrentType);
-        }
+    private fun fireCallbackSafely() {
+        mController?.onTypeChanged(tag, mCurrentType)
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putSerializable(SS_CURRENT_TYPE, mCurrentType);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putSerializable(SS_CURRENT_TYPE, mCurrentType)
     }
 
-    public boolean isSelected() {
-        return mCurrentType != null;
+    fun isSelected(): Boolean {
+        return mCurrentType != null
     }
 
-    public Contract.BudgetType getCurrentType() {
-        return mCurrentType;
+    fun getCurrentType(): Contract.BudgetType? {
+        return mCurrentType
     }
 
-    public void showPicker() {
-        mBudgetTypePickerDialog.showPicker(getChildFragmentManager(), getDialogTag(), mCurrentType);
+    fun showPicker() {
+        mBudgetTypePickerDialog!!.showPicker(childFragmentManager, getDialogTag(), mCurrentType)
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    @Override
-    public void onBudgetTypeSelected(Contract.BudgetType budgetType) {
-        mCurrentType = budgetType;
-        fireCallbackSafely();
+    override fun onBudgetTypeSelected(budgetType: Contract.BudgetType?) {
+        mCurrentType = budgetType
+        fireCallbackSafely()
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onTypeChanged(String tag, Contract.BudgetType type);
+        fun onTypeChanged(tag: String?, type: Contract.BudgetType?)
     }
 }
