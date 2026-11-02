@@ -17,78 +17,69 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
 /**
  * Created by andrea on 09/03/18.
  */
-public class Wallet implements Identifiable, Parcelable {
+class Wallet : Identifiable, Parcelable {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
-    private final CurrencyUnit mCurrency;
-    private final long mStartMoney;
-    private final long mTotalMoney;
+    private val mId: Long
+    val name: String?
+    private val mIcon: Icon?
+    val currency: CurrencyUnit?
+    private val mStartMoney: Long
+    private val mTotalMoney: Long
 
-    public Wallet(long id, String name, Icon icon, CurrencyUnit currency, long startMoney, long totalMoney) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mCurrency = currency;
-        mStartMoney = startMoney;
-        mTotalMoney = totalMoney;
+    constructor(id: Long, name: String?, icon: Icon?, currency: CurrencyUnit?, startMoney: Long, totalMoney: Long) {
+        mId = id
+        this.name = name
+        mIcon = icon
+        this.currency = currency
+        mStartMoney = startMoney
+        mTotalMoney = totalMoney
     }
 
-    @Override
-    public long getId() {
-        return mId;
+    override fun getId(): Long {
+        return mId
     }
 
-    public String getName() {
-        return mName;
+    protected constructor(source: Parcel) {
+        mId = source.readLong()
+        name = source.readString()
+        mIcon = source.readParcelable(Icon::class.java.classLoader)
+        currency = source.readParcelable(CurrencyUnit::class.java.classLoader)
+        mStartMoney = source.readLong()
+        mTotalMoney = source.readLong()
     }
 
-    public CurrencyUnit getCurrency() {
-        return mCurrency;
+    override fun describeContents(): Int {
+        return 0
     }
 
-    protected Wallet(Parcel in) {
-        mId = in.readLong();
-        mName = in.readString();
-        mIcon = in.readParcelable(Icon.class.getClassLoader());
-        mCurrency = in.readParcelable(CurrencyUnit.class.getClassLoader());
-        mStartMoney = in.readLong();
-        mTotalMoney = in.readLong();
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeLong(mId)
+        dest.writeString(name)
+        dest.writeParcelable(mIcon, flags)
+        dest.writeParcelable(currency, flags)
+        dest.writeLong(mStartMoney)
+        dest.writeLong(mTotalMoney)
     }
 
-    public static final Creator<Wallet> CREATOR = new Creator<Wallet>() {
-        @Override
-        public Wallet createFromParcel(Parcel in) {
-            return new Wallet(in);
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Wallet> = object : Parcelable.Creator<Wallet> {
+            override fun createFromParcel(source: Parcel): Wallet {
+                return Wallet(source)
+            }
+
+            override fun newArray(size: Int): Array<Wallet?> {
+                return arrayOfNulls(size)
+            }
         }
-
-        @Override
-        public Wallet[] newArray(int size) {
-            return new Wallet[size];
-        }
-    };
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(mId);
-        dest.writeString(mName);
-        dest.writeParcelable(mIcon, flags);
-        dest.writeParcelable(mCurrency, flags);
-        dest.writeLong(mStartMoney);
-        dest.writeLong(mTotalMoney);
     }
 }
