@@ -17,195 +17,188 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.content.Context;
-import android.os.Bundle;
-import android.os.Parcelable;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.content.Context
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.model.Wallet;
-import com.oriondev.moneywallet.ui.fragment.dialog.WalletPickerDialog;
+import com.oriondev.moneywallet.model.Wallet
+import com.oriondev.moneywallet.ui.fragment.dialog.WalletPickerDialog
 
-import java.util.Arrays;
+import java.util.Arrays
 
 /**
  * Created by andrea on 09/03/18.
  */
-public class WalletPicker extends Fragment implements WalletPickerDialog.Callback {
+class WalletPicker : Fragment(), WalletPickerDialog.Callback {
 
-    private static final String SS_SINGLE_WALLET = "WalletPicker::SavedState::SingleWallet";
-    private static final String SS_CURRENT_WALLET = "WalletPicker::SavedState::CurrentWallet";
+    companion object {
 
-    private static final String ARG_SINGLE_WALLET = "WalletPicker::Arguments::SingleWallet";
-    private static final String ARG_DEFAULT_WALLET = "WalletPicker::Arguments::DefaultWallet";
+        private const val SS_SINGLE_WALLET = "WalletPicker::SavedState::SingleWallet"
+        private const val SS_CURRENT_WALLET = "WalletPicker::SavedState::CurrentWallet"
 
-    private SingleWalletController mSingleWalletController;
-    private MultiWalletController mMultiWalletController;
+        private const val ARG_SINGLE_WALLET = "WalletPicker::Arguments::SingleWallet"
+        private const val ARG_DEFAULT_WALLET = "WalletPicker::Arguments::DefaultWallet"
 
-    private boolean mSingleWallet;
-    private Wallet mCurrentWallet;
-    private Wallet[] mCurrentWallets;
-
-    private WalletPickerDialog mWalletPickerDialog;
-
-    public static WalletPicker createPicker(FragmentManager fragmentManager, String tag, Wallet defaultWallet) {
-        WalletPicker walletPicker = (WalletPicker) fragmentManager.findFragmentByTag(tag);
-        if (walletPicker == null) {
-            walletPicker = new WalletPicker();
-            Bundle arguments = new Bundle();
-            arguments.putBoolean(ARG_SINGLE_WALLET, true);
-            arguments.putParcelable(ARG_DEFAULT_WALLET, defaultWallet);
-            walletPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(walletPicker, tag).commit();
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultWallet: Wallet?): WalletPicker {
+            var walletPicker = fragmentManager.findFragmentByTag(tag) as WalletPicker?
+            if (walletPicker == null) {
+                walletPicker = WalletPicker()
+                val arguments = Bundle()
+                arguments.putBoolean(ARG_SINGLE_WALLET, true)
+                arguments.putParcelable(ARG_DEFAULT_WALLET, defaultWallet)
+                walletPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(walletPicker, tag).commit()
+            }
+            return walletPicker
         }
-        return walletPicker;
-    }
 
-    public static WalletPicker createPicker(FragmentManager fragmentManager, String tag, Wallet[] defaultWallets) {
-        WalletPicker walletPicker = (WalletPicker) fragmentManager.findFragmentByTag(tag);
-        if (walletPicker == null) {
-            walletPicker = new WalletPicker();
-            Bundle arguments = new Bundle();
-            arguments.putBoolean(ARG_SINGLE_WALLET, false);
-            arguments.putParcelableArray(ARG_DEFAULT_WALLET, defaultWallets);
-            walletPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(walletPicker, tag).commit();
-        }
-        return walletPicker;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof SingleWalletController) {
-            mSingleWalletController = (SingleWalletController) context;
-        } else if (getParentFragment() instanceof SingleWalletController) {
-            mSingleWalletController = (SingleWalletController) getParentFragment();
-        }
-        if (context instanceof MultiWalletController) {
-            mMultiWalletController = (MultiWalletController) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultWallets: Array<Wallet?>?): WalletPicker {
+            var walletPicker = fragmentManager.findFragmentByTag(tag) as WalletPicker?
+            if (walletPicker == null) {
+                walletPicker = WalletPicker()
+                val arguments = Bundle()
+                arguments.putBoolean(ARG_SINGLE_WALLET, false)
+                arguments.putParcelableArray(ARG_DEFAULT_WALLET, defaultWallets)
+                walletPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(walletPicker, tag).commit()
+            }
+            return walletPicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private var mSingleWalletController: SingleWalletController? = null
+    private var mMultiWalletController: MultiWalletController? = null
+
+    private var mSingleWallet: Boolean = false
+    private var mCurrentWallet: Wallet? = null
+    private var mCurrentWallets: Array<Wallet?>? = null
+
+    private var mWalletPickerDialog: WalletPickerDialog? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is SingleWalletController) {
+            mSingleWalletController = context
+        } else if (parentFragment is SingleWalletController) {
+            mSingleWalletController = parentFragment as SingleWalletController
+        }
+        if (context is MultiWalletController) {
+            mMultiWalletController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mSingleWallet = savedInstanceState.getBoolean(SS_SINGLE_WALLET);
+            mSingleWallet = savedInstanceState.getBoolean(SS_SINGLE_WALLET)
             if (mSingleWallet) {
-                mCurrentWallet = savedInstanceState.getParcelable(SS_CURRENT_WALLET);
+                mCurrentWallet = savedInstanceState.getParcelable(SS_CURRENT_WALLET)
             } else {
-                Parcelable[] wallets = savedInstanceState.getParcelableArray(SS_CURRENT_WALLET);
-                mCurrentWallets = wallets != null ? Arrays.copyOf(wallets, wallets.length, Wallet[].class) : null;
+                mCurrentWallets = savedInstanceState.getParcelableArray(SS_CURRENT_WALLET)?.let {
+                    Arrays.copyOf(it, it.size, Array<Wallet?>::class.java)
+                }
             }
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mSingleWallet = arguments.getBoolean(ARG_SINGLE_WALLET);
+                mSingleWallet = arguments.getBoolean(ARG_SINGLE_WALLET)
                 if (mSingleWallet) {
-                    mCurrentWallet = arguments.getParcelable(ARG_DEFAULT_WALLET);
+                    mCurrentWallet = arguments.getParcelable(ARG_DEFAULT_WALLET)
                 } else {
-                    mCurrentWallets = (Wallet[]) arguments.getParcelableArray(ARG_DEFAULT_WALLET);
+                    mCurrentWallets = arguments.getParcelableArray(ARG_DEFAULT_WALLET) as Array<Wallet?>?
                 }
             } else {
-                mSingleWallet = true;
-                mCurrentWallets = null;
+                mSingleWallet = true
+                mCurrentWallets = null
             }
         }
-        mWalletPickerDialog = (WalletPickerDialog) getChildFragmentManager().findFragmentByTag(getDialogTag());
+        mWalletPickerDialog = childFragmentManager.findFragmentByTag(getDialogTag()) as WalletPickerDialog?
         if (mWalletPickerDialog == null) {
-            mWalletPickerDialog = WalletPickerDialog.newInstance();
+            mWalletPickerDialog = WalletPickerDialog.newInstance()
         }
-        mWalletPickerDialog.setCallback(this);
+        mWalletPickerDialog!!.setCallback(this)
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private String getDialogTag() {
-        return getTag() + "::DialogFragment";
+    private fun getDialogTag(): String {
+        return tag + "::DialogFragment"
     }
 
-    private void fireCallbackSafely() {
+    private fun fireCallbackSafely() {
         if (mSingleWallet) {
-            if (mSingleWalletController != null) {
-                mSingleWalletController.onWalletChanged(getTag(), mCurrentWallet);
-            }
+            mSingleWalletController?.onWalletChanged(tag, mCurrentWallet)
         } else {
-            if (mMultiWalletController != null) {
-                mMultiWalletController.onWalletListChanged(getTag(), mCurrentWallets);
-            }
+            mMultiWalletController?.onWalletListChanged(tag, mCurrentWallets)
         }
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(SS_SINGLE_WALLET, mSingleWallet);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(SS_SINGLE_WALLET, mSingleWallet)
         if (mSingleWallet) {
-            outState.putParcelable(SS_CURRENT_WALLET, mCurrentWallet);
+            outState.putParcelable(SS_CURRENT_WALLET, mCurrentWallet)
         } else {
-            outState.putParcelableArray(SS_CURRENT_WALLET, mCurrentWallets);
+            outState.putParcelableArray(SS_CURRENT_WALLET, mCurrentWallets)
         }
     }
 
-    public boolean isSelected() {
-        return mSingleWallet ? mCurrentWallet != null : (mCurrentWallets != null && mCurrentWallets.length > 0);
+    fun isSelected(): Boolean {
+        val currentWallets = mCurrentWallets
+        return if (mSingleWallet) mCurrentWallet != null else (currentWallets != null && currentWallets.size > 0)
     }
 
-    public Wallet getCurrentWallet() {
-        return mCurrentWallet;
+    fun getCurrentWallet(): Wallet? {
+        return mCurrentWallet
     }
 
-    public Wallet[] getCurrentWallets() {
-        return mCurrentWallets;
+    fun getCurrentWallets(): Array<Wallet?>? {
+        return mCurrentWallets
     }
 
-    public void showSingleWalletPicker() {
-        showSingleWalletPicker(null);
+    fun showSingleWalletPicker() {
+        showSingleWalletPicker(null)
     }
 
-    public void showSingleWalletPicker(String currencyIso) {
-        mWalletPickerDialog.showSinglePicker(getChildFragmentManager(), getDialogTag(), mCurrentWallet, currencyIso);
+    fun showSingleWalletPicker(currencyIso: String?) {
+        mWalletPickerDialog!!.showSinglePicker(childFragmentManager, getDialogTag(), mCurrentWallet, currencyIso)
     }
 
-    public void showMultiWalletPicker() {
-        mWalletPickerDialog.showMultiPicker(getChildFragmentManager(), getDialogTag(), mCurrentWallets);
+    fun showMultiWalletPicker() {
+        mWalletPickerDialog!!.showMultiPicker(childFragmentManager, getDialogTag(), mCurrentWallets)
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mSingleWalletController = null;
-        mMultiWalletController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mSingleWalletController = null
+        mMultiWalletController = null
     }
 
-    @Override
-    public void onWalletSelected(Wallet wallet) {
-        mCurrentWallet = wallet;
-        fireCallbackSafely();
+    override fun onWalletSelected(wallet: Wallet?) {
+        mCurrentWallet = wallet
+        fireCallbackSafely()
     }
 
-    @Override
-    public void onWalletsSelected(Wallet[] wallets) {
-        mCurrentWallets = wallets;
-        fireCallbackSafely();
+    override fun onWalletsSelected(wallets: Array<Wallet?>?) {
+        mCurrentWallets = wallets
+        fireCallbackSafely()
     }
 
-    public interface SingleWalletController {
+    interface SingleWalletController {
 
-        void onWalletChanged(String tag, Wallet wallet);
+        fun onWalletChanged(tag: String?, wallet: Wallet?)
     }
 
-    public interface MultiWalletController {
+    interface MultiWalletController {
 
-        void onWalletListChanged(String tag, Wallet[] wallets);
+        fun onWalletListChanged(tag: String?, wallets: Array<Wallet?>?)
     }
 }
