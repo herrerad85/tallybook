@@ -17,44 +17,42 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
 
 /**
  * Created by andrea on 24/07/18.
  */
-public enum LockMode {
+enum class LockMode(private val mValue: Int) {
 
     NONE(PreferenceManager.LOCK_MODE_NONE),
     PIN(PreferenceManager.LOCK_MODE_PIN),
     SEQUENCE(PreferenceManager.LOCK_MODE_SEQUENCE),
     FINGERPRINT(PreferenceManager.LOCK_MODE_FINGERPRINT);
 
-    private final int mValue;
-
-    LockMode(int value) {
-        mValue = value;
+    fun getValue(): Int {
+        return mValue
     }
 
-    public int getValue() {
-        return mValue;
+    fun getValueAsString(): String {
+        return mValue.toString()
     }
 
-    public String getValueAsString() {
-        return String.valueOf(mValue);
-    }
+    companion object {
 
-    public static LockMode get(int value) {
-        switch (value) {
-            case PreferenceManager.LOCK_MODE_PIN:
-                return PIN;
-            case PreferenceManager.LOCK_MODE_SEQUENCE:
-                return SEQUENCE;
-            case PreferenceManager.LOCK_MODE_FINGERPRINT:
-                return FINGERPRINT;
-            default:
-                return NONE;
+        @JvmStatic
+        fun get(value: Int): LockMode {
+            when (value) {
+                PreferenceManager.LOCK_MODE_PIN ->
+                    return PIN
+                PreferenceManager.LOCK_MODE_SEQUENCE ->
+                    return SEQUENCE
+                PreferenceManager.LOCK_MODE_FINGERPRINT ->
+                    return FINGERPRINT
+                else ->
+                    return NONE
+            }
         }
     }
 }
