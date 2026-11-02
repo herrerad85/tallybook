@@ -17,56 +17,51 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import androidx.annotation.NonNull;
-
-import com.oriondev.moneywallet.utils.IconLoader;
+import com.oriondev.moneywallet.utils.IconLoader
 
 /**
  * One entry of the wallet switcher in the navigation drawer: a wallet, or the total of them.
  */
-public class WalletAccount {
+class WalletAccount {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
-    private final Money mMoney;
-    private final String mGroup;
+    private val mId: Long
+    private val mName: String?
+    private val mIcon: Icon
+    private val mMoney: Money
+    private val mGroup: String?
 
-    public WalletAccount(long id, String name, Icon icon, Money money) {
-        this(id, name, icon, money, null);
+    constructor(id: Long, name: String?, icon: Icon?, money: Money) : this(id, name, icon, money, null)
+
+    constructor(id: Long, name: String?, icon: Icon?, money: Money, group: String?) {
+        mId = id
+        mName = name
+        mIcon = if (icon != null) icon else IconLoader.UNKNOWN
+        mMoney = money
+        mGroup = group
     }
 
-    public WalletAccount(long id, String name, Icon icon, Money money, String group) {
-        mId = id;
-        mName = name;
-        mIcon = icon != null ? icon : IconLoader.UNKNOWN;
-        mMoney = money;
-        mGroup = group;
+    fun getId(): Long {
+        return mId
     }
 
-    public long getId() {
-        return mId;
+    fun getName(): String? {
+        return mName
     }
 
-    public String getName() {
-        return mName;
+    fun getIcon(): Icon {
+        return mIcon
     }
 
-    @NonNull
-    public Icon getIcon() {
-        return mIcon;
-    }
-
-    public Money getMoney() {
-        return mMoney;
+    fun getMoney(): Money {
+        return mMoney
     }
 
     /**
      * @return the name of the group this wallet belongs to, or null when it is in none.
      */
-    public String getGroup() {
-        return mGroup;
+    fun getGroup(): String? {
+        return mGroup
     }
 }
