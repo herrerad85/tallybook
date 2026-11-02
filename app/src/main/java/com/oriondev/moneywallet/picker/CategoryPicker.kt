@@ -17,272 +17,264 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.Parcelable;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.os.Parcelable
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 
-import com.oriondev.moneywallet.model.Category;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.ui.activity.CategoryPickerActivity;
-import com.oriondev.moneywallet.ui.fragment.dialog.MultiCategoryPickerDialog;
-import com.oriondev.moneywallet.ui.fragment.dialog.ParentCategoryPickerDialog;
+import com.oriondev.moneywallet.model.Category
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.ui.activity.CategoryPickerActivity
+import com.oriondev.moneywallet.ui.fragment.dialog.MultiCategoryPickerDialog
+import com.oriondev.moneywallet.ui.fragment.dialog.ParentCategoryPickerDialog
 
 /**
  * Created by andrea on 02/02/18.
  */
-public class CategoryPicker extends Fragment implements ParentCategoryPickerDialog.Callback, MultiCategoryPickerDialog.Callback {
+class CategoryPicker : Fragment(), ParentCategoryPickerDialog.Callback, MultiCategoryPickerDialog.Callback {
 
-    private static final String SS_CURRENT_CATEGORY = "ParentCategoryPicker::SavedState::CurrentCategory";
-    private static final String SS_CURRENT_CATEGORIES = "ParentCategoryPicker::SavedState::CurrentCategories";
-    private static final String SS_MULTI_CATEGORY = "ParentCategoryPicker::SavedState::MultiCategory";
-    private static final String ARG_DEFAULT_CATEGORY = "ParentCategoryPicker::Arguments::DefaultCategory";
-    private static final String ARG_DEFAULT_CATEGORIES = "ParentCategoryPicker::Arguments::DefaultCategories";
-    private static final String ARG_MULTI_CATEGORY = "ParentCategoryPicker::Arguments::MultiCategory";
+    companion object {
 
-    private static final int REQUEST_CATEGORY_PICKER = 1;
+        private const val SS_CURRENT_CATEGORY = "ParentCategoryPicker::SavedState::CurrentCategory"
+        private const val SS_CURRENT_CATEGORIES = "ParentCategoryPicker::SavedState::CurrentCategories"
+        private const val SS_MULTI_CATEGORY = "ParentCategoryPicker::SavedState::MultiCategory"
+        private const val ARG_DEFAULT_CATEGORY = "ParentCategoryPicker::Arguments::DefaultCategory"
+        private const val ARG_DEFAULT_CATEGORIES = "ParentCategoryPicker::Arguments::DefaultCategories"
+        private const val ARG_MULTI_CATEGORY = "ParentCategoryPicker::Arguments::MultiCategory"
 
-    private Controller mController;
-    private MultiCategoryController mMultiCategoryController;
+        private const val REQUEST_CATEGORY_PICKER = 1
 
-    private boolean mMultiCategory;
-    private Category mCurrentCategory;
-    private Category[] mCurrentCategories;
-
-    private ParentCategoryPickerDialog mParentCategoryPickerDialog;
-    private MultiCategoryPickerDialog mMultiCategoryPickerDialog;
-
-    public static CategoryPicker createPicker(FragmentManager fragmentManager, String tag, Category defaultCategory) {
-        CategoryPicker categoryPicker = (CategoryPicker) fragmentManager.findFragmentByTag(tag);
-        if (categoryPicker == null) {
-            categoryPicker = new CategoryPicker();
-            Bundle arguments = new Bundle();
-            arguments.putBoolean(ARG_MULTI_CATEGORY, false);
-            arguments.putParcelable(ARG_DEFAULT_CATEGORY, defaultCategory);
-            categoryPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(categoryPicker, tag).commit();
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultCategory: Category?): CategoryPicker {
+            var categoryPicker = fragmentManager.findFragmentByTag(tag) as CategoryPicker?
+            if (categoryPicker == null) {
+                categoryPicker = CategoryPicker()
+                val arguments = Bundle()
+                arguments.putBoolean(ARG_MULTI_CATEGORY, false)
+                arguments.putParcelable(ARG_DEFAULT_CATEGORY, defaultCategory)
+                categoryPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(categoryPicker, tag).commit()
+            }
+            return categoryPicker
         }
-        return categoryPicker;
-    }
 
-    /**
-     * A picker over any number of categories at once, for a budget that covers more than one.
-     * It reports through {@link MultiCategoryController} and leaves
-     * {@link #getCurrentCategory()} empty; the single category picker above is untouched and
-     * still reports through {@link Controller}.
-     *
-     * @param fragmentManager manager the picker is added to.
-     * @param tag name it is found again by.
-     * @param defaultCategories categories chosen already, empty or null on a new item.
-     * @return the picker, whether it was created here or found by its tag.
-     */
-    public static CategoryPicker createPicker(FragmentManager fragmentManager, String tag, Category[] defaultCategories) {
-        CategoryPicker categoryPicker = (CategoryPicker) fragmentManager.findFragmentByTag(tag);
-        if (categoryPicker == null) {
-            categoryPicker = new CategoryPicker();
-            Bundle arguments = new Bundle();
-            arguments.putBoolean(ARG_MULTI_CATEGORY, true);
-            arguments.putParcelableArray(ARG_DEFAULT_CATEGORIES, defaultCategories);
-            categoryPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(categoryPicker, tag).commit();
-        }
-        return categoryPicker;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
-        } else if (getParentFragment() instanceof Controller) {
-            mController = (Controller) getParentFragment();
-        }
-        if (context instanceof MultiCategoryController) {
-            mMultiCategoryController = (MultiCategoryController) context;
-        } else if (getParentFragment() instanceof MultiCategoryController) {
-            mMultiCategoryController = (MultiCategoryController) getParentFragment();
+        /**
+         * A picker over any number of categories at once, for a budget that covers more than one.
+         * It reports through [MultiCategoryController] and leaves
+         * [getCurrentCategory] empty; the single category picker above is untouched and
+         * still reports through [Controller].
+         *
+         * @param fragmentManager manager the picker is added to.
+         * @param tag name it is found again by.
+         * @param defaultCategories categories chosen already, empty or null on a new item.
+         * @return the picker, whether it was created here or found by its tag.
+         */
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultCategories: Array<Category?>?): CategoryPicker {
+            var categoryPicker = fragmentManager.findFragmentByTag(tag) as CategoryPicker?
+            if (categoryPicker == null) {
+                categoryPicker = CategoryPicker()
+                val arguments = Bundle()
+                arguments.putBoolean(ARG_MULTI_CATEGORY, true)
+                arguments.putParcelableArray(ARG_DEFAULT_CATEGORIES, defaultCategories)
+                categoryPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(categoryPicker, tag).commit()
+            }
+            return categoryPicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private var mController: Controller? = null
+    private var mMultiCategoryController: MultiCategoryController? = null
+
+    private var mMultiCategory: Boolean = false
+    private var mCurrentCategory: Category? = null
+    private var mCurrentCategories: Array<Category?>? = null
+
+    private var mParentCategoryPickerDialog: ParentCategoryPickerDialog? = null
+    private var mMultiCategoryPickerDialog: MultiCategoryPickerDialog? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        } else if (parentFragment is Controller) {
+            mController = parentFragment as Controller
+        }
+        if (context is MultiCategoryController) {
+            mMultiCategoryController = context
+        } else if (parentFragment is MultiCategoryController) {
+            mMultiCategoryController = parentFragment as MultiCategoryController
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mMultiCategory = savedInstanceState.getBoolean(SS_MULTI_CATEGORY);
-            mCurrentCategory = savedInstanceState.getParcelable(SS_CURRENT_CATEGORY);
-            mCurrentCategories = toCategories(savedInstanceState.getParcelableArray(SS_CURRENT_CATEGORIES));
+            mMultiCategory = savedInstanceState.getBoolean(SS_MULTI_CATEGORY)
+            mCurrentCategory = savedInstanceState.getParcelable(SS_CURRENT_CATEGORY)
+            mCurrentCategories = toCategories(savedInstanceState.getParcelableArray(SS_CURRENT_CATEGORIES))
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mMultiCategory = arguments.getBoolean(ARG_MULTI_CATEGORY);
-                mCurrentCategory = arguments.getParcelable(ARG_DEFAULT_CATEGORY);
-                mCurrentCategories = toCategories(arguments.getParcelableArray(ARG_DEFAULT_CATEGORIES));
+                mMultiCategory = arguments.getBoolean(ARG_MULTI_CATEGORY)
+                mCurrentCategory = arguments.getParcelable(ARG_DEFAULT_CATEGORY)
+                mCurrentCategories = toCategories(arguments.getParcelableArray(ARG_DEFAULT_CATEGORIES))
             } else {
-                mCurrentCategory = null;
-                mCurrentCategories = null;
+                mCurrentCategory = null
+                mCurrentCategories = null
             }
         }
-        mParentCategoryPickerDialog = (ParentCategoryPickerDialog) getChildFragmentManager().findFragmentByTag(getDialogTag());
+        mParentCategoryPickerDialog = childFragmentManager.findFragmentByTag(getDialogTag()) as ParentCategoryPickerDialog?
         if (mParentCategoryPickerDialog == null) {
-            mParentCategoryPickerDialog = ParentCategoryPickerDialog.newInstance();
+            mParentCategoryPickerDialog = ParentCategoryPickerDialog.newInstance()
         }
-        mParentCategoryPickerDialog.setCallback(this);
-        mMultiCategoryPickerDialog = (MultiCategoryPickerDialog) getChildFragmentManager().findFragmentByTag(getMultiDialogTag());
+        mParentCategoryPickerDialog!!.setCallback(this)
+        mMultiCategoryPickerDialog = childFragmentManager.findFragmentByTag(getMultiDialogTag()) as MultiCategoryPickerDialog?
         if (mMultiCategoryPickerDialog == null) {
-            mMultiCategoryPickerDialog = MultiCategoryPickerDialog.newInstance();
+            mMultiCategoryPickerDialog = MultiCategoryPickerDialog.newInstance()
         }
-        mMultiCategoryPickerDialog.setCallback(this);
+        mMultiCategoryPickerDialog!!.setCallback(this)
     }
 
     /**
-     * A parcelable array comes back as {@code Parcelable[]} on some devices whatever was put in
+     * A parcelable array comes back as `Parcelable[]` on some devices whatever was put in
      * it, so the elements are copied one at a time instead of casting the array itself. This is
-     * the same guard {@code WalletPicker} carries for the same reason.
+     * the same guard `WalletPicker` carries for the same reason.
      *
      * @param parcelables array read out of a bundle, possibly null.
      * @return the categories in it, or null when there were none.
      */
-    private static Category[] toCategories(Parcelable[] parcelables) {
+    private fun toCategories(parcelables: Array<Parcelable?>?): Array<Category?>? {
         if (parcelables == null) {
-            return null;
+            return null
         }
-        Category[] categories = new Category[parcelables.length];
-        for (int i = 0; i < parcelables.length; i++) {
-            categories[i] = (Category) parcelables[i];
+        val categories = arrayOfNulls<Category>(parcelables.size)
+        for (i in parcelables.indices) {
+            categories[i] = parcelables[i] as Category?
         }
-        return categories;
+        return categories
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
+    private fun fireCallbackSafely() {
         if (mMultiCategory) {
-            if (mMultiCategoryController != null) {
-                mMultiCategoryController.onCategoryListChanged(getTag(), mCurrentCategories);
-            }
+            mMultiCategoryController?.onCategoryListChanged(tag, mCurrentCategories)
         } else {
-            if (mController != null) {
-                mController.onCategoryChanged(getTag(), mCurrentCategory);
-            }
+            mController?.onCategoryChanged(tag, mCurrentCategory)
         }
     }
 
-    private String getDialogTag() {
-        return getTag() + "::DialogFragment";
+    private fun getDialogTag(): String {
+        return tag + "::DialogFragment"
     }
 
-    private String getMultiDialogTag() {
-        return getTag() + "::MultiDialogFragment";
+    private fun getMultiDialogTag(): String {
+        return tag + "::MultiDialogFragment"
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(SS_MULTI_CATEGORY, mMultiCategory);
-        outState.putParcelable(SS_CURRENT_CATEGORY, mCurrentCategory);
-        outState.putParcelableArray(SS_CURRENT_CATEGORIES, mCurrentCategories);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(SS_MULTI_CATEGORY, mMultiCategory)
+        outState.putParcelable(SS_CURRENT_CATEGORY, mCurrentCategory)
+        outState.putParcelableArray(SS_CURRENT_CATEGORIES, mCurrentCategories)
     }
 
-    public boolean isSelected() {
+    fun isSelected(): Boolean {
         if (mMultiCategory) {
-            return mCurrentCategories != null && mCurrentCategories.length > 0;
+            val currentCategories = mCurrentCategories
+            return currentCategories != null && currentCategories.size > 0
         }
-        return mCurrentCategory != null;
+        return mCurrentCategory != null
     }
 
-    public Category[] getCurrentCategories() {
-        return mCurrentCategories;
+    fun getCurrentCategories(): Array<Category?>? {
+        return mCurrentCategories
     }
 
-    public void showMultiPicker() {
-        mMultiCategoryPickerDialog.showPicker(getChildFragmentManager(), getMultiDialogTag(), mCurrentCategories);
+    fun showMultiPicker() {
+        mMultiCategoryPickerDialog!!.showPicker(childFragmentManager, getMultiDialogTag(), mCurrentCategories)
     }
 
-    public void setCategory(Category category) {
-        mCurrentCategory = category;
-        fireCallbackSafely();
+    fun setCategory(category: Category?) {
+        mCurrentCategory = category
+        fireCallbackSafely()
     }
 
-    public Category getCurrentCategory() {
-        return mCurrentCategory;
+    fun getCurrentCategory(): Category? {
+        return mCurrentCategory
     }
 
-    public void showPicker() {
-        showPicker(true, false);
+    fun showPicker() {
+        showPicker(true, false)
     }
 
-    public void showPicker(boolean showSubCategories, boolean showSystemCategories) {
-        Intent intent = new Intent(getActivity(), CategoryPickerActivity.class);
-        intent.putExtra(CategoryPickerActivity.SHOW_SUB_CATEGORIES, showSubCategories);
-        intent.putExtra(CategoryPickerActivity.SHOW_SYSTEM_CATEGORIES, showSystemCategories);
-        startActivityForResult(intent, REQUEST_CATEGORY_PICKER);
+    fun showPicker(showSubCategories: Boolean, showSystemCategories: Boolean) {
+        val intent = Intent(activity, CategoryPickerActivity::class.java)
+        intent.putExtra(CategoryPickerActivity.SHOW_SUB_CATEGORIES, showSubCategories)
+        intent.putExtra(CategoryPickerActivity.SHOW_SYSTEM_CATEGORIES, showSystemCategories)
+        startActivityForResult(intent, REQUEST_CATEGORY_PICKER)
     }
 
     /**
      * Offers the categories of one type alone, for a choice that has to follow a direction
      * already made elsewhere on the screen.
      */
-    public void showPicker(Contract.CategoryType type) {
-        Intent intent = new Intent(getActivity(), CategoryPickerActivity.class);
-        intent.putExtra(CategoryPickerActivity.SHOW_SUB_CATEGORIES, true);
-        intent.putExtra(CategoryPickerActivity.SHOW_SYSTEM_CATEGORIES, false);
-        intent.putExtra(CategoryPickerActivity.ONLY_TYPE, type);
-        startActivityForResult(intent, REQUEST_CATEGORY_PICKER);
+    fun showPicker(type: Contract.CategoryType?) {
+        val intent = Intent(activity, CategoryPickerActivity::class.java)
+        intent.putExtra(CategoryPickerActivity.SHOW_SUB_CATEGORIES, true)
+        intent.putExtra(CategoryPickerActivity.SHOW_SYSTEM_CATEGORIES, false)
+        intent.putExtra(CategoryPickerActivity.ONLY_TYPE, type)
+        startActivityForResult(intent, REQUEST_CATEGORY_PICKER)
     }
 
-    public void showParentPicker(long categoryId, Contract.CategoryType type) {
-        mParentCategoryPickerDialog.showPicker(getChildFragmentManager(), getDialogTag(), mCurrentCategory, categoryId, type);
+    fun showParentPicker(categoryId: Long, type: Contract.CategoryType?) {
+        mParentCategoryPickerDialog!!.showPicker(childFragmentManager, getDialogTag(), mCurrentCategory, categoryId, type)
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_CATEGORY_PICKER) {
             if (resultCode == Activity.RESULT_OK) {
-                mCurrentCategory = data.getParcelableExtra(CategoryPickerActivity.RESULT_CATEGORY);
-                fireCallbackSafely();
+                mCurrentCategory = data!!.getParcelableExtra(CategoryPickerActivity.RESULT_CATEGORY)
+                fireCallbackSafely()
             }
         } else {
-            super.onActivityResult(requestCode, resultCode, data);
+            super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
-        mMultiCategoryController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
+        mMultiCategoryController = null
     }
 
-    @Override
-    public void onCategoriesSelected(Category[] categories) {
-        mCurrentCategories = categories;
-        fireCallbackSafely();
+    override fun onCategoriesSelected(categories: Array<Category?>?) {
+        mCurrentCategories = categories
+        fireCallbackSafely()
     }
 
-    @Override
-    public void onCategorySelected(Category category) {
-        mCurrentCategory = category;
-        fireCallbackSafely();
+    override fun onCategorySelected(category: Category?) {
+        mCurrentCategory = category
+        fireCallbackSafely()
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onCategoryChanged(String tag, Category category);
+        fun onCategoryChanged(tag: String?, category: Category?)
     }
 
-    public interface MultiCategoryController {
+    interface MultiCategoryController {
 
-        void onCategoryListChanged(String tag, Category[] categories);
+        fun onCategoryListChanged(tag: String?, categories: Array<Category?>?)
     }
 }
