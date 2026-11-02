@@ -48,7 +48,7 @@ class PickerProcessDeathRestoreTest {
         try {
             val restored = personPicker(second)
             assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.id })
-            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.name })
+            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
         } finally {
             second.close()
         }
@@ -65,7 +65,7 @@ class PickerProcessDeathRestoreTest {
         try {
             val restored = personPicker(second)
             assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.id })
-            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.name })
+            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
         } finally {
             second.close()
         }
@@ -126,7 +126,7 @@ class PickerProcessDeathRestoreTest {
             val restoredDialog = restored.childFragmentManager.findFragmentByTag(PERSON_DIALOG_TAG) as PeoplePickerDialog
             confirm(restoredDialog.dialog as AlertDialog)
             assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.id })
-            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.name })
+            assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
         } finally {
             second.close()
         }

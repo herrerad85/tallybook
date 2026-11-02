@@ -17,67 +17,66 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
 /**
  * Created by andrea on 10/03/18.
  */
-public class Person implements Identifiable, Parcelable {
+class Person : Identifiable, Parcelable {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
+    private val mId: Long
+    private val mName: String?
+    private val mIcon: Icon?
 
-    public Person(long id, String name, Icon icon) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
+    constructor(id: Long, name: String?, icon: Icon?) {
+        mId = id
+        mName = name
+        mIcon = icon
     }
 
-    protected Person(Parcel in) {
-        mId = in.readLong();
-        mName = in.readString();
-        mIcon = in.readParcelable(Icon.class.getClassLoader());
+    protected constructor(source: Parcel) {
+        mId = source.readLong()
+        mName = source.readString()
+        mIcon = source.readParcelable(Icon::class.java.classLoader)
     }
 
-    public static final Creator<Person> CREATOR = new Creator<Person>() {
-        @Override
-        public Person createFromParcel(Parcel in) {
-            return new Person(in);
+    override fun getId(): Long {
+        return mId
+    }
+
+    fun getName(): String? {
+        return mName
+    }
+
+    fun getIcon(): Icon? {
+        return mIcon
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+
+        dest.writeLong(mId)
+        dest.writeString(mName)
+        dest.writeParcelable(mIcon, flags)
+    }
+
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Person> = object : Parcelable.Creator<Person> {
+            override fun createFromParcel(source: Parcel): Person {
+                return Person(source)
+            }
+
+            override fun newArray(size: Int): Array<Person?> {
+                return arrayOfNulls(size)
+            }
         }
-
-        @Override
-        public Person[] newArray(int size) {
-            return new Person[size];
-        }
-    };
-
-    @Override
-    public long getId() {
-        return mId;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    public Icon getIcon() {
-        return mIcon;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-
-        dest.writeLong(mId);
-        dest.writeString(mName);
-        dest.writeParcelable(mIcon, flags);
     }
 }
