@@ -17,72 +17,71 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
-import java.util.Date;
+import java.util.Date
 
 /**
  * Created by andrea on 14/03/18.
  */
-public class Event implements Identifiable, Parcelable {
+class Event : Identifiable, Parcelable {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
-    private final Date mStartDate;
-    private final Date mEndDate;
+    private val mId: Long
+    private val mName: String?
+    private val mIcon: Icon?
+    private val mStartDate: Date?
+    private val mEndDate: Date?
 
-    public Event(long id, String name, Icon icon, Date startDate, Date endDate) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mStartDate = startDate;
-        mEndDate = endDate;
+    constructor(id: Long, name: String?, icon: Icon?, startDate: Date?, endDate: Date?) {
+        mId = id
+        mName = name
+        mIcon = icon
+        mStartDate = startDate
+        mEndDate = endDate
     }
 
-    protected Event(Parcel in) {
-        mId = in.readLong();
-        mName = in.readString();
-        mIcon = in.readParcelable(Icon.class.getClassLoader());
-        mStartDate = new Date(in.readLong());
-        mEndDate = new Date(in.readLong());
+    protected constructor(source: Parcel) {
+        mId = source.readLong()
+        mName = source.readString()
+        mIcon = source.readParcelable(Icon::class.java.classLoader)
+        mStartDate = Date(source.readLong())
+        mEndDate = Date(source.readLong())
     }
 
-    public static final Creator<Event> CREATOR = new Creator<Event>() {
-        @Override
-        public Event createFromParcel(Parcel in) {
-            return new Event(in);
+    override fun getId(): Long {
+        return mId
+    }
+
+    fun getName(): String? {
+        return mName
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeLong(mId)
+        dest.writeString(mName)
+        dest.writeParcelable(mIcon, flags)
+        dest.writeLong(mStartDate!!.time)
+        dest.writeLong(mEndDate!!.time)
+    }
+
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Event> = object : Parcelable.Creator<Event> {
+            override fun createFromParcel(source: Parcel): Event {
+                return Event(source)
+            }
+
+            override fun newArray(size: Int): Array<Event?> {
+                return arrayOfNulls(size)
+            }
         }
-
-        @Override
-        public Event[] newArray(int size) {
-            return new Event[size];
-        }
-    };
-
-    @Override
-    public long getId() {
-        return mId;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(mId);
-        dest.writeString(mName);
-        dest.writeParcelable(mIcon, flags);
-        dest.writeLong(mStartDate.getTime());
-        dest.writeLong(mEndDate.getTime());
     }
 }
