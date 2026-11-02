@@ -17,50 +17,48 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import com.github.mikephil.charting.data.BarData;
-
-import java.util.List;
+import com.github.mikephil.charting.data.BarData
 
 /**
  * Created by andrea on 14/08/18.
  */
-public class PeriodDetailSummaryData {
+class PeriodDetailSummaryData {
 
-    private final Money mNetIncomes;
-    private final List<BarData> mBarDataList;
-    private final List<CurrencyUnit> mBarDataCurrencies;
-    private final List<PeriodMoney> mPeriodList;
+    private val mNetIncomes: Money
+    private val mBarDataList: MutableList<BarData>
+    private val mBarDataCurrencies: MutableList<CurrencyUnit?>
+    private val mPeriodList: MutableList<PeriodMoney>
 
-    public PeriodDetailSummaryData(Money netIncomes, List<BarData> barDataList, List<CurrencyUnit> currencyUnitList, List<PeriodMoney> periodMoneyList) {
-        mNetIncomes = netIncomes;
-        mBarDataList = barDataList;
-        mBarDataCurrencies = currencyUnitList;
-        mPeriodList = periodMoneyList;
+    constructor(netIncomes: Money, barDataList: MutableList<BarData>, currencyUnitList: MutableList<CurrencyUnit?>, periodMoneyList: MutableList<PeriodMoney>) {
+        mNetIncomes = netIncomes
+        mBarDataList = barDataList
+        mBarDataCurrencies = currencyUnitList
+        mPeriodList = periodMoneyList
     }
 
-    public Money getNetIncomes() {
-        return mNetIncomes;
+    fun getNetIncomes(): Money {
+        return mNetIncomes
     }
 
-    public BarData getChartData(int index) {
-        return mBarDataList.get(index);
+    fun getChartData(index: Int): BarData {
+        return mBarDataList.get(index)
     }
 
-    public CurrencyUnit getChartCurrency(int index) {
-        return mBarDataCurrencies.get(index);
+    fun getChartCurrency(index: Int): CurrencyUnit? {
+        return mBarDataCurrencies.get(index)
     }
 
-    public int getChartCount() {
-        return mBarDataList.size();
+    fun getChartCount(): Int {
+        return mBarDataList.size
     }
 
-    public PeriodMoney getPeriodMoney(int index) {
-        return mPeriodList.get(index);
+    fun getPeriodMoney(index: Int): PeriodMoney {
+        return mPeriodList.get(index)
     }
 
-    public int getPeriodCount() {
-        return mPeriodList.size();
+    fun getPeriodCount(): Int {
+        return mPeriodList.size
     }
 }
