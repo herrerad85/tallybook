@@ -49,8 +49,8 @@ class Place : Parcelable {
         mName = name
         mIcon = icon
         mAddress = address
-        mLatitude = if (coordinates != null) coordinates.latitude else null
-        mLongitude = if (coordinates != null) coordinates.longitude else null
+        mLatitude = if (coordinates != null) coordinates.getLatitude() else null
+        mLongitude = if (coordinates != null) coordinates.getLongitude() else null
     }
 
     fun getId(): Long {

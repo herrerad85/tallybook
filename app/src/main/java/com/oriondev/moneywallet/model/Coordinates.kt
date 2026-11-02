@@ -17,61 +17,61 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
 /**
  * Created by andrea on 16/10/18.
  */
 
-public class Coordinates implements Parcelable {
+class Coordinates : Parcelable {
 
-    private final double mLatitude;
-    private final double mLongitude;
+    private val mLatitude: Double
+    private val mLongitude: Double
 
-    public Coordinates(double latitude, double longitude) {
-        mLatitude = latitude;
-        mLongitude = longitude;
+    constructor(latitude: Double, longitude: Double) {
+        mLatitude = latitude
+        mLongitude = longitude
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected Coordinates(Parcel in) {
-        mLatitude = in.readDouble();
-        mLongitude = in.readDouble();
+    @Suppress("WeakerAccess")
+    protected constructor(source: Parcel) {
+        mLatitude = source.readDouble()
+        mLongitude = source.readDouble()
     }
 
-    public double getLatitude() {
-        return mLatitude;
+    fun getLatitude(): Double {
+        return mLatitude
     }
 
-    public double getLongitude() {
-        return mLongitude;
+    fun getLongitude(): Double {
+        return mLongitude
     }
 
-    public static final Creator<Coordinates> CREATOR = new Creator<Coordinates>() {
+    override fun describeContents(): Int {
+        return 0
+    }
 
-        @Override
-        public Coordinates createFromParcel(Parcel in) {
-            return new Coordinates(in);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeDouble(mLatitude)
+        dest.writeDouble(mLongitude)
+    }
+
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Coordinates> = object : Parcelable.Creator<Coordinates> {
+
+            override fun createFromParcel(source: Parcel): Coordinates {
+                return Coordinates(source)
+            }
+
+            override fun newArray(size: Int): Array<Coordinates?> {
+                return arrayOfNulls(size)
+            }
+
         }
-
-        @Override
-        public Coordinates[] newArray(int size) {
-            return new Coordinates[size];
-        }
-
-    };
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeDouble(mLatitude);
-        dest.writeDouble(mLongitude);
     }
 }
