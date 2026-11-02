@@ -17,102 +17,105 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 06/04/18.
  */
-public class ChangeLog {
+class ChangeLog {
 
-    public static final int TYPE_HEADER = 0;
-    public static final int TYPE_ITEM = 1;
+    private var type: Int = 0
+    private var versionName: String? = null
+    private var versionDate: String? = null
+    private var changeText: String? = null
+    private var changeType: Int = 0
 
-    private int type;
-    private String versionName;
-    private String versionDate;
-    private String changeText;
-    private int changeType;
-
-    public int getType() {
-        return type;
+    fun getType(): Int {
+        return type
     }
 
-    public void setType(int type) {
-        this.type = type;
+    fun setType(type: Int) {
+        this.type = type
     }
 
-    public String getVersionName() {
-        return versionName;
+    fun getVersionName(): String? {
+        return versionName
     }
 
-    public void setVersionName(String versionName) {
-        this.versionName = versionName;
+    fun setVersionName(versionName: String?) {
+        this.versionName = versionName
     }
 
-    public String getVersionDate() {
-        return versionDate;
+    fun getVersionDate(): String? {
+        return versionDate
     }
 
-    public void setVersionDate(String versionDate) {
-        this.versionDate = versionDate;
+    fun setVersionDate(versionDate: String?) {
+        this.versionDate = versionDate
     }
 
-    public String getChangeText() {
-        return changeText;
+    fun getChangeText(): String? {
+        return changeText
     }
 
-    public void setChangeText(String changeText) {
-        this.changeText = changeText;
+    fun setChangeText(changeText: String?) {
+        this.changeText = changeText
     }
 
-    public int getChangeType() {
-        return changeType;
+    fun getChangeType(): Int {
+        return changeType
     }
 
-    public void setChangeType(int changeType) {
-        this.changeType = changeType;
+    fun setChangeType(changeType: Int) {
+        this.changeType = changeType
     }
 
     // BUILDER CLASS
 
-    public static class HeaderBuilder {
+    class HeaderBuilder {
 
-        private String versionName;
-        private String versionDate;
+        private var versionName: String? = null
+        private var versionDate: String? = null
 
-        public HeaderBuilder versionName(String versionName) {
-            this.versionName = versionName;
-            return this;
+        fun versionName(versionName: String?): HeaderBuilder {
+            this.versionName = versionName
+            return this
         }
 
-        public HeaderBuilder versionDate(String versionDate) {
-            this.versionDate = versionDate;
-            return this;
+        fun versionDate(versionDate: String?): HeaderBuilder {
+            this.versionDate = versionDate
+            return this
         }
 
-        public ChangeLog build() {
-            ChangeLog changeLog = new ChangeLog();
-            changeLog.setType(TYPE_HEADER);
-            changeLog.setVersionName(versionName);
-            changeLog.setVersionDate(versionDate);
-            return changeLog;
+        fun build(): ChangeLog {
+            val changeLog = ChangeLog()
+            changeLog.setType(TYPE_HEADER)
+            changeLog.setVersionName(versionName)
+            changeLog.setVersionDate(versionDate)
+            return changeLog
         }
     }
 
-    public static class ItemBuilder {
+    class ItemBuilder {
 
-        private String changeText;
+        private var changeText: String? = null
 
-        public ItemBuilder changeText(String changeText) {
-            this.changeText = changeText;
-            return this;
+        fun changeText(changeText: String?): ItemBuilder {
+            this.changeText = changeText
+            return this
         }
 
-        public ChangeLog build() {
-            ChangeLog changeLog = new ChangeLog();
-            changeLog.setType(TYPE_ITEM);
-            changeLog.setChangeText(changeText);
-            return changeLog;
+        fun build(): ChangeLog {
+            val changeLog = ChangeLog()
+            changeLog.setType(TYPE_ITEM)
+            changeLog.setChangeText(changeText)
+            return changeLog
         }
+    }
+
+    companion object {
+
+        const val TYPE_HEADER = 0
+        const val TYPE_ITEM = 1
     }
 }
