@@ -17,92 +17,92 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.content.Context;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import android.view.View;
+import android.content.Context
+import android.os.Bundle
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import android.view.View
 
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
-import com.google.android.material.timepicker.MaterialTimePicker;
-import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
-import com.oriondev.moneywallet.utils.DateFormatter;
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog
+import com.oriondev.moneywallet.utils.DateFormatter
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+import java.util.Calendar
+import java.util.Date
+import java.util.TimeZone
 
 /**
  * Created by andrea on 07/03/18.
  */
 
-public class DateTimePicker extends Fragment {
+class DateTimePicker : Fragment() {
 
-    private static final String SS_CURRENT_DATETIME = "DateTimePicker::SavedState::CurrentDateTime";
-    private static final String SS_PARCEL_PROBE_FIRST = "DateTimePicker::SavedState::ParcelProbeFirst";
-    private static final String SS_PARCEL_PROBE_SECOND = "DateTimePicker::SavedState::ParcelProbeSecond";
-    private static final String ARG_DEFAULT_DATETIME = "DateTimePicker::Arguments::DefaultDateTime";
+    companion object {
 
-    private Controller mController;
+        private const val SS_CURRENT_DATETIME = "DateTimePicker::SavedState::CurrentDateTime"
+        private const val SS_PARCEL_PROBE_FIRST = "DateTimePicker::SavedState::ParcelProbeFirst"
+        private const val SS_PARCEL_PROBE_SECOND = "DateTimePicker::SavedState::ParcelProbeSecond"
+        private const val ARG_DEFAULT_DATETIME = "DateTimePicker::Arguments::DefaultDateTime"
 
-    private Calendar mDateTime;
-
-    private boolean mRebuildDatePicker;
-
-    public static DateTimePicker createPicker(FragmentManager fragmentManager, String tag, Date defaultDate) {
-        DateTimePicker dateTimePicker = (DateTimePicker) fragmentManager.findFragmentByTag(tag);
-        if (dateTimePicker == null) {
-            Bundle arguments = new Bundle();
-            if (defaultDate != null) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(defaultDate);
-                arguments.putSerializable(ARG_DEFAULT_DATETIME, calendar);
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultDate: Date?): DateTimePicker {
+            var dateTimePicker = fragmentManager.findFragmentByTag(tag) as DateTimePicker?
+            if (dateTimePicker == null) {
+                val arguments = Bundle()
+                if (defaultDate != null) {
+                    val calendar = Calendar.getInstance()
+                    calendar.setTime(defaultDate)
+                    arguments.putSerializable(ARG_DEFAULT_DATETIME, calendar)
+                }
+                dateTimePicker = DateTimePicker()
+                dateTimePicker.arguments = arguments
+                fragmentManager.beginTransaction().add(dateTimePicker, tag).commit()
             }
-            dateTimePicker = new DateTimePicker();
-            dateTimePicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(dateTimePicker, tag).commit();
+            return dateTimePicker
         }
-        return dateTimePicker;
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+    private var mController: Controller? = null
+
+    private var mDateTime: Calendar? = null
+
+    private var mRebuildDatePicker: Boolean = false
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         // the fragment that created this picker is asked first. A child fragment is attached to
         // the activity, not to its parent, so a dialog that owns date pickers of its own would
         // otherwise lose them to an activity that happens to be a Controller too, and the dialog
         // would never hear the date it asked for.
-        if (getParentFragment() instanceof Controller) {
-            mController = (Controller) getParentFragment();
-        } else if (context instanceof Controller) {
-            mController = (Controller) context;
+        if (parentFragment is Controller) {
+            mController = parentFragment as Controller
+        } else if (context is Controller) {
+            mController = context
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mDateTime = (Calendar) savedInstanceState.getSerializable(SS_CURRENT_DATETIME);
+            mDateTime = savedInstanceState.getSerializable(SS_CURRENT_DATETIME) as Calendar?
             mRebuildDatePicker = crossedParcel(savedInstanceState)
-                    && getChildFragmentManager().findFragmentByTag(getDatePickerTag()) != null;
+                    && childFragmentManager.findFragmentByTag(getDatePickerTag()) != null
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mDateTime = (Calendar) arguments.getSerializable(ARG_DEFAULT_DATETIME);
+                mDateTime = arguments.getSerializable(ARG_DEFAULT_DATETIME) as Calendar?
             }
         }
-        reattachTimePickerListener();
+        reattachTimePickerListener()
         if (!mRebuildDatePicker) {
-            reattachDatePickerListener();
+            reattachDatePickerListener()
         }
-        getChildFragmentManager().registerFragmentLifecycleCallbacks(mPickerOutliner, false);
+        childFragmentManager.registerFragmentLifecycleCallbacks(mPickerOutliner, false)
     }
 
     /**
@@ -110,16 +110,15 @@ public class DateTimePicker extends Fragment {
      * rebuilds gets it too, and it runs on started because the date picker only sets its window
      * background in its own onStart.
      */
-    private final FragmentManager.FragmentLifecycleCallbacks mPickerOutliner = new FragmentManager.FragmentLifecycleCallbacks() {
+    private val mPickerOutliner: FragmentManager.FragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
 
-        @Override
-        public void onFragmentStarted(@NonNull FragmentManager fragmentManager, @NonNull Fragment fragment) {
-            if (fragment instanceof DialogFragment && ((DialogFragment) fragment).getDialog() != null) {
-                ThemedDialog.outlineDeepDark(((DialogFragment) fragment).getDialog());
+        override fun onFragmentStarted(fragmentManager: FragmentManager, fragment: Fragment) {
+            if (fragment is DialogFragment && fragment.dialog != null) {
+                ThemedDialog.outlineDeepDark(fragment.dialog)
             }
         }
 
-    };
+    }
 
     /**
      * MaterialTimePicker is a DialogFragment shown by tag. When the host is recreated the
@@ -130,11 +129,11 @@ public class DateTimePicker extends Fragment {
      * The time picker survives the rebuild intact, because it holds its selection alone in one
      * TimeModel and has no child fragment to disagree with.
      */
-    private void reattachTimePickerListener() {
-        FragmentManager fragmentManager = getChildFragmentManager();
-        MaterialTimePicker timePicker = (MaterialTimePicker) fragmentManager.findFragmentByTag(getTimePickerTag());
+    private fun reattachTimePickerListener() {
+        val fragmentManager = childFragmentManager
+        val timePicker = fragmentManager.findFragmentByTag(getTimePickerTag()) as MaterialTimePicker?
         if (timePicker != null) {
-            timePicker.addOnPositiveButtonClickListener(timeSetListener(timePicker));
+            timePicker.addOnPositiveButtonClickListener(timeSetListener(timePicker))
         }
     }
 
@@ -149,12 +148,12 @@ public class DateTimePicker extends Fragment {
      * the calendar's copy while the header and the OK button both read the picker's. Only that
      * second case is rebuilt, in onStart.
      */
-    private void reattachDatePickerListener() {
-        FragmentManager fragmentManager = getChildFragmentManager();
-        @SuppressWarnings("unchecked")
-        MaterialDatePicker<Long> datePicker = (MaterialDatePicker<Long>) fragmentManager.findFragmentByTag(getDatePickerTag());
+    private fun reattachDatePickerListener() {
+        val fragmentManager = childFragmentManager
+        @Suppress("UNCHECKED_CAST")
+        val datePicker = fragmentManager.findFragmentByTag(getDatePickerTag()) as MaterialDatePicker<Long>?
         if (datePicker != null) {
-            datePicker.addOnPositiveButtonClickListener(mDateSetListener);
+            datePicker.addOnPositiveButtonClickListener(mDateSetListener)
         }
     }
 
@@ -168,38 +167,33 @@ public class DateTimePicker extends Fragment {
      * so at this point the manager has neither saved its state nor is executing, and the close and
      * the open both land in the queue that dispatchStart drains on its way out.
      */
-    @Override
-    public void onStart() {
-        super.onStart();
+    override fun onStart() {
+        super.onStart()
         if (mRebuildDatePicker) {
-            mRebuildDatePicker = false;
-            DialogFragment stale = (DialogFragment) getChildFragmentManager().findFragmentByTag(getDatePickerTag());
+            mRebuildDatePicker = false
+            val stale = childFragmentManager.findFragmentByTag(getDatePickerTag()) as DialogFragment?
             if (stale != null) {
-                stale.dismissAllowingStateLoss();
+                stale.dismissAllowingStateLoss()
             }
-            showDatePicker();
+            showDatePicker()
         }
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onDateTimeChanged(getTag(), getCurrentDateTime());
-        }
+    private fun fireCallbackSafely() {
+        mController?.onDateTimeChanged(tag, getCurrentDateTime())
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putSerializable(SS_CURRENT_DATETIME, mDateTime);
-        int[] probe = new int[1];
-        outState.putIntArray(SS_PARCEL_PROBE_FIRST, probe);
-        outState.putIntArray(SS_PARCEL_PROBE_SECOND, probe);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putSerializable(SS_CURRENT_DATETIME, mDateTime)
+        val probe = IntArray(1)
+        outState.putIntArray(SS_PARCEL_PROBE_FIRST, probe)
+        outState.putIntArray(SS_PARCEL_PROBE_SECOND, probe)
     }
 
     /**
@@ -221,41 +215,41 @@ public class DateTimePicker extends Fragment {
      * picker that did cross a Parcel in place leaves the header and the OK button reading a copy
      * the grid never writes, so OK stores a date the user did not choose.
      */
-    private static boolean crossedParcel(@NonNull Bundle savedInstanceState) {
-        int[] first = savedInstanceState.getIntArray(SS_PARCEL_PROBE_FIRST);
-        return first == null || first != savedInstanceState.getIntArray(SS_PARCEL_PROBE_SECOND);
+    private fun crossedParcel(savedInstanceState: Bundle): Boolean {
+        val first: IntArray? = savedInstanceState.getIntArray(SS_PARCEL_PROBE_FIRST)
+        return first == null || first !== savedInstanceState.getIntArray(SS_PARCEL_PROBE_SECOND)
     }
 
-    public boolean isSelected() {
-        return mDateTime != null;
+    fun isSelected(): Boolean {
+        return mDateTime != null
     }
 
-    public Date getCurrentDateTime() {
-        return mDateTime != null ? mDateTime.getTime() : null;
+    fun getCurrentDateTime(): Date? {
+        return mDateTime?.time
     }
 
-    public void setCurrentDateTime(Date dateTime) {
+    fun setCurrentDateTime(dateTime: Date?) {
         if (dateTime == null) {
-            mDateTime = null;
+            mDateTime = null
         } else {
             if (mDateTime == null) {
-                mDateTime = Calendar.getInstance();
-                mDateTime.setTime(dateTime);
+                mDateTime = Calendar.getInstance()
+                mDateTime!!.setTime(dateTime)
             } else {
-                mDateTime.setTime(dateTime);
+                mDateTime!!.setTime(dateTime)
             }
         }
-        fireCallbackSafely();
+        fireCallbackSafely()
     }
 
-    public void showDatePicker() {
-        Calendar calendar = mDateTime != null ? mDateTime : Calendar.getInstance();
-        Calendar utc = utcCalendar();
-        utc.clear();
-        utc.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
-        MaterialDatePicker<Long> datePicker = ThemedDialog.buildDatePickerDialog(utc.getTimeInMillis());
-        datePicker.addOnPositiveButtonClickListener(mDateSetListener);
-        datePicker.show(getChildFragmentManager(), getDatePickerTag());
+    fun showDatePicker() {
+        val calendar = mDateTime ?: Calendar.getInstance()
+        val utc = utcCalendar()
+        utc.clear()
+        utc.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+        val datePicker = ThemedDialog.buildDatePickerDialog(utc.timeInMillis)
+        datePicker.addOnPositiveButtonClickListener(mDateSetListener)
+        datePicker.show(childFragmentManager, getDatePickerTag())
     }
 
     /**
@@ -264,38 +258,33 @@ public class DateTimePicker extends Fragment {
      * and write calendar fields through a UTC calendar, never through the millisecond value
      * directly, because the same instant falls on the previous day locally west of UTC.
      */
-    private static Calendar utcCalendar() {
-        return Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+    private fun utcCalendar(): Calendar {
+        return Calendar.getInstance(TimeZone.getTimeZone("UTC"))
     }
 
-    private final MaterialPickerOnPositiveButtonClickListener<Long> mDateSetListener = new MaterialPickerOnPositiveButtonClickListener<Long>() {
-
-        @Override
-        public void onPositiveButtonClick(Long selection) {
-            Calendar utc = utcCalendar();
-            utc.setTimeInMillis(selection);
-            if (mDateTime == null) {
-                mDateTime = Calendar.getInstance();
-            }
-            mDateTime.set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH));
-            fireCallbackSafely();
+    private val mDateSetListener: MaterialPickerOnPositiveButtonClickListener<Long> = MaterialPickerOnPositiveButtonClickListener { selection ->
+        val utc = utcCalendar()
+        utc.setTimeInMillis(selection)
+        if (mDateTime == null) {
+            mDateTime = Calendar.getInstance()
         }
-
-    };
-
-    private String getDatePickerTag() {
-        return getTag() + "::DatePicker";
+        mDateTime!!.set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH))
+        fireCallbackSafely()
     }
 
-    public void showTimePicker() {
-        Calendar calendar = mDateTime != null ? mDateTime : Calendar.getInstance();
+    private fun getDatePickerTag(): String {
+        return tag + "::DatePicker"
+    }
+
+    fun showTimePicker() {
+        val calendar = mDateTime ?: Calendar.getInstance()
         // the 12 or 24 hour setting must match how the time is rendered next to this picker, which
         // follows the device setting and not a preference of this app
-        MaterialTimePicker timePicker = ThemedDialog.buildTimePickerDialog(DateFormatter.is24HourFormat(),
+        val timePicker = ThemedDialog.buildTimePickerDialog(DateFormatter.is24HourFormat(),
                 calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE));
-        timePicker.addOnPositiveButtonClickListener(timeSetListener(timePicker));
-        timePicker.show(getChildFragmentManager(), getTimePickerTag());
+                calendar.get(Calendar.MINUTE))
+        timePicker.addOnPositiveButtonClickListener(timeSetListener(timePicker))
+        timePicker.show(childFragmentManager, getTimePickerTag())
     }
 
     /**
@@ -304,34 +293,28 @@ public class DateTimePicker extends Fragment {
      * belongs to. Reading them there is in time, because the OK button walks its positive listeners
      * first and calls dismiss only after the last one.
      */
-    private View.OnClickListener timeSetListener(final MaterialTimePicker picker) {
-        return new View.OnClickListener() {
-
-            @Override
-            public void onClick(View view) {
-                if (mDateTime == null) {
-                    mDateTime = Calendar.getInstance();
-                }
-                mDateTime.set(Calendar.HOUR_OF_DAY, picker.getHour());
-                mDateTime.set(Calendar.MINUTE, picker.getMinute());
-                fireCallbackSafely();
+    private fun timeSetListener(picker: MaterialTimePicker): View.OnClickListener {
+        return View.OnClickListener { view ->
+            if (mDateTime == null) {
+                mDateTime = Calendar.getInstance()
             }
-
-        };
+            mDateTime!!.set(Calendar.HOUR_OF_DAY, picker.hour)
+            mDateTime!!.set(Calendar.MINUTE, picker.minute)
+            fireCallbackSafely()
+        }
     }
 
-    private String getTimePickerTag() {
-        return getTag() + "::TimePicker";
+    private fun getTimePickerTag(): String {
+        return tag + "::TimePicker"
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onDateTimeChanged(String tag, Date date);
+        fun onDateTimeChanged(tag: String?, date: Date?)
     }
 }
