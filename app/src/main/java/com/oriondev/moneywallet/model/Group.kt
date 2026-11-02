@@ -17,36 +17,34 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 03/03/18.
  */
-public enum Group {
+enum class Group(private val mValue: Int) {
 
     DAILY(0), WEEKLY(1), MONTHLY(2), YEARLY(3);
 
-    private final int mValue;
-
-    Group(int value) {
-        mValue = value;
+    fun getType(): Int {
+        return mValue
     }
 
-    public int getType() {
-        return mValue;
-    }
+    companion object {
 
-    public static Group fromType(int type) {
-        switch (type) {
-            case 0:
-                return DAILY;
-            case 1:
-                return WEEKLY;
-            case 2:
-                return MONTHLY;
-            case 3:
-                return YEARLY;
+        @JvmStatic
+        fun fromType(type: Int): Group {
+            when (type) {
+                0 ->
+                    return DAILY
+                1 ->
+                    return WEEKLY
+                2 ->
+                    return MONTHLY
+                3 ->
+                    return YEARLY
+            }
+            throw IllegalArgumentException("Group type not recognized: " + type.toString())
         }
-        throw new IllegalArgumentException("Group type not recognized: " + String.valueOf(type));
     }
 }
