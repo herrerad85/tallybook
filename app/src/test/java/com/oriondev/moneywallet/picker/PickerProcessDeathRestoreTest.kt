@@ -47,7 +47,7 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = true)
         try {
             val restored = personPicker(second)
-            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.id })
+            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.getId() })
             assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
         } finally {
             second.close()
@@ -64,7 +64,7 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = false)
         try {
             val restored = personPicker(second)
-            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.id })
+            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.getId() })
             assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
         } finally {
             second.close()
@@ -83,7 +83,7 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = true)
         try {
             val restored = walletPicker(second)
-            assertEquals(listOf(11L, 12L), restored.currentWallets.map { it.id })
+            assertEquals(listOf(11L, 12L), restored.currentWallets.map { it.getId() })
             assertEquals(listOf("Cash", "Bank"), restored.currentWallets.map { it.name })
             assertEquals(listOf("EUR", "USD"), restored.currentWallets.map { it.currency?.iso })
             assertEquals(listOf(cash, bank).map { iconOf(it)!!.toString() }, restored.currentWallets.map { iconOf(it)?.toString() })
@@ -125,7 +125,7 @@ class PickerProcessDeathRestoreTest {
             assertNull(restored.currentPeople)
             val restoredDialog = restored.childFragmentManager.findFragmentByTag(PERSON_DIALOG_TAG) as PeoplePickerDialog
             confirm(restoredDialog.dialog as AlertDialog)
-            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.id })
+            assertEquals(listOf(1L, 2L), restored.currentPeople.map { it.getId() })
             assertEquals(listOf("Ann", "Bob"), restored.currentPeople.map { it.getName() })
         } finally {
             second.close()
@@ -151,7 +151,7 @@ class PickerProcessDeathRestoreTest {
             assertNull(restored.currentWallets)
             val restoredDialog = restored.childFragmentManager.findFragmentByTag(WALLET_DIALOG_TAG) as WalletPickerDialog
             confirm(restoredDialog.dialog as AlertDialog)
-            assertEquals(listOf(11L, 12L), restored.currentWallets.map { it.id })
+            assertEquals(listOf(11L, 12L), restored.currentWallets.map { it.getId() })
             assertEquals(listOf("Cash", "Bank"), restored.currentWallets.map { it.name })
             assertEquals(listOf("EUR", "USD"), restored.currentWallets.map { it.currency?.iso })
             assertEquals(listOf(cash, bank).map { iconOf(it)!!.toString() }, restored.currentWallets.map { iconOf(it)?.toString() })
@@ -173,7 +173,7 @@ class PickerProcessDeathRestoreTest {
         val second = recreate(first, throughParcel = true)
         try {
             val restored = walletPicker(second)
-            assertEquals(11L, restored.currentWallet.id)
+            assertEquals(11L, restored.currentWallet.getId())
             assertEquals("EUR", restored.currentWallet.currency?.iso)
             val restoredDialog = restored.childFragmentManager.findFragmentByTag(WALLET_DIALOG_TAG) as WalletPickerDialog
             assertNotNull(restoredDialog.dialog)
@@ -182,7 +182,7 @@ class PickerProcessDeathRestoreTest {
             restoredDialog.onWalletClick(bank)
             restored.childFragmentManager.executePendingTransactions()
             assertNull(restored.childFragmentManager.findFragmentByTag(WALLET_DIALOG_TAG))
-            assertEquals(12L, restored.currentWallet.id)
+            assertEquals(12L, restored.currentWallet.getId())
             assertEquals("Bank", restored.currentWallet.name)
             assertEquals("USD", restored.currentWallet.currency?.iso)
             assertEquals(iconOf(bank)!!.toString(), iconOf(restored.currentWallet)?.toString())

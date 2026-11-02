@@ -17,13 +17,13 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
 /**
  * Created by andrea on 11/03/18.
  */
 
-public interface Identifiable {
+interface Identifiable {
 
-    long getId();
+    fun getId(): Long
 }
