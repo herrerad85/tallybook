@@ -17,45 +17,43 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import com.oriondev.moneywallet.ui.view.chart.PieData;
-
-import java.util.List;
+import com.oriondev.moneywallet.ui.view.chart.PieData
 
 /**
  * Created by andrea on 13/08/18.
  */
-public class PeriodDetailFlowData {
+class PeriodDetailFlowData {
 
-    private final Money mTotalMoney;
+    private val mTotalMoney: Money
     // private final List<PieData> mPieDataList;
-    private final List<PieData> mPieDataList;
-    private final List<CategoryMoney> mCategoryMoneyList;
+    private val mPieDataList: MutableList<PieData>
+    private val mCategoryMoneyList: MutableList<CategoryMoney>
 
-    public PeriodDetailFlowData(Money totalMoney, List<PieData> pieDataList, List<CategoryMoney> categoryMoneyList) {
-        mTotalMoney = totalMoney;
-        mPieDataList = pieDataList;
-        mCategoryMoneyList = categoryMoneyList;
+    constructor(totalMoney: Money, pieDataList: MutableList<PieData>, categoryMoneyList: MutableList<CategoryMoney>) {
+        mTotalMoney = totalMoney
+        mPieDataList = pieDataList
+        mCategoryMoneyList = categoryMoneyList
     }
 
-    public Money getTotalMoney() {
-        return mTotalMoney;
+    fun getTotalMoney(): Money {
+        return mTotalMoney
     }
 
-    public PieData getChartData(int index) {
-        return mPieDataList.get(index);
+    fun getChartData(index: Int): PieData {
+        return mPieDataList.get(index)
     }
 
-    public int getChartCount() {
-        return mPieDataList.size();
+    fun getChartCount(): Int {
+        return mPieDataList.size
     }
 
-    public CategoryMoney getCategory(int index) {
-        return mCategoryMoneyList.get(index);
+    fun getCategory(index: Int): CategoryMoney {
+        return mCategoryMoneyList.get(index)
     }
 
-    public int getCategoryCount() {
-        return mCategoryMoneyList.size();
+    fun getCategoryCount(): Int {
+        return mCategoryMoneyList.size
     }
 }
