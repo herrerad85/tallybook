@@ -17,37 +17,37 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import androidx.annotation.DrawableRes;
-import androidx.annotation.StringRes;
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 
 /**
  * Created by andre on 21/03/2018.
  */
-public class BackupService {
+class BackupService {
 
-    private final String mIdentifier;
-    private final int mIconRes;
-    private final int mNameRes;
+    private val mIdentifier: String?
+    private val mIconRes: Int
+    private val mNameRes: Int
 
-    public BackupService(String identifier, int icon, int name) {
-        mIdentifier = identifier;
-        mIconRes = icon;
-        mNameRes = name;
+    constructor(identifier: String?, icon: Int, name: Int) {
+        mIdentifier = identifier
+        mIconRes = icon
+        mNameRes = name
     }
 
-    public String getIdentifier() {
-        return mIdentifier;
+    fun getIdentifier(): String? {
+        return mIdentifier
     }
 
     @DrawableRes
-    public int getIconRes() {
-        return mIconRes;
+    fun getIconRes(): Int {
+        return mIconRes
     }
 
     @StringRes
-    public int getNameRes() {
-        return mNameRes;
+    fun getNameRes(): Int {
+        return mNameRes
     }
 }
