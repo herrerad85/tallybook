@@ -17,238 +17,231 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.widget.EditText;
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.EditText
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.model.ColorIcon;
-import com.oriondev.moneywallet.model.Icon;
-import com.oriondev.moneywallet.model.VectorIcon;
-import com.oriondev.moneywallet.ui.activity.IconListActivity;
-import com.oriondev.moneywallet.ui.fragment.dialog.ColorChooserDialog;
-import com.oriondev.moneywallet.utils.IconLoader;
-import com.oriondev.moneywallet.utils.Utils;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.model.ColorIcon
+import com.oriondev.moneywallet.model.Icon
+import com.oriondev.moneywallet.model.VectorIcon
+import com.oriondev.moneywallet.ui.activity.IconListActivity
+import com.oriondev.moneywallet.ui.fragment.dialog.ColorChooserDialog
+import com.oriondev.moneywallet.utils.IconLoader
+import com.oriondev.moneywallet.utils.Utils
 
 /**
  * Created by andrea on 01/02/18.
  */
-public class IconPicker extends Fragment implements ColorChooserDialog.Callback {
+class IconPicker : Fragment(), ColorChooserDialog.Callback {
 
-    private static final String SS_CURRENT_ICON = "IconPicker::SavedState::CurrentIcon";
-    private static final String SS_LAST_BG_COLOR = "IconPicker::SavedState::LastBackgroundColor";
-    private static final String ARG_DEFAULT_ICON = "IconPicker::Arguments::DefaultIcon";
+    companion object {
 
-    private static final int REQUEST_ICON_PICKER = 57;
+        private const val SS_CURRENT_ICON = "IconPicker::SavedState::CurrentIcon"
+        private const val SS_LAST_BG_COLOR = "IconPicker::SavedState::LastBackgroundColor"
+        private const val ARG_DEFAULT_ICON = "IconPicker::Arguments::DefaultIcon"
 
-    private static final String DEFAULT_BACKGROUND_COLOR = "#000000";
+        private const val REQUEST_ICON_PICKER = 57
 
-    private static final String TAG_COLOR_CHOOSER = "IconPicker::Tag::ColorChooserDialog";
+        private const val DEFAULT_BACKGROUND_COLOR = "#000000"
 
-    private Controller mController;
+        private const val TAG_COLOR_CHOOSER = "IconPicker::Tag::ColorChooserDialog"
 
-    private Icon mCurrentIcon;
-    private String mLastBackgroundColor;
-
-    private EditText mBindEditText;
-
-    public static IconPicker createPicker(FragmentManager fragmentManager, String tag) {
-        return createPicker(fragmentManager, tag, new ColorIcon(DEFAULT_BACKGROUND_COLOR, "?"));
-    }
-
-    public static IconPicker createPicker(FragmentManager fragmentManager, String tag, Icon defaultIcon) {
-        IconPicker iconPicker = (IconPicker) fragmentManager.findFragmentByTag(tag);
-        if (iconPicker == null) {
-            Bundle arguments = new Bundle();
-            arguments.putParcelable(ARG_DEFAULT_ICON, defaultIcon);
-            iconPicker = new IconPicker();
-            iconPicker.setArguments(arguments);
-            fragmentManager.beginTransaction().add(iconPicker, tag).commit();
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?): IconPicker {
+            return createPicker(fragmentManager, tag, ColorIcon(DEFAULT_BACKGROUND_COLOR, "?"))
         }
-        return iconPicker;
-    }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof Controller) {
-            mController = (Controller) context;
+        @JvmStatic
+        fun createPicker(fragmentManager: FragmentManager, tag: String?, defaultIcon: Icon?): IconPicker {
+            var iconPicker = fragmentManager.findFragmentByTag(tag) as IconPicker?
+            if (iconPicker == null) {
+                val arguments = Bundle()
+                arguments.putParcelable(ARG_DEFAULT_ICON, defaultIcon)
+                iconPicker = IconPicker()
+                iconPicker.arguments = arguments
+                fragmentManager.beginTransaction().add(iconPicker, tag).commit()
+            }
+            return iconPicker
         }
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private var mController: Controller? = null
+
+    private var mCurrentIcon: Icon? = null
+    private var mLastBackgroundColor: String? = null
+
+    private var mBindEditText: EditText? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Controller) {
+            mController = context
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            mCurrentIcon = savedInstanceState.getParcelable(SS_CURRENT_ICON);
-            mLastBackgroundColor = savedInstanceState.getString(SS_LAST_BG_COLOR);
+            mCurrentIcon = savedInstanceState.getParcelable(SS_CURRENT_ICON)
+            mLastBackgroundColor = savedInstanceState.getString(SS_LAST_BG_COLOR)
         } else {
-            Bundle arguments = getArguments();
+            val arguments: Bundle? = arguments
             if (arguments != null) {
-                mCurrentIcon = arguments.getParcelable(ARG_DEFAULT_ICON);
+                mCurrentIcon = arguments.getParcelable(ARG_DEFAULT_ICON)
                 if (mCurrentIcon != null) {
-                    if (mCurrentIcon instanceof ColorIcon) {
-                        mLastBackgroundColor = Utils.getHexColor(((ColorIcon) mCurrentIcon).getColor());
+                    if (mCurrentIcon is ColorIcon) {
+                        mLastBackgroundColor = Utils.getHexColor((mCurrentIcon as ColorIcon).getColor())
                     } else {
-                        mLastBackgroundColor = DEFAULT_BACKGROUND_COLOR;
+                        mLastBackgroundColor = DEFAULT_BACKGROUND_COLOR
                     }
                 } else {
-                    mCurrentIcon = new ColorIcon(DEFAULT_BACKGROUND_COLOR, "?");
-                    mLastBackgroundColor = DEFAULT_BACKGROUND_COLOR;
+                    mCurrentIcon = ColorIcon(DEFAULT_BACKGROUND_COLOR, "?")
+                    mLastBackgroundColor = DEFAULT_BACKGROUND_COLOR
                 }
             } else {
-                mCurrentIcon = new ColorIcon(DEFAULT_BACKGROUND_COLOR, "?");
-                mLastBackgroundColor = DEFAULT_BACKGROUND_COLOR;
+                mCurrentIcon = ColorIcon(DEFAULT_BACKGROUND_COLOR, "?")
+                mLastBackgroundColor = DEFAULT_BACKGROUND_COLOR
             }
         }
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        fireCallbackSafely();
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        fireCallbackSafely()
     }
 
-    private void fireCallbackSafely() {
-        if (mController != null) {
-            mController.onIconChanged(getTag(), mCurrentIcon);
-        }
+    private fun fireCallbackSafely() {
+        mController?.onIconChanged(tag, mCurrentIcon)
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(SS_CURRENT_ICON, mCurrentIcon);
-        outState.putString(SS_LAST_BG_COLOR, mLastBackgroundColor);
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(SS_CURRENT_ICON, mCurrentIcon)
+        outState.putString(SS_LAST_BG_COLOR, mLastBackgroundColor)
     }
 
-    public void listenOn(EditText editText) {
-        mBindEditText = editText;
-        mBindEditText.addTextChangedListener(new TextWatcher() {
+    fun listenOn(editText: EditText?) {
+        mBindEditText = editText
+        mBindEditText!!.addTextChangedListener(object : TextWatcher {
 
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            override fun beforeTextChanged(charSequence: CharSequence?, i: Int, i1: Int, i2: Int) {
 
             }
 
-            @Override
-            public void onTextChanged(CharSequence sequence, int i, int i1, int i2) {
-                if (mCurrentIcon instanceof ColorIcon) {
-                    String text = IconLoader.getColorIconString(sequence.toString());
-                    mCurrentIcon = new ColorIcon((ColorIcon) mCurrentIcon, text);
-                    fireCallbackSafely();
+            override fun onTextChanged(sequence: CharSequence?, i: Int, i1: Int, i2: Int) {
+                if (mCurrentIcon is ColorIcon) {
+                    val text = IconLoader.getColorIconString(sequence!!.toString())
+                    mCurrentIcon = ColorIcon(mCurrentIcon as ColorIcon, text)
+                    fireCallbackSafely()
                 }
             }
 
-            @Override
-            public void afterTextChanged(Editable editable) {
+            override fun afterTextChanged(editable: Editable?) {
 
             }
 
-        });
+        })
     }
 
-    public Icon getCurrentIcon() {
-        return mCurrentIcon;
+    fun getCurrentIcon(): Icon? {
+        return mCurrentIcon
     }
 
-    public void setCurrentIcon(Icon icon) {
-        mCurrentIcon = icon;
-        fireCallbackSafely();
+    fun setCurrentIcon(icon: Icon?) {
+        mCurrentIcon = icon
+        fireCallbackSafely()
     }
 
     /**
-     * Opens the icon list. Its menu offers to change the background color of a {@link ColorIcon}
-     * or to remove a {@link VectorIcon}.
+     * Opens the icon list. Its menu offers to change the background color of a [ColorIcon]
+     * or to remove a [VectorIcon].
      */
-    public void showPicker() {
-        Activity activity = getActivity();
+    fun showPicker() {
+        val activity: Activity? = activity
         if (activity != null) {
-            Intent intent = new Intent(activity, IconListActivity.class);
-            if (mCurrentIcon != null) {
-                intent.putExtra(IconListActivity.CURRENT_ICON_TYPE, mCurrentIcon.getType());
+            val intent = Intent(activity, IconListActivity::class.java)
+            val currentIcon = mCurrentIcon
+            if (currentIcon != null) {
+                intent.putExtra(IconListActivity.CURRENT_ICON_TYPE, currentIcon.getType())
             }
-            startActivityForResult(intent, REQUEST_ICON_PICKER);
+            startActivityForResult(intent, REQUEST_ICON_PICKER)
         }
     }
 
-    private void openColorPicker() {
-        if (!isAdded()) {
-            return;
+    private fun openColorPicker() {
+        if (!isAdded) {
+            return
         }
-        FragmentManager fragmentManager = getChildFragmentManager();
+        val fragmentManager = childFragmentManager
         // showNow adds the dialog before it returns, so a second tap in the same frame finds it.
         if (fragmentManager.findFragmentByTag(TAG_COLOR_CHOOSER) == null) {
             ColorChooserDialog.newInstance(R.string.dialog_color_picker_title_icon_picker_background_color,
                             true, Color.parseColor(mLastBackgroundColor))
-                    .showNow(fragmentManager, TAG_COLOR_CHOOSER);
+                    .showNow(fragmentManager, TAG_COLOR_CHOOSER)
         }
     }
 
-    private void restoreColorIcon() {
-        if (!(mCurrentIcon instanceof ColorIcon)) {
-            String text = mBindEditText != null ? mBindEditText.getText().toString() : "?";
-            text = text.isEmpty() ? "?" : text;
-            mCurrentIcon = new ColorIcon(mLastBackgroundColor, text.substring(0, 1));
-            fireCallbackSafely();
+    private fun restoreColorIcon() {
+        if (mCurrentIcon !is ColorIcon) {
+            val bindEditText = mBindEditText
+            var text = if (bindEditText != null) bindEditText.text.toString() else "?"
+            text = if (text.isEmpty()) "?" else text
+            mCurrentIcon = ColorIcon(mLastBackgroundColor, text.substring(0, 1))
+            fireCallbackSafely()
         }
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mController = null;
+    override fun onDetach() {
+        super.onDetach()
+        mController = null
     }
 
-    @Override
-    public void onColorSelection(ColorChooserDialog dialog, int selectedColor) {
-        mLastBackgroundColor = Utils.getHexColor(selectedColor);
-        if (mCurrentIcon instanceof ColorIcon) {
-            String text = IconLoader.getColorIconString(mBindEditText != null ? mBindEditText.getText().toString() : null);
-            mCurrentIcon = new ColorIcon(mLastBackgroundColor, text);
-            fireCallbackSafely();
+    override fun onColorSelection(dialog: ColorChooserDialog?, selectedColor: Int) {
+        mLastBackgroundColor = Utils.getHexColor(selectedColor)
+        if (mCurrentIcon is ColorIcon) {
+            val bindEditText = mBindEditText
+            val text = IconLoader.getColorIconString(if (bindEditText != null) bindEditText.text.toString() else null)
+            mCurrentIcon = ColorIcon(mLastBackgroundColor, text)
+            fireCallbackSafely()
         }
     }
 
-    @Override
-    public void onColorChooserDismissed(ColorChooserDialog dialog) {
+    override fun onColorChooserDismissed(dialog: ColorChooserDialog?) {
         // do nothing here: if the user dismiss the picker, it means that he don't want to change
         // the color at the moment.
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (requestCode == REQUEST_ICON_PICKER) {
             if (resultCode == Activity.RESULT_OK && intent != null) {
-                String action = intent.getStringExtra(IconListActivity.RESULT_ACTION);
-                if (IconListActivity.ACTION_CHANGE_BG_COLOR.equals(action)) {
+                val action: String? = intent.getStringExtra(IconListActivity.RESULT_ACTION)
+                if (IconListActivity.ACTION_CHANGE_BG_COLOR == action) {
                     // The dialog lives here because it calls back the fragment that hosts it.
-                    openColorPicker();
-                } else if (IconListActivity.ACTION_REMOVE_ICON.equals(action)) {
-                    restoreColorIcon();
+                    openColorPicker()
+                } else if (IconListActivity.ACTION_REMOVE_ICON == action) {
+                    restoreColorIcon()
                 } else {
-                    mCurrentIcon = intent.getParcelableExtra(IconListActivity.RESULT_ICON);
-                    fireCallbackSafely();
+                    mCurrentIcon = intent.getParcelableExtra(IconListActivity.RESULT_ICON)
+                    fireCallbackSafely()
                 }
             }
         } else {
-            super.onActivityResult(requestCode, resultCode, intent);
+            super.onActivityResult(requestCode, resultCode, intent)
         }
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onIconChanged(String tag, Icon icon);
+        fun onIconChanged(tag: String?, icon: Icon?)
     }
 }
