@@ -17,136 +17,131 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * A file or folder on a WebDAV server, identified by its path relative to the configured
  * root URL. The path is stored decoded; percent encoding happens when a request URL is built,
  * so the same path can round trip through preferences without double encoding.
  */
-public class WebDAVFile implements IFile {
+class WebDAVFile : IFile {
 
-    private static final String NAME = "name";
-    private static final String PATH = "path";
-    private static final String SIZE = "size";
-    private static final String DIRECTORY = "directory";
+    private val mName: String?
+    private val mPath: String?
+    private val mSize: Long
+    private val mIsDirectory: Boolean
 
-    private final String mName;
-    private final String mPath;
-    private final long mSize;
-    private final boolean mIsDirectory;
-
-    public WebDAVFile(String name, String path, long size, boolean isDirectory) {
-        mName = name;
-        mPath = path;
-        mSize = size;
-        mIsDirectory = isDirectory;
+    constructor(name: String?, path: String?, size: Long, isDirectory: Boolean) {
+        mName = name
+        mPath = path
+        mSize = size
+        mIsDirectory = isDirectory
     }
 
-    public WebDAVFile(@NonNull String encoded) throws JSONException {
-        JSONObject object = new JSONObject(encoded);
-        mName = object.getString(NAME);
-        mPath = object.getString(PATH);
-        mSize = object.optLong(SIZE, 0L);
-        mIsDirectory = object.optBoolean(DIRECTORY, false);
+    @Throws(JSONException::class)
+    constructor(encoded: String) {
+        val jsonObject = JSONObject(encoded)
+        mName = jsonObject.getString(NAME)
+        mPath = jsonObject.getString(PATH)
+        mSize = jsonObject.optLong(SIZE, 0L)
+        mIsDirectory = jsonObject.optBoolean(DIRECTORY, false)
     }
 
-    /**
-     * Fail soft, like {@link SAFFile#decode(String)}. This runs from
-     * {@code BackendServiceFactory.getFile()} against a value that has been sitting in preferences
-     * since an older version, so a value we cannot read must return null rather than take the app
-     * down on startup.
-     */
-    @Nullable
-    public static WebDAVFile decode(String encoded) {
-        if (encoded == null || !encoded.trim().startsWith("{")) {
-            return null;
-        }
+    protected constructor(source: Parcel) {
+        mName = source.readString()
+        mPath = source.readString()
+        mSize = source.readLong()
+        mIsDirectory = source.readByte().toInt() != 0
+    }
+
+    override fun getName(): String? {
+        return mName
+    }
+
+    override fun getExtension(): String? {
+        val index = mName!!.lastIndexOf(".")
+        return if (index >= 0) mName.substring(index) else null
+    }
+
+    override fun isDirectory(): Boolean {
+        return mIsDirectory
+    }
+
+    override fun getSize(): Long {
+        return mSize
+    }
+
+    fun getPath(): String? {
+        return mPath
+    }
+
+    override fun encodeToString(): String? {
         try {
-            return new WebDAVFile(encoded);
-        } catch (JSONException | RuntimeException e) {
-            return null;
+            val jsonObject = JSONObject()
+            jsonObject.put(NAME, mName)
+            jsonObject.put(PATH, mPath)
+            jsonObject.put(SIZE, mSize)
+            jsonObject.put(DIRECTORY, mIsDirectory)
+            return jsonObject.toString()
+        } catch (e: JSONException) {
+            throw RuntimeException("Failed to encode WebDAV file: " + e.message)
         }
     }
 
-    protected WebDAVFile(Parcel in) {
-        mName = in.readString();
-        mPath = in.readString();
-        mSize = in.readLong();
-        mIsDirectory = in.readByte() != 0;
+    override fun describeContents(): Int {
+        return 0
     }
 
-    public static final Creator<WebDAVFile> CREATOR = new Creator<WebDAVFile>() {
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(mName)
+        dest.writeString(mPath)
+        dest.writeLong(mSize)
+        dest.writeByte((if (mIsDirectory) 1 else 0).toByte())
+    }
 
-        @Override
-        public WebDAVFile createFromParcel(Parcel in) {
-            return new WebDAVFile(in);
+    companion object {
+
+        private const val NAME = "name"
+        private const val PATH = "path"
+        private const val SIZE = "size"
+        private const val DIRECTORY = "directory"
+
+        /**
+         * Fail soft, like [SAFFile.decode]. This runs from
+         * `BackendServiceFactory.getFile()` against a value that has been sitting in preferences
+         * since an older version, so a value we cannot read must return null rather than take the app
+         * down on startup.
+         */
+        @JvmStatic
+        fun decode(encoded: String?): WebDAVFile? {
+            if (encoded == null || !encoded.trim { it <= ' ' }.startsWith("{")) {
+                return null
+            }
+            try {
+                return WebDAVFile(encoded)
+            } catch (e: JSONException) {
+                return null
+            } catch (e: RuntimeException) {
+                return null
+            }
         }
 
-        @Override
-        public WebDAVFile[] newArray(int size) {
-            return new WebDAVFile[size];
+        @JvmField
+        val CREATOR: Parcelable.Creator<WebDAVFile> = object : Parcelable.Creator<WebDAVFile> {
+
+            override fun createFromParcel(source: Parcel): WebDAVFile {
+                return WebDAVFile(source)
+            }
+
+            override fun newArray(size: Int): Array<WebDAVFile?> {
+                return arrayOfNulls(size)
+            }
         }
-    };
-
-    @Override
-    public String getName() {
-        return mName;
-    }
-
-    @Override
-    public String getExtension() {
-        int index = mName.lastIndexOf(".");
-        return index >= 0 ? mName.substring(index) : null;
-    }
-
-    @Override
-    public boolean isDirectory() {
-        return mIsDirectory;
-    }
-
-    @Override
-    public long getSize() {
-        return mSize;
-    }
-
-    public String getPath() {
-        return mPath;
-    }
-
-    @Override
-    public String encodeToString() {
-        try {
-            JSONObject object = new JSONObject();
-            object.put(NAME, mName);
-            object.put(PATH, mPath);
-            object.put(SIZE, mSize);
-            object.put(DIRECTORY, mIsDirectory);
-            return object.toString();
-        } catch (JSONException e) {
-            throw new RuntimeException("Failed to encode WebDAV file: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mName);
-        dest.writeString(mPath);
-        dest.writeLong(mSize);
-        dest.writeByte((byte) (mIsDirectory ? 1 : 0));
     }
 }
