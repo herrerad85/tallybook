@@ -17,120 +17,104 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
 
-import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.database.Contract
 
 /**
  * Created by andrea on 02/03/18.
  */
-public class Category implements Parcelable, Identifiable {
+class Category : Parcelable, Identifiable {
 
-    private final long mId;
-    private final String mName;
-    private final Icon mIcon;
-    private final Contract.CategoryType mType;
-    private final String mTag;
+    private val mId: Long
+    val name: String?
+    val icon: Icon?
+    val type: Contract.CategoryType?
+    val tag: String?
 
-    public Category(long id, String name, Icon icon, Contract.CategoryType type) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mType = type;
-        mTag = null;
+    constructor(id: Long, name: String?, icon: Icon?, type: Contract.CategoryType?) {
+        mId = id
+        this.name = name
+        this.icon = icon
+        this.type = type
+        tag = null
     }
 
-    public Category(long id, String name, Icon icon, Contract.CategoryType type, String tag) {
-        mId = id;
-        mName = name;
-        mIcon = icon;
-        mType = type;
-        mTag = tag;
+    constructor(id: Long, name: String?, icon: Icon?, type: Contract.CategoryType?, tag: String?) {
+        mId = id
+        this.name = name
+        this.icon = icon
+        this.type = type
+        this.tag = tag
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected Category(Parcel in) {
-        mId = in.readLong();
-        mName = in.readString();
-        mIcon = in.readParcelable(Icon.class.getClassLoader());
-        mType = (Contract.CategoryType) in.readSerializable();
-        mTag = in.readString();
+    @Suppress("WeakerAccess")
+    protected constructor(source: Parcel) {
+        mId = source.readLong()
+        name = source.readString()
+        icon = source.readParcelable(Icon::class.java.classLoader)
+        type = source.readSerializable() as Contract.CategoryType?
+        tag = source.readString()
     }
 
-    public static final Creator<Category> CREATOR = new Creator<Category>() {
-        @Override
-        public Category createFromParcel(Parcel in) {
-            return new Category(in);
-        }
-
-        @Override
-        public Category[] newArray(int size) {
-            return new Category[size];
-        }
-    };
-
-    public long getId() {
-        return mId;
+    override fun getId(): Long {
+        return mId
     }
 
-    public String getName() {
-        return mName;
-    }
-
-    public Icon getIcon() {
-        return mIcon;
-    }
-
-    public Contract.CategoryType getType() {
-        return mType;
-    }
-
-    public String getTag() {
-        return mTag;
-    }
-
-    public int getDirection() {
-        switch (mType) {
-            case INCOME:
-                return 1;
-            case EXPENSE:
-                return 0;
-            case SYSTEM:
-                if (mTag != null) {
-                    switch (mTag) {
-                        case Contract.CategoryTag.CREDIT:
-                        case Contract.CategoryTag.PAID_DEBT:
-                        case Contract.CategoryTag.SAVING_DEPOSIT:
-                        case Contract.CategoryTag.TAX:
-                        case Contract.CategoryTag.TRANSFER_TAX:
-                        case Contract.CategoryTag.DEBT_INTEREST:
-                            return 0;
-                        case Contract.CategoryTag.DEBT:
-                        case Contract.CategoryTag.PAID_CREDIT:
-                        case Contract.CategoryTag.SAVING_WITHDRAW:
-                        case Contract.CategoryTag.CREDIT_INTEREST:
-                            return 1;
+    val direction: Int
+        get() {
+            when (type!!) {
+                Contract.CategoryType.INCOME ->
+                    return 1
+                Contract.CategoryType.EXPENSE ->
+                    return 0
+                Contract.CategoryType.SYSTEM ->
+                    if (tag != null) {
+                        when (tag) {
+                            Contract.CategoryTag.CREDIT,
+                            Contract.CategoryTag.PAID_DEBT,
+                            Contract.CategoryTag.SAVING_DEPOSIT,
+                            Contract.CategoryTag.TAX,
+                            Contract.CategoryTag.TRANSFER_TAX,
+                            Contract.CategoryTag.DEBT_INTEREST ->
+                                return 0
+                            Contract.CategoryTag.DEBT,
+                            Contract.CategoryTag.PAID_CREDIT,
+                            Contract.CategoryTag.SAVING_WITHDRAW,
+                            Contract.CategoryTag.CREDIT_INTEREST ->
+                                return 1
+                        }
                     }
-                }
-                break;
+            }
+            return 0
         }
-        return 0;
+
+    override fun describeContents(): Int {
+        return 0
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeLong(mId)
+        dest.writeString(name)
+        dest.writeParcelable(icon, flags)
+        dest.writeSerializable(type)
+        dest.writeString(tag)
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(mId);
-        dest.writeString(mName);
-        dest.writeParcelable(mIcon, flags);
-        dest.writeSerializable(mType);
-        dest.writeString(mTag);
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Category> = object : Parcelable.Creator<Category> {
+            override fun createFromParcel(source: Parcel): Category {
+                return Category(source)
+            }
+
+            override fun newArray(size: Int): Array<Category?> {
+                return arrayOfNulls(size)
+            }
+        }
     }
 }
