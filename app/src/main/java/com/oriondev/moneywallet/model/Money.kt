@@ -17,105 +17,105 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.text.TextUtils;
+import android.text.TextUtils
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.HashMap
+import java.util.Locale
+import java.util.regex.Pattern
 
 /**
  * Created by andrea on 23/01/18.
  */
-public class Money {
+class Money {
 
-    private Map<String, Long> mCurrencies;
+    private var mCurrencies: MutableMap<String?, Long>
 
-    public static Money empty() {
-        return new Money();
+    constructor() {
+        mCurrencies = HashMap()
     }
 
-    public Money() {
-        mCurrencies = new HashMap<>();
+    constructor(currency: String?, money: Long) {
+        mCurrencies = HashMap()
+        mCurrencies.put(currency, money)
     }
 
-    public Money(String currency, long money) {
-        mCurrencies = new HashMap<>();
-        mCurrencies.put(currency, money);
-    }
-
-    public void addMoney(String currency, long money) {
-        long total = money;
+    fun addMoney(currency: String?, money: Long) {
+        var total = money
         if (mCurrencies.containsKey(currency)) {
-            total += mCurrencies.get(currency);
+            total += mCurrencies.get(currency)!!
         }
-        mCurrencies.put(currency, total);
+        mCurrencies.put(currency, total)
     }
 
-    public void addMoney(Money money) {
+    fun addMoney(money: Money?) {
         if (money != null) {
-            for (Map.Entry<String, Long> currency : money.mCurrencies.entrySet()) {
-                addMoney(currency.getKey(), currency.getValue());
+            for (currency in money.mCurrencies.entries) {
+                addMoney(currency.key, currency.value)
             }
         }
     }
 
-    public void removeMoney(String currency, long money) {
-        long total = -money;
+    fun removeMoney(currency: String?, money: Long) {
+        var total = -money
         if (mCurrencies.containsKey(currency)) {
-            total += mCurrencies.get(currency);
+            total += mCurrencies.get(currency)!!
         }
-        mCurrencies.put(currency, total);
+        mCurrencies.put(currency, total)
     }
 
-    public void removeMoney(Money money) {
+    fun removeMoney(money: Money?) {
         if (money != null) {
-            for (Map.Entry<String, Long> currency : money.mCurrencies.entrySet()) {
-                removeMoney(currency.getKey(), currency.getValue());
+            for (currency in money.mCurrencies.entries) {
+                removeMoney(currency.key, currency.value)
             }
         }
     }
 
-    public long getMoney(String currency) {
-        Long money = mCurrencies.get(currency);
-        return money != null ? money : 0;
+    fun getMoney(currency: String?): Long {
+        val money: Long? = mCurrencies.get(currency)
+        return if (money != null) money else 0
     }
 
-    public Map<String, Long> getCurrencyMoneys() {
-        return mCurrencies;
-    }
+    val currencyMoneys: MutableMap<String?, Long>
+        get() = mCurrencies
 
-    public Set<String> getCurrencies() {
-        return mCurrencies.keySet();
-    }
+    val currencies: MutableSet<String?>
+        get() = mCurrencies.keys
 
-    public int getNumberOfCurrencies() {
-        return mCurrencies.size();
-    }
+    val numberOfCurrencies: Int
+        get() = mCurrencies.size
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, Long> entry : mCurrencies.entrySet()) {
-            if (builder.length() > 0) {
-                builder.append(",");
+    override fun toString(): String {
+        val builder = StringBuilder()
+        for (entry in mCurrencies.entries) {
+            if (builder.length > 0) {
+                builder.append(",")
             }
-            builder.append(String.format(Locale.ENGLISH, "%s %d", entry.getKey(), entry.getValue()));
+            builder.append(String.format(Locale.ENGLISH, "%s %d", entry.key, entry.value))
         }
-        return builder.toString();
+        return builder.toString()
     }
 
-    public static Money parse(String string) {
-        Money money = new Money();
-        if (!TextUtils.isEmpty(string)) {
-            String[] currencies = string.split(",");
-            for (String currency : currencies) {
-                String[] parts = currency.split(" ");
-                money.addMoney(parts[0], Long.parseLong(parts[1]));
-            }
+    companion object {
+
+        @JvmStatic
+        fun empty(): Money {
+            return Money()
         }
-        return money;
+
+        @JvmStatic
+        fun parse(string: String?): Money {
+            val money = Money()
+            if (!TextUtils.isEmpty(string)) {
+                val currencies = Pattern.compile(",").split(string)
+                for (currency in currencies) {
+                    val parts = Pattern.compile(" ").split(currency)
+                    money.addMoney(parts[0], parts[1].toLong())
+                }
+            }
+            return money
+        }
     }
 }
