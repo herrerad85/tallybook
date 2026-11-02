@@ -1,141 +1,138 @@
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.net.Uri;
-import android.os.Parcel;
+import android.net.Uri
+import android.os.Parcel
+import android.os.Parcelable
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
 
-import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile
 
 /**
  * Represents a file/document with regards to the android storage access framework.
  */
-public class SAFFile implements IFile {
+class SAFFile : IFile {
 
-    private static final String URI = "uri";
-    private static final String NAME = "name";
-    private static final String SIZE = "size";
-    private static final String IS_DIRECTORY = "isDir";
+    private val mUri: Uri
+    private var mName: String?
+    private var mSize: Long
+    private var mIsDir: Boolean
 
-    private final Uri mUri;
-    private String mName;
-    private long mSize;
-    private boolean mIsDir;
-
-    public static final Creator<SAFFile> CREATOR = new Creator<SAFFile>() {
-        @Override
-        public SAFFile createFromParcel(Parcel in) {
-            return new SAFFile(in);
-        }
-
-        @Override
-        public SAFFile[] newArray(int size) {
-            return new SAFFile[size];
-        }
-    };
-
-    public SAFFile(@NonNull String encoded) {
+    constructor(encoded: String?) {
         try {
-            JSONObject object = new JSONObject(encoded);
-            mUri = Uri.parse(object.getString(URI));
-            mName = object.getString(NAME);
-            mSize = object.getLong(SIZE);
-            mIsDir = object.getBoolean(IS_DIRECTORY);
-        } catch (JSONException e) {
-            throw new RuntimeException("Cannot decode file from string: " + e.getMessage());
+            val jsonObject = JSONObject(encoded)
+            mUri = Uri.parse(jsonObject.getString(URI))
+            mName = jsonObject.getString(NAME)
+            mSize = jsonObject.getLong(SIZE)
+            mIsDir = jsonObject.getBoolean(IS_DIRECTORY)
+        } catch (e: JSONException) {
+            throw RuntimeException("Cannot decode file from string: " + e.message)
         }
     }
 
-    /**
-     * Returns true only when the value looks like an encoded SAFFile descriptor (a JSON object),
-     * as opposed to a legacy raw path (e.g. "/storage/emulated/0") persisted by older versions.
-     * Pure check with no Android dependencies, so it is unit-testable.
-     */
-    public static boolean looksEncoded(String encoded) {
-        return encoded != null && encoded.trim().startsWith("{");
+    constructor(documentFile: DocumentFile) {
+        mIsDir = documentFile.isDirectory
+        mUri = documentFile.uri
+        mSize = documentFile.length()
+        mName = documentFile.name
     }
 
-    /**
-     * Decodes an encoded descriptor, returning null instead of throwing when the value is missing,
-     * a legacy path, or otherwise undecodable. Lets callers fail soft rather than crash at startup
-     * (see issue #177, where a legacy auto-backup path crashed the app in Application.onCreate).
-     */
-    public static SAFFile decode(String encoded) {
-        if (!looksEncoded(encoded)) {
-            return null;
-        }
+    constructor(source: Parcel) {
+        mUri = Uri.parse(source.readString())
+        mName = source.readString()
+        mSize = source.readLong()
+        mIsDir = source.readByte().toInt() != 0
+    }
+
+    override fun getName(): String? {
+        return mName
+    }
+
+    override fun getExtension(): String? {
+        val index = getName()!!.lastIndexOf(".")
+        return if (index >= 0) getName()!!.substring(index) else null
+    }
+
+    override fun isDirectory(): Boolean {
+        return mIsDir
+    }
+
+    override fun getSize(): Long {
+        return mSize
+    }
+
+    override fun encodeToString(): String? {
         try {
-            return new SAFFile(encoded);
-        } catch (RuntimeException e) {
-            return null;
+            val jsonObject = JSONObject()
+            jsonObject.put(URI, mUri.toString())
+            jsonObject.put(NAME, mName)
+            jsonObject.put(SIZE, mSize)
+            jsonObject.put(IS_DIRECTORY, mIsDir)
+            return jsonObject.toString()
+        } catch (e: JSONException) {
+            throw RuntimeException("Cannot encode file to string: " + e.message)
         }
     }
 
-    public SAFFile(@NonNull DocumentFile documentFile) {
-        mIsDir = documentFile.isDirectory();
-        mUri = documentFile.getUri();
-        mSize = documentFile.length();
-        mName = documentFile.getName();
+    override fun describeContents(): Int {
+        return 0
     }
 
-    public SAFFile(Parcel in) {
-        mUri = Uri.parse(in.readString());
-        mName = in.readString();
-        mSize = in.readLong();
-        mIsDir = in.readByte() != 0;
+    override fun writeToParcel(dest: Parcel, i: Int) {
+        dest.writeString(mUri.toString())
+        dest.writeString(mName)
+        dest.writeLong(mSize)
+        dest.writeByte((if (mIsDir) 1 else 0).toByte())
     }
 
-    @Override
-    public String getName() {
-        return mName;
+    fun getUri(): Uri {
+        return mUri
     }
 
-    @Override
-    public String getExtension() {
-        int index = getName().lastIndexOf(".");
-        return index >= 0 ? getName().substring(index) : null;
-    }
+    companion object {
 
-    @Override
-    public boolean isDirectory() {
-        return mIsDir;
-    }
+        private const val URI = "uri"
+        private const val NAME = "name"
+        private const val SIZE = "size"
+        private const val IS_DIRECTORY = "isDir"
 
-    @Override
-    public long getSize() {
-        return mSize;
-    }
+        @JvmField
+        val CREATOR: Parcelable.Creator<SAFFile> = object : Parcelable.Creator<SAFFile> {
+            override fun createFromParcel(source: Parcel): SAFFile {
+                return SAFFile(source)
+            }
 
-    @Override
-    public String encodeToString() {
-        try {
-            JSONObject object = new JSONObject();
-            object.put(URI, mUri.toString());
-            object.put(NAME, mName);
-            object.put(SIZE, mSize);
-            object.put(IS_DIRECTORY, mIsDir);
-            return object.toString();
-        } catch (JSONException e) {
-            throw new RuntimeException("Cannot encode file to string: " + e.getMessage());
+            override fun newArray(size: Int): Array<SAFFile?> {
+                return arrayOfNulls(size)
+            }
         }
-    }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
+        /**
+         * Returns true only when the value looks like an encoded SAFFile descriptor (a JSON object),
+         * as opposed to a legacy raw path (e.g. "/storage/emulated/0") persisted by older versions.
+         * Pure check with no Android dependencies, so it is unit-testable.
+         */
+        @JvmStatic
+        fun looksEncoded(encoded: String?): Boolean {
+            return encoded != null && encoded.trim { it <= ' ' }.startsWith("{")
+        }
 
-    @Override
-    public void writeToParcel(Parcel dest, int i) {
-        dest.writeString(mUri.toString());
-        dest.writeString(mName);
-        dest.writeLong(mSize);
-        dest.writeByte((byte) (mIsDir ? 1 : 0));
-    }
-
-    public Uri getUri() {
-        return mUri;
+        /**
+         * Decodes an encoded descriptor, returning null instead of throwing when the value is missing,
+         * a legacy path, or otherwise undecodable. Lets callers fail soft rather than crash at startup
+         * (see issue #177, where a legacy auto-backup path crashed the app in Application.onCreate).
+         */
+        @JvmStatic
+        fun decode(encoded: String?): SAFFile? {
+            if (!looksEncoded(encoded)) {
+                return null
+            }
+            try {
+                return SAFFile(encoded)
+            } catch (e: RuntimeException) {
+                return null
+            }
+        }
     }
 }
