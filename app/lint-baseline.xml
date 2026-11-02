@@ -37,17 +37,6 @@
     <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());"
-        errorLine2="                                                                                                            ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/picker/AttachmentPicker.java"
-            line="260"
-            column="109"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
         errorLine1="            final String extension = name.substring(lastDot + 1).toLowerCase();"
         errorLine2="                                                                 ~~~~~~~~~~~">
         <location
@@ -903,8 +892,8 @@
         errorLine1="                                cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)),"
         errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/picker/AttachmentPicker.java"
-            line="238"
+            file="src/main/java/com/oriondev/moneywallet/picker/AttachmentPicker.kt"
+            line="236"
             column="50"/>
     </issue>
 
@@ -914,8 +903,8 @@
         errorLine1="                                cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE)),"
         errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/picker/AttachmentPicker.java"
-            line="240"
+            file="src/main/java/com/oriondev/moneywallet/picker/AttachmentPicker.kt"
+            line="238"
             column="48"/>
     </issue>
 
