@@ -17,117 +17,102 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.model;
+package com.oriondev.moneywallet.model
 
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.os.Parcel;
-import android.os.Parcelable;
-import androidx.annotation.DrawableRes;
-import android.text.TextUtils;
+import android.content.Context
+import android.graphics.drawable.Drawable
+import android.os.Parcel
+import android.os.Parcelable
+import androidx.annotation.DrawableRes
+import android.text.TextUtils
 
-import com.oriondev.moneywallet.ui.drawable.TextDrawable;
-import com.oriondev.moneywallet.utils.Utils;
+import com.oriondev.moneywallet.ui.drawable.TextDrawable
+import com.oriondev.moneywallet.utils.Utils
 
-import java.util.Locale;
+import java.util.Locale
 
 /**
  * Created by andrea on 31/01/18.
  */
-public class CurrencyUnit implements Parcelable {
+class CurrencyUnit : Parcelable {
 
-    private final String mIso;
-    private final String mName;
-    private final String mSymbol;
-    private final int mDecimals;
+    val iso: String?
+    val name: String?
+    val symbol: String?
+    val decimals: Int
 
-    public CurrencyUnit(String iso, String name, String symbol, int decimals) {
-        mIso = iso;
-        mName = name;
-        mSymbol = symbol;
-        mDecimals = decimals;
+    constructor(iso: String?, name: String?, symbol: String?, decimals: Int) {
+        this.iso = iso
+        this.name = name
+        this.symbol = symbol
+        this.decimals = decimals
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected CurrencyUnit(Parcel in) {
-        mIso = in.readString();
-        mName = in.readString();
-        mSymbol = in.readString();
-        mDecimals = in.readInt();
+    @Suppress("WeakerAccess")
+    protected constructor(source: Parcel) {
+        iso = source.readString()
+        name = source.readString()
+        symbol = source.readString()
+        decimals = source.readInt()
     }
 
-    public static final Creator<CurrencyUnit> CREATOR = new Creator<CurrencyUnit>() {
+    fun hasDecimals(): Boolean {
+        return decimals > 0
+    }
 
-        @Override
-        public CurrencyUnit createFromParcel(Parcel in) {
-            return new CurrencyUnit(in);
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(iso)
+        parcel.writeString(name)
+        parcel.writeString(symbol)
+        parcel.writeInt(decimals)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other != null && other is CurrencyUnit && (other === this || iso!!.equals(other.iso))
+    }
+
+    companion object {
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<CurrencyUnit> = object : Parcelable.Creator<CurrencyUnit> {
+
+            override fun createFromParcel(source: Parcel): CurrencyUnit {
+                return CurrencyUnit(source)
+            }
+
+            override fun newArray(size: Int): Array<CurrencyUnit?> {
+                return arrayOfNulls(size)
+            }
+
         }
 
-        @Override
-        public CurrencyUnit[] newArray(int size) {
-            return new CurrencyUnit[size];
+        @JvmStatic
+        @DrawableRes
+        fun getCurrencyFlag(context: Context?, iso: String?): Int {
+            val resourceName = "ic_flag_" + iso!!.lowercase(Locale.ENGLISH)
+            return getIconResourceId(context, resourceName)
         }
 
-    };
+        @JvmStatic
+        fun getCurrencyDrawable(iso: String?): Drawable? {
+            val text = if (TextUtils.isEmpty(iso)) "?" else iso!!.substring(0, 1)
+            val color = Utils.getRandomMDColor(iso!!.hashCode())
+            return TextDrawable.builder()
+                    .beginConfig()
+                        .width(60)
+                        .height(60)
+                        .textColor(Utils.getBestColor(color))
+                    .endConfig()
+                    .buildRect(text, color)
+        }
 
-    public String getIso() {
-        return mIso;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    public String getSymbol() {
-        return mSymbol;
-    }
-
-    public int getDecimals() {
-        return mDecimals;
-    }
-
-    public boolean hasDecimals() {
-        return mDecimals > 0;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel parcel, int flags) {
-        parcel.writeString(mIso);
-        parcel.writeString(mName);
-        parcel.writeString(mSymbol);
-        parcel.writeInt(mDecimals);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj != null && obj instanceof CurrencyUnit && (obj == this || mIso.equals(((CurrencyUnit) obj).mIso));
-    }
-
-    @DrawableRes
-    public static int getCurrencyFlag(Context context, String iso) {
-        String resourceName = "ic_flag_" + iso.toLowerCase(Locale.ENGLISH);
-        return getIconResourceId(context, resourceName);
-    }
-
-    public static Drawable getCurrencyDrawable(String iso) {
-        String text = TextUtils.isEmpty(iso) ? "?" : iso.substring(0, 1);
-        int color = Utils.getRandomMDColor(iso.hashCode());
-        return TextDrawable.builder()
-                .beginConfig()
-                    .width(60)
-                    .height(60)
-                    .textColor(Utils.getBestColor(color))
-                .endConfig()
-                .buildRect(text, color);
-    }
-
-    private static int getIconResourceId(Context context, String resource) {
-        String packageName = context.getPackageName();
-        return context.getResources().getIdentifier(resource, "drawable", packageName);
+        private fun getIconResourceId(context: Context?, resource: String?): Int {
+            val packageName = context!!.packageName
+            return context.resources.getIdentifier(resource, "drawable", packageName)
+        }
     }
 }
