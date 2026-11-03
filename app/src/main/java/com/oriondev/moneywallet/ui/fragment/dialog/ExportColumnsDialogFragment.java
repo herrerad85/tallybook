@@ -21,6 +21,7 @@ import java.util.List;
 public class ExportColumnsDialogFragment extends DialogFragment {
 
     private static final String SS_CURRENT_INDICES = "ExportColumnsDialogFragment::SavedState::CurrentIndices";
+    private static final String SS_CHECKED = "ExportColumnsDialogFragment::SavedState::Checked";
 
     private static final int[] COLUMN_NAMES = new int[] {
             R.string.hint_event,
@@ -42,6 +43,7 @@ public class ExportColumnsDialogFragment extends DialogFragment {
 
     private Callback mCallback;
     private Integer[] mIndices;
+    private boolean[] mChecked;
 
     @Override
     @NonNull
@@ -52,24 +54,29 @@ public class ExportColumnsDialogFragment extends DialogFragment {
         }
         if (savedInstanceState != null) {
             mIndices = (Integer[]) savedInstanceState.getSerializable(SS_CURRENT_INDICES);
+            mChecked = savedInstanceState.getBooleanArray(SS_CHECKED);
+        } else {
+            mChecked = null;
         }
         String[] items = new String[COLUMN_NAMES.length];
         for (int i = 0; i < COLUMN_NAMES.length; i++) {
             items[i] = getString(COLUMN_NAMES[i]);
         }
-        final boolean[] checked = new boolean[items.length];
-        if (mIndices != null) {
-            for (Integer index : mIndices) {
-                checked[index] = true;
+        if (mChecked == null || mChecked.length != items.length) {
+            mChecked = new boolean[items.length];
+            if (mIndices != null) {
+                for (Integer index : mIndices) {
+                    mChecked[index] = true;
+                }
             }
         }
         return ThemedDialog.buildMaterialDialog(activity)
                 .setTitle(R.string.dialog_export_optional_columns_title)
-                .setMultiChoiceItems(items, checked, new DialogInterface.OnMultiChoiceClickListener() {
+                .setMultiChoiceItems(items, mChecked, new DialogInterface.OnMultiChoiceClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        checked[which] = isChecked;
+                        mChecked[which] = isChecked;
                     }
 
                 })
@@ -78,8 +85,8 @@ public class ExportColumnsDialogFragment extends DialogFragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         List<Integer> indices = new ArrayList<>();
-                        for (int i = 0; i < checked.length; i++) {
-                            if (checked[i]) {
+                        for (int i = 0; i < mChecked.length; i++) {
+                            if (mChecked[i]) {
                                 indices.add(i);
                             }
                         }
@@ -96,6 +103,7 @@ public class ExportColumnsDialogFragment extends DialogFragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putSerializable(SS_CURRENT_INDICES, mIndices);
+        outState.putBooleanArray(SS_CHECKED, mChecked);
     }
 
     public void setCallback(Callback callback) {
