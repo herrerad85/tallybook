@@ -24,8 +24,9 @@
 
     <item
         android:id="@+id/action_change_bg_color"
+        android:icon="@drawable/ic_color_lens_black_24dp"
         android:title="@string/bottom_sheet_icon_picker_action_change_bg_color"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_remove_icon"
