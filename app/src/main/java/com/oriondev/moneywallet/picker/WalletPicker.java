@@ -30,6 +30,8 @@ import androidx.fragment.app.FragmentManager;
 import com.oriondev.moneywallet.model.Wallet;
 import com.oriondev.moneywallet.ui.fragment.dialog.WalletPickerDialog;
 
+import java.util.Arrays;
+
 /**
  * Created by andrea on 09/03/18.
  */
@@ -97,17 +99,8 @@ public class WalletPicker extends Fragment implements WalletPickerDialog.Callbac
             if (mSingleWallet) {
                 mCurrentWallet = savedInstanceState.getParcelable(SS_CURRENT_WALLET);
             } else {
-                // this is required because some devices have issues
-                Parcelable[] parcelables = savedInstanceState.getParcelableArray(SS_CURRENT_WALLET);
-                if (parcelables != null) {
-                    mCurrentWallets = new Wallet[parcelables.length];
-                    for (int i = 0; i < parcelables.length; i++) {
-                        mCurrentWallets[i] = (Wallet) parcelables[i];
-                    }
-                } else {
-                    mCurrentWallets = new Wallet[0];
-                }
-                mCurrentWallets = (Wallet[]) savedInstanceState.getParcelableArray(SS_CURRENT_WALLET);
+                Parcelable[] wallets = savedInstanceState.getParcelableArray(SS_CURRENT_WALLET);
+                mCurrentWallets = wallets != null ? Arrays.copyOf(wallets, wallets.length, Wallet[].class) : null;
             }
         } else {
             Bundle arguments = getArguments();

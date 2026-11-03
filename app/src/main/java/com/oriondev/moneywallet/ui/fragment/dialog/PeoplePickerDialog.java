@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
@@ -78,9 +79,10 @@ public class PeoplePickerDialog extends DialogFragment implements PeopleSelector
         }
         if (savedInstanceState != null) {
             mSelectedPeople = new LongSparseArray<>();
-            Person[] people = (Person[]) savedInstanceState.getParcelableArray(SS_SELECTED_PEOPLE);
-            if (people != null) {
-                for (Person person : people) {
+            Parcelable[] parcelables = savedInstanceState.getParcelableArray(SS_SELECTED_PEOPLE);
+            if (parcelables != null) {
+                for (Parcelable parcelable : parcelables) {
+                    Person person = (Person) parcelable;
                     mSelectedPeople.append(person.getId(), person);
                 }
             }

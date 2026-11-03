@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
@@ -85,9 +86,10 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
             mSelectedWallets = new LongSparseArray<>();
             mSinglePicker = savedInstanceState.getBoolean(SS_SINGLE_PICKER);
             mCurrencyIso = savedInstanceState.getString(SS_CURRENCY_ISO);
-            Wallet[] wallets = (Wallet[]) savedInstanceState.getParcelableArray(SS_SELECTED_WALLETS);
-            if (wallets != null) {
-                for (Wallet wallet : wallets) {
+            Parcelable[] parcelables = savedInstanceState.getParcelableArray(SS_SELECTED_WALLETS);
+            if (parcelables != null) {
+                for (Parcelable parcelable : parcelables) {
+                    Wallet wallet = (Wallet) parcelable;
                     mSelectedWallets.append(wallet.getId(), wallet);
                 }
             }

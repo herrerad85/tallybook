@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.picker;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -28,6 +29,8 @@ import androidx.fragment.app.FragmentManager;
 
 import com.oriondev.moneywallet.model.Person;
 import com.oriondev.moneywallet.ui.fragment.dialog.PeoplePickerDialog;
+
+import java.util.Arrays;
 
 /**
  * Created by andrea on 10/03/18.
@@ -68,7 +71,8 @@ public class PersonPicker extends Fragment implements PeoplePickerDialog.Callbac
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
-            mCurrentPeople = (Person[]) savedInstanceState.getParcelableArray(SS_CURRENT_PEOPLE);
+            Parcelable[] people = savedInstanceState.getParcelableArray(SS_CURRENT_PEOPLE);
+            mCurrentPeople = people != null ? Arrays.copyOf(people, people.length, Person[].class) : null;
         } else {
             Bundle arguments = getArguments();
             if (arguments != null) {
