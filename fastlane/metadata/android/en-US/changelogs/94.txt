@@ -1,0 +1,1 @@
+Fixes: no crash when coming back to the app after Android closed it in the background with people or wallets picked. CSV export keeps the optional columns you ticked through a rotation. Change background color shows in the icon list toolbar.
