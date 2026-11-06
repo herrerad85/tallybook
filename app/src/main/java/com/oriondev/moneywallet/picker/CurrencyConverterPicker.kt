@@ -147,12 +147,14 @@ class CurrencyConverterPicker : Fragment(), CurrencyConverterDialog.Callback {
     }
 
     fun isReady(): Boolean {
-        return mCurrency1 != null && mCurrency2 != null && mConversionRate != null
+        val conversionRate = mConversionRate
+        return mCurrency1 != null && mCurrency2 != null && conversionRate != null && conversionRate.isFinite() && conversionRate > 0.0
     }
 
     fun setCurrency1(currencyUnit: CurrencyUnit?) {
+        val isCurrencyChanged = mCurrency1 != null && mCurrency1 != currencyUnit
         mCurrency1 = currencyUnit
-        loadConversionRate(false)
+        loadConversionRate(isCurrencyChanged)
         fireCallbackSafely()
     }
 

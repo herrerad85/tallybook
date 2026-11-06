@@ -634,7 +634,15 @@ public class NewEditTransferActivity extends NewEditItemActivity  implements Cur
     }
 
     private boolean validate() {
-        if (mWalletFromEditText.validate() && mWalletToEditText.validate() && mConverterPicker.isReady()) {
+        if (mWalletFromEditText.validate() && mWalletToEditText.validate()) {
+            if (!mConverterPicker.isReady()) {
+                ThemedDialog.buildMaterialDialog(this)
+                        .setTitle(R.string.title_error)
+                        .setMessage(R.string.error_input_missing_exchange_rate)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
+                return false;
+            }
             if (mAttachmentPicker.areAllAttachmentsReady()) {
                 return true;
             } else {
