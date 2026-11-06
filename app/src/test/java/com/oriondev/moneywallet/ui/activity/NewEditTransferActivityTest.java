@@ -1,5 +1,8 @@
 package com.oriondev.moneywallet.ui.activity;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.Application;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -7,10 +10,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.Parcel;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
@@ -45,21 +51,32 @@ import com.oriondev.moneywallet.utils.MoneyFormatter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.controller.ActivityController;
+import org.robolectric.shadows.ShadowActivity;
+import org.robolectric.shadows.ShadowDialog;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 /**
  * Drives the real transfer editor on the JVM, against the real content provider over a fresh
@@ -254,6 +271,106 @@ public class NewEditTransferActivityTest {
             });
         }
         assertEquals(before, countTransfers());
+    }
+
+    @Test
+    public void aNewTransferWithNoDestinationShowsNoExchangeRateDialog() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertFalse(activity.isFinishing());
+                assertNull(ShadowDialog.getLatestDialog());
+            });
+        }
+        assertEquals(before, countTransfers());
+    }
+
+    @Test
+    public void aCrossCurrencyTransferWithNoStoredRateIsRefusedUntilARateIsSet() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit euro = CurrencyManager.getCurrency("EUR");
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        assertNull(CurrencyManager.getExchangeRate(euro, yen));
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertFalse(activity.isFinishing());
+                assertEquals(before, countTransfers());
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                TextView message = dialog.findViewById(android.R.id.message);
+                assertEquals(activity.getString(R.string.error_input_missing_exchange_rate),
+                        message.getText().toString());
+                dialog.dismiss();
+                converterPicker(activity).onExchangeRateChanged(0.5D);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        assertEquals(mWalletA, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_WALLET_ID)));
+        assertEquals(mWalletB, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_WALLET_ID)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        long expectedYen = (10000L / 100L) / 2L;
+        assertEquals(expectedYen, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void aCrossCurrencyTransferWithARateSetInTheDialogSavesTheConvertedAmount() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                converterPicker(activity).onExchangeRateChanged(0.5D);
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertTrue(activity.isFinishing());
+                assertNull(ShadowDialog.getLatestDialog());
+            });
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        long expectedYen = (10000L / 100L) / 2L;
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(expectedYen, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void aSameCurrencyTransferWithNoStoredRateSavesWithNoDialog() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletC, "Bank",
+                        IconLoader.parse(ICON), CurrencyManager.getCurrency("EUR"), 0L, 0L));
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertTrue(activity.isFinishing());
+                assertNull(ShadowDialog.getLatestDialog());
+            });
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        assertEquals(mWalletC, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_WALLET_ID)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
     }
 
     @Test
@@ -631,6 +748,303 @@ public class NewEditTransferActivityTest {
         }
     }
 
+    @Test
+    public void switchingTheSourceToTheDestinationCurrencyWithNoStoredRateSavesTheSameAmount() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("EUR"), yen));
+        long osaka = insertWallet("Osaka", "JPY");
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                walletFromPicker(activity).onWalletSelected(new Wallet(osaka, "Osaka",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertNull(ShadowDialog.getLatestDialog());
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        assertEquals(osaka, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_WALLET_ID)));
+        assertEquals(mWalletB, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_WALLET_ID)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void switchingTheSourceToTheDestinationCurrencyDropsATypedRate() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        long osaka = insertWallet("Osaka", "JPY");
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                converterPicker(activity).onExchangeRateChanged(0.5D);
+                walletFromPicker(activity).onWalletSelected(new Wallet(osaka, "Osaka",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertNull(ShadowDialog.getLatestDialog());
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void switchingTheSourceToAnotherCurrencyUsesTheStoredRateOverATypedOne() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit euro = CurrencyManager.getCurrency("EUR");
+        CurrencyUnit dollar = CurrencyManager.getCurrency("USD");
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        long dollars = insertWallet("Dollars", "USD");
+        int before = countTransfers();
+        try {
+            CurrencyManager.getExchangeRateCache().setExchangeRate("USD", 1D, System.currentTimeMillis());
+            CurrencyManager.getExchangeRateCache().setExchangeRate("JPY", 150D, System.currentTimeMillis());
+            assertNull(CurrencyManager.getExchangeRate(euro, yen));
+            assertEquals(150D, CurrencyManager.getExchangeRate(dollar, yen).getRate(), 0D);
+            try (ActivityScenario<NewEditTransferActivity> scenario =
+                         ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+                scenario.onActivity(activity -> {
+                    walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                            IconLoader.parse(ICON), yen, 0L, 0L));
+                    converterPicker(activity).onExchangeRateChanged(0.5D);
+                    walletFromPicker(activity).onWalletSelected(new Wallet(dollars, "Dollars",
+                            IconLoader.parse(ICON), dollar, 0L, 0L));
+                    moneyPicker(activity).setMoney(10000L);
+                    save(activity);
+                    assertNull(ShadowDialog.getLatestDialog());
+                    assertTrue(activity.isFinishing());
+                });
+            }
+        } finally {
+            forgetStoredRates("USD", "JPY");
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        assertEquals(dollars, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_WALLET_ID)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(MoneyScale.convert(10000L, 2, 0, 150D),
+                row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        assertEquals(15000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void anEditedTransferKeepsARateThatNoStoredRateMatches() {
+        assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("EUR"),
+                CurrencyManager.getCurrency("JPY")));
+        long transfer = insertTransfer(mWalletA, mWalletB, 10000L, 5000L, 0L);
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(editIntent(transfer))) {
+            scenario.onActivity(activity -> {
+                assertEquals(euroToYenRateLine(50D), textOf(activity, R.id.exchange_rate_text_view));
+                save(activity);
+                assertNull(ShadowDialog.getLatestDialog());
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before, countTransfers());
+        Cursor row = transferRow(transfer);
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(5000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void aRecreateOnAnEditedTransferKeepsARateThatNoStoredRateMatches() {
+        assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("EUR"),
+                CurrencyManager.getCurrency("JPY")));
+        long transfer = insertTransfer(mWalletA, mWalletB, 10000L, 5000L, 0L);
+        int before = countTransfers();
+        AtomicReference<NewEditTransferActivity> first = new AtomicReference<>();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(editIntent(transfer))) {
+            scenario.onActivity(first::set);
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertNotSame(first.get(), activity);
+                assertEquals(euroToYenRateLine(50D), textOf(activity, R.id.exchange_rate_text_view));
+                save(activity);
+                assertNull(ShadowDialog.getLatestDialog());
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(before, countTransfers());
+        Cursor row = transferRow(transfer);
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(5000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void movingTheSourceOntoTheDestinationCurrencyHidesTheRateLine() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        long osaka = insertWallet("Osaka", "JPY");
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.exchange_rate_text_view).getVisibility());
+                walletFromPicker(activity).onWalletSelected(new Wallet(osaka, "Osaka",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                assertEquals(View.GONE, activity.findViewById(R.id.exchange_rate_text_view).getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void movingTheSourceToAnotherCurrencyShowsTheStoredRateOnTheRateLine() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit dollar = CurrencyManager.getCurrency("USD");
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        long dollars = insertWallet("Dollars", "USD");
+        try {
+            CurrencyManager.getExchangeRateCache().setExchangeRate("USD", 1D, System.currentTimeMillis());
+            CurrencyManager.getExchangeRateCache().setExchangeRate("JPY", 150D, System.currentTimeMillis());
+            try (ActivityScenario<NewEditTransferActivity> scenario =
+                         ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+                scenario.onActivity(activity -> {
+                    walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                            IconLoader.parse(ICON), yen, 0L, 0L));
+                    converterPicker(activity).onExchangeRateChanged(0.5D);
+                    assertEquals(euroToYenRateLine(0.5D), textOf(activity, R.id.exchange_rate_text_view));
+                    walletFromPicker(activity).onWalletSelected(new Wallet(dollars, "Dollars",
+                            IconLoader.parse(ICON), dollar, 0L, 0L));
+                    assertEquals(rateLine("USD", "JPY", 150D), textOf(activity, R.id.exchange_rate_text_view));
+                });
+            }
+        } finally {
+            forgetStoredRates("USD", "JPY");
+        }
+    }
+
+    @Test
+    public void movingTheSourceToACurrencyWithNoStoredRateRefusesATypedRateWithADialog() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        CurrencyUnit dollar = CurrencyManager.getCurrency("USD");
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        assertNull(CurrencyManager.getExchangeRate(dollar, yen));
+        long dollars = insertWallet("Dollars", "USD");
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletB, "Tokyo",
+                        IconLoader.parse(ICON), yen, 0L, 0L));
+                converterPicker(activity).onExchangeRateChanged(0.5D);
+                walletFromPicker(activity).onWalletSelected(new Wallet(dollars, "Dollars",
+                        IconLoader.parse(ICON), dollar, 0L, 0L));
+                moneyPicker(activity).setMoney(10000L);
+                save(activity);
+                assertFalse(activity.isFinishing());
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                TextView message = dialog.findViewById(android.R.id.message);
+                assertEquals(activity.getString(R.string.error_input_missing_exchange_rate),
+                        message.getText().toString());
+            });
+        }
+        assertEquals(before, countTransfers());
+    }
+
+    @Test
+    public void aProcessDeathOnAnEditedTransferKeepsARateThatNoStoredRateMatches() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("USD"),
+                CurrencyManager.getCurrency("JPY")));
+        long dollars = insertWallet("Dollars", "USD");
+        long transfer = insertTransfer(dollars, mWalletB, 10000L, 5000L, 0L);
+        int before = countTransfers();
+        Intent intent = editIntent(transfer);
+        ActivityController<NewEditTransferActivity> opened =
+                Robolectric.buildActivity(NewEditTransferActivity.class, intent).setup();
+        try (ActivityController<NewEditTransferActivity> restored = afterProcessDeath(opened, intent)) {
+            NewEditTransferActivity activity = restored.get();
+            save(activity);
+            assertNull(ShadowDialog.getLatestDialog());
+            assertTrue(activity.isFinishing());
+        }
+        assertEquals(before, countTransfers());
+        Cursor row = transferRow(transfer);
+        assertEquals(dollars, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_WALLET_ID)));
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(5000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void aProcessDeathOnAnEditedTransferKeepsARateTypedBeforeIt() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("USD"),
+                CurrencyManager.getCurrency("JPY")));
+        long dollars = insertWallet("Dollars", "USD");
+        long transfer = insertTransfer(dollars, mWalletB, 10000L, 5000L, 0L);
+        int before = countTransfers();
+        Intent intent = editIntent(transfer);
+        ActivityController<NewEditTransferActivity> opened =
+                Robolectric.buildActivity(NewEditTransferActivity.class, intent).setup();
+        converterPicker(opened.get()).onExchangeRateChanged(0.7D);
+        try (ActivityController<NewEditTransferActivity> restored = afterProcessDeath(opened, intent)) {
+            NewEditTransferActivity activity = restored.get();
+            save(activity);
+            assertNull(ShadowDialog.getLatestDialog());
+            assertTrue(activity.isFinishing());
+        }
+        assertEquals(before, countTransfers());
+        Cursor row = transferRow(transfer);
+        assertEquals(10000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(MoneyScale.convert(10000L, 2, 0, 0.7D),
+                row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void aTransferWithAnAttachmentStillBeingCopiedIsNotSaved() throws IOException {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        shadowOf((Application) mContext).grantPermissions(Manifest.permission.READ_EXTERNAL_STORAGE);
+        File file = File.createTempFile("receipt", ".txt", mContext.getCacheDir());
+        try (FileOutputStream stream = new FileOutputStream(file)) {
+            stream.write(new byte[] {1, 2, 3});
+        }
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity -> {
+                walletToPicker(activity).onWalletSelected(new Wallet(mWalletC, "Bank",
+                        IconLoader.parse(ICON), CurrencyManager.getCurrency("EUR"), 0L, 0L));
+                moneyPicker(activity).setMoney(10000L);
+                attachmentPicker(activity).showPicker();
+                ShadowActivity shadow = shadowOf(activity);
+                Intent request = shadow.getNextStartedActivityForResult().intent;
+                shadow.receiveResult(request, Activity.RESULT_OK, new Intent().setData(Uri.fromFile(file)));
+                assertEquals(1, attachmentPicker(activity).getCurrentAttachments().size());
+                assertFalse(attachmentPicker(activity).areAllAttachmentsReady());
+                assertTrue(converterPicker(activity).isReady());
+                save(activity);
+                assertFalse(activity.isFinishing());
+            });
+        }
+        assertEquals(before, countTransfers());
+    }
+
     // fixtures
 
     private long insertWallet(String name, String currency) {
@@ -749,6 +1163,19 @@ public class NewEditTransferActivityTest {
             builder.append("<").append(ids[i]).append(">");
         }
         return builder.toString();
+    }
+
+    private static void forgetStoredRates(String... currencies) {
+        try {
+            Field field = CurrencyManager.getExchangeRateCache().getClass().getDeclaredField("mCacheMemory");
+            field.setAccessible(true);
+            Map<?, ?> memory = (Map<?, ?>) field.get(CurrencyManager.getExchangeRateCache());
+            for (String currency : currencies) {
+                memory.remove(currency);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     private static Date daysFromNow(int days) {
@@ -1007,6 +1434,33 @@ public class NewEditTransferActivityTest {
         }
         cursor.close();
         return ids;
+    }
+
+    private static String rateLine(String from, String to, double rate) {
+        return String.format(Locale.getDefault(), "%s -> %s: %.2f",
+                CurrencyManager.getCurrency(from).getSymbol(),
+                CurrencyManager.getCurrency(to).getSymbol(), rate);
+    }
+
+    private static ActivityController<NewEditTransferActivity> afterProcessDeath(
+            ActivityController<NewEditTransferActivity> controller, Intent intent) {
+        Bundle state = new Bundle();
+        controller.pause().saveInstanceState(state).stop().destroy();
+        return Robolectric.buildActivity(NewEditTransferActivity.class, intent)
+                .setup(throughAParcel(state));
+    }
+
+    private static Bundle throughAParcel(Bundle state) {
+        Parcel parcel = Parcel.obtain();
+        try {
+            state.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+            Bundle copy = Bundle.CREATOR.createFromParcel(parcel);
+            copy.setClassLoader(NewEditTransferActivityTest.class.getClassLoader());
+            return copy;
+        } finally {
+            parcel.recycle();
+        }
     }
 
 }

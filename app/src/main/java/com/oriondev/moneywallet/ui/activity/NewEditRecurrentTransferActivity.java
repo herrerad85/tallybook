@@ -54,6 +54,7 @@ import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
 import com.oriondev.moneywallet.ui.view.text.Validator;
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.DefaultWallet;
@@ -436,7 +437,17 @@ public class NewEditRecurrentTransferActivity extends NewEditItemActivity implem
     }
 
     private boolean validate() {
-        return mWalletFromEditText.validate() && mWalletToEditText.validate() && mConverterPicker.isReady();
+        if (mWalletFromEditText.validate() && mWalletToEditText.validate()) {
+            if (mConverterPicker.isReady()) {
+                return true;
+            }
+            ThemedDialog.buildMaterialDialog(this)
+                    .setTitle(R.string.title_error)
+                    .setMessage(R.string.error_input_missing_exchange_rate)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+        }
+        return false;
     }
 
     @Override
