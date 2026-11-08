@@ -66,6 +66,9 @@ One receipt can cover several categories. In **New transaction**, or when you ed
 
 - Tick **Repeat this budget** and pick a **Recurrence**. When a period ends, the app opens the next one with the same settings, and the old period stays under Expired.
 - One budget can cover several wallets if they share a currency.
+- An Expenses budget shows a **Category budgets** row with the limits of the category budgets inside it added up. A category budget is inside when it has the same start and end days, covers no wallet outside the Expenses budget, and has only expense categories. A Groceries budget is left out when Groceries sits under Food and a Food budget on the same wallets already covers it.
+- Tap the row to make that total the limit. To keep the limit equal to the total as category budgets change, tick **Use the category budgets inside it as the limit** in the editor.
+- An Expenses budget also counts money lent, debt payments, interest paid, savings deposits, transfer fees and transfers to a wallet outside the budget. No category budget can cover those, so a limit set from the total can show over. After you save with the box ticked, unticking it keeps the total as the limit and does not bring back the one you typed.
 
 ## Savings
 
