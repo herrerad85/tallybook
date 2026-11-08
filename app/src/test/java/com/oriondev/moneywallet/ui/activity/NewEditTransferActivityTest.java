@@ -1045,6 +1045,88 @@ public class NewEditTransferActivityTest {
         assertEquals(before, countTransfers());
     }
 
+    @Test
+    public void aCrossCurrencyModelThatReceivesNothingNeedsARate() {
+        long model = insertModel(1000L, 0L, insertWallet("Dollars", "USD"), mWalletA);
+        assertTrue(NewEditTransferActivity.modelNeedsExchangeRate(mContext, model));
+    }
+
+    @Test
+    public void aSameCurrencyModelThatReceivesNothingNeedsNoRate() {
+        long model = insertModel(1000L, 0L, mWalletA, mWalletC);
+        assertFalse(NewEditTransferActivity.modelNeedsExchangeRate(mContext, model));
+    }
+
+    @Test
+    public void aCrossCurrencyModelThatReceivesAnAmountNeedsNoRate() {
+        long model = insertModel(1000L, 920L, insertWallet("Dollars", "USD"), mWalletA);
+        assertFalse(NewEditTransferActivity.modelNeedsExchangeRate(mContext, model));
+    }
+
+    @Test
+    public void aCrossCurrencyModelThatSendsNothingNeedsNoRate() {
+        long model = insertModel(0L, 0L, insertWallet("Dollars", "USD"), mWalletA);
+        assertFalse(NewEditTransferActivity.modelNeedsExchangeRate(mContext, model));
+    }
+
+    @Test
+    public void aModelThatDoesNotExistNeedsNoRate() {
+        long model = insertModel(1000L, 0L, insertWallet("Dollars", "USD"), mWalletA);
+        assertFalse(NewEditTransferActivity.modelNeedsExchangeRate(mContext, model + 1000L));
+    }
+
+    @Test
+    public void aTransferFromAModelThatNeedsARateIsRefusedWithNoStoredRate() {
+        long model = insertModel(1000L, 0L, insertWallet("Dollars", "USD"), mWalletA);
+        assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("USD"),
+                CurrencyManager.getCurrency("EUR")));
+        Intent intent = newItemIntent(NewEditTransferActivity.TYPE_MODEL);
+        intent.putExtra(NewEditTransferActivity.MODEL_ID, model);
+        int before = countTransfers();
+        try (ActivityScenario<NewEditTransferActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertEquals(1000L, moneyPicker(activity).getCurrentMoney());
+                save(activity);
+                assertFalse(activity.isFinishing());
+                AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
+                assertNotNull(dialog);
+                TextView message = dialog.findViewById(android.R.id.message);
+                assertEquals(activity.getString(R.string.error_input_missing_exchange_rate),
+                        message.getText().toString());
+            });
+        }
+        assertEquals(before, countTransfers());
+    }
+
+    @Test
+    public void aTransferFromAModelThatNeedsARateSavesTheConvertedAmountWithAStoredRate() {
+        long dollars = insertWallet("Dollars", "USD");
+        long model = insertModel(1000L, 0L, dollars, mWalletA);
+        Intent intent = newItemIntent(NewEditTransferActivity.TYPE_MODEL);
+        intent.putExtra(NewEditTransferActivity.MODEL_ID, model);
+        int before = countTransfers();
+        try {
+            CurrencyManager.getExchangeRateCache().setExchangeRate("USD", 1D, System.currentTimeMillis());
+            CurrencyManager.getExchangeRateCache().setExchangeRate("EUR", 0.92D, System.currentTimeMillis());
+            try (ActivityScenario<NewEditTransferActivity> scenario = ActivityScenario.launch(intent)) {
+                scenario.onActivity(activity -> {
+                    save(activity);
+                    assertNull(ShadowDialog.getLatestDialog());
+                    assertTrue(activity.isFinishing());
+                });
+            }
+        } finally {
+            forgetStoredRates("USD", "EUR");
+        }
+        assertEquals(before + 1, countTransfers());
+        Cursor row = newestTransfer();
+        assertEquals(dollars, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_WALLET_ID)));
+        assertEquals(mWalletA, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_WALLET_ID)));
+        assertEquals(1000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
+        assertEquals(1000L * 92L / 100L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
+        row.close();
+    }
+
     // fixtures
 
     private long insertWallet(String name, String currency) {

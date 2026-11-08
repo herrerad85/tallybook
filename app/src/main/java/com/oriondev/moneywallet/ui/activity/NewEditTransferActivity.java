@@ -731,6 +731,18 @@ public class NewEditTransferActivity extends NewEditItemActivity  implements Cur
         return null;
     }
 
+    public static boolean modelNeedsExchangeRate(Context context, long modelId) {
+        String selection = Contract.TransferModel.ID + " = ? AND (" + Contract.TRANSFER_MODEL_NEEDS_EXCHANGE_RATE_SELECTION + ")";
+        String[] selectionArgs = new String[] {String.valueOf(modelId)};
+        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_TRANSFER_MODELS, new String[] {Contract.TransferModel.ID}, selection, selectionArgs, null);
+        if (cursor != null) {
+            boolean needsRate = cursor.moveToFirst();
+            cursor.close();
+            return needsRate;
+        }
+        return false;
+    }
+
     @Override
     public void onConversionRateChanged(String tag, CurrencyUnit currencyUnit1, CurrencyUnit currencyUnit2, Double conversionRate) {
         if (currencyUnit1 != null && currencyUnit2 != null && !currencyUnit1.equals(currencyUnit2)) {

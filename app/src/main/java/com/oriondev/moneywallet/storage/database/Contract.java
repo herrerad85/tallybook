@@ -324,6 +324,14 @@ public class Contract {
             Schema.BudgetWallet.BUDGET + " = " + Schema.Budget.TABLE + "." + Schema.Budget.ID + " AND bw." +
             Schema.BudgetWallet.DELETED + " = 0 AND w." + Schema.Wallet.DELETED + " = 0) = 1";
 
+    public static final String TRANSFER_NEEDS_EXCHANGE_RATE_SELECTION =
+            RecurrentTransfer.MONEY_FROM + " != 0 AND " + RecurrentTransfer.MONEY_TO + " = 0 AND " +
+            RecurrentTransfer.WALLET_FROM_CURRENCY + " != " + RecurrentTransfer.WALLET_TO_CURRENCY;
+
+    public static final String TRANSFER_MODEL_NEEDS_EXCHANGE_RATE_SELECTION =
+            TransferModel.MONEY_FROM + " != 0 AND " + TransferModel.MONEY_TO + " = 0 AND " +
+            TransferModel.WALLET_FROM_CURRENCY + " != " + TransferModel.WALLET_TO_CURRENCY;
+
     /**
      * Selection over the raw budgets table naming the budgets of one chain that come after a given
      * one. Takes three arguments: the id of the budget asking, the uuid of the budget its chain

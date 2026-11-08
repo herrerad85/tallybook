@@ -43,6 +43,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver;
 import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.storage.database.Contract;
@@ -183,6 +184,7 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, getItemId());
+                        Context appContext = context.getApplicationContext();
                         deleteItemInBackground(uri, e -> {
                             if (e.getErrorCode() == Contract.ErrorCode.WALLET_USED_IN_TRANSFER) {
                                 ThemedDialog.buildMaterialDialog(requireActivity())
@@ -191,7 +193,7 @@ public class WalletItemFragment extends SecondaryPanelFragment implements Loader
                                         .setPositiveButton(android.R.string.ok, null)
                                         .show();
                             }
-                        });
+                        }, () -> RecurrenceBroadcastReceiver.scheduleRecurrenceTask(appContext));
                     }
 
                 })

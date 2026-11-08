@@ -840,6 +840,11 @@
         <item quantity="one">"%d recurring transaction added"</item>
         <item quantity="other">"%d recurring transactions added"</item>
     </plurals>
+    <string name="notification_title_recurrence_needs_rate">"A recurring transfer needs an exchange rate"</string>
+    <plurals name="notification_title_recurrences_need_rate">
+        <item quantity="one">"%d recurring transfer needs an exchange rate"</item>
+        <item quantity="other">"%d recurring transfers need an exchange rate"</item>
+    </plurals>
     <string name="notification_text_recurrence_transfer">"Transfer: %1$s -> %2$s"</string>
 
     <string name="widget_label">"Wallet balance"</string>

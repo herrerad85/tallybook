@@ -108,6 +108,10 @@ public class TransferModelListFragment extends CursorListFragment implements Tra
 
     @Override
     public void onModelAddClick(long modelId) {
+        if (NewEditTransferActivity.modelNeedsExchangeRate(getActivity(), modelId)) {
+            onModelEditClick(modelId);
+            return;
+        }
         Uri uri = NewEditTransferActivity.insertTransferFromModel(getActivity(), modelId);
         if (uri != null) {
             Fragment parentFragment = getParentFragment();

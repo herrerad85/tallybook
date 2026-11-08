@@ -30,10 +30,13 @@ import android.database.Cursor
 import android.net.Uri
 import android.text.TextUtils
 
+import androidx.core.app.NotificationManagerCompat
+
 import com.oriondev.moneywallet.service.RecurrenceHandlerIntentService
 import com.oriondev.moneywallet.storage.database.Contract
 import com.oriondev.moneywallet.storage.database.DataContentProvider
 import com.oriondev.moneywallet.storage.database.SyncContentProvider
+import com.oriondev.moneywallet.ui.notification.NotificationContract
 import com.oriondev.moneywallet.utils.DateUtils
 
 import java.util.Date
@@ -46,7 +49,8 @@ class RecurrenceBroadcastReceiver : BroadcastReceiver() {
     companion object {
 
         @JvmStatic
-        fun scheduleRecurrenceTask(context: Context) {
+        @JvmOverloads
+        fun scheduleRecurrenceTask(context: Context, includeHeld: Boolean = true) {
             cancelPendingIntent(context)
             val contentResolver: ContentResolver? = context.contentResolver
             val nextOccurrence1: Date? = getMinNextOccurrence(contentResolver,
@@ -54,7 +58,7 @@ class RecurrenceBroadcastReceiver : BroadcastReceiver() {
                     Contract.RecurrentTransaction.NEXT_OCCURRENCE + " IS NOT NULL")
             val nextOccurrence2: Date? = getMinNextOccurrence(contentResolver,
                     DataContentProvider.CONTENT_RECURRENT_TRANSFERS, Contract.RecurrentTransfer.NEXT_OCCURRENCE,
-                    Contract.RecurrentTransfer.NEXT_OCCURRENCE + " IS NOT NULL")
+                    Contract.RecurrentTransfer.NEXT_OCCURRENCE + " IS NOT NULL" + if (includeHeld) "" else " AND NOT (" + Contract.TRANSFER_NEEDS_EXCHANGE_RATE_SELECTION + " AND DATE(" + Contract.RecurrentTransfer.NEXT_OCCURRENCE + ") <= DATE('now', 'localtime'))")
             // A repeating budget opens its next period the day after the current one ends, and it is
             // the only thing that wakes the task for a user who has no recurring transaction at all.
             // This asks the budgets table itself and not DataContentProvider, whose budget rows carry
@@ -68,9 +72,12 @@ class RecurrenceBroadcastReceiver : BroadcastReceiver() {
                 System.out.println("[ALARM] Next occurrence is at: " + nextOccurrence.toString())
                 if (DateUtils.isBeforeNow(nextOccurrence)) {
                     startBackgroundTask(context)
-                } else {
-                    schedulePendingIntent(context, nextOccurrence)
+                    return
                 }
+                schedulePendingIntent(context, nextOccurrence)
+            }
+            if (includeHeld) {
+                NotificationManagerCompat.from(context).cancel(NotificationContract.NOTIFICATION_ID_RECURRENCE_NEEDS_RATE)
             }
         }
 

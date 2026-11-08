@@ -34,6 +34,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.JobIntentService;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver;
@@ -70,6 +71,7 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
 
     private int mPostedCount;
     private String mFirstPostedLabel;
+    private List<String> mNeedsRateLabels;
 
     public static void enqueueWork(Context context, Intent intent) {
         enqueueWork(context, RecurrenceHandlerIntentService.class, JOB_ID, intent);
@@ -81,12 +83,18 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
         // insert itself, so only the rows that came due afterwards are counted here
         mPostedCount = 0;
         mFirstPostedLabel = null;
+        mNeedsRateLabels = new ArrayList<>();
         addMissingRecurrentTransactionOccurrences();
         addMissingRecurrentTransferOccurrences();
         addMissingBudgetPeriods();
-        RecurrenceBroadcastReceiver.scheduleRecurrenceTask(this);
+        RecurrenceBroadcastReceiver.scheduleRecurrenceTask(this, false);
         if (mPostedCount > 0) {
             notifyPostedOccurrences();
+        }
+        if (mNeedsRateLabels.isEmpty()) {
+            NotificationManagerCompat.from(this).cancel(NotificationContract.NOTIFICATION_ID_RECURRENCE_NEEDS_RATE);
+        } else {
+            notifyRecurrencesNeedRate();
         }
     }
 
@@ -138,6 +146,37 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
                             .build());
         }
         notificationManager.notify(NotificationContract.NOTIFICATION_ID_RECURRENCE, builder.build());
+    }
+
+    private void notifyRecurrencesNeedRate() {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            return;
+        }
+        int total = mNeedsRateLabels.size();
+        boolean locked = PreferenceManager.getCurrentLockMode() != LockMode.NONE;
+        String title = total == 1 ? getString(R.string.notification_title_recurrence_needs_rate)
+                : getResources().getQuantityString(R.plurals.notification_title_recurrences_need_rate, total, total);
+        String label = total == 1 && !locked ? mNeedsRateLabels.get(0) : null;
+        Intent intent = new Intent(this, LauncherActivity.class);
+        PendingIntent pending = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationContract.NOTIFICATION_CHANNEL_RECURRENCE)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setAutoCancel(true)
+                .setContentIntent(pending);
+        if (!TextUtils.isEmpty(label)) {
+            builder.setContentText(label)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(label));
+        }
+        if (!locked) {
+            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                    .setPublicVersion(new NotificationCompat.Builder(this, NotificationContract.NOTIFICATION_CHANNEL_RECURRENCE)
+                            .setSmallIcon(R.drawable.ic_notification)
+                            .setContentTitle(title)
+                            .build());
+        }
+        notificationManager.notify(NotificationContract.NOTIFICATION_ID_RECURRENCE_NEEDS_RATE, builder.build());
     }
 
     /**
@@ -290,7 +329,7 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
     private void addMissingRecurrentTransferOccurrences() {
         Uri uri = DataContentProvider.CONTENT_RECURRENT_TRANSFERS;
         String selection = Contract.RecurrentTransfer.NEXT_OCCURRENCE + " IS NOT NULL AND DATE(" + Contract.RecurrentTransfer.NEXT_OCCURRENCE + ") <= DATE('now', 'localtime')";
-        Cursor cursor = getContentResolver().query(uri, null, selection, null, null);
+        Cursor cursor = getContentResolver().query(uri, null, selection + " AND NOT (" + Contract.TRANSFER_NEEDS_EXCHANGE_RATE_SELECTION + ")", null, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 // get basic information about the recurrence entity
@@ -333,6 +372,16 @@ public class RecurrenceHandlerIntentService extends JobIntentService {
                 contentValues.put(Contract.RecurrentTransfer.NEXT_OCCURRENCE, update.getNextOccurrence() != null ? DateUtils.getSQLDateString(update.getNextOccurrence()) : null);
                 Uri contentUri = ContentUris.withAppendedId(DataContentProvider.CONTENT_RECURRENT_TRANSFERS, recurrenceId);
                 getContentResolver().update(contentUri, contentValues, null, null);
+            }
+            cursor.close();
+        }
+        cursor = getContentResolver().query(uri, null, selection + " AND (" + Contract.TRANSFER_NEEDS_EXCHANGE_RATE_SELECTION + ")", null, null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                mNeedsRateLabels.add(labelOf(cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransfer.DESCRIPTION)),
+                        getString(R.string.notification_text_recurrence_transfer,
+                                cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransfer.WALLET_FROM_NAME)),
+                                cursor.getString(cursor.getColumnIndexOrThrow(Contract.RecurrentTransfer.WALLET_TO_NAME)))));
             }
             cursor.close();
         }

@@ -143,6 +143,10 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
      * failure is rethrown on the main thread.
      */
     protected void deleteItemInBackground(Uri uri, @Nullable Consumer<SQLiteDataException> onError) {
+        deleteItemInBackground(uri, onError, null);
+    }
+
+    protected void deleteItemInBackground(Uri uri, @Nullable Consumer<SQLiteDataException> onError, @Nullable Runnable onDeleted) {
         Context context = getContext();
         if (context == null) {
             return;
@@ -156,6 +160,9 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
                 resolver.delete(uri, null, null);
             } catch (SQLiteDataException e) {
                 failure = e;
+            }
+            if (failure == null && onDeleted != null) {
+                onDeleted.run();
             }
             SQLiteDataException error = failure;
             sMainHandler.post(() -> {
