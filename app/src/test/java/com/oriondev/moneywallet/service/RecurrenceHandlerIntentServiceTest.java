@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -470,6 +471,25 @@ public class RecurrenceHandlerIntentServiceTest {
         assertEquals(mContext.getString(R.string.notification_text_recurrence_transfer, "Dollars", "Euros"), text(needsRateNotification()));
     }
 
+    @Test
+    public void everyTransferADueRecurrencePostsIsLinkedToThatRecurrence() {
+        long decoy = insertRecurrentTransfer("Decoy", mWalletB, mWalletA, 500L, 500L, "FREQ=DAILY");
+        long id = insertRecurrentTransfer("Rent", mWalletA, mWalletB, 1000L, 1000L, "FREQ=DAILY");
+        makeDue(id, 3, false);
+        List<String> expected = dailyRows(readString(recurrentTransferUri(id), Contract.RecurrentTransfer.NEXT_OCCURRENCE), 1000L);
+        runTask();
+        assertTrue(expected.size() >= 2);
+        assertEquals(expected, postedTransfers(mWalletA));
+        assertTrue(postedTransfers(mWalletB).isEmpty());
+        assertNotEquals(1L, id);
+        assertNotEquals(decoy, id);
+        List<Long> recurrences = storedTransferRecurrences();
+        assertEquals(expected.size(), recurrences.size());
+        for (Long recurrence : recurrences) {
+            assertEquals(Long.valueOf(id), recurrence);
+        }
+    }
+
     private static List<String> dailyRows(String from, long moneyTo) {
         List<String> rows = new ArrayList<>();
         String today = DateUtils.getSQLDateString(new Date());
@@ -571,6 +591,20 @@ public class RecurrenceHandlerIntentServiceTest {
             cursor.close();
         }
         return rows;
+    }
+
+    private List<Long> storedTransferRecurrences() {
+        Cursor cursor = SplitLedger.database(mContext).rawQuery("SELECT transaction_recurrence FROM transfers", null);
+        assertNotNull(cursor);
+        List<Long> recurrences = new ArrayList<>();
+        try {
+            while (cursor.moveToNext()) {
+                recurrences.add(cursor.isNull(0) ? null : cursor.getLong(0));
+            }
+        } finally {
+            cursor.close();
+        }
+        return recurrences;
     }
 
     private String plural(int count) {

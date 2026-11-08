@@ -1978,6 +1978,7 @@ import java.util.function.Supplier;
         // the uuid of the transaction to be uniquely identified across different devices
         String transferUUID = UUID.randomUUID().toString();
         long lastEdit = System.currentTimeMillis();
+        Long linkedRecurrenceId = null;
         if (contentValues.containsKey(Contract.Transfer.RECURRENCE_ID)) {
             long recurrenceId = contentValues.getAsLong(Contract.Transfer.RECURRENCE_ID);
             String table = Schema.RecurrentTransfer.TABLE;
@@ -1991,6 +1992,7 @@ import java.util.function.Supplier;
                     Date date = DateUtils.getDateFromSQLDateTimeString(contentValues.getAsString(Contract.Transfer.DATE));
                     transferUUID = getRecurrentItemUUID(recurrenceUUID, date);
                     lastEdit = date.getTime();
+                    linkedRecurrenceId = recurrenceId;
                 }
                 cursor.close();
             }
@@ -2068,6 +2070,7 @@ import java.util.function.Supplier;
         cv.put(Schema.Transfer.NOTE, contentValues.getAsString(Contract.Transfer.NOTE));
         cv.put(Schema.Transfer.PLACE, contentValues.getAsLong(Contract.Transfer.PLACE_ID));
         cv.put(Schema.Transfer.EVENT, contentValues.getAsLong(Contract.Transfer.EVENT_ID));
+        cv.put(Schema.Transfer.RECURRENCE, linkedRecurrenceId);
         cv.put(Schema.Transfer.CONFIRMED, contentValues.getAsBoolean(Contract.Transfer.CONFIRMED));
         cv.put(Schema.Transfer.COUNT_IN_TOTAL, contentValues.getAsBoolean(Contract.Transfer.COUNT_IN_TOTAL));
         cv.put(Schema.Transfer.TAG, contentValues.getAsString(Contract.Transfer.TAG));
@@ -5338,6 +5341,7 @@ import java.util.function.Supplier;
                     cvt.put(Schema.Transfer.NOTE, contentValues.getAsString(Contract.RecurrentTransfer.NOTE));
                     cvt.put(Schema.Transfer.PLACE, contentValues.getAsLong(Contract.RecurrentTransfer.PLACE_ID));
                     cvt.put(Schema.Transfer.EVENT, contentValues.getAsLong(Contract.RecurrentTransfer.EVENT_ID));
+                    cvt.put(Schema.Transfer.RECURRENCE, id);
                     cvt.put(Schema.Transfer.CONFIRMED, contentValues.getAsBoolean(Contract.RecurrentTransfer.CONFIRMED));
                     cvt.put(Schema.Transfer.COUNT_IN_TOTAL, contentValues.getAsBoolean(Contract.RecurrentTransfer.COUNT_IN_TOTAL));
                     cvt.put(Schema.Transfer.TAG, contentValues.getAsString(Contract.RecurrentTransfer.TAG));

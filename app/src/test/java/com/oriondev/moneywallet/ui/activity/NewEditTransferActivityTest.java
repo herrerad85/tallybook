@@ -39,6 +39,7 @@ import com.oriondev.moneywallet.picker.PlacePicker;
 import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.database.TransferContentValuesBuilder;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
@@ -1125,6 +1126,16 @@ public class NewEditTransferActivityTest {
         assertEquals(1000L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_MONEY)));
         assertEquals(1000L * 92L / 100L, row.getLong(row.getColumnIndex(Contract.Transfer.TRANSACTION_TO_MONEY)));
         row.close();
+    }
+
+    @Test
+    public void aTransferStoredWithoutARecurrenceKeepsItsRecurrenceEmpty() {
+        long transfer = insertTransfer(mWalletA, mWalletB, 10000L, 10000L, 0L);
+        Cursor cursor = SplitLedger.database(mContext).rawQuery(
+                "SELECT transaction_recurrence FROM transfers WHERE transfer_id = " + transfer, null);
+        assertTrue(cursor.moveToFirst());
+        assertTrue(cursor.isNull(0));
+        cursor.close();
     }
 
     // fixtures
