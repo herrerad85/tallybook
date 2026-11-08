@@ -72,7 +72,7 @@ public class PlaceMultiPanelFragment extends MultiPanelCursorListItemFragment im
                     Contract.Place.ICON,
                     Contract.Place.ADDRESS
             };
-            String sortOrder = Contract.Place.NAME + " DESC";
+            String sortOrder = Contract.Place.NAME + " ASC";
             return new CursorLoader(activity, uri, projection, null, null, sortOrder);
         }
         return null;
