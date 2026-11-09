@@ -168,6 +168,39 @@ public class DebtCardButtonsTest {
                 assertEquals(View.GONE, card.findViewById(R.id.interest_text_view).getVisibility()));
     }
 
+    @Test
+    public void aDebtStillBeingPaidOffSaysWhatIsLeftToSettle() {
+        onCard(Contract.DebtType.DEBT, 10000L, -2500L, false, 1, (activity, card) ->
+                assertProgressLine(card, R.string.relative_string_money_to_settle_debt, 7500L));
+    }
+
+    @Test
+    public void aCreditStillBeingRepaidSaysWhatIsLeftToReceive() {
+        onCard(Contract.DebtType.CREDIT, 10000L, 2500L, false, 1, (activity, card) ->
+                assertProgressLine(card, R.string.relative_string_money_to_collect_credit, 7500L));
+    }
+
+    @Test
+    public void aDebtPaidOffSaysTheDebtIsCompleted() {
+        onCard(Contract.DebtType.DEBT, 10000L, -10000L, true, 1, (activity, card) ->
+                assertEquals(card.getContext().getString(R.string.relative_string_debt_completed),
+                        progressLine(card)));
+    }
+
+    @Test
+    public void aCreditRepaidSaysTheCreditIsCompleted() {
+        onCard(Contract.DebtType.CREDIT, 10000L, 10000L, true, 1, (activity, card) ->
+                assertEquals(card.getContext().getString(R.string.relative_string_credit_completed),
+                        progressLine(card)));
+    }
+
+    @Test
+    public void aCreditRepaidPastItsTotalSaysTheCreditIsCompleted() {
+        onCard(Contract.DebtType.CREDIT, 10000L, 12000L, true, 1, (activity, card) ->
+                assertEquals(card.getContext().getString(R.string.relative_string_credit_completed),
+                        progressLine(card)));
+    }
+
     // ---- what each button sends the editor --------------------------------------------------
 
     @Test
@@ -305,6 +338,17 @@ public class DebtCardButtonsTest {
         String money = MoneyFormatter.getInstance().getNotTintedString(
                 CurrencyManager.getCurrency("EUR"), interest);
         assertEquals(card.getContext().getString(format, money), line.getText().toString());
+    }
+
+    private static String progressLine(View card) {
+        TextView line = card.findViewById(R.id.money_progress_text_view);
+        return line.getText().toString();
+    }
+
+    private static void assertProgressLine(View card, int format, long remaining) {
+        String money = MoneyFormatter.getInstance().getNotTintedString(
+                CurrencyManager.getCurrency("EUR"), remaining);
+        assertEquals(card.getContext().getString(format, money), progressLine(card));
     }
 
     private static void assertEditorOpened(BackupListActivity activity, int debtAction) {

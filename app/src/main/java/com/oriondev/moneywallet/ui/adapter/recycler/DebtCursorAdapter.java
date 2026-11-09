@@ -163,14 +163,19 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         }
         holder.mProgressBar.setMaxValue(target);
         holder.mProgressBar.setProgressValue(progress);
+        boolean credit = debtType == Contract.DebtType.CREDIT;
         if (progress < target) {
             Context context = holder.mProgressTextView.getContext();
             long remaining = Math.abs(target - progress);
             String differenceText = mMoneyFormatter.getNotTintedString(currency, remaining);
-            String progressText = context.getString(R.string.relative_string_money_to_settle_debt, differenceText);
-            holder.mProgressTextView.setText(progressText);
+            int format = credit
+                    ? R.string.relative_string_money_to_collect_credit
+                    : R.string.relative_string_money_to_settle_debt;
+            holder.mProgressTextView.setText(context.getString(format, differenceText));
         } else {
-            holder.mProgressTextView.setText(R.string.relative_string_debt_completed);
+            holder.mProgressTextView.setText(credit
+                    ? R.string.relative_string_credit_completed
+                    : R.string.relative_string_debt_completed);
         }
         long interest = Math.abs(cursor.getLong(mIndexInterest));
         if (interest == 0L || debtType == null) {

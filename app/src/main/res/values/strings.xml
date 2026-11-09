@@ -375,10 +375,12 @@
     <string name="relative_string_will_end_on">"Will end on: %s"</string>
     <string name="relative_string_money_to_settle_debt">"%s left to settle this debt"</string>
     <string name="relative_string_debt_completed">"This debt has been completed"</string>
+    <string name="relative_string_money_to_collect_credit">"%s left to receive"</string>
+    <string name="relative_string_credit_completed">"This credit has been completed"</string>
     <string name="relative_string_debt_interest_paid">"%s interest paid"</string>
     <string name="relative_string_credit_interest_received">"%s interest received"</string>
     <string name="relative_string_expired_on">"Expired on: %s"</string>
-    <string name="relative_string_will_expire_on">"Will expired on: %s"</string>
+    <string name="relative_string_will_expire_on">"Will expire on: %s"</string>
     <string name="relative_string_version_name">"Version %s"</string>
 
     <string name="adapter_current_money">"Current:"</string>
@@ -453,7 +455,7 @@
     <string name="message_backend_create_folder">"Insert the name of the folder that you want to create"</string>
     <string name="message_permission_required_external_storage">"The permission to access the external storage is required in order to read and write files. Please enable it."</string>
     <string name="message_permission_required_not_granted">"Permission denied. Please go to application setting and enable it."</string>
-    <string name="message_backup_create">"Are you sure you want create a new backup? The operation cannot be stopped. If you want you can set a password to protect the backup file."</string>
+    <string name="message_backup_create">"Are you sure you want to create a new backup? The operation cannot be stopped. If you want you can set a password to protect the backup file."</string>
     <string name="message_backup_restore_standard">"Are you sure you want to restore this backup? All current data will be lost and the operation cannot be stopped. Proceed?"</string>
     <string name="message_backup_restore_protected">"Are you sure you want to restore this backup? All current data will be lost and the operation cannot be stopped. The backup is protected by a password, please enter it and proceed."</string>
     <string name="message_backup_restore_legacy">"Are you sure you want to restore this backup? All current data will be lost and the operation cannot be stopped. WARNING!: this is a legacy backup and the application may fail to import it. Proceed?"</string>
