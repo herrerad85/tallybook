@@ -288,7 +288,7 @@
     <string name="relative_string_money_to_settle_debt">"%s bu borcu kapatmak için kaldı "</string>
     <string name="relative_string_debt_completed"> "Bu borç tamamlandı" </string>
     <string name="relative_string_expired_on"> "Sona erme tarihi: %s" </string>
-    <string name="relative_string_will_expire_on"> "Süresi dolmuş: %s" </string>
+    <string name="relative_string_will_expire_on"> "Süresi dolacak: %s" </string>
     <string name="relative_string_version_name"> "%s Sürüm" </string>
 
     <string name="adapter_current_money"> "Geçerli:" </string>
