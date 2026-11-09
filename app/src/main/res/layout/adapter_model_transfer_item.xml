@@ -40,7 +40,8 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/material_component_lists_card_top_layout_height">
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/material_component_lists_card_top_layout_height">
 
             <ImageView
                 android:id="@+id/avatar_image_view"
@@ -50,10 +51,17 @@
                 android:layout_marginStart="@dimen/material_component_lists_card_avatar_start_margin"
                 android:layout_marginTop="@dimen/material_component_lists_card_avatar_top_margin"
                 android:contentDescription="@string/description_transfer_icon"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/avatar_guideline"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:src="@mipmap/ic_launcher" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/avatar_guideline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="@dimen/material_component_lists_card_top_layout_height" />
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/text_guideline"
@@ -71,9 +79,9 @@
                 android:layout_marginRight="@dimen/material_component_lists_two_line_primary_text_end_margin"
                 android:layout_marginStart="@dimen/material_component_lists_two_line_primary_text_start_margin"
                 android:textSize="@dimen/material_component_lists_two_line_with_avatar_primary_text_size"
-                app:layout_constraintBottom_toTopOf="@+id/text_guideline"
                 app:layout_constraintEnd_toStartOf="@+id/money_text_view"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/avatar_image_view"
                 app:theme_textColor="textColorPrimary"
                 tools:text="This is the primary text" />
 
@@ -84,10 +92,17 @@
                 android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
                 android:layout_marginRight="@dimen/material_component_lists_two_line_primary_text_end_margin"
                 android:textSize="@dimen/material_component_lists_two_line_with_avatar_primary_text_size"
-                app:layout_constraintBottom_toTopOf="@+id/text_guideline"
+                app:layout_constraintBaseline_toBaselineOf="@+id/primary_text_view"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:theme_textColor="textColorPrimary"
                 tools:text="€ 500.00" />
+
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/title_barrier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:barrierDirection="bottom"
+                app:constraint_referenced_ids="primary_text_view,money_text_view,text_guideline" />
 
             <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
                 android:id="@+id/secondary_text_view"
@@ -99,9 +114,16 @@
                 android:layout_marginStart="@dimen/material_component_lists_two_line_primary_text_start_margin"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_guideline"
+                app:layout_constraintTop_toBottomOf="@+id/title_barrier"
                 app:theme_textColor="textColorSecondary"
                 tools:text="Wallet 1 -> Wallet 2" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="5dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/secondary_text_view" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
