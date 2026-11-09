@@ -261,6 +261,14 @@ public class TransactionEditorRules implements Serializable {
     }
 
     /**
+     * Whether a save is refused for having no amount: an amount of nothing on screen, unless the
+     * row being edited is already stored at nothing.
+     */
+    public static boolean isAmountMissing(long money, Long storedMoney) {
+        return money == 0L && (storedMoney == null || storedMoney != 0L);
+    }
+
+    /**
      * The ceiling is in the saving's own currency. A row sitting in a wallet held in another one
      * is not comparable with it as it stands and this screen converts nowhere else, so the check
      * steps aside instead of comparing amounts that do not mean the same thing. A saving that

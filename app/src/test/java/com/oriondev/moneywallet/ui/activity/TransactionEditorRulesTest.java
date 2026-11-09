@@ -336,6 +336,26 @@ public class TransactionEditorRulesTest {
         assertFalse(TransactionEditorRules.isWithinLimit(76001L, 76000L));
     }
 
+    @Test
+    public void aNewRowAtNothingIsMissingItsAmount() {
+        assertTrue(TransactionEditorRules.isAmountMissing(0L, null));
+    }
+
+    @Test
+    public void aRowStoredAtNothingAndKeptAtNothingIsNotMissingItsAmount() {
+        assertFalse(TransactionEditorRules.isAmountMissing(0L, 0L));
+    }
+
+    @Test
+    public void aStoredRowSetToNothingIsMissingItsAmount() {
+        assertTrue(TransactionEditorRules.isAmountMissing(0L, 2500L));
+    }
+
+    @Test
+    public void aNewRowWithAnAmountIsNotMissingIt() {
+        assertFalse(TransactionEditorRules.isAmountMissing(100L, null));
+    }
+
     // ---- when the ceiling applies at all ---------------------------------------------------
 
     @Test

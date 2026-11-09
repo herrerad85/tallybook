@@ -328,6 +328,7 @@
     <string name="error_input_date_range_not_valid">"Not a valid date range"</string>
     <string name="error_input_missing_budget_type">"Select a budget type"</string>
     <string name="error_input_missing_wallet">"Select a wallet"</string>
+    <string name="error_input_missing_amount">"Enter an amount"</string>
     <string name="error_input_missing_multiple_wallets">"Select at least one wallet"</string>
     <string name="error_input_invalid_multiple_wallets">"Wallets must have the same currency"</string>
     <string name="error_input_missing_exchange_rate">"Set an exchange rate above zero"</string>

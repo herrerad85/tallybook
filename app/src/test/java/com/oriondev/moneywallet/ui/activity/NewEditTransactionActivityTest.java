@@ -279,7 +279,7 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
-    public void anAmountOfNothingIsNeverRefused() {
+    public void aWithdrawalOnASavingUnderZeroIsRefusedOverTheCeilingAtOneCentAndAsMissingAtNothing() {
         long saving = insertSaving(0L, 0L, mEuroWallet);
         insertSavingRow(saving, 5000L, daysFromNow(-1), Contract.CategoryTag.SAVING_WITHDRAW, true, mEuroWallet);
         Intent intent = savingIntent(NewEditTransactionActivity.SAVING_WITHDRAW);
@@ -299,11 +299,10 @@ public class NewEditTransactionActivityTest {
                                 CurrencyManager.getCurrency("EUR"), 0L)),
                         message.getText().toString());
                 moneyPicker(activity).setMoney(0L);
-                save(activity);
-                assertTrue(activity.isFinishing());
+                assertRefused(activity, R.string.error_input_missing_amount);
             });
         }
-        assertEquals(before + 1, countTransactions());
+        assertEquals(before, countTransactions());
     }
 
     @Test
@@ -569,22 +568,122 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
-    public void withdrawEverythingOnASavingUnderZeroOpensOnNothingAndWritesNothingNegative() {
+    public void withdrawEverythingOnASavingUnderZeroOpensOnNothingAndIsRefusedAsMissingWithoutCompletingTheSaving() {
         long saving = insertSaving(0L, 0L, mEuroWallet);
         insertSavingRow(saving, 5000L, daysFromNow(1), Contract.CategoryTag.SAVING_WITHDRAW, true, mEuroWallet);
         Intent intent = savingIntent(NewEditTransactionActivity.SAVING_WITHDRAW_EVERYTHING);
         intent.putExtra(NewEditTransactionActivity.SAVING_ID, saving);
+        int before = countTransactions();
         try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 // the lowest from now is minus 5000; the prefill is held at nothing
                 assertEquals(0L, moneyPicker(activity).getCurrentMoney());
+                assertRefused(activity, R.string.error_input_missing_amount);
+            });
+        }
+        assertEquals(before, countTransactions());
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_SAVINGS, saving);
+        try (Cursor cursor = mResolver.query(uri, new String[] {Contract.Saving.COMPLETE}, null, null, null)) {
+            assertTrue(cursor.moveToFirst());
+            assertEquals(0, cursor.getInt(0));
+        }
+    }
+
+    @Test
+    public void aNewTransactionAtNothingIsRefusedAsMissingItsAmountAndSavedOnceItHasOne() {
+        long categoryId = insertCategory();
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        intent.putExtra(NewEditTransactionActivity.WALLET_ID, mEuroWallet);
+        int before = countTransactions();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                categoryPicker(activity).setCategory(new Category(categoryId, "Groceries",
+                        IconLoader.parse(ICON), Contract.CategoryType.EXPENSE, null));
+                assertRefused(activity, R.string.error_input_missing_amount);
+                moneyPicker(activity).setMoney(1L);
                 save(activity);
                 assertTrue(activity.isFinishing());
             });
         }
-        Cursor row = newestTransaction();
-        assertEquals(0L, row.getLong(row.getColumnIndex(Contract.Transaction.MONEY)));
-        row.close();
+        assertEquals(before + 1, countTransactions());
+    }
+
+    @Test
+    public void aNewDebtPaymentAtNothingIsRefusedAsMissingItsAmount() {
+        long debt = insertDebt(mEuroWallet);
+        int before = countTransactions();
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(
+                debtIntent(debt, NewEditTransactionActivity.DEBT_PAY))) {
+            scenario.onActivity(activity -> assertRefused(activity, R.string.error_input_missing_amount));
+        }
+        assertEquals(before, countTransactions());
+    }
+
+    @Test
+    public void aStoredRowSetToNothingIsRefusedAsMissingItsAmount() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.PLAIN_CASH))) {
+            scenario.onActivity(activity -> {
+                moneyPicker(activity).setMoney(0L);
+                assertRefused(activity, R.string.error_input_missing_amount);
+            });
+        }
+        assertEquals(1100L, moneyOf(SplitLedger.PLAIN_CASH));
+    }
+
+    @Test
+    public void aRowStoredAtNothingCanStillHaveItsDescriptionCorrected() {
+        long row = insertSavingRow(0L, daysFromNow(-1), Contract.CategoryTag.SAVING_DEPOSIT, true, mEuroWallet);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(row))) {
+            scenario.onActivity(activity -> {
+                ((EditText) activity.findViewById(R.id.description_edit_text)).setText("Corrected");
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, row);
+        try (Cursor cursor = mResolver.query(uri, new String[] {Contract.Transaction.DESCRIPTION}, null, null, null)) {
+            assertTrue(cursor.moveToFirst());
+            assertEquals("Corrected", cursor.getString(0));
+        }
+        assertEquals(0L, moneyOf(row));
+    }
+
+    @Test
+    public void aWithdrawalStoredAtNothingOnASavingUnderZeroCanStillBeSaved() {
+        long saving = insertSaving(0L, 0L, mEuroWallet);
+        insertSavingRow(saving, 5000L, daysFromNow(-1), Contract.CategoryTag.SAVING_WITHDRAW, true, mEuroWallet);
+        long row = insertSavingRow(saving, 0L, daysFromNow(-1), Contract.CategoryTag.SAVING_WITHDRAW, true, mEuroWallet);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(row))) {
+            scenario.onActivity(activity -> {
+                ((EditText) activity.findViewById(R.id.description_edit_text)).setText("Corrected");
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(0L, moneyOf(row));
+    }
+
+    @Test
+    public void aWithdrawalStoredAtNothingOnASavingUnderZeroCanStillBeMovedEarlier() {
+        long saving = insertSaving(0L, 0L, mEuroWallet);
+        insertSavingRow(saving, 5000L, daysFromNow(-1), Contract.CategoryTag.SAVING_WITHDRAW, true, mEuroWallet);
+        long row = insertSavingRow(saving, 0L, daysFromNow(-1), Contract.CategoryTag.SAVING_WITHDRAW, true, mEuroWallet);
+        Date moved = daysFromNow(-3);
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(row))) {
+            scenario.onActivity(activity -> {
+                dateTimePicker(activity).setCurrentDateTime(moved);
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertEquals(0L, moneyOf(row));
+        assertEquals(DateUtils.getSQLDateTimeString(moved), dateOf(row));
     }
 
     @Test
