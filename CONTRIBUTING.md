@@ -4,6 +4,15 @@ Bug reports and pull requests are welcome in the [issue tracker](https://github.
 
 People keep years of their own financial records in this app, and it runs on phones going back to Android 7. A change that works once, on one modern phone, in portrait, has not been tested yet.
 
+## Start with an issue
+
+Every pull request links an issue, and for a bug the issue comes first. Translations are the exception.
+
+- **Find it by using the app.** A bug report starts from what someone does and sees, like "I open a budget, rotate the phone, and the amount resets." A problem found only by reading the code is a guess until you can make it happen in the app.
+- **Search before you file.** If the problem is already reported, add to that issue instead of opening a second one.
+- **The issue carries the steps, not the fix.** Say what you did, what you expected and what happened. The fix and how it works go in the pull request.
+- An issue written after the fix, to justify it, does not count.
+
 ## Using AI to write a change
 
 AI written pull requests are welcome here. There is nothing to hide and nothing to announce. The bar is the same as for any other patch, and the work of getting a change over that bar is yours, not the model's.
@@ -12,6 +21,46 @@ AI written pull requests are welcome here. There is nothing to hide and nothing 
 - A model states a cause with the same confidence whether it traced one or not. Trace the mechanism yourself before you write it into a pull request body, a commit message or a code comment. A commit message is a claim, and a wrong one sends the next person down the wrong path.
 - Watch for the things models invent: a file path that is not in the tree, a method nobody calls, an API that does not exist on API 24, a test that passes because it asserts the code's current behavior instead of the correct one.
 - "It should be a small fix" is a prediction, not a finding. When the change looks smallest, check it hardest.
+
+## Writing the code
+
+### Kotlin
+
+- **New code is Kotlin.** New classes, new files and new tests are written in Kotlin. Do not add Java files.
+- **A fix inside an existing Java file stays in Java**, and stays as small as the fix needs. The app is moving to Kotlin one package at a time, in pull requests that carry nothing else. Converting a file in the same pull request as a fix buries the few lines that matter under a diff of every line.
+- **Kotlin still has to work where Java code and Android reach it.** A `Parcelable` keeps `@JvmField` on its `CREATOR`, because Android reads that field by reflection and needs it to be a public static field.
+
+### Comments
+
+- **No comments inside function bodies.** If a line needs a comment to be understood, rename the variable or pull the step into a function whose name says what it does.
+- **Never comment a call or a variable.** Their names explain them.
+- **A KDoc, or Javadoc in a Java file, only when a declaration's contract is not obvious** from its name and types, for example what a null return means or what a caller must do first. Describe what the code does, and do not argue that it is right.
+- **No comment that restates the name.** "getWallet: gets the wallet" tells the reader nothing.
+- **The why goes in the commit message.** The history, the workaround and what forced it, the crash a guard prevents. `git blame` takes the next person straight to it.
+- Comments already in code you are not otherwise changing stay where they are. Removing them is an unrelated change.
+
+### Keep pull requests small
+
+- **One concern per pull request.** A fix, a feature or a cleanup, not two of them. Unrelated cleanup makes a change harder to review and harder to revert.
+- **Split work that splits.** When a feature divides into steps that each build and pass the tests, send them as separate pull requests, in order.
+- **Touch only the files the change needs.** Reformatting, renaming or tidying files you were not otherwise changing makes a small fix hard to find in the diff. New files are fine. A change that has to reach many files for a real reason, like removing a string from every translation, is fine too, and the body says why.
+- **A refactor changes no behavior.** If anything a user can see changes, it is not a refactor, and the body says what changed.
+
+### Fixing a bug
+
+- **Fix it where every caller goes through.** A report names one path. Patching only that path leaves every sibling caller broken, and one guard in the shared function is a smaller change than a guard in each caller.
+- **Read the history of a line before you change it.** `git blame` and `git log -L <line>,<line>:<path>` take seconds and name the commit and the issue that put the line there. Code that looks arbitrary, a guard, a disabled default, a magic number, usually has a crash behind it. Layouts and resource files carry decisions the same way source does.
+
+### Structure
+
+- **One function, one job.** A function that loads, checks, formats and saves is four functions.
+- **Shared helpers go in a utility class** under `utils`, not at the bottom of the screen that first needed them.
+- **No code nobody calls.** No getters, setters or overloads added in case they are useful later, and no second way to read the same setting.
+- **Use the words the codebase already uses.** A name says what the thing does. Do not invent a term for your change, since nobody else will know to search for it.
+- **Text a user sees goes in `strings.xml`**, never typed into code or a layout, or it cannot be translated. A label shown on screen is never also a stored value or a key, because renaming the label later would break saved data.
+- **Keep the main thread free.** New database, file or network work does not go on the main thread or into app start.
+- **No new dependency for what a few lines do.** The `floss` flavor ships no proprietary services and F-Droid builds it from source, so anything added has to be free software and resolvable in that build.
+- **License.** Tallybook is GPLv3 or later. Code adapted from another project has to be compatible with that, which GPLv2 only is not, and the pull request needs to say where it came from.
 
 ## Cold read your own diff
 
@@ -35,6 +84,8 @@ Build and run the unit tests:
 
 Pass `clean`, the way CI does. An up to date task is skipped, so a green test count can be one that predates your edit.
 
+A new test should fail without your fix. Undo the fix, run the test and watch it fail, then put the fix back. A test that passes either way proves nothing.
+
 The same command runs in CI on every pull request. The instrumented tests are compiled there but only run once a week, on one emulator at API 35, so a change touching the database or the UI needs you to run it on a device yourself.
 
 Run the app, on an emulator or a phone, on both ends of the range:
@@ -56,18 +107,31 @@ Lint runs in CI with `abortOnError true`, so an error fails the build. Warnings 
 
 `app/lint-baseline.xml` records what was already there before a check was turned on. It is not permission to add more. Do not regenerate it to make a new warning disappear.
 
-## The change itself
-
-- **Fix it where every caller goes through.** A report names one path. Patching only that path leaves every sibling caller broken, and one guard in the shared function is a smaller change than a guard in each caller.
-- **Read the history of a line before you change it.** `git blame` and `git log -L <line>,<line>:<path>` take seconds and name the commit and the issue that put the line there. Code that looks arbitrary, a guard, a disabled default, a magic number, usually has a crash behind it. Layouts and resource files carry decisions the same way source does.
-- **One concern per pull request.** Unrelated cleanup makes a change harder to review and harder to revert.
-- **No new dependency for what a few lines do.** The `floss` flavor ships no proprietary services and F-Droid builds it from source, so anything added has to be free software and resolvable in that build.
-- **Comment sparingly.** Explain why at the definition, not what at every call site.
-- **License.** Tallybook is GPLv3 or later. Code adapted from another project has to be compatible with that, which GPLv2 only is not, and the pull request needs to say where it came from.
-
 ## The pull request
 
-Say what was broken and how you know it is fixed, in plain words, with steps someone else can run. Every claim in the body should be one you checked. If something is untested, name it. "I did not test X" is a fine sentence, and a confident wrong one is not.
+Write the body yourself, in plain words, for someone who has not seen the code.
+
+- **Link the issue** it fixes.
+- **Say what was broken and how you know it is fixed**, with steps someone else can run.
+- **Give the argument.** When a reviewer would reasonably ask why it was done this way and not the obvious way, answer that. A list of what changed is not an argument, the diff already shows it.
+- **Say how the pieces fit** when the change adds a class or moves work from one place to another.
+- **Name what you did not test.** Every claim in the body should be one you checked. "I did not test X" is a fine sentence, and a confident wrong one is not.
+- **Answer the review.** Reply to every question, and read the whole review before you push again, not only the newest comment.
+
+## Checklist before you open it
+
+- [ ] An issue exists, written from what a user does and sees, and the pull request links it.
+- [ ] New code is Kotlin. A fix in a Java file stays Java and stays small.
+- [ ] No comments inside function bodies or on calls and variables. The why is in the commit message.
+- [ ] One concern, and no file touched without a reason.
+- [ ] One job per function, shared helpers in `utils`, nothing added that nobody calls.
+- [ ] Names use the codebase's own words.
+- [ ] Text a user sees is in `strings.xml`.
+- [ ] Cold read done, and every caller of what you changed checked.
+- [ ] Each new test fails without the fix.
+- [ ] Run on API 24 and a current Android, rotated, in dark theme, with the steps from the issue.
+- [ ] The Gradle command under Testing passes, with no new lint warnings.
+- [ ] The body gives the argument and names what was not tested.
 
 ## Translating
 
