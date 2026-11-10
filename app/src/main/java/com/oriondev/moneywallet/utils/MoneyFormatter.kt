@@ -74,7 +74,7 @@ class MoneyFormatter {
         private const val DEFAULT_DIVIDER_POW = 2
 
         private const val EMPTY_TEXT = " --- "
-        private const val DIVIDER_TEXT = " - "
+        private const val DIVIDER_TEXT = " · "
 
         @JvmStatic
         fun getInstance(): MoneyFormatter {
@@ -158,16 +158,29 @@ class MoneyFormatter {
             builder.append(EMPTY_TEXT)
         } else {
             val currencyMode = if (money.numberOfCurrencies > 1) CurrencyMode.ALWAYS_SHOWN else CurrencyMode.USER_PREFERENCE
+            val currencyUnits = getPrintedCurrencyUnits(money)
             for (entry in money.currencyMoneys.entries) {
                 if (builder.length > 0) {
                     builder.append(mDivider)
                 }
-                val currencyUnit = CurrencyManager.getCurrency(entry.key)
+                val currencyUnit = currencyUnits[entry.key]
                 val currencyMoney: Long = entry.value
                 builder.append(getNotTintedString(currencyUnit, currencyMoney, currencyMode, FlowMode.AUTO_DETECT))
             }
         }
         return builder.toString()
+    }
+
+    private fun getPrintedCurrencyUnits(money: Money): Map<String?, CurrencyUnit?> {
+        val currencyUnits = money.currencies.associateWith { CurrencyManager.getCurrency(it) }
+        val symbolCounts = currencyUnits.values.filterNotNull().groupingBy { it.symbol }.eachCount()
+        return currencyUnits.mapValues { (_, currencyUnit) ->
+            if (currencyUnit != null && symbolCounts.getValue(currencyUnit.symbol) > 1) {
+                CurrencyUnit(currencyUnit.iso, currencyUnit.name, currencyUnit.iso, currencyUnit.decimals)
+            } else {
+                currencyUnit
+            }
+        }
     }
 
     fun getNotTintedString(currencyUnit: CurrencyUnit?, money: Long): String {
@@ -222,13 +235,14 @@ class MoneyFormatter {
             builder.append(emptyString)
         } else {
             val currencyMode = if (money.numberOfCurrencies > 1) CurrencyMode.ALWAYS_SHOWN else CurrencyMode.USER_PREFERENCE
+            val currencyUnits = getPrintedCurrencyUnits(money)
             for (entry in money.currencyMoneys.entries) {
                 if (builder.length > 0) {
                     val divider = SpannableString(mDivider)
                     divider.setSpan(ForegroundColorSpan(ThemeEngine.getTheme().textColorPrimary), 0, divider.length, 0)
                     builder.append(divider)
                 }
-                val currencyUnit = CurrencyManager.getCurrency(entry.key)
+                val currencyUnit = currencyUnits[entry.key]
                 val currencyMoney: Long = entry.value
                 builder.append(getTintedString(currencyUnit, currencyMoney, currencyMode, tintMode))
             }
