@@ -24,6 +24,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -42,6 +43,7 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.config.IConfigurationProvider;
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
 import org.osmdroid.tileprovider.tilesource.TileSourcePolicy;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.MapTileIndex;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -88,9 +90,10 @@ public class MapViewWrapper {
     private static final int TILE_SIZE_PIXELS = 256;
     private static final int TILE_MAX_ZOOM = 19;
 
+    private static final double MIN_ZOOM_LEVEL = 2d;
     private static final double DEFAULT_MIN_ZOOM_LEVEL = 4d;
     private static final double DEFAULT_ZOOM_LEVEL = 14d;
-    private static final double GLOBAL_ZOOM_LEVEL = 8d;
+    private static final float MARKER_HEIGHT_DP = 48f;
 
     private final MapView mMapView;
 
@@ -100,7 +103,8 @@ public class MapViewWrapper {
         mMapView = (MapView) view;
         mMapView.setBuiltInZoomControls(false);
         mMapView.setMultiTouchControls(true);
-        mMapView.setMinZoomLevel(DEFAULT_MIN_ZOOM_LEVEL);
+        mMapView.setMinZoomLevel(MIN_ZOOM_LEVEL);
+        mMapView.setVerticalMapRepetitionEnabled(false);
         mMapView.getController().setZoom(DEFAULT_ZOOM_LEVEL);
         setupConfiguration(mMapView.getContext());
     }
@@ -292,9 +296,7 @@ public class MapViewWrapper {
 
     public void addPlaces(List<Place> places) {
         if (mMapView != null && places != null && !places.isEmpty()) {
-            int pointCount = 0;
-            double centerLatitude = 0;
-            double centerLongitude = 0;
+            List<GeoPoint> points = new ArrayList<>();
             List<OverlayItem> items = new ArrayList<>();
             for (Place place : places) {
                 if (place.hasCoordinates()) {
@@ -304,9 +306,7 @@ public class MapViewWrapper {
                     String description = place.getAddress();
                     GeoPoint geoPoint = new GeoPoint(coordinates.getLatitude(), coordinates.getLongitude());
                     items.add(new OverlayItem(identifier, name, description, geoPoint));
-                    pointCount += 1;
-                    centerLatitude += coordinates.getLatitude();
-                    centerLongitude += coordinates.getLongitude();
+                    points.add(geoPoint);
                 }
             }
             ItemizedOverlayWithFocus<OverlayItem> overlay = new ItemizedOverlayWithFocus<>(items, getMarkerIcon(), getMarkerIcon(), OverlayConstants.NOT_SET, new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
@@ -335,15 +335,40 @@ public class MapViewWrapper {
             overlay.setDescriptionBoxCornerWidth(10);
 
             mMapView.getOverlays().add(overlay);
-            // setup the map-view to better handle multiple locations
-            if (pointCount > 0) {
-                centerLatitude = centerLatitude / pointCount;
-                centerLongitude = centerLongitude / pointCount;
-                GeoPoint centerPoint = new GeoPoint(centerLatitude, centerLongitude);
-                mMapView.getController().setCenter(centerPoint);
+            if (!points.isEmpty()) {
+                BoundingBox boundingBox = BoundingBox.fromGeoPoints(points);
+                if (mMapView.isLayoutOccurred()) {
+                    zoomToBoundingBox(boundingBox);
+                } else {
+                    mMapView.addOnFirstLayoutListener((view, left, top, right, bottom) -> zoomToBoundingBox(boundingBox));
+                }
             }
-            mMapView.getController().setZoom(GLOBAL_ZOOM_LEVEL);
         }
+    }
+
+    private void zoomToBoundingBox(BoundingBox boundingBox) {
+        int border = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, MARKER_HEIGHT_DP,
+                mMapView.getResources().getDisplayMetrics());
+        if (hasRoomForBorder(border)) {
+            mMapView.zoomToBoundingBox(boundingBox, false, border, DEFAULT_ZOOM_LEVEL, null);
+        } else {
+            mMapView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+
+                @Override
+                public void onLayoutChange(View view, int left, int top, int right, int bottom,
+                                           int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    if (hasRoomForBorder(border)) {
+                        view.removeOnLayoutChangeListener(this);
+                        zoomToBoundingBox(boundingBox);
+                    }
+                }
+
+            });
+        }
+    }
+
+    private boolean hasRoomForBorder(int border) {
+        return mMapView.getWidth() > 2 * border && mMapView.getHeight() > 2 * border;
     }
 
     public void addCoordinates(Coordinates coordinates) {
