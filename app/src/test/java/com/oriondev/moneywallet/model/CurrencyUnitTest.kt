@@ -3,6 +3,7 @@ package com.oriondev.moneywallet.model
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class CurrencyUnitTest {
@@ -41,5 +42,29 @@ class CurrencyUnitTest {
         val unit = CurrencyUnit("GBP", "Pound", "£", 2)
         assertNotEquals(unit, null)
         assertNotEquals(unit, "GBP")
+    }
+
+    @Test
+    fun symbolOrIsoIsTheIsoWhenTheSymbolIsNull() {
+        val unit = CurrencyUnit("XAF", "CFA Franc BEAC", null, 0)
+        assertEquals("XAF", unit.symbolOrIso)
+    }
+
+    @Test
+    fun symbolOrIsoIsTheIsoWhenTheSymbolIsEmpty() {
+        val unit = CurrencyUnit("XOF", "CFA Franc BCEAO", "", 0)
+        assertEquals("XOF", unit.symbolOrIso)
+    }
+
+    @Test
+    fun symbolOrIsoIsTheSymbolWhenOneIsSet() {
+        val unit = CurrencyUnit("USD", "US Dollar", "$", 2)
+        assertEquals("$", unit.symbolOrIso)
+    }
+
+    @Test
+    fun aUnitBuiltWithANullSymbolKeepsANullSymbol() {
+        val unit = CurrencyUnit("XAF", "CFA Franc BEAC", null, 0)
+        assertNull(unit.symbol)
     }
 }

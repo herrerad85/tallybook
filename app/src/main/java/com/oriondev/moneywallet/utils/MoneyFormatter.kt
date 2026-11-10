@@ -173,9 +173,9 @@ class MoneyFormatter {
 
     private fun getPrintedCurrencyUnits(money: Money): Map<String?, CurrencyUnit?> {
         val currencyUnits = money.currencies.associateWith { CurrencyManager.getCurrency(it) }
-        val symbolCounts = currencyUnits.values.filterNotNull().groupingBy { it.symbol }.eachCount()
+        val symbolCounts = currencyUnits.values.filterNotNull().groupingBy { it.symbolOrIso }.eachCount()
         return currencyUnits.mapValues { (_, currencyUnit) ->
-            if (currencyUnit != null && symbolCounts.getValue(currencyUnit.symbol) > 1) {
+            if (currencyUnit != null && symbolCounts.getValue(currencyUnit.symbolOrIso) > 1) {
                 CurrencyUnit(currencyUnit.iso, currencyUnit.name, currencyUnit.iso, currencyUnit.decimals)
             } else {
                 currencyUnit
@@ -199,7 +199,7 @@ class MoneyFormatter {
             mFormatter.maximumFractionDigits = currencyUnit.decimals
             divider = Math.pow(10.0, currencyUnit.decimals.toDouble())
             if (currencyMode === CurrencyMode.ALWAYS_SHOWN || (currencyMode === CurrencyMode.USER_PREFERENCE && mCurrencyEnabled)) {
-                builder.append(currencyUnit.symbol)
+                builder.append(currencyUnit.symbolOrIso)
                 builder.append(" ")
             }
         } else {

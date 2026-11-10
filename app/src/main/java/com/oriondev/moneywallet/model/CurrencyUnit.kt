@@ -41,6 +41,9 @@ class CurrencyUnit : Parcelable {
     val symbol: String?
     val decimals: Int
 
+    val symbolOrIso: String?
+        get() = if (symbol.isNullOrEmpty()) iso else symbol
+
     constructor(iso: String?, name: String?, symbol: String?, decimals: Int) {
         this.iso = iso
         this.name = name

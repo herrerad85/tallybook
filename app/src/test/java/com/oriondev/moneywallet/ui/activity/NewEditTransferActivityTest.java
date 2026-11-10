@@ -155,6 +155,38 @@ public class NewEditTransferActivityTest {
     }
 
     @Test
+    public void aRateLineFromACurrencyWithoutASymbolStartsWithItsIsoCode() {
+        long francs = insertWallet("Douala", "XAF");
+        long dollars = insertWallet("Dollars", "USD");
+        long transfer = insertTransfer(francs, dollars, 1000L, 60000L, 0L);
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(editIntent(transfer))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                assertEquals(View.VISIBLE, rate.getVisibility());
+                assertTrue(rate.getText().toString().startsWith("XAF -> "));
+                assertFalse(rate.getText().toString().contains("null"));
+            });
+        }
+    }
+
+    @Test
+    public void aRateLineToACurrencyWithoutASymbolNamesItByItsIsoCode() {
+        long dollars = insertWallet("Dollars", "USD");
+        long francs = insertWallet("Douala", "XAF");
+        long transfer = insertTransfer(dollars, francs, 1000L, 6000L, 0L);
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(editIntent(transfer))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                assertEquals(View.VISIBLE, rate.getVisibility());
+                assertTrue(rate.getText().toString().startsWith("$ -> XAF: "));
+                assertFalse(rate.getText().toString().contains("null"));
+            });
+        }
+    }
+
+    @Test
     public void anEditedCrossScaleTransferKeepsEveryStoredFieldWhenNothingIsTouched() {
         long place = insertPlace();
         long event = insertEvent();

@@ -84,6 +84,38 @@ public class NewEditTransferModelActivityTest {
     }
 
     @Test
+    public void aRateLineFromACurrencyWithoutASymbolStartsWithItsIsoCode() {
+        long francs = insertWallet("Douala", "XAF");
+        long dollars = insertWallet("Dollars", "USD");
+        long model = insertModel(1000L, 60000L, francs, dollars);
+        try (ActivityScenario<NewEditTransferModelActivity> scenario =
+                     ActivityScenario.launch(editIntent(model))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                assertEquals(View.VISIBLE, rate.getVisibility());
+                assertTrue(rate.getText().toString().startsWith("XAF -> "));
+                assertFalse(rate.getText().toString().contains("null"));
+            });
+        }
+    }
+
+    @Test
+    public void aRateLineToACurrencyWithoutASymbolNamesItByItsIsoCode() {
+        long dollars = insertWallet("Dollars", "USD");
+        long francs = insertWallet("Douala", "XAF");
+        long model = insertModel(1000L, 6000L, dollars, francs);
+        try (ActivityScenario<NewEditTransferModelActivity> scenario =
+                     ActivityScenario.launch(editIntent(model))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                assertEquals(View.VISIBLE, rate.getVisibility());
+                assertTrue(rate.getText().toString().startsWith("$ -> XAF: "));
+                assertFalse(rate.getText().toString().contains("null"));
+            });
+        }
+    }
+
+    @Test
     public void aCrossCurrencyModelWithNoStoredRateIsRefusedWithADialog() {
         PreferenceManager.setCurrentWallet(mContext, mWalletA);
         assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("EUR"),

@@ -73,4 +73,29 @@ class MoneyFormatterTest {
         assertEquals(expected, parts(formatter.getNotTintedString(amount), "\n"))
         assertEquals(expected, parts(formatter.getTintedString(amount).toString(), "\n"))
     }
+
+    @Test
+    fun aSingleCurrencyWithoutASymbolPrintsItsIsoCode() {
+        val formatter = MoneyFormatter.getInstance()
+        val notTinted = formatter.getNotTintedString(Money("XAF", 1000L))
+        val tinted = formatter.getTintedString(Money("XAF", 1000L)).toString()
+        assertEquals("XAF 1,000", notTinted)
+        assertEquals("XAF 1,000", tinted)
+        assertFalse(notTinted.contains("null"))
+        assertFalse(tinted.contains("null"))
+    }
+
+    @Test
+    fun aCurrencyWithoutASymbolNextToOneWithASymbolPrintsItsIsoCode() {
+        val text = MoneyFormatter.getInstance().getNotTintedString(money("XAF" to 1000L, "USD" to 2000L))
+        assertEquals(setOf("XAF 1,000", "$ 20.00"), parts(text, DIVIDER))
+        assertFalse(text.contains("null"))
+    }
+
+    @Test
+    fun twoCurrenciesWithoutASymbolEachPrintTheirIsoCode() {
+        val text = MoneyFormatter.getInstance().getNotTintedString(money("XAF" to 1000L, "XOF" to 2500L))
+        assertEquals(setOf("XAF 1,000", "XOF 2,500"), parts(text, DIVIDER))
+        assertFalse(text.contains("null"))
+    }
 }
