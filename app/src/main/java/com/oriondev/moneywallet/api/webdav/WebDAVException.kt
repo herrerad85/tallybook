@@ -17,33 +17,33 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api.webdav;
+package com.oriondev.moneywallet.api.webdav
 
-import com.oriondev.moneywallet.api.BackendException;
+import com.oriondev.moneywallet.api.BackendException
 
 /**
- * Extends {@link BackendException} so the API layer can let it through untouched.
+ * Extends [BackendException] so the API layer can let it through untouched.
  *
  * Recoverability is load bearing rather than cosmetic: an unrecoverable exception from a folder
- * listing makes {@code BackupHandlerFragment} disconnect the account. Only a credential rejection
+ * listing makes `BackupHandlerFragment` disconnect the account. Only a credential rejection
  * earns that. A timeout, a dropped connection or a server side error is recoverable, because a
  * phone that is briefly offline must not silently lose its saved server.
  */
-public class WebDAVException extends BackendException {
+class WebDAVException : BackendException {
 
-    public WebDAVException(String message, boolean recoverable) {
-        super(message, recoverable);
-    }
+    constructor(message: String?, recoverable: Boolean) : super(message, recoverable)
 
-    public WebDAVException(String message, Throwable cause, boolean recoverable) {
-        super(message, cause, recoverable);
-    }
+    constructor(message: String?, cause: Throwable?, recoverable: Boolean) : super(message, cause, recoverable)
 
-    static WebDAVException forStatus(int status, String action) {
-        boolean recoverable = status != 401 && status != 403;
-        return new WebDAVException(
-                String.format("Server refused to %s (HTTP %d)", action, status),
-                recoverable
-        );
+    companion object {
+
+        @JvmStatic
+        internal fun forStatus(status: Int, action: String?): WebDAVException {
+            val recoverable = status != 401 && status != 403
+            return WebDAVException(
+                    String.format("Server refused to %s (HTTP %d)", action, status),
+                    recoverable
+            )
+        }
     }
 }
