@@ -36,17 +36,6 @@
 
     <issue
         id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="            final String extension = name.substring(lastDot + 1).toLowerCase();"
-        errorLine2="                                                                 ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/api/saf/SAFBackendServiceAPI.java"
-            line="130"
-            column="66"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
         errorLine1="        text = builder.toUpperCase ? builder.text.toUpperCase() : builder.text;"
         errorLine2="                                                  ~~~~~~~~~~~">
