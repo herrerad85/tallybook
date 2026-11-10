@@ -48,12 +48,12 @@
     <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                String.format(&quot;Server refused to %s (HTTP %d)&quot;, action, status),"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    String.format(&quot;Server refused to %s (HTTP %d)&quot;, action, status),"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/api/webdav/WebDAVException.java"
-            line="45"
-            column="17"/>
+            file="src/main/java/com/oriondev/moneywallet/api/webdav/WebDAVException.kt"
+            line="44"
+            column="21"/>
     </issue>
 
     <issue
