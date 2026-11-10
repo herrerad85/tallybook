@@ -40,3 +40,121 @@ c67c904855cc5aa05eb28dfa82eb6a56d3bf2a27
 f33c5b9ed2105a0461a27fb813c20a5e798c90f1
 # Convert App to Kotlin
 e6ec50356d51beef81d1589f39c8999c078900c7
+# Convert AddTransactionReceiverTest to Kotlin
+c1e66b1451e1a017ba96da91c0883e6ca7f4b96f
+# Convert DateUtilsTest to Kotlin
+430ee6fde0814a53daca488bb2f0e6ec541d9132
+# Convert DefaultWalletTest to Kotlin
+878f724c8899ce34ca2a02c5ccdf9583b18fa063
+# Convert EquationSolverTest to Kotlin
+4abaa016b08c74724cb6a7711f32552c30009739
+# Convert IntentExtrasTest to Kotlin
+a8094c05cf7d127b023064cf55978f191c0f854a
+# Convert TileAddressTest to Kotlin
+97f6da1c108b0736013900ef0e04bf08d6c4fc97
+# Convert Category to Kotlin
+4f5ca8fa1a591454c2441843805cf16bf0a44d6e
+# Convert Wallet to Kotlin
+63c954e86a4d27b25be9523abe197f0ec11083b8
+# Convert Place to Kotlin
+acee9abb41caac79b0014390d2244b9c3a036c85
+# Convert Money to Kotlin
+4222f52c8b98cd649d1a84bd493427a93c41823d
+# Convert Event to Kotlin
+6b5f52d9e5c3b0eb14eb66bc69f5717b597e0f1c
+# Convert Attachment to Kotlin
+f6a2a969254c8998dbc75cc206ba5fd6dfb58909
+# Convert Person to Kotlin
+0fdfdba00a8de19b563a9061e8927e1e015b53d7
+# Convert RecurrenceSetting to Kotlin
+6480e04159509923cf6e25c63fddc3439209c794
+# Convert SearchFilter to Kotlin
+1ccdca5be2fff195cfc0e0519549b68f990b0993
+# Convert CurrencyUnit to Kotlin
+820b327f408fe1abc77c094716d6ea63ef0f206a
+# Convert Icon to Kotlin
+6311fe44cdac6e1ce1f3fdc93479bbea97f4f210
+# Convert ColorIcon to Kotlin
+8a354e4aa6643e660954a2a6095a92d439dcfda4
+# Convert VectorIcon to Kotlin
+6225e5ce6739330fbf6fc4601ac643034f4d3cce
+# Convert BackupService to Kotlin
+cd73d0b2d22fc2a25008606308690026b77fa8fa
+# Convert CategoryMoney to Kotlin
+530f4494d1d9283e9b3a0dd3e391836b171a3c69
+# Convert ChangeLog to Kotlin
+05bef6bfa5697c8a21525bcca1d1df8bf9457518
+# Convert Coordinates to Kotlin
+906d2f26bc58d569acb60e81ef1591c5c3d455b1
+# Convert DataFormat to Kotlin
+7b45ab8ed2418b561dbe50969de224d95f6327d0
+# Convert ExchangeRate to Kotlin
+fc05e84e4c1c5670b918fd9ed8013fa3d4887109
+# Convert Group to Kotlin
+7c1d262709b1c8ee50edc896e5f0a686f4196a52
+# Convert IFile to Kotlin
+662e52e0c260edf01b7a6523fb6d2363a866da21
+# Convert IconGroup to Kotlin
+21608daa23a832cd414877371b3f3abe3bc0094b
+# Convert Identifiable to Kotlin
+a8e6546c314e0df198d86b7315de1f45de9dca9c
+# Convert License to Kotlin
+292ae3addc1ebc4961da5b78c425ea91a4b28356
+# Convert LocalFile to Kotlin
+003b44af2fd031da92f4b61f7ac994ab8481d9d2
+# Convert LockMode to Kotlin
+9fbdb045d393deb4fdd832654146f95b9c68a28a
+# Convert MoneyScale to Kotlin
+ef9f99c1c02e9a807f9ce35d785eea8277ac9bb5
+# Convert OverviewData to Kotlin
+fa3007b638488d153309fadd554c9b8ad99e6658
+# Convert OverviewSetting to Kotlin
+aa20687f0791392baabefb54b64911a120ce5c25
+# Convert Pair to Kotlin
+bc81ade14b9a490cfa7408ed73b21d18e37b9290
+# Convert PeriodDetailFlowData to Kotlin
+1349f25619cbdcc82a4213b79d42071d6b0b7206
+# Convert PeriodDetailSummaryData to Kotlin
+64c58df98d48e176aba9ebaf628e1ca043738618
+# Convert PeriodMoney to Kotlin
+bde3edb88b1f1616db5c0a76193f12679279f58d
+# Convert SAFFile to Kotlin
+012dd222127149b2388a8a50d6251e623bed5dc6
+# Convert WalletAccount to Kotlin
+1de6f5aeedf6741895d913797e7dbb255491d430
+# Convert WebDAVFile to Kotlin
+d8a0a4302b7031cc89a6fa0bba463cd14f0acb35
+# Convert AttachmentPicker to Kotlin
+3e227fd3a15f6419e42210acfad2930479bcbaad
+# Convert BudgetTypePicker to Kotlin
+c8e60987d4df263f7e411cc215ad3a45a9729fdc
+# Convert CategoryPicker to Kotlin
+7281b0d0fa7aea4acda17b00eb3d776555e32bd8
+# Convert ColorPicker to Kotlin
+c8a52789d66d08af691cf1fbb3917dad89c72def
+# Convert CurrencyConverterPicker to Kotlin
+715a5d473074e905d74a24e529c6d465d1bde813
+# Convert CurrencyPicker to Kotlin
+2f2e9e96b98e16b3389bacc8aea5ea15aea331b6
+# Convert DateTimePicker to Kotlin
+1976db2608858869bd75259f4bba75a9078fe087
+# Convert EventPicker to Kotlin
+7705cff0fbcf72a11ee62027fd97ff27d2d2c966
+# Convert ExportColumnsPicker to Kotlin
+30897d46f8087c2515e84c62eda6e03fc4a16528
+# Convert IconPicker to Kotlin
+6c2a387b7a0e06f5e9f123dbfcdda1f5938e7352
+# Convert ImportExportFormatPicker to Kotlin
+4a907de2f5fc339d40ef9f0d0ccf1be723343e55
+# Convert MoneyPicker to Kotlin
+defd194e9d4d17b2b7d5d45fb53e2826e2cb46df
+# Convert OverviewSettingPicker to Kotlin
+dccf32e0c3f308bcab2da1cb69a93d332299ecce
+# Convert PersonPicker to Kotlin
+72fcb94952bfeabf34fa6f15cc10063355747e36
+# Convert PlacePicker to Kotlin
+61e21bbe381b8c3a56258f213dbe2888fdcdc756
+# Convert RecurrencePicker to Kotlin
+628d8023a3ec286c68202d3bbababf4ab77c2896
+# Convert WalletPicker to Kotlin
+3ac46ec29943ce8402bb9479f66c06e3addc2c99
