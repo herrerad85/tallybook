@@ -17,71 +17,72 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api;
+package com.oriondev.moneywallet.api
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.oriondev.moneywallet.model.IFile
+import com.oriondev.moneywallet.utils.ProgressInputStream
+import com.oriondev.moneywallet.utils.ProgressOutputStream
 
-import com.oriondev.moneywallet.model.IFile;
-import com.oriondev.moneywallet.utils.ProgressInputStream;
-import com.oriondev.moneywallet.utils.ProgressOutputStream;
-
-import java.io.File;
-import java.util.List;
+import java.io.File
 
 /**
  * Created by andrea on 24/11/18.
  */
-@SuppressWarnings("unchecked")
-public abstract class AbstractBackendServiceAPI<T extends IFile> implements IBackendServiceAPI {
+@Suppress("UNCHECKED_CAST")
+abstract class AbstractBackendServiceAPI<T : IFile> : IBackendServiceAPI {
 
-    private final Class<T> mType;
+    private val mType: Class<T>
 
-    public AbstractBackendServiceAPI(Class<T> type) throws BackendException {
-        mType = type;
+    @Throws(BackendException::class)
+    constructor(type: Class<T>) {
+        mType = type
     }
 
-    @Override
-    public IFile uploadFile(IFile folder, File file, ProgressInputStream.UploadProgressListener listener) throws BackendException {
+    @Throws(BackendException::class)
+    override fun uploadFile(folder: IFile?, file: File, listener: ProgressInputStream.UploadProgressListener?): IFile {
         if (folder == null || mType.isInstance(folder)) {
-            return upload((T) folder, file, listener);
+            return upload(folder as T?, file, listener)
         } else {
-            throw new ClassCastException("Backend cannot upload a file to a folder that is not an instance of " + mType.getName() + ". The provided folder is an instance of: " + folder.getClass().getName());
+            throw ClassCastException("Backend cannot upload a file to a folder that is not an instance of " + mType.name + ". The provided folder is an instance of: " + folder.javaClass.name)
         }
     }
 
-    protected abstract T upload(@Nullable T folder, File file, ProgressInputStream.UploadProgressListener listener) throws BackendException;
+    @Throws(BackendException::class)
+    protected abstract fun upload(folder: T?, file: File, listener: ProgressInputStream.UploadProgressListener?): T
 
-    @Override
-    public File downloadFile(File folder, IFile file, ProgressOutputStream.DownloadProgressListener listener) throws BackendException {
+    @Throws(BackendException::class)
+    override fun downloadFile(folder: File?, file: IFile?, listener: ProgressOutputStream.DownloadProgressListener?): File {
         if (mType.isInstance(file)) {
-            return download(folder, (T) file, listener);
+            return download(folder, file as T, listener)
         } else {
-            throw new ClassCastException("Backend cannot download a file that is not an instance of " + mType.getName() + ". The provided file is an instance of: " + folder.getClass().getName());
+            throw ClassCastException("Backend cannot download a file that is not an instance of " + mType.name + ". The provided file is an instance of: " + folder!!.javaClass.name)
         }
     }
 
-    protected abstract File download(File folder, @NonNull T file, ProgressOutputStream.DownloadProgressListener listener) throws BackendException;
+    @Throws(BackendException::class)
+    protected abstract fun download(folder: File?, file: T, listener: ProgressOutputStream.DownloadProgressListener?): File
 
-    @Override
-    public List<IFile> getFolderContent(IFile folder) throws BackendException {
+    @Throws(BackendException::class)
+    override fun getFolderContent(folder: IFile?): List<IFile> {
         if (folder == null || mType.isInstance(folder)) {
-            return list((T) folder);
+            return list(folder as T?)
         } else {
-            throw new ClassCastException("Backend cannot list the content of a folder that is not an instance of " + mType.getName() + ". The provided folder is an instance of: " + folder.getClass().getName());
+            throw ClassCastException("Backend cannot list the content of a folder that is not an instance of " + mType.name + ". The provided folder is an instance of: " + folder.javaClass.name)
         }
     }
 
-    protected abstract List<IFile> list(@Nullable T folder) throws BackendException;
+    @Throws(BackendException::class)
+    protected abstract fun list(folder: T?): List<IFile>
 
-    @Override
-    public IFile createFolder(IFile parent, String name) throws BackendException {
+    @Throws(BackendException::class)
+    override fun createFolder(parent: IFile?, name: String): IFile {
         if (parent == null || mType.isInstance(parent)) {
-            return newFolder((T) parent, name);
+            return newFolder(parent as T?, name)
         } else {
-            throw new ClassCastException("Backend cannot create a folder in a folder that is not an instance of " + mType.getName() + ". The provided folder is an instance of: " + parent.getClass().getName());
+            throw ClassCastException("Backend cannot create a folder in a folder that is not an instance of " + mType.name + ". The provided folder is an instance of: " + parent.javaClass.name)
         }
     }
 
-    protected abstract T newFolder(T parent, String name) throws BackendException;
+    @Throws(BackendException::class)
+    protected abstract fun newFolder(parent: T?, name: String): T
 }
