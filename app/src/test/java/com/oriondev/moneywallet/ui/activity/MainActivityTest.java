@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Looper;
+import android.text.Layout;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,8 +48,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
+import org.robolectric.annotation.GraphicsMode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -512,6 +517,97 @@ public class MainActivityTest {
     }
 
     @Test
+    public void theTotalRowPrintsEachCurrencyOnALineOfItsOwn() {
+        insertWalletsInThreeMoreCurrencies();
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                TextView amount = (TextView) drawer(activity).getMenu().findItem(TOTAL_ITEM).getActionView();
+                assertEquals(totalCurrencyLines(), new HashSet<>(Arrays.asList(amount.getText().toString().split("\n"))));
+            });
+        }
+    }
+
+    @Test
+    public void theHeaderKeepsTheTotalOnOneLineAndEllipsizesItAtTheEnd() {
+        insertWalletsInThreeMoreCurrencies();
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                activity.onNavigationItemSelected(drawer(activity).getMenu().findItem(TOTAL_ITEM));
+                TextView money = activity.findViewById(R.id.wallet_money_text_view);
+                String text = money.getText().toString();
+                assertFalse(text.contains("\n"));
+                assertEquals(totalCurrencyLines(), new HashSet<>(Arrays.asList(text.split(" \u00b7 "))));
+                assertEquals(TextUtils.TruncateAt.END, money.getEllipsize());
+            });
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void theTotalRowLeavesItsTitleWholeAndKeepsItsAmountInsideTheRow() {
+        insertWalletsInThreeMoreCurrencies();
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                ViewGroup row = totalRowAt320dp(activity);
+                CheckedTextView title = (CheckedTextView) row.getChildAt(0);
+                int titleRoom = title.getWidth() - title.getCompoundPaddingLeft() - title.getCompoundPaddingRight();
+                float titleText = title.getPaint().measureText(title.getText().toString());
+                assertTrue("the title has " + titleRoom + " for a text of " + titleText, titleRoom >= titleText);
+                ViewGroup area = actionArea(row);
+                int amountRight = area.getLeft() + area.getChildAt(0).getRight();
+                assertTrue("the amount ends at " + amountRight + " in a row of " + row.getWidth(), amountRight <= row.getWidth());
+                TextView amount = (TextView) area.getChildAt(0);
+                int lines = amount.getLayout().getLineCount();
+                assertEquals(totalCurrencyLines().size(), lines);
+                int textRoom = amount.getHeight() - amount.getCompoundPaddingTop() - amount.getCompoundPaddingBottom();
+                int lastLineBottom = amount.getLayout().getLineBottom(lines - 1);
+                assertTrue("the last line ends at " + lastLineBottom + " in a text room of " + textRoom, lastLineBottom <= textRoom);
+            });
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    public void everyCurrencyLineOfTheTotalEndsAtTheRightEdgeInALeftToRightLayout() {
+        insertWallet("Dirhams", 2, 4250000L, true, false, null, "AED");
+        insertWallet("Dollars", 3, 123456789L, true, false, null, "USD");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                TextView amount = (TextView) actionArea(totalRowAt320dp(activity)).getChildAt(0);
+                assertEquals(View.LAYOUT_DIRECTION_LTR, amount.getLayoutDirection());
+                Layout layout = amount.getLayout();
+                for (int i = 0; i < layout.getLineCount(); i++) {
+                    assertEquals("the line " + lineText(layout, i) + " ends at " + layout.getLineRight(i)
+                            + " in a layout of " + layout.getWidth(), layout.getWidth(), layout.getLineRight(i), 0.5);
+                }
+            });
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "fa-ldrtl")
+    public void everyCurrencyLineOfTheTotalStartsAtTheLeftEdgeInARightToLeftLayout() {
+        insertWalletsInThreeMoreCurrencies();
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                TextView amount = (TextView) actionArea(totalRowAt320dp(activity)).getChildAt(0);
+                assertEquals(View.LAYOUT_DIRECTION_RTL, amount.getLayoutDirection());
+                Layout layout = amount.getLayout();
+                for (int i = 0; i < layout.getLineCount(); i++) {
+                    assertEquals("the line " + lineText(layout, i) + " starts at " + layout.getLineLeft(i)
+                            + " in a layout of " + layout.getWidth(), 0, layout.getLineLeft(i), 0.5);
+                }
+            });
+        }
+    }
+
+    @Test
     public void theQuickSwitchIconsHoldTheNextTwoWalletsAndSwitchToThem() {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> {
@@ -693,7 +789,11 @@ public class MainActivityTest {
      * A row is a label and an action area; the header and the dividers have one child each.
      */
     private static List<ViewGroup> rows(NavigationView drawer) {
-        drawer.measure(View.MeasureSpec.makeMeasureSpec(960, View.MeasureSpec.EXACTLY),
+        return rows(drawer, 960);
+    }
+
+    private static List<ViewGroup> rows(NavigationView drawer, int width) {
+        drawer.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(1600, View.MeasureSpec.EXACTLY));
         drawer.layout(0, 0, drawer.getMeasuredWidth(), drawer.getMeasuredHeight());
         List<ViewGroup> rows = new ArrayList<>();
@@ -724,6 +824,17 @@ public class MainActivityTest {
 
     private static ViewGroup actionArea(ViewGroup row) {
         return (ViewGroup) row.getChildAt(1);
+    }
+
+    private static ViewGroup totalRowAt320dp(MainActivity activity) {
+        activity.findViewById(R.id.navigation_drawer_header).performClick();
+        shadowOf(Looper.getMainLooper()).idle();
+        int width = Math.round(320 * activity.getResources().getDisplayMetrics().density);
+        return rowLabelled(rows(drawer(activity), width), activity.getString(R.string.total_wallet_name));
+    }
+
+    private static String lineText(Layout layout, int line) {
+        return layout.getText().subSequence(layout.getLineStart(line), layout.getLineEnd(line)).toString().trim();
     }
 
     private static int walletItem(long walletId) {
@@ -832,16 +943,36 @@ public class MainActivityTest {
         }
     }
 
+    private void insertWalletsInThreeMoreCurrencies() {
+        insertWallet("Dollars", 2, 123456789L, true, false, null, "USD");
+        insertWallet("Pounds", 3, 9876543L, true, false, null, "GBP");
+        insertWallet("Douala", 4, 1500000L, true, false, null, "XAF");
+    }
+
+    private static Set<String> totalCurrencyLines() {
+        MoneyFormatter formatter = MoneyFormatter.getInstance();
+        return new HashSet<>(Arrays.asList(
+                formatter.getNotTintedString(new Money("EUR", 0L)),
+                formatter.getNotTintedString(new Money("USD", 123456789L)),
+                formatter.getNotTintedString(new Money("GBP", 9876543L)),
+                formatter.getNotTintedString(new Money("XAF", 1500000L))));
+    }
+
     private long insertWallet(String name, int index, long startMoney, boolean countInTotal, boolean archived) {
         return insertWallet(name, index, startMoney, countInTotal, archived, null);
     }
 
     private long insertWallet(String name, int index, long startMoney, boolean countInTotal,
                               boolean archived, String group) {
+        return insertWallet(name, index, startMoney, countInTotal, archived, group, "EUR");
+    }
+
+    private long insertWallet(String name, int index, long startMoney, boolean countInTotal,
+                              boolean archived, String group, String currency) {
         ContentValues values = new ContentValues();
         values.put(Contract.Wallet.NAME, name);
         values.put(Contract.Wallet.ICON, ICON);
-        values.put(Contract.Wallet.CURRENCY, "EUR");
+        values.put(Contract.Wallet.CURRENCY, currency);
         values.put(Contract.Wallet.START_MONEY, startMoney);
         values.put(Contract.Wallet.COUNT_IN_TOTAL, countInTotal);
         values.put(Contract.Wallet.ARCHIVED, archived);

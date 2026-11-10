@@ -164,6 +164,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     };
 
     private final MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
+    private final MoneyFormatter mWalletListFormatter = MoneyFormatter.getInstance();
     private final List<WalletAccount> mWallets = new ArrayList<>();
 
     private DrawerLayout mDrawerLayout;
@@ -189,6 +190,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mWalletListFormatter.setDivider("\n");
         initializeUi();
         loadUi(savedInstanceState);
         registerReceiver();
@@ -737,9 +739,10 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
 
     private TextView buildMoneyView(Money money, int textColor) {
         TextView moneyView = new TextView(this);
-        moneyView.setText(mMoneyFormatter.getNotTintedString(money));
+        moneyView.setText(mWalletListFormatter.getNotTintedString(money));
         moneyView.setTextColor(textColor);
         moneyView.setGravity(Gravity.CENTER_VERTICAL);
+        moneyView.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_END);
         return moneyView;
     }
 

@@ -117,6 +117,7 @@
                 android:id="@+id/wallet_money_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:fontFamily="sans-serif"
                 android:maxLines="1"
                 android:textSize="14sp" />
