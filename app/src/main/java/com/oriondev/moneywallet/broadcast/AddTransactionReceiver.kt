@@ -86,7 +86,7 @@ class AddTransactionReceiver : BroadcastReceiver() {
             if (walletId == PreferenceManager.TOTAL_WALLET_ID) {
                 cursor = contentResolver!!.query(DataContentProvider.CONTENT_WALLETS, projection,
                         Contract.Wallet.ARCHIVED + " = 0", null,
-                        Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC")
+                        Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC")
             } else {
                 cursor = contentResolver!!.query(ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, walletId),
                         projection, null, null, null)

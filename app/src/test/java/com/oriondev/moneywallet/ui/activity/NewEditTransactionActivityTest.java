@@ -701,6 +701,19 @@ public class NewEditTransactionActivityTest {
     }
 
     @Test
+    public void aNewTransactionOnTheTotalViewOpensOnAWalletNamedInLowercaseBeforeTheCapitalizedOnes() {
+        insertWallet("Zed", "EUR");
+        insertWallet("apple", "EUR");
+        PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
+                PreferenceManager.TOTAL_WALLET_ID);
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> assertEquals("apple", walletField(activity)));
+        }
+    }
+
+    @Test
     public void aNewTransactionOnTheTotalViewOpensOnTheConfiguredDefaultWallet() {
         PreferenceManager.setCurrentWallet(ApplicationProvider.getApplicationContext(),
                 PreferenceManager.TOTAL_WALLET_ID);

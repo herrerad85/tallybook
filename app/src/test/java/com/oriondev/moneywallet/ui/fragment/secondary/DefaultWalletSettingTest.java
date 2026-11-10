@@ -43,6 +43,10 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDialog;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.robolectric.Shadows.shadowOf;
@@ -211,6 +215,22 @@ public class DefaultWalletSettingTest {
             assertEquals("Cash", String.valueOf(list.getAdapter().getItem(checked)));
             pressOk(dialog);
             assertEquals(usable, PreferenceManager.getDefaultWallet());
+        });
+    }
+
+    @Test
+    public void theWalletsAreListedInNameOrderWhateverTheCaseOrAccentOfTheirFirstLetter() {
+        insertWallet("Zed", false);
+        insertWallet("apple", false);
+        insertWallet("bob", false);
+        insertWallet("\u00c9mile", false);
+        onDialog((row, dialog) -> {
+            ListView list = dialog.getListView();
+            List<String> listed = new ArrayList<>();
+            for (int i = 0; i < list.getAdapter().getCount(); i++) {
+                listed.add(String.valueOf(list.getAdapter().getItem(i)));
+            }
+            assertEquals(Arrays.asList("Current wallet", "apple", "bob", "\u00c9mile", "Zed"), listed);
         });
     }
 

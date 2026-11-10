@@ -146,7 +146,7 @@ public class EventPickerDialog extends DialogFragment implements EventSelectorCu
                         Contract.Event.END_DATE + ")";
                 whereArgs = new String[] {DateUtils.getSQLDateString(mFilterDate)};
             }
-            String sortOrder = Contract.Event.NAME;
+            String sortOrder = Contract.Event.NAME + " COLLATE LOCALIZED";
             return new CursorLoader(activity, uri, projection, where, whereArgs, sortOrder);
         }
         return null;

@@ -175,6 +175,17 @@ public class NewEditRecurrentTransferActivityTest {
     }
 
     @Test
+    public void aNewRecurrenceOnTheTotalWalletOpensOnAWalletNamedInLowercaseBeforeTheCapitalizedOnes() {
+        insertWallet("Zed", "EUR");
+        long apple = insertWallet("apple", "EUR");
+        PreferenceManager.setCurrentWallet(mContext, PreferenceManager.TOTAL_WALLET_ID);
+        try (ActivityScenario<NewEditRecurrentTransferActivity> scenario = ActivityScenario.launch(newIntent())) {
+            scenario.onActivity(activity ->
+                    assertEquals(apple, walletFromPicker(activity).getCurrentWallet().getId()));
+        }
+    }
+
+    @Test
     public void aCrossCurrencyRecurrenceWithNoStoredRateIsRefusedWithADialog() {
         PreferenceManager.setCurrentWallet(mContext, mWalletA);
         assertNull(CurrencyManager.getExchangeRate(CurrencyManager.getCurrency("EUR"),

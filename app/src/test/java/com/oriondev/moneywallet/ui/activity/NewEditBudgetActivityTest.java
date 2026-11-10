@@ -328,6 +328,18 @@ public class NewEditBudgetActivityTest {
     }
 
     @Test
+    public void aNewBudgetOnTheTotalWalletOpensOnAWalletNamedInLowercaseBeforeTheCapitalizedOnes() {
+        insertWallet("Zed", "EUR");
+        long apple = insertWallet("apple", "EUR");
+        PreferenceManager.setCurrentWallet(mContext, PreferenceManager.TOTAL_WALLET_ID);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity ->
+                    assertEquals(Collections.singletonList(apple), walletPickerIds(activity)));
+        }
+    }
+
+    @Test
     public void aNewCategoryBudgetCarriesEveryCategoryAndEveryWallet() {
         PreferenceManager.setCurrentWallet(mContext, mWalletA);
         int before = countBudgets();

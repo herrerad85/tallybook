@@ -41,10 +41,10 @@ import java.util.Map;
  */
 public class SearchRailLoader extends AbstractGenericLoader<SearchRailLoader.Result> {
 
-    public static final String PEOPLE_SORT_ORDER = Contract.Person.NAME + " ASC";
+    public static final String PEOPLE_SORT_ORDER = Contract.Person.NAME + " COLLATE LOCALIZED ASC";
 
     public static final String WALLET_SORT_ORDER = Contract.Wallet.ARCHIVED + " ASC, "
-            + Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
+            + Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC";
 
     public static class Result {
 

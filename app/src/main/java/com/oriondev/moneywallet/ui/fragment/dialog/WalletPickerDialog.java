@@ -208,7 +208,7 @@ public class WalletPickerDialog extends DialogFragment implements LoaderManager.
                 selection += " AND " + Contract.Wallet.CURRENCY + " = ?";
                 selectionArgs = new String[] {mCurrencyIso};
             }
-            String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
+            String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC";
             return new CursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
         }
         throw new RuntimeException("Activity is null");

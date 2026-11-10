@@ -132,7 +132,7 @@ public class PlacePickerDialog extends DialogFragment implements PlaceSelectorCu
                     Contract.Place.LATITUDE,
                     Contract.Place.LONGITUDE
             };
-            String sortOrder = Contract.Place.NAME;
+            String sortOrder = Contract.Place.NAME + " COLLATE LOCALIZED";
             return new CursorLoader(activity, uri, projection, null, null, sortOrder);
         }
         return null;

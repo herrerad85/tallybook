@@ -117,7 +117,7 @@ public class WalletSortActivity extends SinglePanelSimpleListActivity implements
                 Contract.Wallet.NAME,
                 Contract.Wallet.ICON
         };
-        String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
+        String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC";
         return new CursorLoader(this, uri, projection, null, null, sortOrder);
     }
 

@@ -122,8 +122,8 @@ public class CategoryListFragment extends CursorListFragment implements Category
             }
             String[] selectionArgs = new String[] {String.valueOf(type.getValue())};
             String sortOrder = Contract.Category.GROUP_INDEX + " ASC, " + Contract.Category.GROUP_NAME +
-                    " ASC, " + Contract.Category.GROUP_ID + " ASC, " + Contract.Category.PARENT +
-                    " IS NULL DESC, " + Contract.Category.NAME + " ASC";
+                    " COLLATE LOCALIZED ASC, " + Contract.Category.GROUP_ID + " ASC, " + Contract.Category.PARENT +
+                    " IS NULL DESC, " + Contract.Category.NAME + " COLLATE LOCALIZED ASC";
             return new CursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
         }
         return null;

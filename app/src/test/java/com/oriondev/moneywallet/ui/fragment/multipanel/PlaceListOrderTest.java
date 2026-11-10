@@ -51,10 +51,21 @@ public class PlaceListOrderTest {
 
     @Test
     public void thePlacesAreListedFromAToZ() {
+        assertEquals(Arrays.asList("Bluebell Diner", "Corner Coffee", "Terminal B"),
+                listed("Corner Coffee", "Terminal B", "Bluebell Diner"));
+    }
+
+    @Test
+    public void thePlacesAreListedInNameOrderWhateverTheCaseOrAccentOfTheirFirstLetter() {
+        assertEquals(Arrays.asList("apple", "bob", "\u00c9mile", "Zed"),
+                listed("Zed", "apple", "bob", "\u00c9mile"));
+    }
+
+    private static List<String> listed(String... names) {
         Context context = ApplicationProvider.getApplicationContext();
         TestDatabases.useFreshDatabase(context);
         ContentResolver resolver = context.getContentResolver();
-        for (String name : new String[] {"Corner Coffee", "Terminal B", "Bluebell Diner"}) {
+        for (String name : names) {
             ContentValues values = new ContentValues();
             values.put(Contract.Place.NAME, name);
             values.put(Contract.Place.ICON, ICON);
@@ -72,6 +83,6 @@ public class PlaceListOrderTest {
             }
         }
         controller.pause().stop().destroy();
-        assertEquals(Arrays.asList("Bluebell Diner", "Corner Coffee", "Terminal B"), listed);
+        return listed;
     }
 }

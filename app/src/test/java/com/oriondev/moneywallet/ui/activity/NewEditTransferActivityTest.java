@@ -420,6 +420,18 @@ public class NewEditTransferActivityTest {
     }
 
     @Test
+    public void aNewTransferOnTheTotalWalletOpensOnAWalletNamedInLowercaseBeforeTheCapitalizedOnes() {
+        insertWallet("Zed", "EUR");
+        long apple = insertWallet("apple", "EUR");
+        PreferenceManager.setCurrentWallet(mContext, PreferenceManager.TOTAL_WALLET_ID);
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(newItemIntent(NewEditTransferActivity.TYPE_STANDARD))) {
+            scenario.onActivity(activity ->
+                    assertEquals(apple, walletFromPicker(activity).getCurrentWallet().getId()));
+        }
+    }
+
+    @Test
     public void aSavedTransferCarriesTheWalletIdsTheTaxAndTheConvertedAmount() {
         PreferenceManager.setCurrentWallet(mContext, mWalletA);
         long place = insertPlace();

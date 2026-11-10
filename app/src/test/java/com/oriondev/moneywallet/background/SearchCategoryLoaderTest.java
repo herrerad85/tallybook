@@ -124,6 +124,23 @@ public class SearchCategoryLoaderTest {
         }
     }
 
+    @Test
+    public void parentsAndTheChildrenUnderThemComeInNameOrderWhateverTheCaseOrAccentOfTheirFirstLetter() {
+        insertCategory("Zed", Contract.CategoryType.EXPENSE, null);
+        long apple = insertCategory("apple", Contract.CategoryType.EXPENSE, null);
+        insertCategory("bob", Contract.CategoryType.EXPENSE, null);
+        insertCategory("\u00c9mile", Contract.CategoryType.EXPENSE, null);
+        insertCategory("Zinc", Contract.CategoryType.EXPENSE, apple);
+        insertCategory("acorn", Contract.CategoryType.EXPENSE, apple);
+        insertCategory("berry", Contract.CategoryType.EXPENSE, apple);
+        insertCategory("\u00c9clair", Contract.CategoryType.EXPENSE, apple);
+        List<SearchCategoryLoader.Entry> categories = new SearchCategoryLoader(mContext).loadInBackground();
+        assertEquals(Arrays.asList("apple", "bob", "\u00c9mile", "Food", "Zed", "Salary", "Credit",
+                "Credit paid", "Debt", "Debt paid", "Deposit", "Interest paid", "Interest received",
+                "Tax", "Transfer", "Transfer tax", "Withdraw"), names(categories));
+        assertEquals(Arrays.asList("acorn", "berry", "\u00c9clair", "Zinc"), names(categories.get(0).getChildren()));
+    }
+
     private Map<String, Integer> counts() {
         Map<String, Integer> counts = new HashMap<>();
         for (SearchCategoryLoader.Entry category : new SearchCategoryLoader(mContext).loadInBackground()) {

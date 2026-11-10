@@ -442,7 +442,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                 DataContentProvider.CONTENT_WALLETS,
                 new String[]{Contract.Wallet.ID, Contract.Wallet.NAME},
                 Contract.Wallet.ARCHIVED + " = 0", null,
-                Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC");
+                Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC");
         if (cursor != null) {
             try {
                 while (cursor.moveToNext()) {

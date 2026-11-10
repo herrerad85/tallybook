@@ -611,7 +611,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
                 Contract.Wallet.GROUP
         };
         Uri uri = DataContentProvider.CONTENT_WALLETS;
-        String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
+        String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC";
         return new CursorLoader(this, uri, projection, null, null, sortOrder);
     }
 

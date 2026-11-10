@@ -187,6 +187,17 @@ public class NewEditTransferModelActivityTest {
     }
 
     @Test
+    public void aNewModelOnTheTotalWalletOpensOnAWalletNamedInLowercaseBeforeTheCapitalizedOnes() {
+        insertWallet("Zed", "EUR");
+        long apple = insertWallet("apple", "EUR");
+        PreferenceManager.setCurrentWallet(mContext, PreferenceManager.TOTAL_WALLET_ID);
+        try (ActivityScenario<NewEditTransferModelActivity> scenario = ActivityScenario.launch(newIntent())) {
+            scenario.onActivity(activity ->
+                    assertEquals(apple, walletFromPicker(activity).getCurrentWallet().getId()));
+        }
+    }
+
+    @Test
     public void aModelWithNoDestinationWalletShowsNoExchangeRateDialog() {
         PreferenceManager.setCurrentWallet(mContext, mWalletA);
         int before = countModels();

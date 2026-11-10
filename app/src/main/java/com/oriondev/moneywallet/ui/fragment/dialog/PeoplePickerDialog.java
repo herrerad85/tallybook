@@ -161,7 +161,7 @@ public class PeoplePickerDialog extends DialogFragment implements PeopleSelector
                     Contract.Person.NAME,
                     Contract.Person.ICON
             };
-            String sortOrder = Contract.Person.NAME;
+            String sortOrder = Contract.Person.NAME + " COLLATE LOCALIZED";
             return new CursorLoader(activity, uri, projection, null, null, sortOrder);
         }
         return null;

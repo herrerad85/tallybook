@@ -311,7 +311,7 @@ public class NewEditTransactionModelActivity extends NewEditItemActivity impleme
                     Uri uri = DataContentProvider.CONTENT_WALLETS;
                     cursor = contentResolver.query(uri, projection,
                             Contract.Wallet.ARCHIVED + " = 0", null,
-                            Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC");
+                            Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC");
                 } else {
                     Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_WALLETS, currentWallet);
                     cursor = contentResolver.query(uri, projection, null, null, null);

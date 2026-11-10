@@ -131,8 +131,8 @@ public class CategorySortActivity extends SinglePanelSimpleListActivity implemen
         String selection = Contract.Category.TYPE + " = ? AND " + Contract.Category.PARENT + " IS NULL";
         String[] selectionArgs = new String[] {String.valueOf(mCategoryType.getValue())};
         String sortOrder = Contract.Category.GROUP_INDEX + " ASC, " + Contract.Category.GROUP_NAME +
-                " ASC, " + Contract.Category.GROUP_ID + " ASC, " + Contract.Category.PARENT +
-                " IS NULL DESC, " + Contract.Category.NAME + " ASC";
+                " COLLATE LOCALIZED ASC, " + Contract.Category.GROUP_ID + " ASC, " + Contract.Category.PARENT +
+                " IS NULL DESC, " + Contract.Category.NAME + " COLLATE LOCALIZED ASC";
         return new CursorLoader(this, uri, projection, selection, selectionArgs, sortOrder);
     }
 

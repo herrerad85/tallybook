@@ -177,6 +177,17 @@ class AddTransactionReceiverTest {
     }
 
     @Test
+    fun withNoDefaultWalletAWalletNamedInLowercaseIsTakenBeforeTheCapitalizedOnes() {
+        insertWallet("Zed", "EUR")
+        val apple = insertWallet("apple", "EUR")
+        PreferenceManager.setDefaultWallet(PreferenceManager.NO_DEFAULT_WALLET)
+        receive(request())
+        onlyTransaction().use { cursor ->
+            assertEquals(apple, longOf(cursor, Contract.Transaction.WALLET_ID))
+        }
+    }
+
+    @Test
     fun noWalletThatIsNotArchivedSavesNothing() {
         archiveWallet(mCashWallet)
         archiveWallet(mBankWallet)

@@ -3659,7 +3659,7 @@ import java.util.function.Supplier;
                 " = c2." + Schema.Category.ID + " AND c2." + Schema.Category.DELETED +
                 " = 0 WHERE bc2." + Schema.BudgetCategory.BUDGET + " = b." + Schema.Budget.ID +
                 " AND bc2." + Schema.BudgetCategory.DELETED + " = 0 ORDER BY c2." +
-                Schema.Category.NAME + ")) AS " + Contract.Budget.CATEGORY_NAME + ", " +
+                Schema.Category.NAME + " COLLATE LOCALIZED)) AS " + Contract.Budget.CATEGORY_NAME + ", " +
                 "(SELECT GROUP_CONCAT(i) FROM (SELECT '<' || bc3." + Schema.BudgetCategory.CATEGORY +
                 " || '>' AS i FROM " + Schema.BudgetCategory.TABLE + " AS bc3 JOIN " +
                 Schema.Category.TABLE + " AS c3 ON bc3." + Schema.BudgetCategory.CATEGORY +

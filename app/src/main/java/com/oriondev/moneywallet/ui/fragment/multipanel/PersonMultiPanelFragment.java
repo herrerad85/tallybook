@@ -69,7 +69,7 @@ public class PersonMultiPanelFragment extends MultiPanelCursorListItemFragment i
                     Contract.Person.NAME,
                     Contract.Person.ICON
             };
-            String sortOrder = Contract.Person.NAME + " ASC";
+            String sortOrder = Contract.Person.NAME + " COLLATE LOCALIZED ASC";
             return new CursorLoader(activity, uri, projection, null, null, sortOrder);
         }
         return null;

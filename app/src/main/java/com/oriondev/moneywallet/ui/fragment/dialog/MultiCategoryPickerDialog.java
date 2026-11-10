@@ -66,8 +66,8 @@ public class MultiCategoryPickerDialog extends DialogFragment implements ParentC
      * By type, then each parent followed by its children.
      */
     public static final String SORT_ORDER = Contract.Category.TYPE + " ASC, " + Contract.Category.GROUP_INDEX +
-            " ASC, " + Contract.Category.GROUP_NAME + " ASC, " + Contract.Category.GROUP_ID +
-            " ASC, " + Contract.Category.PARENT + " IS NULL DESC, " + Contract.Category.NAME + " ASC";
+            " ASC, " + Contract.Category.GROUP_NAME + " COLLATE LOCALIZED ASC, " + Contract.Category.GROUP_ID +
+            " ASC, " + Contract.Category.PARENT + " IS NULL DESC, " + Contract.Category.NAME + " COLLATE LOCALIZED ASC";
 
     public static MultiCategoryPickerDialog newInstance() {
         return new MultiCategoryPickerDialog();

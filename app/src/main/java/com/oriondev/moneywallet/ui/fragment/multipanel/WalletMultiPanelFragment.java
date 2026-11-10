@@ -143,7 +143,7 @@ public class WalletMultiPanelFragment extends MultiPanelAppBarItemFragment imple
                     Contract.Wallet.COUNT_IN_TOTAL,
                     Contract.Wallet.TOTAL_MONEY
             };
-            String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " ASC";
+            String sortOrder = Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC";
             return new CursorLoader(context, uri, projection, null, null, sortOrder);
         } else {
             return null;

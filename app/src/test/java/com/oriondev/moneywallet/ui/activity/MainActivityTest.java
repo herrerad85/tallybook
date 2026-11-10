@@ -194,6 +194,21 @@ public class MainActivityTest {
         }
     }
 
+    @Test
+    public void walletsAtTheSameIndexAreDrawnInNameOrderWhateverTheCaseOrAccentOfTheirFirstLetter() {
+        insertWallet("Zed", 0, 0L, true, false);
+        insertWallet("apple", 0, 0L, true, false);
+        insertWallet("bob", 0, 0L, true, false);
+        insertWallet("\u00c9mile", 0, 0L, true, false);
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                awaitWallets(activity);
+                assertEquals(List.of("apple", "bob", "Cash", "\u00c9mile", "Zed", "Bank", "Total"),
+                        walletSection(drawer(activity).getMenu()));
+            });
+        }
+    }
+
     /**
      * Groups come first in alphabetical order, each one led by its own header, then the wallets in
      * no group, then the Total. The Total belongs to no group, so it lands at the end of the

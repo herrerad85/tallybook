@@ -181,7 +181,7 @@ public class CurrencyListActivity extends SinglePanelSimpleListActivity implemen
                     Contract.Currency.ISO + " LIKE '%'||?||'%'";
             selectionArgs = new String[] {query, query};
         }
-        String sortBy = Contract.Currency.FAVOURITE + " DESC, " + Contract.Currency.NAME + " ASC";
+        String sortBy = Contract.Currency.FAVOURITE + " DESC, " + Contract.Currency.NAME + " COLLATE LOCALIZED ASC";
         return new CursorLoader(this, uri, projection, selection, selectionArgs, sortBy);
     }
 

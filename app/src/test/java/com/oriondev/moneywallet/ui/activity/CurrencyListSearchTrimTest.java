@@ -19,13 +19,17 @@
 
 package com.oriondev.moneywallet.ui.activity;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.widget.EditText;
 
 import androidx.loader.content.CursorLoader;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 
 import org.junit.After;
@@ -36,7 +40,12 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.android.controller.ActivityController;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -75,6 +84,26 @@ public class CurrencyListSearchTrimTest {
     public void aQueryOfOnlySpacesListsEveryCurrency() {
         CursorLoader loader = loaderFor("   ");
         assertNull(loader.getSelection());
+    }
+
+    @Test
+    public void aCustomCurrencyNamedInLowercaseIsListedAmongTheBuiltInNamesByItsFirstLetter() {
+        ContentValues values = new ContentValues();
+        values.put(Contract.Currency.ISO, "XEC");
+        values.put(Contract.Currency.NAME, "euro coin");
+        values.put(Contract.Currency.SYMBOL, "ec");
+        values.put(Contract.Currency.DECIMALS, 2);
+        ApplicationProvider.getApplicationContext().getContentResolver()
+                .insert(DataContentProvider.CONTENT_CURRENCIES, values);
+        List<String> listed = new ArrayList<>();
+        try (Cursor cursor = loaderFor("").loadInBackground()) {
+            while (cursor.moveToNext()) {
+                listed.add(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Currency.NAME)));
+            }
+        }
+        int custom = listed.indexOf("euro coin");
+        assertEquals(Arrays.asList("Euro", "euro coin", "Falkland Islands Pound"),
+                listed.subList(custom - 1, custom + 2));
     }
 
     private CursorLoader loaderFor(String typed) {

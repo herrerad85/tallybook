@@ -142,6 +142,21 @@ public class SearchRailLoaderTest {
     }
 
     @Test
+    public void peopleComeInNameOrderWhateverTheCaseOrAccentOfTheirFirstLetter() {
+        insertPerson("Zed");
+        insertPerson("apple");
+        insertPerson("bob");
+        insertPerson("\u00c9mile");
+        List<String> names = new ArrayList<>();
+        for (SearchPeopleLoader.Person person : new SearchPeopleLoader(mContext).loadInBackground()) {
+            names.add(person.getName());
+        }
+        List<String> expected = Arrays.asList("apple", "bob", "\u00c9mile", "Zed");
+        assertEquals(expected, names);
+        assertEquals(expected, new ArrayList<>(rail().getPeople().values()));
+    }
+
+    @Test
     public void aPersonLinkedOnlyThroughATransferKeepsPeople() {
         long euro = insertWallet("Euro", false);
         long savings = insertWallet("Savings", false);
@@ -216,6 +231,16 @@ public class SearchRailLoaderTest {
         insertWallet("Euro", false);
         insertWallet("Cash", false);
         assertEquals(Arrays.asList("Cash", "Euro", "Attic"), new ArrayList<>(rail().getWallets().values()));
+    }
+
+    @Test
+    public void walletsAtTheSameIndexComeInNameOrderWhateverTheCaseOrAccentOfTheirFirstLetter() {
+        insertWallet("Zed", false);
+        insertWallet("apple", false);
+        insertWallet("bob", false);
+        insertWallet("\u00c9mile", false);
+        assertEquals(Arrays.asList("apple", "bob", "\u00c9mile", "Zed"),
+                new ArrayList<>(rail().getWallets().values()));
     }
 
     @Test

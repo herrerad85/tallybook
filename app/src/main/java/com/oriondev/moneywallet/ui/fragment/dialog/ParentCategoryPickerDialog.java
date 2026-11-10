@@ -154,7 +154,7 @@ public class ParentCategoryPickerDialog extends DialogFragment implements Parent
             String where = Contract.Category.TYPE + " = ? AND " + Contract.Category.PARENT +
                     " IS NULL AND " + Contract.Category.ID + " != ?";
             String[] whereArgs = new String[] {String.valueOf(mCategoryType.getValue()), String.valueOf(mCallerId)};
-            String sortOrder = Contract.Category.NAME;
+            String sortOrder = Contract.Category.NAME + " COLLATE LOCALIZED";
             return new CursorLoader(activity, uri, projection, where, whereArgs, sortOrder);
         }
         return null;
