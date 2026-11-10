@@ -17,69 +17,69 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.picker;
+package com.oriondev.moneywallet.picker
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.android.controller.ActivityController;
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.android.controller.ActivityController
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 /**
  * Ending a preview is not per picker, it drops whatever is being shown, so a picker whose chooser
  * showed nothing has to stay out of it. Income color and expense color are two of those, and their
  * chooser closing must not take the theme preview with it.
  */
-@RunWith(RobolectricTestRunner.class)
-public class ColorPickerPreviewEndTest {
+@RunWith(RobolectricTestRunner::class)
+class ColorPickerPreviewEndTest {
 
-    private static final String THEME_TAG = "theme";
-    private static final String PLAIN_TAG = "plain";
+    companion object {
+
+        private const val THEME_TAG = "theme"
+        private const val PLAIN_TAG = "plain"
+    }
 
     @Test
-    public void aChooserThatShowedNothingEndsNothing() {
-        ActivityController<AppCompatActivity> controller =
-                Robolectric.buildActivity(AppCompatActivity.class).setup();
+    fun aChooserThatShowedNothingEndsNothing() {
+        val controller: ActivityController<AppCompatActivity> =
+                Robolectric.buildActivity(AppCompatActivity::class.java).setup()
         try {
-            RecordingController recorder = new RecordingController();
-            ColorPicker theme = ColorPicker.createPicker(
-                    controller.get().getSupportFragmentManager(), THEME_TAG, 0xFF3F51B5, false, recorder);
-            ColorPicker plain = ColorPicker.createPicker(
-                    controller.get().getSupportFragmentManager(), PLAIN_TAG, 0xFF2196F3, false, recorder);
+            val recorder = RecordingController()
+            val theme = ColorPicker.createPicker(
+                    controller.get().supportFragmentManager, THEME_TAG, 0xFF3F51B5.toInt(), false, recorder)
+            val plain = ColorPicker.createPicker(
+                    controller.get().supportFragmentManager, PLAIN_TAG, 0xFF2196F3.toInt(), false, recorder)
 
-            assertTrue(theme.onColorPreview(null, 0xFF009688));
-            plain.onColorPreview(null, 0xFF4CAF50);
-            plain.onColorChooserDismissed(null);
-            assertEquals("the chooser that showed nothing ended the one that did", 0, recorder.mEnded);
+            assertTrue(theme.onColorPreview(null, 0xFF009688.toInt()))
+            plain.onColorPreview(null, 0xFF4CAF50.toInt())
+            plain.onColorChooserDismissed(null)
+            assertEquals("the chooser that showed nothing ended the one that did", 0, recorder.mEnded)
 
-            theme.onColorChooserDismissed(null);
-            assertEquals(1, recorder.mEnded);
+            theme.onColorChooserDismissed(null)
+            assertEquals(1, recorder.mEnded)
         } finally {
-            controller.close();
+            controller.close()
         }
     }
 
     /** Answers the way the settings screen does, where only the theme colors reach the engine. */
-    private static class RecordingController implements ColorPicker.Controller {
+    private class RecordingController : ColorPicker.Controller {
 
-        private int mEnded;
+        var mEnded: Int = 0
 
-        @Override
-        public void onColorChanged(String tag, int color, boolean autoFired) {}
+        override fun onColorChanged(tag: String?, color: Int, autoFired: Boolean) {}
 
-        @Override
-        public boolean onColorPreview(String tag, int color) {
-            return THEME_TAG.equals(tag);
+        override fun onColorPreview(tag: String?, color: Int): Boolean {
+            return THEME_TAG == tag
         }
 
-        @Override
-        public void onColorPreviewEnded() {
-            mEnded++;
+        override fun onColorPreviewEnded() {
+            mEnded++
         }
     }
 }
