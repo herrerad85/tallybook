@@ -1,238 +1,246 @@
-package com.oriondev.moneywallet.api.saf;
+package com.oriondev.moneywallet.api.saf
 
-import android.content.Context;
-import android.content.UriPermission;
-import android.net.Uri;
-import android.webkit.MimeTypeMap;
+import android.content.Context
+import android.content.UriPermission
+import android.net.Uri
+import android.webkit.MimeTypeMap
 
-import com.oriondev.moneywallet.api.AbstractBackendServiceAPI;
-import com.oriondev.moneywallet.api.BackendException;
-import com.oriondev.moneywallet.model.IFile;
-import com.oriondev.moneywallet.model.SAFFile;
-import com.oriondev.moneywallet.utils.ProgressInputStream;
-import com.oriondev.moneywallet.utils.ProgressOutputStream;
+import com.oriondev.moneywallet.api.AbstractBackendServiceAPI
+import com.oriondev.moneywallet.api.BackendException
+import com.oriondev.moneywallet.model.IFile
+import com.oriondev.moneywallet.model.SAFFile
+import com.oriondev.moneywallet.utils.ProgressInputStream
+import com.oriondev.moneywallet.utils.ProgressOutputStream
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.IOUtils
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.LinkedList
+import java.util.Locale
+import java.util.Objects
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.documentfile.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile
 
-import static com.oriondev.moneywallet.api.saf.SAFBackendService.getUri;
+import com.oriondev.moneywallet.api.saf.SAFBackendService.Companion.getUri
 
-public class SAFBackendServiceAPI extends AbstractBackendServiceAPI<SAFFile> {
+class SAFBackendServiceAPI : AbstractBackendServiceAPI<SAFFile> {
 
-    private final Context mContext;
-    private final DocumentFile mRoot;
+    private val mContext: Context
+    private val mRoot: DocumentFile?
 
-    public SAFBackendServiceAPI(Context context) throws BackendException {
-        super(SAFFile.class);
-        mContext = context;
-        Uri uri = getUri(context);
+    @Throws(BackendException::class)
+    constructor(context: Context) : super(SAFFile::class.java) {
+        mContext = context
+        val uri = getUri(context)
         if (uri == null) {
-            throw new BackendException("SAFBackendService not enabled");
+            throw BackendException("SAFBackendService not enabled")
         }
-        UriPermission permission = getPermissionFor(getUri(context));
-        if (permission == null || !(permission.isReadPermission() && permission.isWritePermission())) {
-            throw new BackendException("Root uri not accessible (no permission)");
+        val permission = getPermissionFor(getUri(context))
+        if (permission == null || !(permission.isReadPermission && permission.isWritePermission)) {
+            throw BackendException("Root uri not accessible (no permission)")
         }
-        mRoot = DocumentFile.fromTreeUri(mContext, permission.getUri());
+        mRoot = DocumentFile.fromTreeUri(mContext, permission.uri)
     }
 
-    private UriPermission getPermissionFor(Uri uri) {
-        for (UriPermission permission : mContext.getContentResolver().getPersistedUriPermissions()) {
-            if (Objects.equals(permission.getUri(), uri)) {
-                return permission;
+    private fun getPermissionFor(uri: Uri?): UriPermission? {
+        for (permission in mContext.contentResolver.persistedUriPermissions) {
+            if (Objects.equals(permission.uri, uri)) {
+                return permission
             }
         }
-        return null;
+        return null
     }
 
-    @Override
-    public SAFFile upload(@Nullable SAFFile folder, File file, ProgressInputStream.UploadProgressListener listener) throws BackendException {
-        DocumentFile docFile = createDocumentFile(folder, file);
+    @Throws(BackendException::class)
+    public override fun upload(folder: SAFFile?, file: File, listener: ProgressInputStream.UploadProgressListener?): SAFFile {
+        val docFile = createDocumentFile(folder, file)
         if (docFile == null) {
-            throw new BackendException(
+            throw BackendException(
                     String.format("Couldn't create output file %s under %s",
-                            file.getName(),
-                            folder == null ? "root directory" : folder.getName()
+                            file.name,
+                            if (folder == null) "root directory" else folder.getName()
                     )
-            );
+            )
         }
 
-        try (InputStream in = openUploadInputStream(file, listener);
-             OutputStream out = openUploadOutputStream(docFile)) {
-            IOUtils.copy(in, out);
-        } catch (IOException e) {
-            throw new BackendException(
-                    String.format("Failed to upload %s to %s", file.getName(), docFile.getUri()),
+        try {
+            openUploadInputStream(file, listener).use { `in` ->
+                openUploadOutputStream(docFile).use { out ->
+                    IOUtils.copy(`in`, out)
+                }
+            }
+        } catch (e: IOException) {
+            throw BackendException(
+                    String.format("Failed to upload %s to %s", file.name, docFile.uri),
                     e, true
-            );
+            )
         }
-        return new SAFFile(docFile);
+        return SAFFile(docFile)
     }
 
-    private OutputStream openUploadOutputStream(DocumentFile docFile) {
-        OutputStream out;
+    private fun openUploadOutputStream(docFile: DocumentFile): OutputStream? {
+        val out: OutputStream?
         try {
-            out = mContext.getContentResolver().openOutputStream(docFile.getUri());
-        } catch (FileNotFoundException e) {
-            throw new AssertionError("Document file should have been created!");
+            out = mContext.contentResolver.openOutputStream(docFile.uri)
+        } catch (e: FileNotFoundException) {
+            throw AssertionError("Document file should have been created!")
         }
-        return out;
+        return out
     }
 
-    private InputStream openUploadInputStream(File file, ProgressInputStream.UploadProgressListener listener) throws BackendException {
-        InputStream in;
+    @Throws(BackendException::class)
+    private fun openUploadInputStream(file: File, listener: ProgressInputStream.UploadProgressListener?): InputStream {
+        val `in`: InputStream
         try {
-            in = new ProgressInputStream(file, listener);
-        } catch (FileNotFoundException e) {
-            throw new BackendException(
-                    String.format("File '%s' doesn't exist", file.getName()), e
-            );
-        } catch (IOException e) {
-            throw new BackendException(
-                    String.format("Couldn't access file '%s'", file.getName()), e
-            );
+            `in` = ProgressInputStream(file, listener!!)
+        } catch (e: FileNotFoundException) {
+            throw BackendException(
+                    String.format("File '%s' doesn't exist", file.name), e
+            )
+        } catch (e: IOException) {
+            throw BackendException(
+                    String.format("Couldn't access file '%s'", file.name), e
+            )
         }
-        return in;
+        return `in`
     }
 
-    private DocumentFile createDocumentFile(@Nullable SAFFile folder, File file) throws BackendException {
-        DocumentFile docFolder;
+    @Throws(BackendException::class)
+    private fun createDocumentFile(folder: SAFFile?, file: File): DocumentFile? {
+        val docFolder: DocumentFile?
         if (folder == null) {
-            docFolder = mRoot;
+            docFolder = mRoot
         } else {
-            docFolder = DocumentFile.fromTreeUri(mContext, folder.getUri());
+            docFolder = DocumentFile.fromTreeUri(mContext, folder.getUri())
             if (docFolder == null) {
-                throw new BackendException(
+                throw BackendException(
                         String.format("Couldn't open folder %s to create file %s",
-                                folder.getUri(), file.getName())
-                );
+                                folder.getUri(), file.name)
+                )
             }
         }
-        return docFolder.createFile(getFileType(file), file.getName());
+        return docFolder!!.createFile(getFileType(file), file.name)
     }
 
-    private String getFileType(File file) {
-        String name = file.getName();
-        final int lastDot = name.lastIndexOf('.');
+    private fun getFileType(file: File): String {
+        val name = file.name
+        val lastDot = name.lastIndexOf('.')
         if (lastDot >= 0) {
-            final String extension = name.substring(lastDot + 1).toLowerCase();
-            final String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            val extension = name.substring(lastDot + 1).lowercase(Locale.getDefault())
+            val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
             if (mime != null) {
-                return mime;
+                return mime
             }
         }
 
-        return "application/octet-stream";
+        return "application/octet-stream"
     }
 
-    @Override
-    public File download(File folder, @NonNull SAFFile file, ProgressOutputStream.DownloadProgressListener listener) throws BackendException {
-        File destination = new File(folder, file.getName());
+    @Throws(BackendException::class)
+    public override fun download(folder: File?, file: SAFFile, listener: ProgressOutputStream.DownloadProgressListener?): File {
+        val destination = File(folder, file.getName())
 
-        try (InputStream in = openDownloadInputStream(file);
-             OutputStream out = openDownloadOutputStream(file, destination, listener)) {
-            IOUtils.copy(in, out);
-        } catch (IOException e) {
-            throw new BackendException(
+        try {
+            openDownloadInputStream(file).use { `in` ->
+                openDownloadOutputStream(file, destination, listener).use { out ->
+                    IOUtils.copy(`in`, out)
+                }
+            }
+        } catch (e: IOException) {
+            throw BackendException(
                     String.format("Failed to download %s to %s",
                             file.getName(),
-                            destination.getName()
+                            destination.name
                     ), e, true
-            );
+            )
         }
-        return destination;
+        return destination
     }
 
-    private InputStream openDownloadInputStream(@NonNull SAFFile file) throws BackendException {
-        InputStream in;
+    @Throws(BackendException::class)
+    private fun openDownloadInputStream(file: SAFFile): InputStream {
+        val `in`: InputStream?
         try {
-            in = mContext.getContentResolver().openInputStream(file.getUri());
-        } catch (FileNotFoundException e) {
-            throw new BackendException(
+            `in` = mContext.contentResolver.openInputStream(file.getUri())
+        } catch (e: FileNotFoundException) {
+            throw BackendException(
                     String.format("Unable to open uri %s", file.getUri()), e, true
-            );
+            )
         }
 
-        if (in == null) {
-            throw new BackendException(
+        if (`in` == null) {
+            throw BackendException(
                     String.format("Couldn't open file %s its provider has recently crashed",
                             file.getUri()
                     ), true
-            );
+            )
         }
-        return in;
+        return `in`
     }
 
-    private OutputStream openDownloadOutputStream(SAFFile source, File destination, ProgressOutputStream.DownloadProgressListener listener) throws BackendException {
-        OutputStream out;
+    @Throws(BackendException::class)
+    private fun openDownloadOutputStream(source: SAFFile, destination: File, listener: ProgressOutputStream.DownloadProgressListener?): OutputStream {
+        val out: OutputStream
         try {
-            out = new ProgressOutputStream(destination, source.getSize(), listener);
-        } catch (FileNotFoundException e) {
-            throw new BackendException(
+            out = ProgressOutputStream(destination, source.getSize(), listener!!)
+        } catch (e: FileNotFoundException) {
+            throw BackendException(
                     String.format(
                             "Couldn't open '%s' for writing (might be a folder or inaccessible)",
-                            destination.getName()
+                            destination.name
                     ), e, true
-            );
+            )
         }
-        return out;
+        return out
     }
 
-    @Override
-    public List<IFile> list(@Nullable SAFFile folder) throws BackendException {
-        DocumentFile docFolder;
+    @Throws(BackendException::class)
+    public override fun list(folder: SAFFile?): List<IFile> {
+        val docFolder: DocumentFile?
         if (folder == null) {
-            docFolder = mRoot;
+            docFolder = mRoot
         } else {
-            docFolder = DocumentFile.fromTreeUri(mContext, folder.getUri());
+            docFolder = DocumentFile.fromTreeUri(mContext, folder.getUri())
             if (docFolder == null) {
-                throw new BackendException(
+                throw BackendException(
                     String.format("Couldn't access folder '%s' " +
                             "(maybe this was called on SDK_Version <21)", folder.getUri())
-                );
+                )
             }
         }
-        LinkedList<IFile> folderContents = new LinkedList<>();
-        for (DocumentFile file : docFolder.listFiles()) {
-            folderContents.add(new SAFFile(file));
+        val folderContents = LinkedList<IFile>()
+        for (file in docFolder!!.listFiles()) {
+            folderContents.add(SAFFile(file))
         }
-        return folderContents;
+        return folderContents
     }
 
-    @Override
-    public SAFFile newFolder(SAFFile parent, String name) throws BackendException {
+    @Throws(BackendException::class)
+    public override fun newFolder(parent: SAFFile?, name: String): SAFFile {
         // No parent means the top of the granted tree, which is where the explorer starts and
         // is the only place a first folder can be made. Reading a uri off it threw instead, and
         // BackendHandlerIntentService catches BackendException only, so it took the app down.
         // upload and list already read a missing parent this way.
-        DocumentFile docParent = parent == null ? mRoot
-                : DocumentFile.fromTreeUri(mContext, parent.getUri());
-        String parentName = parent == null ? "root directory" : parent.getUri().toString();
+        val docParent = if (parent == null) mRoot
+                else DocumentFile.fromTreeUri(mContext, parent.getUri())
+        val parentName = if (parent == null) "root directory" else parent.getUri().toString()
         if (docParent == null) {
-            throw new BackendException(
+            throw BackendException(
                     String.format("Couldn't access parent '%s'", parentName)
-            );
+            )
         }
-        DocumentFile docFolder = docParent.createDirectory(name);
+        val docFolder = docParent.createDirectory(name)
         if (docFolder == null) {
-            throw new BackendException(
+            throw BackendException(
                     String.format(
                             "Couldn't create folder '%s' under parent '%s'", name, parentName
                     )
-            );
+            )
         }
-        return new SAFFile(docFolder);
+        return SAFFile(docFolder)
     }
 }
