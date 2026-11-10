@@ -17,33 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api;
+package com.oriondev.moneywallet.api
 
 /**
  * Created by andrea on 21/11/18.
  */
-public class BackendException extends Exception {
+open class BackendException : Exception {
 
-    private boolean mIsRecoverable;
+    private val mIsRecoverable: Boolean
 
-    public BackendException(String message) {
-        this(message, null);
+    constructor(message: String?) : this(message, null)
+
+    constructor(message: String?, cause: Throwable?) : this(message, cause, false)
+
+    constructor(message: String?, isRecoverable: Boolean) : this(message, null, isRecoverable)
+
+    constructor(message: String?, cause: Throwable?, isRecoverable: Boolean) : super(message, cause) {
+        mIsRecoverable = isRecoverable
     }
 
-    public BackendException(String message, Throwable cause) {
-        this(message, cause, false);
-    }
-
-    public BackendException(String message, boolean isRecoverable) {
-        this(message, null, isRecoverable);
-    }
-
-    public BackendException(String message, Throwable cause, boolean isRecoverable) {
-        super(message, cause);
-        mIsRecoverable = isRecoverable;
-    }
-
-    public boolean isRecoverable() {
-        return mIsRecoverable;
+    fun isRecoverable(): Boolean {
+        return mIsRecoverable
     }
 }
