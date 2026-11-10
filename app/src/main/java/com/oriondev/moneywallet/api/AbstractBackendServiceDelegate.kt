@@ -17,95 +17,94 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api;
+package com.oriondev.moneywallet.api
 
-import android.content.Context;
-import android.content.Intent;
+import android.content.Context
+import android.content.Intent
 
-import androidx.activity.ComponentActivity;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.fragment.app.Fragment;
+import androidx.activity.ComponentActivity
+import androidx.annotation.StringRes
+import androidx.fragment.app.Fragment
 
 /**
  * Created by andrea on 21/11/18.
  */
-public abstract class AbstractBackendServiceDelegate {
+abstract class AbstractBackendServiceDelegate {
 
-    private final BackendServiceStatusListener mListener;
+    private val mListener: BackendServiceStatusListener?
 
-    public AbstractBackendServiceDelegate(BackendServiceStatusListener listener) {
-        mListener = listener;
+    constructor(listener: BackendServiceStatusListener?) {
+        mListener = listener
     }
 
-    public abstract String getId();
+    abstract fun getId(): String
 
     @StringRes
-    public abstract int getBackupCoverMessage();
+    abstract fun getBackupCoverMessage(): Int
 
     @StringRes
-    public abstract int getName();
+    abstract fun getName(): Int
 
     @StringRes
-    public abstract int getBackupCoverAction();
+    abstract fun getBackupCoverAction(): Int
 
-    public abstract boolean isServiceEnabled(Context context);
+    abstract fun isServiceEnabled(context: Context?): Boolean
 
     /**
      * Registers the activity result launchers this backend needs. A Fragment refuses a
      * registration once its view has been created, so call this from onAttach or onCreate,
-     * never from {@link #setup}, which runs on a click. A backend that registers a launcher
-     * here needs this called before its {@link #setup}.
+     * never from [setup], which runs on a click. A backend that registers a launcher
+     * here needs this called before its [setup].
      */
-    public void registerLaunchers(@NonNull Fragment fragment) {
+    open fun registerLaunchers(fragment: Fragment) {
         // most backends have nothing to register
     }
 
-    public abstract void setup(ComponentActivity activity) throws BackendException;
+    @Throws(BackendException::class)
+    abstract fun setup(activity: ComponentActivity?)
 
-    public abstract void teardown(ComponentActivity activity) throws BackendException;
+    @Throws(BackendException::class)
+    abstract fun teardown(activity: ComponentActivity?)
 
-    public boolean handlePermissionsResult(Context context, int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        return false;
+    open fun handlePermissionsResult(context: Context?, requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
+        return false
     }
 
-    public boolean handleActivityResult(Context context, int requestCode, int resultCode, Intent data) {
-        return false;
+    open fun handleActivityResult(context: Context?, requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        return false
     }
 
     /**
      * Whether the user can disconnect (forget/revoke) this backend. Most backends can be
      * disconnected; the local external-memory backend cannot, since it holds no session to drop.
      */
-    public boolean isDisconnectable() {
-        return true;
+    open fun isDisconnectable(): Boolean {
+        return true
     }
 
     /**
-     * Whether {@link #setup} can be run again on an enabled backend to pick a different location.
+     * Whether [setup] can be run again on an enabled backend to pick a different location.
      */
-    public boolean isFolderChangeable() {
-        return false;
+    open fun isFolderChangeable(): Boolean {
+        return false
     }
 
     /**
      * A line naming where this backend stores its backups, or null if it has none to show. It
      * may query another app's provider, so call it off the main thread.
      */
-    @Nullable
-    public String describeLocation(Context context) {
-        return null;
+    open fun describeLocation(context: Context?): String? {
+        return null
     }
 
-    protected void setBackendServiceEnabled(boolean enabled) {
+    protected fun setBackendServiceEnabled(enabled: Boolean) {
         if (mListener != null) {
-            mListener.onBackendStatusChange(enabled);
+            mListener.onBackendStatusChange(enabled)
         }
     }
 
-    public interface BackendServiceStatusListener {
+    interface BackendServiceStatusListener {
 
-        void onBackendStatusChange(boolean enabled);
+        fun onBackendStatusChange(enabled: Boolean)
     }
 }
