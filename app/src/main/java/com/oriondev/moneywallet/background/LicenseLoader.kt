@@ -17,66 +17,62 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
+import android.content.Context
 
-import com.oriondev.moneywallet.model.License;
+import com.oriondev.moneywallet.model.License
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONArray
+import org.json.JSONException
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 
 /**
  * Created by andrea on 06/04/18.
  */
-public class LicenseLoader extends AbstractGenericLoader<List<License>> {
+class LicenseLoader : AbstractGenericLoader<MutableList<License>> {
 
-    public LicenseLoader(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    override fun loadInBackground(): MutableList<License>? {
+        val licenses: MutableList<License> = ArrayList()
+        licenses.addAll(loadLicenseFile("libraries_base.json"))
+        licenses.addAll(loadLicenseFile("libraries_version.json"))
+        licenses.addAll(loadLicenseFile("libraries_map.json"))
+        return licenses
     }
 
-    @Override
-    public List<License> loadInBackground() {
-        List<License> licenses = new ArrayList<>();
-        licenses.addAll(loadLicenseFile("libraries_base.json"));
-        licenses.addAll(loadLicenseFile("libraries_version.json"));
-        licenses.addAll(loadLicenseFile("libraries_map.json"));
-        return licenses;
-    }
-
-    private List<License> loadLicenseFile(String resource) {
-        List<License> licenses = new ArrayList<>();
-        StringBuilder jsonBuilder = new StringBuilder();
+    private fun loadLicenseFile(resource: String): MutableList<License> {
+        val licenses: MutableList<License> = ArrayList()
+        val jsonBuilder = StringBuilder()
         try {
-            InputStream inputStream = getContext().getAssets().open("resources/" + resource);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                jsonBuilder.append(line);
+            val inputStream: InputStream = context.assets.open("resources/" + resource)
+            val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+            while (true) {
+                val line: String = bufferedReader.readLine() ?: break
+                jsonBuilder.append(line)
             }
-            JSONArray array = new JSONArray(jsonBuilder.toString());
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject item = array.getJSONObject(i);
-                licenses.add(new License(
+            val array = JSONArray(jsonBuilder.toString())
+            for (i in 0 until array.length()) {
+                val item = array.getJSONObject(i)
+                licenses.add(License(
                         item.getString("name"),
                         item.optString("author"),
                         item.optString("website"),
                         item.optString("version"),
                         item.optString("copyright"),
                         item.optString("license")
-                ));
+                ))
             }
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
-        return licenses;
+        return licenses
     }
 }
