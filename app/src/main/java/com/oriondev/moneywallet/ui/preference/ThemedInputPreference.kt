@@ -17,121 +17,114 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.preference;
+package com.oriondev.moneywallet.ui.preference
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import android.content.DialogInterface;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.EditText;
-import androidx.appcompat.app.AlertDialog;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceViewHolder;
-import android.text.TextUtils;
-import android.util.AttributeSet;
+import android.content.Context
+import android.content.DialogInterface
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
+import androidx.preference.Preference
+import androidx.preference.PreferenceViewHolder
+import android.text.TextUtils
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
-import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog
 
 /**
  * Created by andrea on 13/11/18.
  */
 
-public class ThemedInputPreference extends Preference {
+class ThemedInputPreference : Preference {
 
-    private String mContent;
+    private var mContent: String? = null
 
-    private String mHint;
-    private boolean mAllowEmptyInput;
-    private int mInputType;
+    private var mHint: String? = null
+    private var mAllowEmptyInput: Boolean = false
+    private var mInputType: Int = 0
 
-    private String mValue;
+    private var mValue: String? = null
 
-    public ThemedInputPreference(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    public ThemedInputPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public ThemedInputPreference(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    private void initialize() {
-        setLayoutResource(R.layout.layout_preference_material_design);
-        setOnPreferenceClickListener(new OnPreferenceClickListener() {
+    private fun initialize() {
+        layoutResource = R.layout.layout_preference_material_design
+        onPreferenceClickListener = object : Preference.OnPreferenceClickListener {
 
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                showDialog();
-                return false;
+            override fun onPreferenceClick(preference: Preference): Boolean {
+                showDialog()
+                return false
             }
 
-        });
+        }
     }
 
-    public void setContent(String content) {
-        mContent = content;
+    fun setContent(content: String?) {
+        mContent = content
     }
 
-    public void setContent(int content) {
-        mContent = getContext().getString(content);
+    fun setContent(content: Int) {
+        mContent = context.getString(content)
     }
 
-    public void setInput(String hint, boolean allowEmptyInput, int inputType) {
-        mHint = hint;
-        mAllowEmptyInput = allowEmptyInput;
-        mInputType = inputType;
+    fun setInput(hint: String?, allowEmptyInput: Boolean, inputType: Int) {
+        mHint = hint
+        mAllowEmptyInput = allowEmptyInput
+        mInputType = inputType
     }
 
-    public void setCurrentValue(String value) {
-        mValue = value;
+    fun setCurrentValue(value: String?) {
+        mValue = value
     }
 
-    public void setInput(int hint, boolean allowEmptyInput, int inputType) {
-        mHint = getContext().getString(hint);
-        mAllowEmptyInput = allowEmptyInput;
-        mInputType = inputType;
+    fun setInput(hint: Int, allowEmptyInput: Boolean, inputType: Int) {
+        mHint = context.getString(hint)
+        mAllowEmptyInput = allowEmptyInput
+        mInputType = inputType
     }
 
-    private void showDialog() {
-        View inputView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_input, null);
-        final EditText inputEditText = inputView.findViewById(R.id.dialog_input_edit_text);
-        inputEditText.setHint(mHint);
-        inputEditText.setText(mValue);
-        inputEditText.setInputType(mInputType);
-        AlertDialog dialog = ThemedDialog.buildMaterialDialog(getContext())
-                .setTitle(getTitle())
+    private fun showDialog() {
+        val inputView = LayoutInflater.from(context).inflate(R.layout.dialog_input, null)
+        val inputEditText = inputView.findViewById<EditText>(R.id.dialog_input_edit_text)
+        inputEditText.hint = mHint
+        inputEditText.setText(mValue)
+        inputEditText.inputType = mInputType
+        val dialog = ThemedDialog.buildMaterialDialog(context)
+                .setTitle(title)
                 .setMessage(mContent)
                 .setView(inputView)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                .setPositiveButton(android.R.string.ok, object : DialogInterface.OnClickListener {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        CharSequence input = inputEditText.getText();
+                    override fun onClick(dialog: DialogInterface?, which: Int) {
+                        val input = inputEditText.text
                         if (!TextUtils.equals(input, mValue)) {
-                            mValue = input.toString();
-                            callChangeListener(mValue);
+                            mValue = input.toString()
+                            callChangeListener(mValue)
                         }
                     }
 
                 })
                 .setNegativeButton(android.R.string.cancel, null)
-                .create();
-        ThemedDialog.showWithInput(dialog, inputEditText, mAllowEmptyInput);
+                .create()
+        ThemedDialog.showWithInput(dialog, inputEditText, mAllowEmptyInput)
     }
 
     // see ThemedPreference.onBindViewHolder
-    @Override
-    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
-        super.onBindViewHolder(holder);
-        ThemeEngine.applyTheme(holder.itemView, true);
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        ThemeEngine.applyTheme(holder.itemView, true)
     }
 }
