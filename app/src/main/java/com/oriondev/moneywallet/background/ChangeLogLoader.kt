@@ -17,76 +17,74 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
+import android.content.Context
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.model.ChangeLog;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.model.ChangeLog
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserException
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException
 
 /**
  * Created by andrea on 06/04/18.
  */
-public class ChangeLogLoader extends AbstractGenericLoader<List<ChangeLog>> {
+class ChangeLogLoader : AbstractGenericLoader<MutableList<ChangeLog>> {
 
-    private static final String VERSION = "version";
-    private static final String CHANGE_TEXT = "change";
-    private static final String VERSION_NAME = "versionName";
-    private static final String VERSION_DATE = "versionDate";
+    companion object {
 
-    public ChangeLogLoader(Context context) {
-        super(context);
+        private const val VERSION = "version"
+        private const val CHANGE_TEXT = "change"
+        private const val VERSION_NAME = "versionName"
+        private const val VERSION_DATE = "versionDate"
     }
 
-    @Override
-    public List<ChangeLog> loadInBackground() {
-        List<ChangeLog> changeLogs = new ArrayList<>();
-        XmlPullParser parser = getContext().getResources().getXml(R.xml.changelog);
+    constructor(context: Context) : super(context)
+
+    override fun loadInBackground(): MutableList<ChangeLog>? {
+        val changeLogs: MutableList<ChangeLog> = ArrayList()
+        val parser: XmlPullParser = context.resources.getXml(R.xml.changelog)
         try {
-            int eventType = parser.getEventType();
-            String buffer = null;
+            var eventType = parser.eventType
+            var buffer: String? = null
             while (eventType != XmlPullParser.END_DOCUMENT) {
-                String tagName = parser.getName();
-                switch (eventType) {
-                    case XmlPullParser.START_TAG:
+                val tagName = parser.name
+                when (eventType) {
+                    XmlPullParser.START_TAG -> {
                         if (tagName.equals(VERSION)) {
-                            ChangeLog changeLog = new ChangeLog.HeaderBuilder()
+                            val changeLog = ChangeLog.HeaderBuilder()
                                     .versionName(parser.getAttributeValue(null, VERSION_NAME))
                                     .versionDate(parser.getAttributeValue(null, VERSION_DATE))
-                                    .build();
-                            changeLogs.add(changeLog);
+                                    .build()
+                            changeLogs.add(changeLog)
                         }
-                        break;
-                    case XmlPullParser.TEXT:
-                        buffer = parser.getText();
+                    }
+                    XmlPullParser.TEXT -> {
+                        buffer = parser.text
                         if (buffer != null) {
-                            buffer = buffer.replaceAll("\\[", "<").replaceAll("\\]", ">");
+                            buffer = buffer.replace(Regex("\\["), "<").replace(Regex("\\]"), ">")
                         }
-                        break;
-                    case XmlPullParser.END_TAG:
+                    }
+                    XmlPullParser.END_TAG -> {
                         if (tagName.equals(CHANGE_TEXT)) {
-                            ChangeLog changeLog = new ChangeLog.ItemBuilder()
+                            val changeLog = ChangeLog.ItemBuilder()
                                     .changeText(buffer)
-                                    .build();
-                            changeLogs.add(changeLog);
-                            buffer = null;
+                                    .build()
+                            changeLogs.add(changeLog)
+                            buffer = null
                         }
-                        break;
+                    }
                 }
-                eventType = parser.next();
+                eventType = parser.next()
             }
-        } catch (XmlPullParserException e) {
+        } catch (e: XmlPullParserException) {
             // Log.e("ChangeLogLoader", "Exception while parsing change log xml file", e);
-        } catch (IOException e) {
+        } catch (e: IOException) {
             // Log.e("ChangeLogLoader", "I/O Exception while parsing change log xml file", e);
         }
-        return changeLogs;
+        return changeLogs
     }
 }
