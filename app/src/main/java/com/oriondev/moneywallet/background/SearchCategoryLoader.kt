@@ -17,24 +17,15 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
 
-import androidx.annotation.Nullable;
-
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-import com.oriondev.moneywallet.ui.fragment.dialog.MultiCategoryPickerDialog;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.ui.fragment.dialog.MultiCategoryPickerDialog
 
 /**
  * Every category in the Category editor's order, the expense parents, then the income ones, then
@@ -42,138 +33,138 @@ import java.util.Set;
  * transactions the Category type matches with only its checkbox tapped, which is the count the
  * search strip shows for it.
  */
-public class SearchCategoryLoader extends AbstractGenericLoader<List<SearchCategoryLoader.Entry>> {
+class SearchCategoryLoader : AbstractGenericLoader<MutableList<SearchCategoryLoader.Entry>> {
 
-    public static class Entry {
+    class Entry {
 
-        private final long mId;
-        private final String mName;
-        private final String mIcon;
-        private final Contract.CategoryType mType;
-        private final List<Entry> mChildren = new ArrayList<>();
-        private int mCount;
+        private val mId: Long
+        private val mName: String?
+        private val mIcon: String?
+        private val mType: Contract.CategoryType?
+        private val mChildren: MutableList<Entry> = ArrayList()
+        internal var mCount: Int
 
-        private Entry(long id, String name, String icon, Contract.CategoryType type, int count) {
-            mId = id;
-            mName = name;
-            mIcon = icon;
-            mType = type;
-            mCount = count;
+        internal constructor(id: Long, name: String?, icon: String?, type: Contract.CategoryType?, count: Int) {
+            mId = id
+            mName = name
+            mIcon = icon
+            mType = type
+            mCount = count
         }
 
-        public long getId() {
-            return mId;
+        fun getId(): Long {
+            return mId
         }
 
-        public String getName() {
-            return mName;
+        fun getName(): String? {
+            return mName
         }
 
-        public String getIcon() {
-            return mIcon;
+        fun getIcon(): String? {
+            return mIcon
         }
 
-        public Contract.CategoryType getType() {
-            return mType;
+        fun getType(): Contract.CategoryType? {
+            return mType
         }
 
-        public List<Entry> getChildren() {
-            return mChildren;
+        fun getChildren(): MutableList<Entry> {
+            return mChildren
         }
 
-        public int getCount() {
-            return mCount;
+        fun getCount(): Int {
+            return mCount
         }
 
         /**
          * @return this category's id and every child's, which a tap on its checkbox ticks.
          */
-        public List<Long> getIds() {
-            List<Long> ids = new ArrayList<>();
-            ids.add(mId);
-            for (Entry child : mChildren) {
-                ids.add(child.mId);
+        fun getIds(): MutableList<Long> {
+            val ids: MutableList<Long> = ArrayList()
+            ids.add(mId)
+            for (child in mChildren) {
+                ids.add(child.mId)
             }
-            return ids;
+            return ids
         }
     }
 
-    public SearchCategoryLoader(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    override fun getObservedUri(): Uri? {
+        return DataContentProvider.CONTENT_ALL
     }
 
-    @Override
-    protected Uri getObservedUri() {
-        return DataContentProvider.CONTENT_ALL;
+    override fun loadInBackground(): MutableList<Entry>? {
+        return loadCategories(context, countByCategory(context))
     }
 
-    @Override
-    public List<Entry> loadInBackground() {
-        return loadCategories(getContext(), countByCategory(getContext()));
-    }
+    companion object {
 
-    /**
-     * @param counts the ids of the transactions in each category, by id, or null to count none.
-     */
-    public static List<Entry> loadCategories(Context context, @Nullable Map<Long, Set<Long>> counts) {
-        List<Entry> expense = new ArrayList<>();
-        List<Entry> income = new ArrayList<>();
-        List<Entry> system = new ArrayList<>();
-        Map<Long, Entry> parents = new HashMap<>();
-        // a transaction split across a parent and its child, or two children, counts once for the
-        // parent, which ticks them all
-        Map<Long, Set<Long>> family = new HashMap<>();
-        String[] projection = new String[] {Contract.Category.ID, Contract.Category.NAME,
-                Contract.Category.ICON, Contract.Category.TYPE, Contract.Category.PARENT};
-        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_CATEGORIES, projection, null, null, MultiCategoryPickerDialog.SORT_ORDER);
-        if (cursor != null) {
-            try {
-                while (cursor.moveToNext()) {
-                    long id = cursor.getLong(0);
-                    Set<Long> transactions = counts != null && counts.containsKey(id) ? counts.get(id) : new HashSet<>();
-                    Contract.CategoryType type = Contract.CategoryType.fromValue(cursor.getInt(3));
-                    Entry entry = new Entry(id, cursor.getString(1), cursor.getString(2), type, transactions.size());
-                    // null for a top level category, and for one whose parent was deleted
-                    Entry parent = cursor.isNull(4) ? null : parents.get(cursor.getLong(4));
-                    if (parent != null) {
-                        parent.mChildren.add(entry);
-                        Set<Long> union = family.get(parent.mId);
-                        union.addAll(transactions);
-                        parent.mCount = union.size();
-                    } else {
-                        parents.put(id, entry);
-                        family.put(id, new HashSet<>(transactions));
-                        (type == Contract.CategoryType.EXPENSE ? expense
-                                : type == Contract.CategoryType.INCOME ? income : system).add(entry);
+        /**
+         * @param counts the ids of the transactions in each category, by id, or null to count none.
+         */
+        @JvmStatic
+        fun loadCategories(context: Context, counts: MutableMap<Long, MutableSet<Long>>?): MutableList<Entry> {
+            val expense: MutableList<Entry> = ArrayList()
+            val income: MutableList<Entry> = ArrayList()
+            val system: MutableList<Entry> = ArrayList()
+            val parents: MutableMap<Long, Entry> = HashMap()
+            // a transaction split across a parent and its child, or two children, counts once for the
+            // parent, which ticks them all
+            val family: MutableMap<Long, MutableSet<Long>> = HashMap()
+            val projection = arrayOf(Contract.Category.ID, Contract.Category.NAME,
+                    Contract.Category.ICON, Contract.Category.TYPE, Contract.Category.PARENT)
+            val cursor: Cursor? = context.contentResolver.query(DataContentProvider.CONTENT_CATEGORIES, projection, null, null, MultiCategoryPickerDialog.SORT_ORDER)
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getLong(0)
+                        val transactions: MutableSet<Long>? = if (counts != null && counts.containsKey(id)) counts.get(id) else HashSet()
+                        val type = Contract.CategoryType.fromValue(cursor.getInt(3))
+                        val entry = Entry(id, cursor.getString(1), cursor.getString(2), type, transactions!!.size)
+                        // null for a top level category, and for one whose parent was deleted
+                        val parent = if (cursor.isNull(4)) null else parents.get(cursor.getLong(4))
+                        if (parent != null) {
+                            parent.getChildren().add(entry)
+                            val union = family.get(parent.getId())
+                            union!!.addAll(transactions)
+                            parent.mCount = union.size
+                        } else {
+                            parents.put(id, entry)
+                            family.put(id, HashSet(transactions))
+                            (if (type === Contract.CategoryType.EXPENSE) expense
+                                    else if (type === Contract.CategoryType.INCOME) income else system).add(entry)
+                        }
                     }
+                } finally {
+                    cursor.close()
                 }
-            } finally {
-                cursor.close();
             }
+            val categories: MutableList<Entry> = ArrayList(expense)
+            categories.addAll(income)
+            categories.addAll(system)
+            return categories
         }
-        List<Entry> categories = new ArrayList<>(expense);
-        categories.addAll(income);
-        categories.addAll(system);
-        return categories;
-    }
 
-    /**
-     * One pass over the category lines, so a split transaction is found under each category it
-     * has a line in.
-     */
-    private static Map<Long, Set<Long>> countByCategory(Context context) {
-        Map<Long, Set<Long>> counts = new HashMap<>();
-        String[] projection = new String[] {Contract.Transaction.CATEGORY_ID, Contract.Transaction.ID};
-        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_CATEGORY_LINES, projection, null, null, null);
-        if (cursor != null) {
-            try {
-                while (cursor.moveToNext()) {
-                    counts.computeIfAbsent(cursor.getLong(0), id -> new HashSet<>()).add(cursor.getLong(1));
+        /**
+         * One pass over the category lines, so a split transaction is found under each category it
+         * has a line in.
+         */
+        private fun countByCategory(context: Context): MutableMap<Long, MutableSet<Long>> {
+            val counts: MutableMap<Long, MutableSet<Long>> = HashMap()
+            val projection = arrayOf(Contract.Transaction.CATEGORY_ID, Contract.Transaction.ID)
+            val cursor: Cursor? = context.contentResolver.query(DataContentProvider.CONTENT_CATEGORY_LINES, projection, null, null, null)
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        counts.computeIfAbsent(cursor.getLong(0)) { id -> HashSet() }.add(cursor.getLong(1))
+                    }
+                } finally {
+                    cursor.close()
                 }
-            } finally {
-                cursor.close();
             }
+            return counts
         }
-        return counts;
     }
 }
