@@ -17,50 +17,44 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.preference;
+package com.oriondev.moneywallet.ui.preference
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import androidx.preference.PreferenceCategory;
-import androidx.preference.PreferenceViewHolder;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.preference.PreferenceCategory
+import androidx.preference.PreferenceViewHolder
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
 
 /**
  * Created by andrea on 28/07/18.
  */
-public class ThemedPreferenceCategory extends PreferenceCategory {
+class ThemedPreferenceCategory : PreferenceCategory {
 
-    public ThemedPreferenceCategory(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    public ThemedPreferenceCategory(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public ThemedPreferenceCategory(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    public ThemedPreferenceCategory(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initialize()
     }
 
-    private void initialize() {
-        setLayoutResource(R.layout.layout_preference_category_material_design);
+    private fun initialize() {
+        layoutResource = R.layout.layout_preference_category_material_design
     }
 
     // see ThemedPreference.onBindViewHolder
-    @Override
-    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
-        super.onBindViewHolder(holder);
-        ThemeEngine.applyTheme(holder.itemView, true);
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        ThemeEngine.applyTheme(holder.itemView, true)
     }
 }
