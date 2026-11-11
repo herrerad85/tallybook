@@ -17,190 +17,184 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
 
-import com.oriondev.moneywallet.model.Category;
-import com.oriondev.moneywallet.model.CategoryMoney;
-import com.oriondev.moneywallet.model.CurrencyUnit;
-import com.oriondev.moneywallet.model.Money;
-import com.oriondev.moneywallet.model.PeriodDetailFlowData;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-import com.oriondev.moneywallet.storage.preference.PreferenceManager;
-import com.oriondev.moneywallet.ui.view.chart.PieData;
-import com.oriondev.moneywallet.ui.view.chart.PieSlice;
-import com.oriondev.moneywallet.utils.CurrencyManager;
-import com.oriondev.moneywallet.utils.DateUtils;
-import com.oriondev.moneywallet.utils.IconLoader;
+import com.oriondev.moneywallet.model.Category
+import com.oriondev.moneywallet.model.CategoryMoney
+import com.oriondev.moneywallet.model.CurrencyUnit
+import com.oriondev.moneywallet.model.Money
+import com.oriondev.moneywallet.model.PeriodDetailFlowData
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.storage.preference.PreferenceManager
+import com.oriondev.moneywallet.ui.view.chart.PieData
+import com.oriondev.moneywallet.ui.view.chart.PieSlice
+import com.oriondev.moneywallet.utils.CurrencyManager
+import com.oriondev.moneywallet.utils.DateUtils
+import com.oriondev.moneywallet.utils.IconLoader
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections
+import java.util.Comparator
+import java.util.Date
 
 /**
  * Created by andrea on 13/08/18.
  */
-public class PeriodDetailFlowLoader extends AbstractGenericLoader<PeriodDetailFlowData> {
+class PeriodDetailFlowLoader : AbstractGenericLoader<PeriodDetailFlowData> {
 
 
-    private final Date mStartDate;
-    private final Date mEndDate;
-    private final boolean mIncomes;
+    private val mStartDate: Date?
+    private val mEndDate: Date?
+    private val mIncomes: Boolean
 
-    public PeriodDetailFlowLoader(Context context, Date startDate, Date endDate, boolean incomes) {
-        super(context);
-        mStartDate = startDate;
-        mEndDate = endDate;
-        mIncomes = incomes;
+    constructor(context: Context, startDate: Date?, endDate: Date?, incomes: Boolean) : super(context) {
+        mStartDate = startDate
+        mEndDate = endDate
+        mIncomes = incomes
     }
 
-    @Override
-    protected Uri getObservedUri() {
-        return DataContentProvider.CONTENT_ALL;
+    override fun getObservedUri(): Uri? {
+        return DataContentProvider.CONTENT_ALL
     }
 
-    @Override @SuppressLint("UseSparseArrays")
-    public PeriodDetailFlowData loadInBackground() {
-        Money totalMoney = new Money();
-        Map<CurrencyUnit, PieData> pieDataSets = new HashMap<>();
-        Map<Long, CategoryMoney> categoryMoneyMap = new HashMap<>();
-        Map<Long, Map<Long, CategoryMoney>> childMoneyMap = new HashMap<>();
-        Map<Long, Money> directMoneyMap = new HashMap<>();
-        Map<Long, Category> categoryCache = loadCategoryCache();
-        Map<Long, Category> childCategoryCache = loadChildCategoryCache();
-        Uri uri = DataContentProvider.CONTENT_CATEGORY_LINES;
-        String[] projection = new String[] {
+    @SuppressLint("UseSparseArrays")
+    override fun loadInBackground(): PeriodDetailFlowData? {
+        val totalMoney = Money()
+        val pieDataSets: MutableMap<CurrencyUnit?, PieData> = HashMap()
+        val categoryMoneyMap: MutableMap<Long, CategoryMoney> = HashMap()
+        val childMoneyMap: MutableMap<Long, MutableMap<Long, CategoryMoney>> = HashMap()
+        val directMoneyMap: MutableMap<Long, Money> = HashMap()
+        val categoryCache = loadCategoryCache()
+        val childCategoryCache = loadChildCategoryCache()
+        val uri = DataContentProvider.CONTENT_CATEGORY_LINES
+        val projection = arrayOf(
                 Contract.Transaction.CATEGORY_ID,
                 Contract.Transaction.CATEGORY_PARENT_ID,
                 Contract.Transaction.MONEY,
                 Contract.Transaction.WALLET_CURRENCY
-        };
-        String selection;
-        String[] selectionArgs;
-        long currentWallet = PreferenceManager.getCurrentWallet();
+        )
+        var selection: String
+        val selectionArgs: Array<String?>?
+        val currentWallet = PreferenceManager.getCurrentWallet()
         if (currentWallet == PreferenceManager.TOTAL_WALLET_ID) {
-            selection = Contract.Transaction.WALLET_COUNT_IN_TOTAL + " = 1";
-            selectionArgs = null;
+            selection = Contract.Transaction.WALLET_COUNT_IN_TOTAL + " = 1"
+            selectionArgs = null
         } else {
-            selection = Contract.Transaction.WALLET_ID + " = ?";
-            selectionArgs = new String[] {String.valueOf(currentWallet)};
+            selection = Contract.Transaction.WALLET_ID + " = ?"
+            selectionArgs = arrayOf(currentWallet.toString())
         }
-        selection += " AND " + Contract.Transaction.CONFIRMED + " = '1' AND " + Contract.Transaction.COUNT_IN_TOTAL + " = '1'";
-        selection += " AND " + Contract.Transaction.REPORT_FILTER;
-        selection += " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')";
-        selection += " AND " + Contract.Transaction.DIRECTION + " = " + (mIncomes ? Contract.Direction.INCOME : Contract.Direction.EXPENSE);
+        selection += " AND " + Contract.Transaction.CONFIRMED + " = '1' AND " + Contract.Transaction.COUNT_IN_TOTAL + " = '1'"
+        selection += " AND " + Contract.Transaction.REPORT_FILTER
+        selection += " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')"
+        selection += " AND " + Contract.Transaction.DIRECTION + " = " + (if (mIncomes) Contract.Direction.INCOME else Contract.Direction.EXPENSE)
         // This tab sums one direction on its own, so it matches the month header on the
         // transactions list and holds transfers out of the total and off the pie.
-        selection += " AND " + Contract.Transaction.NOT_TRANSFER;
+        selection += " AND " + Contract.Transaction.NOT_TRANSFER
         if (mStartDate != null) {
-            selection += " AND DATETIME(" + Contract.Transaction.DATE + ") >= DATETIME('" + DateUtils.getSQLDateTimeString(mStartDate) + "')";
+            selection += " AND DATETIME(" + Contract.Transaction.DATE + ") >= DATETIME('" + DateUtils.getSQLDateTimeString(mStartDate) + "')"
         }
         if (mEndDate != null) {
-            selection += " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('" + DateUtils.getSQLDateTimeString(mEndDate) + "')";
+            selection += " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('" + DateUtils.getSQLDateTimeString(mEndDate) + "')"
         }
-        String sortOrder = Contract.Transaction.CATEGORY_ID;
-        Cursor cursor = getContext().getContentResolver().query(uri, projection, selection, selectionArgs, sortOrder);
+        val sortOrder = Contract.Transaction.CATEGORY_ID
+        val cursor: Cursor? = context.contentResolver.query(uri, projection, selection, selectionArgs, sortOrder)
         if (cursor != null) {
             if (cursor.moveToFirst()) {
                 do {
-                    long ownId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_ID));
-                    long categoryId;
-                    long childId;
+                    val ownId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_ID))
+                    val categoryId: Long
+                    val childId: Long
                     if (cursor.isNull(cursor.getColumnIndex(Contract.Transaction.CATEGORY_PARENT_ID))) {
-                        categoryId = ownId;
-                        childId = 0L;
+                        categoryId = ownId
+                        childId = 0L
                     } else {
-                        categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_PARENT_ID));
-                        childId = ownId;
+                        categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_PARENT_ID))
+                        childId = ownId
                     }
-                    long money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY));
-                    String iso = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY));
+                    val money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY))
+                    val iso = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY))
                     if (categoryCache.containsKey(categoryId)) {
-                        Category child = childId != 0L ? childCategoryCache.get(childId) : null;
+                        val child = if (childId != 0L) childCategoryCache.get(childId) else null
                         if (child != null) {
-                            addChildMoney(childMoneyMap, categoryId, childId, child, iso, money);
+                            addChildMoney(childMoneyMap, categoryId, childId, child, iso, money)
                         } else {
-                            addDirectMoney(directMoneyMap, categoryId, iso, money);
+                            addDirectMoney(directMoneyMap, categoryId, iso, money)
                         }
                     }
                     if (categoryMoneyMap.containsKey(categoryId)) {
-                        CategoryMoney categoryMoney = categoryMoneyMap.get(categoryId);
-                        categoryMoney.getMoney().addMoney(iso, money);
+                        val categoryMoney = categoryMoneyMap.get(categoryId)
+                        categoryMoney!!.getMoney().addMoney(iso, money)
                     } else {
-                        Category category = categoryCache.get(categoryId);
+                        val category = categoryCache.get(categoryId)
                         if (category != null) {
-                            CategoryMoney categoryMoney = new CategoryMoney(
+                            val categoryMoney = CategoryMoney(
                                     categoryId,
-                                    category.getName(),
-                                    category.getIcon(),
-                                    new Money(iso, money)
-                            );
-                            categoryMoneyMap.put(categoryId, categoryMoney);
+                                    category.name,
+                                    category.icon,
+                                    Money(iso, money)
+                            )
+                            categoryMoneyMap.put(categoryId, categoryMoney)
                         }
                     }
-                } while (cursor.moveToNext());
+                } while (cursor.moveToNext())
             }
-            cursor.close();
+            cursor.close()
         }
-        List<CategoryMoney> categoryMoneyList = new ArrayList<>();
-        for (CategoryMoney categoryMoney : categoryMoneyMap.values()) {
-            Money money = categoryMoney.getMoney();
-            totalMoney.addMoney(money);
-            for (Map.Entry<String, Long> entry : money.getCurrencyMoneys().entrySet()) {
-                CurrencyUnit currency = CurrencyManager.getCurrency(entry.getKey());
+        val categoryMoneyList: MutableList<CategoryMoney> = ArrayList()
+        for (categoryMoney in categoryMoneyMap.values) {
+            val money = categoryMoney.getMoney()
+            totalMoney.addMoney(money)
+            for (entry in money.currencyMoneys.entries) {
+                val currency = CurrencyManager.getCurrency(entry.key)
                 if (pieDataSets.containsKey(currency)) {
-                    PieData pieData = pieDataSets.get(currency);
-                    pieData.add(new PieSlice(categoryMoney.getName(), entry.getValue(), categoryMoney.getIcon().getDrawable(getContext())));
+                    val pieData = pieDataSets.get(currency)
+                    pieData!!.add(PieSlice(categoryMoney.getName(), entry.value, categoryMoney.getIcon()!!.getDrawable(context)))
                 } else {
-                    PieData pieData = new PieData();
-                    pieData.add(new PieSlice(categoryMoney.getName(), entry.getValue(), categoryMoney.getIcon().getDrawable(getContext())));
-                    pieDataSets.put(currency, pieData);
+                    val pieData = PieData()
+                    pieData.add(PieSlice(categoryMoney.getName(), entry.value, categoryMoney.getIcon()!!.getDrawable(context)))
+                    pieDataSets.put(currency, pieData)
                 }
             }
             attachChildren(categoryMoney, childMoneyMap.get(categoryMoney.getId()),
-                    directMoneyMap.get(categoryMoney.getId()));
-            categoryMoneyList.add(categoryMoney);
+                    directMoneyMap.get(categoryMoney.getId()))
+            categoryMoneyList.add(categoryMoney)
         }
-        List<PieData> pieDataList = new ArrayList<>();
-        for (Map.Entry<CurrencyUnit, PieData> entry : pieDataSets.entrySet()) {
-            pieDataList.add(entry.getValue());
+        val pieDataList: MutableList<PieData> = ArrayList()
+        for (entry in pieDataSets.entries) {
+            pieDataList.add(entry.value)
         }
-        return new PeriodDetailFlowData(totalMoney, pieDataList, categoryMoneyList);
+        return PeriodDetailFlowData(totalMoney, pieDataList, categoryMoneyList)
     }
 
     /** The caller checked that the parent has a row, so a child counted here is also counted in
      * the parent row above it. */
-    private void addChildMoney(Map<Long, Map<Long, CategoryMoney>> childMoneyMap,
-                               long parentId, long childId, Category child, String iso, long money) {
-        Map<Long, CategoryMoney> children = childMoneyMap.get(parentId);
+    private fun addChildMoney(childMoneyMap: MutableMap<Long, MutableMap<Long, CategoryMoney>>,
+                              parentId: Long, childId: Long, child: Category, iso: String?, money: Long) {
+        var children = childMoneyMap.get(parentId)
         if (children == null) {
-            children = new HashMap<>();
-            childMoneyMap.put(parentId, children);
+            children = HashMap()
+            childMoneyMap.put(parentId, children)
         }
-        CategoryMoney childMoney = children.get(childId);
+        val childMoney = children.get(childId)
         if (childMoney != null) {
-            childMoney.getMoney().addMoney(iso, money);
+            childMoney.getMoney().addMoney(iso, money)
         } else {
-            children.put(childId, new CategoryMoney(childId, child.getName(), child.getIcon(),
-                    new Money(iso, money)));
+            children.put(childId, CategoryMoney(childId, child.name, child.icon,
+                    Money(iso, money)))
         }
     }
 
-    private void addDirectMoney(Map<Long, Money> directMoneyMap, long categoryId, String iso, long money) {
-        Money direct = directMoneyMap.get(categoryId);
+    private fun addDirectMoney(directMoneyMap: MutableMap<Long, Money>, categoryId: Long, iso: String?, money: Long) {
+        val direct = directMoneyMap.get(categoryId)
         if (direct == null) {
-            directMoneyMap.put(categoryId, new Money(iso, money));
+            directMoneyMap.put(categoryId, Money(iso, money))
         } else {
-            direct.addMoney(iso, money);
+            direct.addMoney(iso, money)
         }
     }
 
@@ -209,24 +203,23 @@ public class PeriodDetailFlowLoader extends AbstractGenericLoader<PeriodDetailFl
      * of one period read as a defect. Money filed on the category itself leads the list under the
      * category's own name, so the rows always add up to the category.
      */
-    private void attachChildren(CategoryMoney parent, Map<Long, CategoryMoney> children, Money direct) {
+    private fun attachChildren(parent: CategoryMoney, children: MutableMap<Long, CategoryMoney>?, direct: Money?) {
         if (children == null) {
-            return;
+            return
         }
         if (direct != null) {
-            parent.addChild(new CategoryMoney(parent.getId(), parent.getName(), parent.getIcon(), direct));
+            parent.addChild(CategoryMoney(parent.getId(), parent.getName(), parent.getIcon(), direct))
         }
-        List<CategoryMoney> sorted = new ArrayList<>(children.values());
-        Collections.sort(sorted, new Comparator<CategoryMoney>() {
+        val sorted: MutableList<CategoryMoney> = ArrayList(children.values)
+        Collections.sort(sorted, object : Comparator<CategoryMoney> {
 
-            @Override
-            public int compare(CategoryMoney left, CategoryMoney right) {
-                return String.CASE_INSENSITIVE_ORDER.compare(left.getName(), right.getName());
+            override fun compare(left: CategoryMoney, right: CategoryMoney): Int {
+                return String.CASE_INSENSITIVE_ORDER.compare(left.getName()!!, right.getName()!!)
             }
 
-        });
-        for (CategoryMoney child : sorted) {
-            parent.addChild(child);
+        })
+        for (child in sorted) {
+            parent.addChild(child)
         }
     }
 
@@ -234,40 +227,40 @@ public class PeriodDetailFlowLoader extends AbstractGenericLoader<PeriodDetailFl
      * Both caches name rows and neither decides what counts. A category hidden from the reports is
      * already out, because REPORT_FILTER drops its transactions before they reach this loader.
      */
-    private Map<Long, Category> loadChildCategoryCache() {
-        return loadCategories(Contract.Category.PARENT + " IS NOT NULL");
+    private fun loadChildCategoryCache(): MutableMap<Long, Category> {
+        return loadCategories(Contract.Category.PARENT + " IS NOT NULL")
     }
 
     @SuppressLint("UseSparseArrays")
-    private Map<Long, Category> loadCategoryCache() {
-        return loadCategories(Contract.Category.PARENT + " IS NULL");
+    private fun loadCategoryCache(): MutableMap<Long, Category> {
+        return loadCategories(Contract.Category.PARENT + " IS NULL")
     }
 
     @SuppressLint("UseSparseArrays")
-    private Map<Long, Category> loadCategories(String selection) {
-        Map<Long, Category> cache = new HashMap<>();
-        Uri uri = DataContentProvider.CONTENT_CATEGORIES;
-        String[] projection = new String[] {
+    private fun loadCategories(selection: String): MutableMap<Long, Category> {
+        val cache: MutableMap<Long, Category> = HashMap()
+        val uri = DataContentProvider.CONTENT_CATEGORIES
+        val projection = arrayOf(
                 Contract.Category.ID,
                 Contract.Category.NAME,
                 Contract.Category.ICON,
                 Contract.Category.TYPE
-        };
-        Cursor cursor = getContext().getContentResolver().query(uri, projection, selection, null, null);
+        )
+        val cursor: Cursor? = context.contentResolver.query(uri, projection, selection, null, null)
         if (cursor != null) {
             if (cursor.moveToFirst()) {
                 do {
-                    long categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Category.ID));
-                    Category category = new Category(categoryId,
+                    val categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Category.ID))
+                    val category = Category(categoryId,
                             cursor.getString(cursor.getColumnIndex(Contract.Category.NAME)),
                             IconLoader.parse(cursor.getString(cursor.getColumnIndex(Contract.Category.ICON))),
                             Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndex(Contract.Category.TYPE)))
-                    );
-                    cache.put(categoryId, category);
-                } while (cursor.moveToNext());
+                    )
+                    cache.put(categoryId, category)
+                } while (cursor.moveToNext())
             }
-            cursor.close();
+            cursor.close()
         }
-        return cache;
+        return cache
     }
 }
