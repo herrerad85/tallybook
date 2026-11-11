@@ -14,23 +14,23 @@
 
     <issue
         id="CanvasSize"
-        message="Calling `Canvas.getWidth()` is usually wrong; you should be calling `getBounds().getWidth()` instead"
-        errorLine1="        int width = canvas.getWidth();"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~">
+        message="Referencing `Canvas.width` is usually wrong; you should be referencing `bounds.width` instead"
+        errorLine1="        val width = canvas.width"
+        errorLine2="                    ~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.java"
-            line="48"
+            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.kt"
+            line="45"
             column="21"/>
     </issue>
 
     <issue
         id="CanvasSize"
-        message="Calling `Canvas.getHeight()` is usually wrong; you should be calling `getBounds().getHeight()` instead"
-        errorLine1="        int height = canvas.getHeight();"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~">
+        message="Referencing `Canvas.height` is usually wrong; you should be referencing `bounds.height` instead"
+        errorLine1="        val height = canvas.height"
+        errorLine2="                     ~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.java"
-            line="49"
+            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.kt"
+            line="46"
             column="22"/>
     </issue>
 

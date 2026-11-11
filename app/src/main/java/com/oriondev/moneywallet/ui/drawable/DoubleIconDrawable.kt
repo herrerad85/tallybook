@@ -17,57 +17,51 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.drawable;
+package com.oriondev.moneywallet.ui.drawable
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.PixelFormat;
-import android.graphics.drawable.Drawable;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.PixelFormat
+import android.graphics.drawable.Drawable
 
-import com.oriondev.moneywallet.model.Icon;
-import com.oriondev.moneywallet.utils.IconLoader;
+import com.oriondev.moneywallet.model.Icon
+import com.oriondev.moneywallet.utils.IconLoader
 
 /**
  * Created by andrea on 17/08/18.
  */
-public class DoubleIconDrawable extends Drawable {
+class DoubleIconDrawable : Drawable {
 
-    private final Drawable mDrawable1;
-    private final Drawable mDrawable2;
+    private val mDrawable1: Drawable?
+    private val mDrawable2: Drawable?
 
-    public DoubleIconDrawable(Context context, Icon icon1, Icon icon2) {
-        mDrawable1 = icon1 != null ? icon1.getDrawable(context) : IconLoader.UNKNOWN.getDrawable(context);
-        mDrawable2 = icon2 != null ? icon2.getDrawable(context) : IconLoader.UNKNOWN.getDrawable(context);
+    constructor(context: Context?, icon1: Icon?, icon2: Icon?) : super() {
+        mDrawable1 = if (icon1 != null) icon1.getDrawable(context) else IconLoader.UNKNOWN.getDrawable(context)
+        mDrawable2 = if (icon2 != null) icon2.getDrawable(context) else IconLoader.UNKNOWN.getDrawable(context)
     }
 
-    @Override
-    public void draw(@NonNull Canvas canvas) {
-        int width = canvas.getWidth();
-        int height = canvas.getHeight();
+    override fun draw(canvas: Canvas) {
+        val width = canvas.width
+        val height = canvas.height
         if (width == 0 || height == 0) {
-            return;
+            return
         }
-        mDrawable1.setBounds(0, 0, width / 2, height);
-        mDrawable2.setBounds(width / 2, 0, width, height);
-        mDrawable1.draw(canvas);
-        mDrawable2.draw(canvas);
+        mDrawable1!!.setBounds(0, 0, width / 2, height)
+        mDrawable2!!.setBounds(width / 2, 0, width, height)
+        mDrawable1.draw(canvas)
+        mDrawable2.draw(canvas)
     }
 
-    @Override
-    public void setAlpha(int alpha) {
-
-    }
-
-    @Override
-    public void setColorFilter(@Nullable ColorFilter colorFilter) {
+    override fun setAlpha(alpha: Int) {
 
     }
 
-    @Override
-    public int getOpacity() {
-        return PixelFormat.UNKNOWN;
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+
+    }
+
+    override fun getOpacity(): Int {
+        return PixelFormat.UNKNOWN
     }
 }
