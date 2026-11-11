@@ -36,17 +36,6 @@
 
     <issue
         id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="        text = builder.toUpperCase ? builder.text.toUpperCase() : builder.text;"
-        errorLine2="                                                  ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/ui/drawable/TextDrawable.java"
-            line="61"
-            column="51"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="                    String.format(&quot;Server refused to %s (HTTP %d)&quot;, action, status),"
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">

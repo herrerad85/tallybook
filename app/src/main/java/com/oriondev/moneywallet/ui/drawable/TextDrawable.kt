@@ -17,314 +17,310 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.drawable;
+package com.oriondev.moneywallet.ui.drawable
 
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Typeface;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
-import android.graphics.drawable.shapes.RectShape;
-import android.graphics.drawable.shapes.RoundRectShape;
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.OvalShape
+import android.graphics.drawable.shapes.RectShape
+import android.graphics.drawable.shapes.RoundRectShape
+
+import java.util.Locale
 
 /**
  * This class has been imported from this repository: https://github.com/amulyakhare/TextDrawable
  * It has been modified to correctly recycle Typefaces and not waste memory.
  */
-public class TextDrawable extends ShapeDrawable {
+class TextDrawable : ShapeDrawable {
 
-    private final Paint textPaint;
-    private final Paint borderPaint;
-    private static final float SHADE_FACTOR = 0.9f;
-    private final String text;
-    private final int color;
-    private final RectShape shape;
-    private final int height;
-    private final int width;
-    private final int fontSize;
-    private final float radius;
-    private final int borderThickness;
+    private val textPaint: Paint
+    private val borderPaint: Paint
+    private val text: String?
+    private val color: Int
+    private val shape: RectShape
+    private val height: Int
+    private val width: Int
+    private val fontSize: Int
+    private val radius: Float
+    private val borderThickness: Int
 
-    private TextDrawable(Builder builder) {
-        super(builder.shape);
+    private constructor(shape: RectShape, height: Int, width: Int, radius: Float, text: String?, toUpperCase: Boolean,
+                        color: Int, fontSize: Int, textColor: Int, isBold: Boolean, font: Typeface?,
+                        borderThickness: Int) : super(shape) {
         // shape properties
-        shape = builder.shape;
-        height = builder.height;
-        width = builder.width;
-        radius = builder.radius;
+        this.shape = shape
+        this.height = height
+        this.width = width
+        this.radius = radius
         // text and color
-        text = builder.toUpperCase ? builder.text.toUpperCase() : builder.text;
-        color = builder.color;
+        this.text = if (toUpperCase) text!!.uppercase(Locale.getDefault()) else text
+        this.color = color
         // text paint settings
-        fontSize = builder.fontSize;
-        textPaint = new Paint();
-        textPaint.setColor(builder.textColor);
-        textPaint.setAntiAlias(true);
-        textPaint.setFakeBoldText(builder.isBold);
-        textPaint.setStyle(Paint.Style.FILL);
-        textPaint.setTypeface(builder.font);
-        textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setStrokeWidth(builder.borderThickness);
+        this.fontSize = fontSize
+        textPaint = Paint()
+        textPaint.color = textColor
+        textPaint.isAntiAlias = true
+        textPaint.isFakeBoldText = isBold
+        textPaint.style = Paint.Style.FILL
+        textPaint.typeface = font
+        textPaint.textAlign = Paint.Align.CENTER
+        textPaint.strokeWidth = borderThickness.toFloat()
         // border paint settings
-        borderThickness = builder.borderThickness;
-        borderPaint = new Paint();
-        borderPaint.setColor(getDarkerShade(color));
-        borderPaint.setStyle(Paint.Style.STROKE);
-        borderPaint.setStrokeWidth(borderThickness);
+        this.borderThickness = borderThickness
+        borderPaint = Paint()
+        borderPaint.color = getDarkerShade(color)
+        borderPaint.style = Paint.Style.STROKE
+        borderPaint.strokeWidth = this.borderThickness.toFloat()
         // drawable paint color
-        Paint paint = getPaint();
-        paint.setColor(color);
+        val paint = getPaint()
+        paint.color = color
     }
 
-    private int getDarkerShade(int color) {
-        return Color.rgb((int)(SHADE_FACTOR * Color.red(color)),
-                (int)(SHADE_FACTOR * Color.green(color)),
-                (int)(SHADE_FACTOR * Color.blue(color)));
+    private fun getDarkerShade(color: Int): Int {
+        return Color.rgb((SHADE_FACTOR * Color.red(color)).toInt(),
+                (SHADE_FACTOR * Color.green(color)).toInt(),
+                (SHADE_FACTOR * Color.blue(color)).toInt())
     }
 
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-        Rect r = getBounds();
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+        val r = bounds
         // draw border
         if (borderThickness > 0) {
-            drawBorder(canvas);
+            drawBorder(canvas)
         }
-        int count = canvas.save();
-        canvas.translate(r.left, r.top);
+        val count = canvas.save()
+        canvas.translate(r.left.toFloat(), r.top.toFloat())
         // draw text
-        int width = r.width(); //this.width < 0 ? r.width() : this.width;
-        int height = r.height(); //this.height < 0 ? r.height() : this.height;
-        int fontSize = this.fontSize < 0 ? (Math.min(width, height) / 2) : this.fontSize;
-        textPaint.setTextSize(fontSize);
-        canvas.drawText(text, width / 2, height / 2 - ((textPaint.descent() + textPaint.ascent()) / 2), textPaint);
-        canvas.restoreToCount(count);
+        val width = r.width() //this.width < 0 ? r.width() : this.width;
+        val height = r.height() //this.height < 0 ? r.height() : this.height;
+        val fontSize = if (this.fontSize < 0) (Math.min(width, height) / 2) else this.fontSize
+        textPaint.textSize = fontSize.toFloat()
+        canvas.drawText(text!!, (width / 2).toFloat(), height / 2 - ((textPaint.descent() + textPaint.ascent()) / 2), textPaint)
+        canvas.restoreToCount(count)
     }
 
-    private void drawBorder(Canvas canvas) {
-        RectF rect = new RectF(getBounds());
-        rect.inset(borderThickness/2, borderThickness/2);
-        if (shape instanceof OvalShape) {
-            canvas.drawOval(rect, borderPaint);
+    private fun drawBorder(canvas: Canvas) {
+        val rect = RectF(bounds)
+        rect.inset((borderThickness / 2).toFloat(), (borderThickness / 2).toFloat())
+        if (shape is OvalShape) {
+            canvas.drawOval(rect, borderPaint)
         }
-        else if (shape instanceof RoundRectShape) {
-            canvas.drawRoundRect(rect, radius, radius, borderPaint);
+        else if (shape is RoundRectShape) {
+            canvas.drawRoundRect(rect, radius, radius, borderPaint)
         }
         else {
-            canvas.drawRect(rect, borderPaint);
+            canvas.drawRect(rect, borderPaint)
         }
     }
 
-    @Override
-    public void setAlpha(int alpha) {
-        textPaint.setAlpha(alpha);
+    override fun setAlpha(alpha: Int) {
+        textPaint.alpha = alpha
     }
 
-    @Override
-    public void setColorFilter(ColorFilter cf) {
-        textPaint.setColorFilter(cf);
+    override fun setColorFilter(cf: ColorFilter?) {
+        textPaint.colorFilter = cf
     }
 
-    @Override
-    public int getOpacity() {
-        return PixelFormat.TRANSLUCENT;
+    override fun getOpacity(): Int {
+        return PixelFormat.TRANSLUCENT
     }
 
-    @Override
-    public int getIntrinsicWidth() {
-        return width;
+    override fun getIntrinsicWidth(): Int {
+        return width
     }
 
-    @Override
-    public int getIntrinsicHeight() {
-        return height;
+    override fun getIntrinsicHeight(): Int {
+        return height
     }
 
-    public static IShapeBuilder builder() {
-        return new Builder();
-    }
+    companion object {
 
-    public static class Builder implements IConfigBuilder, IShapeBuilder, IBuilder {
+        private const val SHADE_FACTOR = 0.9f
 
-        private String text;
-
-        private int color;
-
-        private int borderThickness;
-
-        private int width;
-
-        private int height;
-
-        private Typeface font;
-
-        private RectShape shape;
-
-        public int textColor;
-
-        private int fontSize;
-
-        private boolean isBold;
-
-        private boolean toUpperCase;
-
-        public float radius;
-
-        private Builder() {
-            text = "";
-            color = Color.GRAY;
-            textColor = Color.WHITE;
-            borderThickness = 0;
-            width = -1;
-            height = -1;
-            shape = new RectShape();
-            font = Typeface.create("sans-serif-light", Typeface.NORMAL);
-            fontSize = -1;
-            isBold = false;
-            toUpperCase = false;
-        }
-
-        public IConfigBuilder width(int width) {
-            this.width = width;
-            return this;
-        }
-
-        public IConfigBuilder height(int height) {
-            this.height = height;
-            return this;
-        }
-
-        public IConfigBuilder textColor(int color) {
-            this.textColor = color;
-            return this;
-        }
-
-        public IConfigBuilder withBorder(int thickness) {
-            this.borderThickness = thickness;
-            return this;
-        }
-
-        public IConfigBuilder useFont(Typeface font) {
-            this.font = font;
-            return this;
-        }
-
-        public IConfigBuilder fontSize(int size) {
-            this.fontSize = size;
-            return this;
-        }
-
-        public IConfigBuilder bold() {
-            this.isBold = true;
-            return this;
-        }
-
-        public IConfigBuilder toUpperCase() {
-            this.toUpperCase = true;
-            return this;
-        }
-
-        @Override
-        public IConfigBuilder beginConfig() {
-            return this;
-        }
-
-        @Override
-        public IShapeBuilder endConfig() {
-            return this;
-        }
-
-        @Override
-        public IBuilder rect() {
-            this.shape = new RectShape();
-            return this;
-        }
-
-        @Override
-        public IBuilder round() {
-            this.shape = new OvalShape();
-            return this;
-        }
-
-        @Override
-        public IBuilder roundRect(int radius) {
-            this.radius = radius;
-            float[] radii = {radius, radius, radius, radius, radius, radius, radius, radius};
-            this.shape = new RoundRectShape(radii, null, null);
-            return this;
-        }
-
-        @Override
-        public TextDrawable buildRect(String text, int color) {
-            rect();
-            return build(text, color);
-        }
-
-        @Override
-        public TextDrawable buildRoundRect(String text, int color, int radius) {
-            roundRect(radius);
-            return build(text, color);
-        }
-
-        @Override
-        public TextDrawable buildRound(String text, int color) {
-            round();
-            return build(text, color);
-        }
-
-        @Override
-        public TextDrawable build(String text, int color) {
-            this.color = color;
-            this.text = text;
-            return new TextDrawable(this);
+        @JvmStatic
+        fun builder(): IShapeBuilder {
+            return Builder()
         }
     }
 
-    public interface IConfigBuilder {
+    class Builder : IConfigBuilder, IShapeBuilder, IBuilder {
 
-        IConfigBuilder width(int width);
+        private var text: String?
 
-        IConfigBuilder height(int height);
+        private var color: Int
 
-        IConfigBuilder textColor(int color);
+        private var borderThickness: Int
 
-        IConfigBuilder withBorder(int thickness);
+        private var width: Int
 
-        IConfigBuilder useFont(Typeface font);
+        private var height: Int
 
-        IConfigBuilder fontSize(int size);
+        private var font: Typeface?
 
-        IConfigBuilder bold();
+        private var shape: RectShape
 
-        IConfigBuilder toUpperCase();
+        @JvmField
+        var textColor: Int
 
-        IShapeBuilder endConfig();
+        private var fontSize: Int
+
+        private var isBold: Boolean
+
+        private var toUpperCase: Boolean
+
+        @JvmField
+        var radius: Float = 0f
+
+        internal constructor() {
+            text = ""
+            color = Color.GRAY
+            textColor = Color.WHITE
+            borderThickness = 0
+            width = -1
+            height = -1
+            shape = RectShape()
+            font = Typeface.create("sans-serif-light", Typeface.NORMAL)
+            fontSize = -1
+            isBold = false
+            toUpperCase = false
+        }
+
+        override fun width(width: Int): IConfigBuilder {
+            this.width = width
+            return this
+        }
+
+        override fun height(height: Int): IConfigBuilder {
+            this.height = height
+            return this
+        }
+
+        override fun textColor(color: Int): IConfigBuilder {
+            this.textColor = color
+            return this
+        }
+
+        override fun withBorder(thickness: Int): IConfigBuilder {
+            this.borderThickness = thickness
+            return this
+        }
+
+        override fun useFont(font: Typeface?): IConfigBuilder {
+            this.font = font
+            return this
+        }
+
+        override fun fontSize(size: Int): IConfigBuilder {
+            this.fontSize = size
+            return this
+        }
+
+        override fun bold(): IConfigBuilder {
+            this.isBold = true
+            return this
+        }
+
+        override fun toUpperCase(): IConfigBuilder {
+            this.toUpperCase = true
+            return this
+        }
+
+        override fun beginConfig(): IConfigBuilder {
+            return this
+        }
+
+        override fun endConfig(): IShapeBuilder {
+            return this
+        }
+
+        override fun rect(): IBuilder {
+            this.shape = RectShape()
+            return this
+        }
+
+        override fun round(): IBuilder {
+            this.shape = OvalShape()
+            return this
+        }
+
+        override fun roundRect(radius: Int): IBuilder {
+            this.radius = radius.toFloat()
+            val radii = floatArrayOf(radius.toFloat(), radius.toFloat(), radius.toFloat(), radius.toFloat(), radius.toFloat(), radius.toFloat(), radius.toFloat(), radius.toFloat())
+            this.shape = RoundRectShape(radii, null, null)
+            return this
+        }
+
+        override fun buildRect(text: String?, color: Int): TextDrawable {
+            rect()
+            return build(text, color)
+        }
+
+        override fun buildRoundRect(text: String?, color: Int, radius: Int): TextDrawable {
+            roundRect(radius)
+            return build(text, color)
+        }
+
+        override fun buildRound(text: String?, color: Int): TextDrawable {
+            round()
+            return build(text, color)
+        }
+
+        override fun build(text: String?, color: Int): TextDrawable {
+            this.color = color
+            this.text = text
+            return TextDrawable(shape, height, width, radius, this.text, toUpperCase, this.color, fontSize, textColor,
+                    isBold, font, borderThickness)
+        }
     }
 
-    public interface IBuilder {
+    interface IConfigBuilder {
 
-        TextDrawable build(String text, int color);
+        fun width(width: Int): IConfigBuilder
+
+        fun height(height: Int): IConfigBuilder
+
+        fun textColor(color: Int): IConfigBuilder
+
+        fun withBorder(thickness: Int): IConfigBuilder
+
+        fun useFont(font: Typeface?): IConfigBuilder
+
+        fun fontSize(size: Int): IConfigBuilder
+
+        fun bold(): IConfigBuilder
+
+        fun toUpperCase(): IConfigBuilder
+
+        fun endConfig(): IShapeBuilder
     }
 
-    public interface IShapeBuilder {
+    interface IBuilder {
 
-        IConfigBuilder beginConfig();
+        fun build(text: String?, color: Int): TextDrawable
+    }
 
-        IBuilder rect();
+    interface IShapeBuilder {
 
-        IBuilder round();
+        fun beginConfig(): IConfigBuilder
 
-        IBuilder roundRect(int radius);
+        fun rect(): IBuilder
 
-        TextDrawable buildRect(String text, int color);
+        fun round(): IBuilder
 
-        TextDrawable buildRoundRect(String text, int color, int radius);
+        fun roundRect(radius: Int): IBuilder
 
-        TextDrawable buildRound(String text, int color);
+        fun buildRect(text: String?, color: Int): TextDrawable
+
+        fun buildRoundRect(text: String?, color: Int, radius: Int): TextDrawable
+
+        fun buildRound(text: String?, color: Int): TextDrawable
     }
 }
