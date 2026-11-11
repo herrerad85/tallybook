@@ -6829,45 +6829,45 @@
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                        Date date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE)));"
-        errorLine2="                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        val date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE)))"
+        errorLine2="                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="104"
-            column="93"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="108"
+            column="92"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            int direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION));"
+        errorLine1="                            val direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION))"
         errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="106"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="110"
             column="59"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            String currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY));"
-        errorLine2="                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            val currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY))"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="107"
-            column="64"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="111"
+            column="61"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            long money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY));"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            val money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY))"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="108"
-            column="57"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="112"
+            column="56"/>
     </issue>
 
     <issue
