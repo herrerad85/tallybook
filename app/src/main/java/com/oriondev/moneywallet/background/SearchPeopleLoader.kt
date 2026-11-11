@@ -17,84 +17,78 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
 
-import com.oriondev.moneywallet.model.SearchFilter;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.model.SearchFilter
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collections
 
 /**
  * Every person with the number of transactions the People type matches with only that person
  * ticked, which is the count the search strip shows for it.
  */
-public class SearchPeopleLoader extends AbstractGenericLoader<List<SearchPeopleLoader.Person>> {
+class SearchPeopleLoader : AbstractGenericLoader<MutableList<SearchPeopleLoader.Person>> {
 
-    public static class Person {
+    class Person {
 
-        private final long mId;
-        private final String mName;
-        private final String mIcon;
-        private final int mCount;
+        private val mId: Long
+        private val mName: String?
+        private val mIcon: String?
+        private val mCount: Int
 
-        private Person(long id, String name, String icon, int count) {
-            mId = id;
-            mName = name;
-            mIcon = icon;
-            mCount = count;
+        internal constructor(id: Long, name: String?, icon: String?, count: Int) {
+            mId = id
+            mName = name
+            mIcon = icon
+            mCount = count
         }
 
-        public long getId() {
-            return mId;
+        fun getId(): Long {
+            return mId
         }
 
-        public String getName() {
-            return mName;
+        fun getName(): String? {
+            return mName
         }
 
-        public String getIcon() {
-            return mIcon;
+        fun getIcon(): String? {
+            return mIcon
         }
 
-        public int getCount() {
-            return mCount;
+        fun getCount(): Int {
+            return mCount
         }
     }
 
-    public SearchPeopleLoader(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    override fun getObservedUri(): Uri? {
+        return DataContentProvider.CONTENT_ALL
     }
 
-    @Override
-    protected Uri getObservedUri() {
-        return DataContentProvider.CONTENT_ALL;
-    }
-
-    @Override
-    public List<Person> loadInBackground() {
-        List<Person> people = new ArrayList<>();
-        String[] projection = new String[] {Contract.Person.ID, Contract.Person.NAME, Contract.Person.ICON};
-        Cursor cursor = getContext().getContentResolver().query(DataContentProvider.CONTENT_PEOPLE, projection, null, null, SearchRailLoader.PEOPLE_SORT_ORDER);
+    override fun loadInBackground(): MutableList<Person>? {
+        val people: MutableList<Person> = ArrayList()
+        val projection = arrayOf(Contract.Person.ID, Contract.Person.NAME, Contract.Person.ICON)
+        val cursor: Cursor? = context.contentResolver.query(DataContentProvider.CONTENT_PEOPLE, projection, null, null, SearchRailLoader.PEOPLE_SORT_ORDER)
         if (cursor != null) {
             try {
                 while (cursor.moveToNext()) {
-                    long id = cursor.getLong(0);
-                    SearchFilter filter = new SearchFilter();
-                    filter.setPeopleIds(Collections.singleton(id));
-                    int count = SearchRailLoader.countMatches(getContext(), filter);
-                    people.add(new Person(id, cursor.getString(1), cursor.getString(2), count));
+                    val id = cursor.getLong(0)
+                    val filter = SearchFilter()
+                    filter.setPeopleIds(Collections.singleton(id))
+                    val count = SearchRailLoader.countMatches(context, filter)
+                    people.add(Person(id, cursor.getString(1), cursor.getString(2), count))
                 }
             } finally {
-                cursor.close();
+                cursor.close()
             }
         }
-        return people;
+        return people
     }
 }
