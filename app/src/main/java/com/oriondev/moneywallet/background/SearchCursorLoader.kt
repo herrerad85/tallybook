@@ -17,193 +17,178 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
-import android.database.Cursor;
-import android.database.CursorWrapper;
-import android.text.TextUtils;
+import android.content.Context
+import android.database.Cursor
+import android.database.CursorWrapper
+import android.text.TextUtils
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
-import androidx.loader.content.CursorLoader;
+import androidx.annotation.VisibleForTesting
+import androidx.loader.content.CursorLoader
 
-import com.oriondev.moneywallet.model.Pair;
-import com.oriondev.moneywallet.model.SearchFilter;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-import com.oriondev.moneywallet.storage.wrapper.CurrencyHeaderCursor;
-import com.oriondev.moneywallet.utils.CurrencyManager;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.oriondev.moneywallet.model.SearchFilter
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.storage.wrapper.CurrencyHeaderCursor
+import com.oriondev.moneywallet.utils.CurrencyManager
 
 /**
- * The transactions a {@link SearchFilter} matches, in its sort, with their count and totals. The
+ * The transactions a [SearchFilter] matches, in its sort, with their count and totals. The
  * selection is built here and not by the caller, since an amount needs the currencies in use.
  */
-public class SearchCursorLoader extends CursorLoader {
+class SearchCursorLoader : CursorLoader {
 
     /**
      * What the search strip shows, carried by the cursor this loader delivers.
      */
-    public interface Summary {
+    interface Summary {
 
-        int getMatchCount();
+        fun getMatchCount(): Int
 
         /**
          * @return the currency every match shares, or null when nothing matches or the matches
          *         mix currencies.
          */
-        @Nullable
-        String getCurrency();
+        fun getCurrency(): String?
 
         /**
          * @return the sum of the Out matches in minor units, or null when there is none or the
          *         matches mix currencies.
          */
-        @Nullable
-        Long getOut();
+        fun getOut(): Long?
 
         /**
          * @return the sum of the In matches in minor units, or null when there is none or the
          *         matches mix currencies.
          */
-        @Nullable
-        Long getIn();
+        fun getIn(): Long?
     }
 
-    private final SearchFilter mFilter;
+    private val mFilter: SearchFilter
 
-    public SearchCursorLoader(@NonNull Context context, @NonNull SearchFilter filter) {
-        super(context, DataContentProvider.CONTENT_TRANSACTIONS, null, null, null, null);
-        mFilter = filter.copy();
+    constructor(context: Context, filter: SearchFilter) : super(context, DataContentProvider.CONTENT_TRANSACTIONS, null, null, null, null) {
+        mFilter = filter.copy()
     }
 
-    @Override
-    public Cursor loadInBackground() {
+    override fun loadInBackground(): Cursor? {
         // only then, since the wallets query totals every transaction
-        Map<String, Integer> decimals = mFilter.isAmountSet() ? loadDecimals(getContext()) : null;
-        Pair<String, String[]> selection = mFilter.toSelection(decimals);
+        val decimals: MutableMap<String, Int>? = if (mFilter.isAmountSet()) loadDecimals(context) else null
+        val selection = mFilter.toSelection(decimals)
         // with a category ticked, a split transaction matches once and carries the money of its
         // parts in the ticked categories
-        setUri(mFilter.getCategoryIds().isEmpty() ? DataContentProvider.CONTENT_TRANSACTIONS
-                : DataContentProvider.CONTENT_CATEGORY_SHARES);
-        setSelection(selection.getL());
-        setSelectionArgs(selection.getR());
-        setSortOrder(mFilter.getSort().getOrderBy());
-        Cursor cursor = super.loadInBackground();
+        setUri(if (mFilter.getCategoryIds().isEmpty()) DataContentProvider.CONTENT_TRANSACTIONS
+                else DataContentProvider.CONTENT_CATEGORY_SHARES)
+        setSelection(selection.getL())
+        setSelectionArgs(selection.getR())
+        setSortOrder(mFilter.getSort()!!.getOrderBy())
+        val cursor = super.loadInBackground()
         if (cursor == null) {
-            return null;
+            return null
         }
-        if (mFilter.getSort().isByAmount() && mixesCurrencies(cursor)) {
-            return new CurrencyHeaderCursor(cursor);
+        if (mFilter.getSort()!!.isByAmount() && mixesCurrencies(cursor)) {
+            return CurrencyHeaderCursor(cursor)
         }
-        return new SummaryCursor(cursor);
+        return SummaryCursor(cursor)
     }
 
-    /**
-     * Read from the first and the last row alone, which holds for rows ordered by currency first,
-     * as the amount sorts are, and leaves the one walk to the cursor built after it.
-     */
-    private static boolean mixesCurrencies(Cursor cursor) {
-        int indexCurrency = cursor.getColumnIndexOrThrow(Contract.Transaction.WALLET_CURRENCY);
-        boolean mixed = false;
-        if (cursor.moveToFirst()) {
-            String first = cursor.getString(indexCurrency);
-            cursor.moveToLast();
-            mixed = !TextUtils.equals(first, cursor.getString(indexCurrency));
-        }
-        cursor.moveToPosition(-1);
-        return mixed;
-    }
+    companion object {
 
-    /**
-     * The decimals of every wallet currency, archived wallets included, since the transactions
-     * query keeps their rows.
-     */
-    @VisibleForTesting
-    static Map<String, Integer> loadDecimals(Context context) {
-        Map<String, Integer> decimals = new HashMap<>();
-        String[] projection = new String[] {Contract.Wallet.CURRENCY};
-        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_WALLETS, projection, null, null, null);
-        if (cursor != null) {
-            try {
-                while (cursor.moveToNext()) {
-                    String iso = cursor.getString(0);
-                    decimals.put(iso, CurrencyManager.getDecimals(CurrencyManager.getCurrency(iso)));
-                }
-            } finally {
-                cursor.close();
+        /**
+         * Read from the first and the last row alone, which holds for rows ordered by currency first,
+         * as the amount sorts are, and leaves the one walk to the cursor built after it.
+         */
+        private fun mixesCurrencies(cursor: Cursor): Boolean {
+            val indexCurrency = cursor.getColumnIndexOrThrow(Contract.Transaction.WALLET_CURRENCY)
+            var mixed = false
+            if (cursor.moveToFirst()) {
+                val first = cursor.getString(indexCurrency)
+                cursor.moveToLast()
+                mixed = !TextUtils.equals(first, cursor.getString(indexCurrency))
             }
+            cursor.moveToPosition(-1)
+            return mixed
         }
-        return decimals;
+
+        /**
+         * The decimals of every wallet currency, archived wallets included, since the transactions
+         * query keeps their rows.
+         */
+        @VisibleForTesting
+        @JvmStatic
+        fun loadDecimals(context: Context): MutableMap<String, Int> {
+            val decimals: MutableMap<String, Int> = HashMap()
+            val projection = arrayOf(Contract.Wallet.CURRENCY)
+            val cursor: Cursor? = context.contentResolver.query(DataContentProvider.CONTENT_WALLETS, projection, null, null, null)
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        val iso = cursor.getString(0)
+                        decimals.put(iso, CurrencyManager.getDecimals(CurrencyManager.getCurrency(iso)))
+                    }
+                } finally {
+                    cursor.close()
+                }
+            }
+            return decimals
+        }
     }
 
-    private static class SummaryCursor extends CursorWrapper implements Summary {
+    private class SummaryCursor : CursorWrapper, Summary {
 
-        private final int mMatchCount;
-        private final String mCurrency;
-        private final Long mOut;
-        private final Long mIn;
+        private val mMatchCount: Int
+        private val mCurrency: String?
+        private val mOut: Long?
+        private val mIn: Long?
 
-        private SummaryCursor(Cursor cursor) {
-            super(cursor);
-            int indexCurrency = cursor.getColumnIndexOrThrow(Contract.Transaction.WALLET_CURRENCY);
-            int indexDirection = cursor.getColumnIndexOrThrow(Contract.Transaction.DIRECTION);
-            int indexMoney = cursor.getColumnIndexOrThrow(Contract.Transaction.MONEY);
-            String currency = null;
-            boolean mixed = false;
-            long out = 0L;
-            long in = 0L;
-            boolean hasOut = false;
-            boolean hasIn = false;
+        constructor(cursor: Cursor) : super(cursor) {
+            val indexCurrency = cursor.getColumnIndexOrThrow(Contract.Transaction.WALLET_CURRENCY)
+            val indexDirection = cursor.getColumnIndexOrThrow(Contract.Transaction.DIRECTION)
+            val indexMoney = cursor.getColumnIndexOrThrow(Contract.Transaction.MONEY)
+            var currency: String? = null
+            var mixed = false
+            var out = 0L
+            var `in` = 0L
+            var hasOut = false
+            var hasIn = false
             while (cursor.moveToNext()) {
-                String rowCurrency = cursor.getString(indexCurrency);
-                if (cursor.isFirst()) {
-                    currency = rowCurrency;
+                val rowCurrency = cursor.getString(indexCurrency)
+                if (cursor.isFirst) {
+                    currency = rowCurrency
                 } else if (!TextUtils.equals(currency, rowCurrency)) {
-                    mixed = true;
-                    break;
+                    mixed = true
+                    break
                 }
                 if (cursor.getInt(indexDirection) == Contract.Direction.INCOME) {
-                    in += cursor.getLong(indexMoney);
-                    hasIn = true;
+                    `in` += cursor.getLong(indexMoney)
+                    hasIn = true
                 } else {
-                    out += cursor.getLong(indexMoney);
-                    hasOut = true;
+                    out += cursor.getLong(indexMoney)
+                    hasOut = true
                 }
             }
-            cursor.moveToPosition(-1);
-            boolean single = currency != null && !mixed;
-            mMatchCount = cursor.getCount();
-            mCurrency = single ? currency : null;
-            mOut = single && hasOut ? out : null;
-            mIn = single && hasIn ? in : null;
+            cursor.moveToPosition(-1)
+            val single = currency != null && !mixed
+            mMatchCount = cursor.count
+            mCurrency = if (single) currency else null
+            mOut = if (single && hasOut) out else null
+            mIn = if (single && hasIn) `in` else null
         }
 
-        @Override
-        public int getMatchCount() {
-            return mMatchCount;
+        override fun getMatchCount(): Int {
+            return mMatchCount
         }
 
-        @Nullable
-        @Override
-        public String getCurrency() {
-            return mCurrency;
+        override fun getCurrency(): String? {
+            return mCurrency
         }
 
-        @Nullable
-        @Override
-        public Long getOut() {
-            return mOut;
+        override fun getOut(): Long? {
+            return mOut
         }
 
-        @Nullable
-        @Override
-        public Long getIn() {
-            return mIn;
+        override fun getIn(): Long? {
+            return mIn
         }
     }
 }
