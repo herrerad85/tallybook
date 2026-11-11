@@ -17,136 +17,128 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
 
-import androidx.annotation.NonNull;
-
-import com.oriondev.moneywallet.model.Pair;
-import com.oriondev.moneywallet.model.SearchFilter;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.oriondev.moneywallet.model.SearchFilter
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
 
 /**
  * What the search rail reads from the database: whether a transaction or a side of a transfer
  * links a person, whether there is more than one wallet or any transfer, whether any row is
  * unconfirmed, and the names the Category, People and Wallet chips show, in their editors' order.
  */
-public class SearchRailLoader extends AbstractGenericLoader<SearchRailLoader.Result> {
+class SearchRailLoader : AbstractGenericLoader<SearchRailLoader.Result> {
 
-    public static final String PEOPLE_SORT_ORDER = Contract.Person.NAME + " COLLATE LOCALIZED ASC";
+    class Result {
 
-    public static final String WALLET_SORT_ORDER = Contract.Wallet.ARCHIVED + " ASC, "
-            + Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC";
+        private val mCategories: MutableList<SearchCategoryLoader.Entry>
+        private val mPeople: MutableMap<Long, String?>
+        private val mWallets: MutableMap<Long, String?>
+        private val mHasPersonLinks: Boolean
+        private val mHasWalletChoice: Boolean
+        private val mHasUnconfirmed: Boolean
 
-    public static class Result {
-
-        private final List<SearchCategoryLoader.Entry> mCategories;
-        private final Map<Long, String> mPeople;
-        private final Map<Long, String> mWallets;
-        private final boolean mHasPersonLinks;
-        private final boolean mHasWalletChoice;
-        private final boolean mHasUnconfirmed;
-
-        private Result(List<SearchCategoryLoader.Entry> categories, Map<Long, String> people,
-                       Map<Long, String> wallets, boolean hasPersonLinks, boolean hasWalletChoice,
-                       boolean hasUnconfirmed) {
-            mCategories = categories;
-            mPeople = people;
-            mWallets = wallets;
-            mHasPersonLinks = hasPersonLinks;
-            mHasWalletChoice = hasWalletChoice;
-            mHasUnconfirmed = hasUnconfirmed;
+        internal constructor(categories: MutableList<SearchCategoryLoader.Entry>, people: MutableMap<Long, String?>,
+                             wallets: MutableMap<Long, String?>, hasPersonLinks: Boolean, hasWalletChoice: Boolean,
+                             hasUnconfirmed: Boolean) {
+            mCategories = categories
+            mPeople = people
+            mWallets = wallets
+            mHasPersonLinks = hasPersonLinks
+            mHasWalletChoice = hasWalletChoice
+            mHasUnconfirmed = hasUnconfirmed
         }
 
-        public List<SearchCategoryLoader.Entry> getCategories() {
-            return mCategories;
+        fun getCategories(): MutableList<SearchCategoryLoader.Entry> {
+            return mCategories
         }
 
-        public Map<Long, String> getPeople() {
-            return mPeople;
+        fun getPeople(): MutableMap<Long, String?> {
+            return mPeople
         }
 
-        public Map<Long, String> getWallets() {
-            return mWallets;
+        fun getWallets(): MutableMap<Long, String?> {
+            return mWallets
         }
 
-        public boolean hasPersonLinks() {
-            return mHasPersonLinks;
+        fun hasPersonLinks(): Boolean {
+            return mHasPersonLinks
         }
 
-        public boolean hasWalletChoice() {
-            return mHasWalletChoice;
+        fun hasWalletChoice(): Boolean {
+            return mHasWalletChoice
         }
 
-        public boolean hasUnconfirmed() {
-            return mHasUnconfirmed;
+        fun hasUnconfirmed(): Boolean {
+            return mHasUnconfirmed
         }
     }
 
-    public SearchRailLoader(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    override fun getObservedUri(): Uri? {
+        return DataContentProvider.CONTENT_ALL
     }
 
-    @Override
-    protected Uri getObservedUri() {
-        return DataContentProvider.CONTENT_ALL;
+    override fun loadInBackground(): Result? {
+        val context: Context = getContext()
+        val people = loadNames(context, DataContentProvider.CONTENT_PEOPLE,
+                Contract.Person.ID, Contract.Person.NAME, PEOPLE_SORT_ORDER)
+        val wallets = loadNames(context, DataContentProvider.CONTENT_WALLETS,
+                Contract.Wallet.ID, Contract.Wallet.NAME, WALLET_SORT_ORDER)
+        val linked = SearchFilter()
+        linked.setPeopleIds(people.keys)
+        val hasPersonLinks = !people.isEmpty() && countMatches(context, linked) > 0
+        val hasWalletChoice = wallets.size > 1 || countTransactions(context,
+                Contract.Transaction.TYPE + " = ?", arrayOf(Contract.TransactionType.TRANSFER.toString())) > 0
+        val hasUnconfirmed = countTransactions(context, Contract.Transaction.CONFIRMED + " = 0", arrayOf()) > 0
+        return Result(SearchCategoryLoader.loadCategories(context, null), people, wallets,
+                hasPersonLinks, hasWalletChoice, hasUnconfirmed)
     }
 
-    @Override
-    public Result loadInBackground() {
-        Context context = getContext();
-        Map<Long, String> people = loadNames(context, DataContentProvider.CONTENT_PEOPLE,
-                Contract.Person.ID, Contract.Person.NAME, PEOPLE_SORT_ORDER);
-        Map<Long, String> wallets = loadNames(context, DataContentProvider.CONTENT_WALLETS,
-                Contract.Wallet.ID, Contract.Wallet.NAME, WALLET_SORT_ORDER);
-        SearchFilter linked = new SearchFilter();
-        linked.setPeopleIds(people.keySet());
-        boolean hasPersonLinks = !people.isEmpty() && countMatches(context, linked) > 0;
-        boolean hasWalletChoice = wallets.size() > 1 || countTransactions(context,
-                Contract.Transaction.TYPE + " = ?", String.valueOf(Contract.TransactionType.TRANSFER)) > 0;
-        boolean hasUnconfirmed = countTransactions(context, Contract.Transaction.CONFIRMED + " = 0") > 0;
-        return new Result(SearchCategoryLoader.loadCategories(context, null), people, wallets,
-                hasPersonLinks, hasWalletChoice, hasUnconfirmed);
-    }
+    companion object {
 
-    /*package-local*/ static int countMatches(Context context, @NonNull SearchFilter filter) {
-        Pair<String, String[]> selection = filter.toSelection(null);
-        return countTransactions(context, selection.getL(), selection.getR());
-    }
+        const val PEOPLE_SORT_ORDER = Contract.Person.NAME + " COLLATE LOCALIZED ASC"
 
-    private static int countTransactions(Context context, String selection, String... selectionArgs) {
-        String[] projection = new String[] {Contract.Transaction.ID};
-        Cursor cursor = context.getContentResolver().query(DataContentProvider.CONTENT_TRANSACTIONS, projection, selection, selectionArgs, null);
-        if (cursor == null) {
-            return 0;
+        const val WALLET_SORT_ORDER = Contract.Wallet.ARCHIVED + " ASC, " +
+                Contract.Wallet.INDEX + " ASC, " + Contract.Wallet.NAME + " COLLATE LOCALIZED ASC"
+
+        internal fun countMatches(context: Context, filter: SearchFilter): Int {
+            val selection = filter.toSelection(null)
+            return countTransactions(context, selection.getL(), selection.getR())
         }
-        try {
-            return cursor.getCount();
-        } finally {
-            cursor.close();
-        }
-    }
 
-    private static Map<Long, String> loadNames(Context context, Uri uri, String id, String name, String sortOrder) {
-        Map<Long, String> names = new LinkedHashMap<>();
-        Cursor cursor = context.getContentResolver().query(uri, new String[] {id, name}, null, null, sortOrder);
-        if (cursor != null) {
+        private fun countTransactions(context: Context, selection: String?, selectionArgs: Array<String?>?): Int {
+            val projection = arrayOf(Contract.Transaction.ID)
+            val cursor: Cursor? = context.contentResolver.query(DataContentProvider.CONTENT_TRANSACTIONS, projection, selection, selectionArgs, null)
+            if (cursor == null) {
+                return 0
+            }
             try {
-                while (cursor.moveToNext()) {
-                    names.put(cursor.getLong(0), cursor.getString(1));
-                }
+                return cursor.count
             } finally {
-                cursor.close();
+                cursor.close()
             }
         }
-        return names;
+
+        private fun loadNames(context: Context, uri: Uri, id: String, name: String, sortOrder: String): MutableMap<Long, String?> {
+            val names: MutableMap<Long, String?> = LinkedHashMap()
+            val cursor: Cursor? = context.contentResolver.query(uri, arrayOf(id, name), null, null, sortOrder)
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        names.put(cursor.getLong(0), cursor.getString(1))
+                    }
+                } finally {
+                    cursor.close()
+                }
+            }
+            return names
+        }
     }
 }
