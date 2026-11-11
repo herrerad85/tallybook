@@ -17,10 +17,10 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.widget;
+package com.oriondev.moneywallet.ui.widget
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.Context
+import android.content.SharedPreferences
 
 /**
  * What one placed widget was configured with. The same widget can be placed once per wallet, so
@@ -30,31 +30,34 @@ import android.content.SharedPreferences;
  * copy of the widget and are deleted with it. Mixing them into the settings the user edits would
  * leave the ids of removed widgets sitting in a file nothing else ever cleans.
  */
-class WalletWidgetPreferences {
+object WalletWidgetPreferences {
 
-    static final long NO_WALLET = -1L;
+    const val NO_WALLET = -1L
 
-    private static final String FILE = "wallet_widget";
-    private static final String KEY_WALLET = "wallet::";
-    private static final String KEY_SHOW_WHEN_LOCKED = "show_when_locked::";
+    private const val FILE = "wallet_widget"
+    private const val KEY_WALLET = "wallet::"
+    private const val KEY_SHOW_WHEN_LOCKED = "show_when_locked::"
 
-    private static SharedPreferences preferences(Context context) {
-        return context.getSharedPreferences(FILE, Context.MODE_PRIVATE);
+    private fun preferences(context: Context?): SharedPreferences {
+        return context!!.getSharedPreferences(FILE, Context.MODE_PRIVATE)
     }
 
-    static void save(Context context, int appWidgetId, long walletId, boolean showWhenLocked) {
+    @JvmStatic
+    fun save(context: Context?, appWidgetId: Int, walletId: Long, showWhenLocked: Boolean) {
         preferences(context).edit()
                 .putLong(KEY_WALLET + appWidgetId, walletId)
                 .putBoolean(KEY_SHOW_WHEN_LOCKED + appWidgetId, showWhenLocked)
-                .apply();
+                .apply()
     }
 
-    static long getWallet(Context context, int appWidgetId) {
-        return preferences(context).getLong(KEY_WALLET + appWidgetId, NO_WALLET);
+    @JvmStatic
+    fun getWallet(context: Context?, appWidgetId: Int): Long {
+        return preferences(context).getLong(KEY_WALLET + appWidgetId, NO_WALLET)
     }
 
-    static boolean isShowWhenLocked(Context context, int appWidgetId) {
-        return preferences(context).getBoolean(KEY_SHOW_WHEN_LOCKED + appWidgetId, false);
+    @JvmStatic
+    fun isShowWhenLocked(context: Context?, appWidgetId: Int): Boolean {
+        return preferences(context).getBoolean(KEY_SHOW_WHEN_LOCKED + appWidgetId, false)
     }
 
     /**
@@ -62,13 +65,14 @@ class WalletWidgetPreferences {
      * every widget the user ever places and removes, and nothing else would ever know those ids
      * are dead.
      */
-    static void delete(Context context, int[] appWidgetIds) {
-        SharedPreferences.Editor editor = preferences(context).edit();
-        for (int appWidgetId : appWidgetIds) {
-            editor.remove(KEY_WALLET + appWidgetId);
-            editor.remove(KEY_SHOW_WHEN_LOCKED + appWidgetId);
+    @JvmStatic
+    fun delete(context: Context?, appWidgetIds: IntArray?) {
+        val editor = preferences(context).edit()
+        for (appWidgetId in appWidgetIds!!) {
+            editor.remove(KEY_WALLET + appWidgetId)
+            editor.remove(KEY_SHOW_WHEN_LOCKED + appWidgetId)
         }
-        editor.apply();
+        editor.apply()
     }
 
     /**
@@ -80,14 +84,15 @@ class WalletWidgetPreferences {
      * transactions into it. DataContentProvider already clears the current wallet for the same
      * reason on the same path.
      */
-    static void clearWallets(Context context) {
-        SharedPreferences preferences = preferences(context);
-        SharedPreferences.Editor editor = preferences.edit();
-        for (String key : preferences.getAll().keySet()) {
+    @JvmStatic
+    internal fun clearWallets(context: Context?) {
+        val preferences = preferences(context)
+        val editor = preferences.edit()
+        for (key in preferences.all.keys) {
             if (key.startsWith(KEY_WALLET)) {
-                editor.remove(key);
+                editor.remove(key)
             }
         }
-        editor.apply();
+        editor.apply()
     }
 }
