@@ -12967,12 +12967,12 @@
     <issue
         id="RestrictedApi"
         message="SnackbarLayout can only be accessed from within the same library group (referenced groupId=`com.google.android.material` from groupId=`moneywallet-fix10b`)"
-        errorLine1="        return dependency instanceof AppBarLayout || dependency instanceof Snackbar.SnackbarLayout;"
-        errorLine2="                                                                           ~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        return dependency is Snackbar.SnackbarLayout"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/behavior/ScrollingFloatingActionButtonBehavior.java"
-            line="52"
-            column="76"/>
+            file="src/main/java/com/oriondev/moneywallet/ui/behavior/ScrollingFloatingActionButtonBehavior.kt"
+            line="42"
+            column="30"/>
     </issue>
 
     <issue
