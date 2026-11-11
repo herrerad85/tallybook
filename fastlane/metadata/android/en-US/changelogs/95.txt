@@ -1,0 +1,3 @@
+New: an Expenses budget can take its limit from the category budgets inside it.
+
+Fixes: a transfer between currencies with no exchange rate asks for one instead of saving 0 received. An empty amount is refused in the transaction editor. A currency with no symbol shows its code, not "null". The drawer shows one currency per line. Names sort alphabetically whatever the case. Long card titles show in full. A credit's card is worded as a credit.

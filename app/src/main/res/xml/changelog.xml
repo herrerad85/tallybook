@@ -20,6 +20,18 @@
 
 <changelog>
 
+    <version versionName="1.17.0" versionDate="Nov 11, 2026">
+        <change>[b]New![/b] An Expenses budget can take its limit from the category budgets inside it. Its detail screen shows a Category budgets row with their total, and tapping the row uses that total as the limit. Ticking "Use the category budgets inside it as the limit" in the editor keeps the limit on the total.</change>
+        <change>A transfer between two currencies with no exchange rate is no longer saved with nothing received. Saving stops and asks for an exchange rate above zero, in the transfer, recurring transfer and transfer model editors.</change>
+        <change>A transfer model saved that way opens the editor so the rate can be set, and a recurring transfer saved that way waits and shows a notification until it has a rate.</change>
+        <change>Leaving the amount empty in the transaction editor now stops with "Enter an amount" instead of saving 0.</change>
+        <change>A currency with no symbol, like the CFA franc, shows its three letter code where it showed "null".</change>
+        <change>In the drawer, an amount in several currencies shows one currency per line, and currencies that share a symbol, like US dollars and Mexican pesos, show their three letter codes.</change>
+        <change>Lists sorted by name no longer put names that start with a lowercase or accented letter after Z, and Places lists from A to Z.</change>
+        <change>A long title on a budget, debt, saving or model card shows in full.</change>
+        <change>A credit's card on the Debts screen is worded as a credit. In Turkish, a debt that has not ended yet no longer says it has expired.</change>
+    </version>
+
     <version versionName="1.16.0" versionDate="Nov 4, 2026">
         <change>Coming back to the app after Android closed it in the background no longer crashes when people or wallets were picked in the transaction editor, the budget editor, the people dialog or the export screen's wallet dialog.</change>
         <change>Columns ticked under Optional columns in the CSV export are kept through a rotation, or when Android closes the app in the background.</change>
