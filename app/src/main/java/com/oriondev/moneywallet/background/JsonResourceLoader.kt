@@ -17,44 +17,44 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
+import android.content.Context
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONException
+import org.json.JSONObject
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 
 /**
  * Created by andrea on 08/12/18.
  */
-public class JsonResourceLoader extends AbstractGenericLoader<JSONObject> {
+class JsonResourceLoader : AbstractGenericLoader<JSONObject> {
 
-    private final String mResourcePath;
+    private val mResourcePath: String
 
-    public JsonResourceLoader(Context context, String resource) {
-        super(context);
-        mResourcePath = "resources/" + resource;
+    constructor(context: Context, resource: String?) : super(context) {
+        mResourcePath = "resources/" + resource
     }
 
-    @Override
-    public JSONObject loadInBackground() {
-        StringBuilder jsonBuilder = new StringBuilder();
+    override fun loadInBackground(): JSONObject? {
+        val jsonBuilder = StringBuilder()
         try {
-            InputStream inputStream = getContext().getAssets().open(mResourcePath);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                jsonBuilder.append(line);
+            val inputStream: InputStream = context.assets.open(mResourcePath)
+            val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+            while (true) {
+                val line: String = bufferedReader.readLine() ?: break
+                jsonBuilder.append(line)
             }
-            return new JSONObject(jsonBuilder.toString());
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
+            return JSONObject(jsonBuilder.toString())
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
-        return null;
+        return null
     }
 }
