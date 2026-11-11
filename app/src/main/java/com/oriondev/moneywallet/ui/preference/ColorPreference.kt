@@ -17,54 +17,50 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.preference;
+package com.oriondev.moneywallet.ui.preference
 
-import android.content.Context;
-import android.graphics.Color;
-import androidx.preference.PreferenceViewHolder;
-import android.util.AttributeSet;
+import android.content.Context
+import android.graphics.Color
+import androidx.preference.PreferenceViewHolder
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.CircleView;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.CircleView
 
 /**
  * Created by andrea on 15/04/18.
  */
-public class ColorPreference extends ThemedPreference {
+class ColorPreference : ThemedPreference {
 
-    private int mColor;
+    private var mColor: Int = 0
 
-    public ColorPreference(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    public ColorPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public ColorPreference(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    private void initialize() {
-        setWidgetLayoutResource(R.layout.layout_preference_color_picker);
-        mColor = Color.BLACK;
+    private fun initialize() {
+        widgetLayoutResource = R.layout.layout_preference_color_picker
+        mColor = Color.BLACK
     }
 
-    @Override
-    public void onBindViewHolder(PreferenceViewHolder holder) {
-        super.onBindViewHolder(holder);
-        CircleView circleView = (CircleView) holder.findViewById(R.id.circle_view);
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        val circleView = holder.findViewById(R.id.circle_view) as CircleView?
         if (circleView != null) {
-            circleView.setColor(mColor);
+            circleView.setColor(mColor)
         }
     }
 
-    public void setColor(int newColor) {
-        mColor = newColor;
-        notifyChanged();
+    fun setColor(newColor: Int) {
+        mColor = newColor
+        notifyChanged()
     }
 }
