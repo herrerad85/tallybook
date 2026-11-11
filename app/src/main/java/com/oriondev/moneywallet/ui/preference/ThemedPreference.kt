@@ -17,39 +17,35 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.preference;
+package com.oriondev.moneywallet.ui.preference
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceViewHolder;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.preference.Preference
+import androidx.preference.PreferenceViewHolder
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
 
 /**
  * Created by andrea on 15/04/18.
  */
-public class ThemedPreference extends Preference {
+open class ThemedPreference : Preference {
 
-    public ThemedPreference(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    public ThemedPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public ThemedPreference(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    private void initialize() {
-        setLayoutResource(R.layout.layout_preference_material_design);
+    private fun initialize() {
+        layoutResource = R.layout.layout_preference_material_design
     }
 
     /**
@@ -60,9 +56,8 @@ public class ThemedPreference extends Preference {
      * another loses its title to the mode it was built under. Deep dark made that unreadable,
      * because the copy was black and the window behind it was too.
      */
-    @Override
-    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
-        super.onBindViewHolder(holder);
-        ThemeEngine.applyTheme(holder.itemView, true);
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        ThemeEngine.applyTheme(holder.itemView, true)
     }
 }
