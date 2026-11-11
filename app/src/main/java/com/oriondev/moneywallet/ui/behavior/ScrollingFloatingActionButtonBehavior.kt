@@ -17,48 +17,43 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.behavior;
+package com.oriondev.moneywallet.ui.behavior
 
-import android.content.Context;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
+import android.util.AttributeSet
+import android.view.View
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * A custom behavior for the Floating Action Button when it is attached to a CoordinatorLayout. It
  * hides the button while a snackbar covers it and shows it again once the snackbar is gone.
  */
-public class ScrollingFloatingActionButtonBehavior extends CoordinatorLayout.Behavior<FloatingActionButton> {
+class ScrollingFloatingActionButtonBehavior : CoordinatorLayout.Behavior<FloatingActionButton> {
 
-    private boolean mHiddenForSnackbar;
+    private var mHiddenForSnackbar: Boolean = false
 
-    public ScrollingFloatingActionButtonBehavior(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+
+    override fun layoutDependsOn(parent: CoordinatorLayout, fab: FloatingActionButton, dependency: View): Boolean {
+        return dependency is Snackbar.SnackbarLayout
     }
 
-    @Override
-    public boolean layoutDependsOn(CoordinatorLayout parent, FloatingActionButton fab, View dependency) {
-        return dependency instanceof Snackbar.SnackbarLayout;
-    }
-
-    @Override
-    public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton fab, View dependency) {
-        if (fab.getVisibility() == View.VISIBLE && parent.doViewsOverlap(fab, dependency)) {
-            mHiddenForSnackbar = true;
-            fab.hide();
+    override fun onDependentViewChanged(parent: CoordinatorLayout, fab: FloatingActionButton, dependency: View): Boolean {
+        if (fab.visibility == View.VISIBLE && parent.doViewsOverlap(fab, dependency)) {
+            mHiddenForSnackbar = true
+            fab.hide()
         }
-        return false;
+        return false
     }
 
-    @Override
-    public void onDependentViewRemoved(CoordinatorLayout parent, FloatingActionButton fab, View dependency) {
+    override fun onDependentViewRemoved(parent: CoordinatorLayout, fab: FloatingActionButton, dependency: View) {
         if (mHiddenForSnackbar) {
-            mHiddenForSnackbar = false;
-            fab.show();
+            mHiddenForSnackbar = false
+            fab.show()
         }
     }
 }
