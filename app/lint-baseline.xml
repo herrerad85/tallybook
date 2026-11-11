@@ -12706,8 +12706,8 @@
         errorLine1="                    cursor.getLong(cursor.getColumnIndex(Contract.Wallet.ID)),"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="168"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="158"
             column="36"/>
     </issue>
 
@@ -12717,8 +12717,8 @@
         errorLine1="                    cursor.getString(cursor.getColumnIndex(Contract.Wallet.NAME)),"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="169"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="159"
             column="38"/>
     </issue>
 
@@ -12728,8 +12728,8 @@
         errorLine1="                    IconLoader.parse(cursor.getString(cursor.getColumnIndex(Contract.Wallet.ICON))),"
         errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="170"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="160"
             column="55"/>
     </issue>
 
@@ -12739,8 +12739,8 @@
         errorLine1="                    CurrencyManager.getCurrency(cursor.getString(cursor.getColumnIndex(Contract.Wallet.CURRENCY))),"
         errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="171"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="161"
             column="66"/>
     </issue>
 
@@ -12750,8 +12750,8 @@
         errorLine1="                    cursor.getLong(cursor.getColumnIndex(Contract.Wallet.START_MONEY)),"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="172"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="162"
             column="36"/>
     </issue>
 
@@ -12761,8 +12761,8 @@
         errorLine1="                    cursor.getLong(cursor.getColumnIndex(Contract.Wallet.TOTAL_MONEY))"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="173"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="163"
             column="36"/>
     </issue>
 
