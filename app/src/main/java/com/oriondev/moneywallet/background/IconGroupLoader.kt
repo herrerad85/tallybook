@@ -17,26 +17,24 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
+import android.content.Context
 
-import com.oriondev.moneywallet.model.Icon;
-import com.oriondev.moneywallet.model.IconGroup;
-import com.oriondev.moneywallet.model.VectorIcon;
+import com.oriondev.moneywallet.model.Icon
+import com.oriondev.moneywallet.model.IconGroup
+import com.oriondev.moneywallet.model.VectorIcon
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.util.Collections
+import java.util.Comparator
 
 /**
  * This class is used by the IconListActivity to fetch all the available icons and organize
@@ -49,61 +47,61 @@ import java.util.List;
  * the build checks that a name in the file resolves, so run the instrumented IconGroupLoaderTest
  * on a device after adding one.
  */
-public class IconGroupLoader extends AbstractGenericLoader<List<IconGroup>> {
+class IconGroupLoader : AbstractGenericLoader<MutableList<IconGroup>> {
 
-    public IconGroupLoader(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    @Override
-    public List<IconGroup> loadInBackground() {
-        List<IconGroup> iconGroups = new ArrayList<>();
-        StringBuilder jsonBuilder = new StringBuilder();
+    override fun loadInBackground(): MutableList<IconGroup>? {
+        val iconGroups: MutableList<IconGroup> = ArrayList()
+        val jsonBuilder = StringBuilder()
         try {
-            InputStream inputStream = getContext().getAssets().open("resources/icons.json");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                jsonBuilder.append(line);
+            val inputStream: InputStream = context.assets.open("resources/icons.json")
+            val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+            while (true) {
+                val line: String = bufferedReader.readLine() ?: break
+                jsonBuilder.append(line)
             }
-            JSONObject iconsObj = new JSONObject(jsonBuilder.toString());
-            JSONArray categories = iconsObj.getJSONArray("categories");
-            for (int i = 0; i < categories.length(); i++) {
-                iconGroups.add(parseIconGroup(categories.getJSONObject(i)));
+            val iconsObj = JSONObject(jsonBuilder.toString())
+            val categories = iconsObj.getJSONArray("categories")
+            for (i in 0 until categories.length()) {
+                iconGroups.add(parseIconGroup(categories.getJSONObject(i)))
             }
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
-        Collections.sort(iconGroups, new AlphabeticIconComparator());
-        return iconGroups;
+        Collections.sort(iconGroups, AlphabeticIconComparator())
+        return iconGroups
     }
 
-    private IconGroup parseIconGroup(JSONObject category) throws JSONException {
-        String groupName = getStringByName(category.getString("name"));
-        List<Icon> icons = parseIconList(category.getJSONArray("icons"));
-        return new IconGroup(groupName, icons);
+    @Throws(JSONException::class)
+    private fun parseIconGroup(category: JSONObject): IconGroup {
+        val groupName = getStringByName(category.getString("name"))
+        val icons = parseIconList(category.getJSONArray("icons"))
+        return IconGroup(groupName, icons)
     }
 
-    private List<Icon> parseIconList(JSONArray icons) throws JSONException {
-        List<Icon> iconList = new ArrayList<>();
-        for (int i = 0; i < icons.length(); i++) {
-            iconList.add(new VectorIcon(icons.getJSONObject(i)));
+    @Throws(JSONException::class)
+    private fun parseIconList(icons: JSONArray): MutableList<Icon> {
+        val iconList: MutableList<Icon> = ArrayList()
+        for (i in 0 until icons.length()) {
+            iconList.add(VectorIcon(icons.getJSONObject(i)))
         }
-        return iconList;
+        return iconList
     }
 
-    private String getStringByName(String name) {
-        Context context = getContext();
-        String packageName = context.getPackageName();
-        int resId = context.getResources().getIdentifier(name, "string", packageName);
-        return context.getString(resId);
+    private fun getStringByName(name: String): String {
+        val context: Context = getContext()
+        val packageName = context.packageName
+        val resId = context.resources.getIdentifier(name, "string", packageName)
+        return context.getString(resId)
     }
 
-    private class AlphabeticIconComparator implements Comparator<IconGroup> {
+    private inner class AlphabeticIconComparator : Comparator<IconGroup> {
 
-        @Override
-        public int compare(IconGroup icon1, IconGroup icon2) {
-            return icon1.getGroupName().compareTo(icon2.getGroupName());
+        override fun compare(icon1: IconGroup, icon2: IconGroup): Int {
+            return icon1.getGroupName()!!.compareTo(icon2.getGroupName()!!)
         }
     }
 }
