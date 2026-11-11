@@ -17,122 +17,115 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.preference;
+package com.oriondev.moneywallet.ui.preference
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import android.content.DialogInterface;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceViewHolder;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import android.content.DialogInterface
+import androidx.preference.Preference
+import androidx.preference.PreferenceViewHolder
+import android.util.AttributeSet
+import android.view.View
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
-import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog
 
 /**
  * Created by andrea on 25/07/18.
  */
-public class ThemedListPreference extends Preference {
+class ThemedListPreference : Preference {
 
-    private String[] mEntries;
-    private String[] mEntryValues;
+    private var mEntries: Array<String>? = null
+    private var mEntryValues: Array<String>? = null
 
-    private int mCurrentValueIndex;
+    private var mCurrentValueIndex: Int = 0
 
-    public ThemedListPreference(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    public ThemedListPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public ThemedListPreference(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    private void initialize() {
-        setLayoutResource(R.layout.layout_preference_material_design);
-        setOnPreferenceClickListener(new OnPreferenceClickListener() {
+    private fun initialize() {
+        layoutResource = R.layout.layout_preference_material_design
+        onPreferenceClickListener = object : Preference.OnPreferenceClickListener {
 
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                showDialog();
-                return false;
+            override fun onPreferenceClick(preference: Preference): Boolean {
+                showDialog()
+                return false
             }
 
-        });
+        }
     }
 
-    public void setEntries(String[] entries) {
-        mEntries = entries;
+    fun setEntries(entries: Array<String>?) {
+        mEntries = entries
     }
 
-    public void setEntries(int array) {
-        mEntries = getContext().getResources().getStringArray(array);
+    fun setEntries(array: Int) {
+        mEntries = context.resources.getStringArray(array)
     }
 
-    public void setEntryValues(String[] entryValues) {
-        mEntryValues = entryValues;
+    fun setEntryValues(entryValues: Array<String>?) {
+        mEntryValues = entryValues
     }
 
-    public void setValue(int valueIndex) {
-        mCurrentValueIndex = valueIndex;
+    fun setValue(valueIndex: Int) {
+        mCurrentValueIndex = valueIndex
     }
 
-    public String getValue() {
-        return mCurrentValueIndex >= 0 ? mEntryValues[mCurrentValueIndex] : null;
+    fun getValue(): String? {
+        return if (mCurrentValueIndex >= 0) mEntryValues!![mCurrentValueIndex] else null
     }
 
-    public void setValue(String value) {
-        mCurrentValueIndex = indexOf(value);
+    fun setValue(value: String?) {
+        mCurrentValueIndex = indexOf(value)
     }
 
-    private int indexOf(String value) {
-        for(int i = 0; i < mEntryValues.length; i++) {
-            if (mEntryValues[i].equals(value)) {
-                return i;
+    private fun indexOf(value: String?): Int {
+        val entryValues = mEntryValues!!
+        for (i in 0 until entryValues.size) {
+            if (entryValues[i].equals(value)) {
+                return i
             }
         }
-        return -1;
+        return -1
     }
 
-    private void showDialog() {
-        final int[] selected = new int[] {mCurrentValueIndex};
-        ThemedDialog.buildMaterialDialog(getContext())
-                .setTitle(getTitle())
-                .setSingleChoiceItems(mEntries, mCurrentValueIndex, new DialogInterface.OnClickListener() {
+    private fun showDialog() {
+        val selected = intArrayOf(mCurrentValueIndex)
+        ThemedDialog.buildMaterialDialog(context)
+                .setTitle(title)
+                .setSingleChoiceItems(mEntries, mCurrentValueIndex, object : DialogInterface.OnClickListener {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        selected[0] = which;
+                    override fun onClick(dialog: DialogInterface?, which: Int) {
+                        selected[0] = which
                     }
 
                 })
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                .setPositiveButton(android.R.string.ok, object : DialogInterface.OnClickListener {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    override fun onClick(dialog: DialogInterface?, which: Int) {
                         if (selected[0] != mCurrentValueIndex) {
-                            callChangeListener(mEntryValues[selected[0]]);
-                            mCurrentValueIndex = selected[0];
+                            callChangeListener(mEntryValues!![selected[0]])
+                            mCurrentValueIndex = selected[0]
                         }
                     }
 
                 })
                 .setNegativeButton(android.R.string.cancel, null)
-                .show();
+                .show()
     }
 
     // see ThemedPreference.onBindViewHolder
-    @Override
-    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
-        super.onBindViewHolder(holder);
-        ThemeEngine.applyTheme(holder.itemView, true);
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        ThemeEngine.applyTheme(holder.itemView, true)
     }
 }
