@@ -5,9 +5,11 @@ import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.view.WindowManager;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.oriondev.moneywallet.model.LockMode;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
@@ -25,6 +27,7 @@ import org.robolectric.shadows.ShadowAppTask;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
@@ -92,6 +95,28 @@ public class LauncherActivityTest {
         LauncherActivity activity = launch(false, MainActivity.class, true);
         assertTrue(activity.isFinishing());
         assertNull(shadowOf(activity).getNextStartedActivity());
+    }
+
+    @Test
+    public void theWelcomeScreenIsSecureWhileTheLockIsOn() {
+        PreferenceManager.setCurrentLockMode(LockMode.PIN);
+        LauncherActivity activity = launch(true, null, false);
+        mController.start().resume();
+        assertFalse(activity.isFinishing());
+        assertTrue(isSecure(activity));
+    }
+
+    @Test
+    public void theWelcomeScreenIsNotSecureWhileTheLockIsOff() {
+        PreferenceManager.setCurrentLockMode(LockMode.NONE);
+        LauncherActivity activity = launch(true, null, false);
+        mController.start().resume();
+        assertFalse(activity.isFinishing());
+        assertFalse(isSecure(activity));
+    }
+
+    private static boolean isSecure(LauncherActivity activity) {
+        return (activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_SECURE) != 0;
     }
 
     private static void assertMainScreenStarted(LauncherActivity activity) {

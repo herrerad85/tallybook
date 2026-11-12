@@ -58,6 +58,7 @@ import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.utils.SecureWindow;
 
 /**
  * Created by andrea on 20/08/18.
@@ -227,6 +228,7 @@ public class ThemedDialog {
         @Override
         public AlertDialog create() {
             final AlertDialog dialog = super.create();
+            SecureWindow.update(dialog.getWindow());
             outlineDeepDark(dialog);
             dialog.setOnShowListener(new DialogInterface.OnShowListener() {
 

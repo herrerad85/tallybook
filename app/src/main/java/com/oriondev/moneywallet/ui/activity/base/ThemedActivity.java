@@ -49,6 +49,7 @@ import com.google.android.material.color.utilities.SchemeContent;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.utils.SecureWindow;
 import com.oriondev.moneywallet.utils.Utils;
 
 import java.lang.reflect.Constructor;
@@ -215,6 +216,12 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         onThemeSetup(ThemeEngine.getTheme());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SecureWindow.update(getWindow());
     }
 
     @Override

@@ -31,6 +31,7 @@ import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClic
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.oriondev.moneywallet.ui.view.theme.ThemedDialog
 import com.oriondev.moneywallet.utils.DateFormatter
+import com.oriondev.moneywallet.utils.SecureWindow
 
 import java.util.Calendar
 import java.util.Date
@@ -111,6 +112,12 @@ class DateTimePicker : Fragment() {
      * background in its own onStart.
      */
     private val mPickerOutliner: FragmentManager.FragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
+
+        override fun onFragmentViewCreated(fragmentManager: FragmentManager, fragment: Fragment, view: View, savedInstanceState: Bundle?) {
+            if (fragment is DialogFragment && fragment.dialog != null) {
+                SecureWindow.update(fragment.requireDialog().window!!)
+            }
+        }
 
         override fun onFragmentStarted(fragmentManager: FragmentManager, fragment: Fragment) {
             if (fragment is DialogFragment && fragment.dialog != null) {
