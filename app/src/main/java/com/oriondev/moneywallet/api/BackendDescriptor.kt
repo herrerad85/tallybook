@@ -17,63 +17,64 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api;
+package com.oriondev.moneywallet.api
 
-import android.content.Context;
+import android.content.Context
 
-import androidx.annotation.DrawableRes;
-import androidx.annotation.StringRes;
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 
-import com.oriondev.moneywallet.model.IFile;
+import com.oriondev.moneywallet.model.IFile
 
 /**
- * Single source of truth for one backup backend. Each flavor's {@code BackendServiceFactory}
+ * Single source of truth for one backup backend. Each flavor's `BackendServiceFactory`
  * holds a list of these instead of four parallel switch statements: the id is the lookup key,
  * the icon is carried here (the delegate has no icon accessor), and everything else is created
  * on demand. The backend name is read back from the delegate so it is not re-declared here.
  */
-public abstract class BackendDescriptor {
+abstract class BackendDescriptor {
 
-    private final String mId;
-    private final int mIconRes;
+    private val mId: String
+    private val mIconRes: Int
 
-    protected BackendDescriptor(String id, @DrawableRes int iconRes) {
-        mId = id;
-        mIconRes = iconRes;
+    protected constructor(id: String, @DrawableRes iconRes: Int) {
+        mId = id
+        mIconRes = iconRes
     }
 
-    public String getId() {
-        return mId;
+    fun getId(): String {
+        return mId
     }
 
     @DrawableRes
-    public int getIconRes() {
-        return mIconRes;
+    fun getIconRes(): Int {
+        return mIconRes
     }
 
     /**
      * The backend name, taken from the delegate's own metadata so it lives in exactly one place.
      */
     @StringRes
-    public int getNameRes() {
-        return createDelegate(null).getName();
+    fun getNameRes(): Int {
+        return createDelegate(null).getName()
     }
 
     /**
      * Whether this backend is usable on the current device. Defaults to true.
      */
-    public boolean isAvailable() {
-        return true;
+    fun isAvailable(): Boolean {
+        return true
     }
 
     /** Where a backup goes when no folder was chosen. Null when there is none to offer. */
-    public IFile getDefaultFolder() {
-        return null;
+    open fun getDefaultFolder(): IFile? {
+        return null
     }
 
-    public abstract AbstractBackendServiceDelegate createDelegate(AbstractBackendServiceDelegate.BackendServiceStatusListener listener);
+    abstract fun createDelegate(listener: AbstractBackendServiceDelegate.BackendServiceStatusListener?): AbstractBackendServiceDelegate
 
-    public abstract IBackendServiceAPI createServiceApi(Context context) throws BackendException;
+    @Throws(BackendException::class)
+    abstract fun createServiceApi(context: Context): IBackendServiceAPI
 
-    public abstract IFile createFile(String encoded);
+    abstract fun createFile(encoded: String): IFile?
 }
