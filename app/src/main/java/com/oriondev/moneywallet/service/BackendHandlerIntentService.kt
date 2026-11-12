@@ -17,112 +17,108 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.service;
 
-import android.app.IntentService;
-import android.content.Intent;
-import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+package com.oriondev.moneywallet.service
 
-import com.oriondev.moneywallet.api.BackendException;
-import com.oriondev.moneywallet.api.BackendServiceFactory;
-import com.oriondev.moneywallet.api.IBackendServiceAPI;
-import com.oriondev.moneywallet.broadcast.LocalAction;
-import com.oriondev.moneywallet.model.IFile;
-import com.oriondev.moneywallet.utils.Utils;
+import android.app.IntentService
+import android.content.Intent
+import android.os.Bundle
 
-import java.util.List;
+import com.oriondev.moneywallet.api.BackendException
+import com.oriondev.moneywallet.api.BackendServiceFactory
+import com.oriondev.moneywallet.broadcast.LocalAction
+import com.oriondev.moneywallet.model.IFile
+import com.oriondev.moneywallet.utils.Utils
 
 /**
  * Created by andrea on 26/11/18.
  */
-public class BackendHandlerIntentService extends IntentService {
+class BackendHandlerIntentService : IntentService {
 
-    public static final String ACTION = "BackendHandlerIntentService::Argument::Action";
-    public static final String BACKEND_ID = "BackendHandlerIntentService::Argument::BackendId";
-    public static final String PARENT_FOLDER = "BackendHandlerIntentService::Argument::ParentFolder";
-    public static final String ERROR_MESSAGE = "BackendHandlerIntentService::Argument::ErrorMessage";
-    public static final String FOLDER_CONTENT = "BackendHandlerIntentService::Argument::FolderContent";
-    public static final String FOLDER_NAME = "BackendHandlerIntentService::Argument::FolderName";
-    public static final String CREATED_FILE = "BackendHandlerIntentService::Argument::CreatedFile";
+    companion object {
 
-    public static final int ACTION_LIST = 0;
-    public static final int ACTION_CREATE_FOLDER = 1;
+        const val ACTION = "BackendHandlerIntentService::Argument::Action"
+        const val BACKEND_ID = "BackendHandlerIntentService::Argument::BackendId"
+        const val PARENT_FOLDER = "BackendHandlerIntentService::Argument::ParentFolder"
+        const val ERROR_MESSAGE = "BackendHandlerIntentService::Argument::ErrorMessage"
+        const val FOLDER_CONTENT = "BackendHandlerIntentService::Argument::FolderContent"
+        const val FOLDER_NAME = "BackendHandlerIntentService::Argument::FolderName"
+        const val CREATED_FILE = "BackendHandlerIntentService::Argument::CreatedFile"
 
-    private String mBackendId;
-
-    private TaskReporter mReporter;
-
-    public BackendHandlerIntentService() {
-        super("BackendHandlerIntentService");
+        const val ACTION_LIST = 0
+        const val ACTION_CREATE_FOLDER = 1
     }
 
-    @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
+    private var mBackendId: String? = null
+
+    private var mReporter: TaskReporter? = null
+
+    constructor() : super("BackendHandlerIntentService")
+
+    override fun onHandleIntent(intent: Intent?) {
         if (intent != null && intent.hasExtra(BACKEND_ID)) {
-            mReporter = new TaskReporter(this);
-            mBackendId = intent.getStringExtra(BACKEND_ID);
-            switch (intent.getIntExtra(ACTION, ACTION_LIST)) {
-                case ACTION_LIST:
-                    onActionList(intent);
-                    break;
-                case ACTION_CREATE_FOLDER:
-                    onActionCreateFolder(intent);
-                    break;
+            mReporter = TaskReporter(this)
+            mBackendId = intent.getStringExtra(BACKEND_ID)
+            when (intent.getIntExtra(ACTION, ACTION_LIST)) {
+                ACTION_LIST -> {
+                    onActionList(intent)
+                }
+                ACTION_CREATE_FOLDER -> {
+                    onActionCreateFolder(intent)
+                }
             }
         }
     }
 
-    private void onActionList(@NonNull Intent intent) {
-        notifyTaskStarted(ACTION_LIST);
-        IFile remoteFolder = intent.getParcelableExtra(PARENT_FOLDER);
+    private fun onActionList(intent: Intent) {
+        notifyTaskStarted(ACTION_LIST)
+        val remoteFolder: IFile? = intent.getParcelableExtra(PARENT_FOLDER)
         try {
-            IBackendServiceAPI api = BackendServiceFactory.getServiceAPIById(this, mBackendId);
-            List<IFile> fileList = api.getFolderContent(remoteFolder);
-            notifyListTaskFinished(fileList);
-        } catch (BackendException e) {
-            notifyTaskFailure(ACTION_LIST, e.getMessage());
+            val api = BackendServiceFactory.getServiceAPIById(this, mBackendId)
+            val fileList: List<IFile> = api.getFolderContent(remoteFolder)
+            notifyListTaskFinished(fileList)
+        } catch (e: BackendException) {
+            notifyTaskFailure(ACTION_LIST, e.message)
         }
     }
 
-    private void onActionCreateFolder(@NonNull Intent intent) {
-        notifyTaskStarted(ACTION_CREATE_FOLDER);
-        IFile remoteFolder = intent.getParcelableExtra(PARENT_FOLDER);
-        String folderName = intent.getStringExtra(FOLDER_NAME);
+    private fun onActionCreateFolder(intent: Intent) {
+        notifyTaskStarted(ACTION_CREATE_FOLDER)
+        val remoteFolder: IFile? = intent.getParcelableExtra(PARENT_FOLDER)
+        val folderName: String? = intent.getStringExtra(FOLDER_NAME)
         try {
-            IBackendServiceAPI api = BackendServiceFactory.getServiceAPIById(this, mBackendId);
-            IFile createdFolder = api.createFolder(remoteFolder, folderName);
-            notifyCreateFolderTaskFinished(createdFolder);
-        } catch (BackendException e) {
-            notifyTaskFailure(ACTION_CREATE_FOLDER, e.getMessage());
+            val api = BackendServiceFactory.getServiceAPIById(this, mBackendId)
+            val createdFolder: IFile = api.createFolder(remoteFolder, folderName!!)
+            notifyCreateFolderTaskFinished(createdFolder)
+        } catch (e: BackendException) {
+            notifyTaskFailure(ACTION_CREATE_FOLDER, e.message)
         }
     }
 
-    private void notifyTaskStarted(int action) {
-        Bundle extras = new Bundle();
-        extras.putInt(ACTION, action);
-        mReporter.broadcast(LocalAction.ACTION_BACKEND_SERVICE_STARTED, extras);
+    private fun notifyTaskStarted(action: Int) {
+        val extras = Bundle()
+        extras.putInt(ACTION, action)
+        mReporter!!.broadcast(LocalAction.ACTION_BACKEND_SERVICE_STARTED, extras)
     }
 
-    private void notifyListTaskFinished(List<IFile> files) {
-        Bundle extras = new Bundle();
-        extras.putInt(ACTION, ACTION_LIST);
-        extras.putParcelableArrayList(FOLDER_CONTENT, Utils.wrapAsArrayList(files));
-        mReporter.broadcast(LocalAction.ACTION_BACKEND_SERVICE_FINISHED, extras);
+    private fun notifyListTaskFinished(files: List<IFile>) {
+        val extras = Bundle()
+        extras.putInt(ACTION, ACTION_LIST)
+        extras.putParcelableArrayList(FOLDER_CONTENT, Utils.wrapAsArrayList(files))
+        mReporter!!.broadcast(LocalAction.ACTION_BACKEND_SERVICE_FINISHED, extras)
     }
 
-    private void notifyCreateFolderTaskFinished(IFile file) {
-        Bundle extras = new Bundle();
-        extras.putInt(ACTION, ACTION_CREATE_FOLDER);
-        extras.putParcelable(CREATED_FILE, file);
-        mReporter.broadcast(LocalAction.ACTION_BACKEND_SERVICE_FINISHED, extras);
+    private fun notifyCreateFolderTaskFinished(file: IFile) {
+        val extras = Bundle()
+        extras.putInt(ACTION, ACTION_CREATE_FOLDER)
+        extras.putParcelable(CREATED_FILE, file)
+        mReporter!!.broadcast(LocalAction.ACTION_BACKEND_SERVICE_FINISHED, extras)
     }
 
-    private void notifyTaskFailure(int action, String message) {
-        Bundle extras = new Bundle();
-        extras.putInt(ACTION, action);
-        extras.putString(ERROR_MESSAGE, message);
-        mReporter.broadcast(LocalAction.ACTION_BACKEND_SERVICE_FAILED, extras);
+    private fun notifyTaskFailure(action: Int, message: String?) {
+        val extras = Bundle()
+        extras.putInt(ACTION, action)
+        extras.putString(ERROR_MESSAGE, message)
+        mReporter!!.broadcast(LocalAction.ACTION_BACKEND_SERVICE_FAILED, extras)
     }
 }
