@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.ui.view.theme;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import androidx.annotation.UiThread;
@@ -138,6 +139,7 @@ public class ThemeEngine implements ITheme {
     private static final int INDEX_MODE_LIGHT = 0;
     private static final int INDEX_MODE_DARK = 1;
     private static final int INDEX_MODE_DEEP_DARK = 2;
+    private static final int INDEX_MODE_SYSTEM = 3;
 
     private static final List<ThemeObserver> mThemeObserverList = new ArrayList<>();
 
@@ -247,10 +249,30 @@ public class ThemeEngine implements ITheme {
     @UiThread
     public static void setMode(Mode mode) {
         if (sInstance != null && mode != null) {
-            if (mode != sInstance.getMode()) {
+            if (mode.getIndex() != sInstance.getStoredMode()) {
                 sInstance.mPreferences.edit().putInt(MODE, mode.getIndex()).apply();
                 notifyObservers();
             }
+        } else {
+            throw new RuntimeException("ThemeEngine not initialized!");
+        }
+    }
+
+    @UiThread
+    public static void setFollowSystem() {
+        if (sInstance != null) {
+            if (!isFollowingSystem()) {
+                sInstance.mPreferences.edit().putInt(MODE, INDEX_MODE_SYSTEM).apply();
+                notifyObservers();
+            }
+        } else {
+            throw new RuntimeException("ThemeEngine not initialized!");
+        }
+    }
+
+    public static boolean isFollowingSystem() {
+        if (sInstance != null) {
+            return sInstance.getStoredMode() == INDEX_MODE_SYSTEM;
         } else {
             throw new RuntimeException("ThemeEngine not initialized!");
         }
@@ -400,15 +422,23 @@ public class ThemeEngine implements ITheme {
         return ColorUtils.setAlphaComponent(color, 255);
     }
 
+    private int getStoredMode() {
+        return mPreferences.getInt(MODE, DEFAULT_MODE.getIndex());
+    }
+
     @Override
     public Mode getMode() {
-        switch (mPreferences.getInt(MODE, DEFAULT_MODE.getIndex())) {
+        switch (getStoredMode()) {
             case INDEX_MODE_LIGHT:
                 return Mode.LIGHT;
             case INDEX_MODE_DARK:
                 return Mode.DARK;
             case INDEX_MODE_DEEP_DARK:
                 return Mode.DEEP_DARK;
+            case INDEX_MODE_SYSTEM:
+                return (mContext.getResources().getConfiguration().uiMode
+                        & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+                        ? Mode.DARK : Mode.LIGHT;
             default:
                 // the stored value has been manually altered
                 return Mode.LIGHT;
@@ -538,15 +568,6 @@ public class ThemeEngine implements ITheme {
     public int getBestIconColor(int background) {
         int index = Util.isColorLight(background) ? INDEX_MODE_LIGHT : INDEX_MODE_DARK;
         return DEFAULT_ICON_COLOR[index];
-    }
-
-    private int getColorByMode(int colorLight, int colorDark) {
-        switch (mPreferences.getInt(MODE, DEFAULT_MODE.getIndex())) {
-            case INDEX_MODE_LIGHT:
-                return colorLight;
-            default:
-                return colorDark;
-        }
     }
 
     public enum Mode {

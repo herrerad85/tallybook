@@ -78,6 +78,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     private static final String THEME_TYPE_LIGHT = "light";
     private static final String THEME_TYPE_DARK = "dark";
     private static final String THEME_TYPE_DEEP_DARK = "deep_dark";
+    private static final String THEME_TYPE_SYSTEM = "system";
 
     private ColorPreference mColorIncomePreference;
     private ColorPreference mColorExpensePreference;
@@ -212,7 +213,7 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
 
         });
         mThemeTypePreference.setEntries(R.array.theme_types);
-        mThemeTypePreference.setEntryValues(new String[] {THEME_TYPE_LIGHT, THEME_TYPE_DARK, THEME_TYPE_DEEP_DARK});
+        mThemeTypePreference.setEntryValues(new String[] {THEME_TYPE_LIGHT, THEME_TYPE_DARK, THEME_TYPE_DEEP_DARK, THEME_TYPE_SYSTEM});
         // setup current values
         setupCurrentDateFormat();
         setupCurrentTimeFormat();
@@ -364,6 +365,9 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
                         break;
                     case THEME_TYPE_DEEP_DARK:
                         ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
+                        break;
+                    case THEME_TYPE_SYSTEM:
+                        ThemeEngine.setFollowSystem();
                         break;
                 }
                 setupCurrentThemeType();
@@ -600,6 +604,11 @@ public class UserInterfaceSettingFragment extends PreferenceFragmentCompat imple
     }
 
     private void setupCurrentThemeType() {
+        if (ThemeEngine.isFollowingSystem()) {
+            mThemeTypePreference.setValue(THEME_TYPE_SYSTEM);
+            mThemeTypePreference.setSummary(R.string.setting_item_ui_theme_type_system);
+            return;
+        }
         ITheme theme = ThemeEngine.getTheme();
         switch (theme.getMode()) {
             case LIGHT:

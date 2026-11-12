@@ -21,7 +21,7 @@
 
     <!-- The app theme for the light mode. ThemedActivity swaps in one of the two below for the
          dark modes before super.onCreate, and recreates the activity when the mode changes. Not
-         DayNight, because the mode is picked in the app and not taken from the system. The color
+         DayNight, because the mode is picked in the app. The color
          roles were generated once from the default primary #3f51b5 with SchemeContent, the scheme
          the library seeds dynamic color from a single color with. The screens carry their
          own toolbar, so the parent's window action bar and title stay off. -->

@@ -29,5 +29,6 @@
         <item>@string/setting_item_ui_theme_type_light</item>
         <item>@string/setting_item_ui_theme_type_dark</item>
         <item>@string/setting_item_ui_theme_type_deep_dark</item>
+        <item>@string/setting_item_ui_theme_type_system</item>
     </string-array>
 </resources>
