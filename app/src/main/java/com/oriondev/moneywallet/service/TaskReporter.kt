@@ -17,16 +17,16 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.service;
+package com.oriondev.moneywallet.service
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Small helper shared by the intent services to report task state.
@@ -38,21 +38,21 @@ import com.oriondev.moneywallet.R;
  * and foreground timing; this class only owns the plumbing that was identical
  * everywhere.
  */
-class TaskReporter {
+internal class TaskReporter {
 
-    private final Context mContext;
-    private final LocalBroadcastManager mBroadcastManager;
+    private val mContext: Context
+    private val mBroadcastManager: LocalBroadcastManager
 
-    TaskReporter(Context context) {
-        mContext = context;
-        mBroadcastManager = LocalBroadcastManager.getInstance(context);
+    internal constructor(context: Context) {
+        mContext = context
+        mBroadcastManager = LocalBroadcastManager.getInstance(context)
     }
 
     /**
      * Send a local broadcast carrying only the action string.
      */
-    void broadcast(String action) {
-        mBroadcastManager.sendBroadcast(new Intent(action));
+    internal fun broadcast(action: String) {
+        mBroadcastManager.sendBroadcast(Intent(action))
     }
 
     /**
@@ -60,10 +60,10 @@ class TaskReporter {
      * The extras are copied verbatim into the intent, so the receivers observe
      * exactly the keys, types and values the caller put into the bundle.
      */
-    void broadcast(String action, Bundle extras) {
-        Intent intent = new Intent(action);
-        intent.putExtras(extras);
-        mBroadcastManager.sendBroadcast(intent);
+    internal fun broadcast(action: String, extras: Bundle) {
+        val intent = Intent(action)
+        intent.putExtras(extras)
+        mBroadcastManager.sendBroadcast(intent)
     }
 
     /**
@@ -71,19 +71,19 @@ class TaskReporter {
      * The caller sets everything else (title, text, progress, category, style,
      * actions) so per-service notification differences are preserved.
      */
-    NotificationCompat.Builder newNotification(String channelId) {
-        return new NotificationCompat.Builder(mContext, channelId)
-                .setSmallIcon(R.drawable.ic_notification);
+    internal fun newNotification(channelId: String): NotificationCompat.Builder {
+        return NotificationCompat.Builder(mContext, channelId)
+                .setSmallIcon(R.drawable.ic_notification)
     }
 
     /**
      * Post (or update) a notification through the notification manager. Used for
      * the error notifications that must survive the end of the foreground task.
      */
-    void showNotification(int id, NotificationCompat.Builder builder) {
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
+    internal fun showNotification(id: Int, builder: NotificationCompat.Builder) {
+        val notificationManager = NotificationManagerCompat.from(mContext)
         if (notificationManager.areNotificationsEnabled()) {
-            notificationManager.notify(id, builder.build());
+            notificationManager.notify(id, builder.build())
         }
     }
 }
