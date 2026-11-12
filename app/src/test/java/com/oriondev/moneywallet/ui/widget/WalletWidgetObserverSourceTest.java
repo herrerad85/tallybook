@@ -60,16 +60,6 @@ import static org.junit.Assert.fail;
  */
 public class WalletWidgetObserverSourceTest {
 
-    /**
-     * A java string literal, a char literal, a line comment, then a block comment. The literals go
-     * first so that a comment marker inside one cannot cut the line short, and the char literal is
-     * in the list so that a lone quote written as a character cannot invert the quote parity of
-     * everything below it and stop comments being stripped at all.
-     */
-    private static final Pattern STRIPPED = Pattern.compile(
-            "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|//.*?$|/[*].*?[*]/",
-            Pattern.DOTALL | Pattern.MULTILINE);
-
     private static final Pattern WATCHES_THE_WHOLE_PROVIDER = Pattern.compile(
             "registerContentObserver\\(\\s*DataContentProvider\\.CONTENT_ALL\\s*,\\s*true\\s*,");
 
@@ -77,8 +67,141 @@ public class WalletWidgetObserverSourceTest {
     private static final Pattern ANY_REGISTRATION = Pattern.compile(
             "\\.\\s*registerContentObserver\\s*\\(");
 
+    /**
+     * A Kotlin raw string, a Kotlin string literal, a char literal, a line comment, then a block
+     * comment, nested or not. The literals go
+     * first so that a comment marker inside one cannot cut the line short, and the char literal is
+     * in the list so that a lone quote written as a character cannot invert the quote parity of
+     * everything below it and stop comments being stripped at all.
+     */
+    private static String strip(String source) {
+        StringBuilder stripped = new StringBuilder();
+        int at = 0;
+        while (at < source.length()) {
+            int end = skipped(source, at);
+            if (end >= 0) {
+                stripped.append(' ');
+                at = end;
+            } else {
+                stripped.append(source.charAt(at));
+                at++;
+            }
+        }
+        return stripped.toString();
+    }
+
+    private static int skipped(String source, int at) {
+        if (source.startsWith("\"\"\"", at)) {
+            return rawStringEnd(source, at + 3);
+        }
+        char c = source.charAt(at);
+        if (c == '"') {
+            return stringEnd(source, at + 1);
+        }
+        if (c == '\'') {
+            return charEnd(source, at + 1);
+        }
+        if (source.startsWith("//", at)) {
+            int newline = source.indexOf('\n', at);
+            return newline < 0 ? source.length() : newline;
+        }
+        if (source.startsWith("/*", at)) {
+            return blockCommentEnd(source, at);
+        }
+        return -1;
+    }
+
+    private static int rawStringEnd(String source, int at) {
+        while (at < source.length()) {
+            if (source.startsWith("\"\"\"", at)) {
+                at += 3;
+                while (at < source.length() && source.charAt(at) == '"') {
+                    at++;
+                }
+                return at;
+            }
+            if (source.startsWith("${", at)) {
+                at = templateEnd(source, at + 2);
+            } else {
+                at++;
+            }
+        }
+        return source.length();
+    }
+
+    private static int stringEnd(String source, int at) {
+        while (at < source.length()) {
+            char c = source.charAt(at);
+            if (c == '\\') {
+                at += 2;
+            } else if (c == '"') {
+                return at + 1;
+            } else if (source.startsWith("${", at)) {
+                at = templateEnd(source, at + 2);
+            } else if (c == '\n') {
+                return at;
+            } else {
+                at++;
+            }
+        }
+        return source.length();
+    }
+
+    private static int templateEnd(String source, int at) {
+        int depth = 1;
+        while (at < source.length()) {
+            int end = skipped(source, at);
+            if (end >= 0) {
+                at = end;
+                continue;
+            }
+            char c = source.charAt(at);
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    return at + 1;
+                }
+            }
+            at++;
+        }
+        return source.length();
+    }
+
+    private static int charEnd(String source, int at) {
+        if (at < source.length() && source.charAt(at) == '\\') {
+            at += 2;
+        } else {
+            at++;
+        }
+        while (at < source.length() && source.charAt(at) != '\'' && source.charAt(at) != '\n') {
+            at++;
+        }
+        return at < source.length() && source.charAt(at) == '\'' ? at + 1 : at;
+    }
+
+    private static int blockCommentEnd(String source, int at) {
+        int depth = 0;
+        while (at < source.length()) {
+            if (source.startsWith("/*", at)) {
+                depth++;
+                at += 2;
+            } else if (source.startsWith("*/", at)) {
+                depth--;
+                at += 2;
+                if (depth == 0) {
+                    return at;
+                }
+            } else {
+                at++;
+            }
+        }
+        return source.length();
+    }
+
     private String source() {
-        String path = "src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetObserver.java";
+        String path = "src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetObserver.kt";
         File file = new File(path);
         if (!file.exists()) {
             // a runner rooted at the repo root instead of the module, which the precedent
@@ -90,7 +213,7 @@ public class WalletWidgetObserverSourceTest {
         }
         try {
             String read = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-            return STRIPPED.matcher(read).replaceAll(" ");
+            return strip(read);
         } catch (IOException e) {
             fail("Cannot read " + path + ": " + e.getMessage());
             return null;
