@@ -14,57 +14,35 @@
 
     <issue
         id="CanvasSize"
-        message="Calling `Canvas.getWidth()` is usually wrong; you should be calling `getBounds().getWidth()` instead"
-        errorLine1="        int width = canvas.getWidth();"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~">
+        message="Referencing `Canvas.width` is usually wrong; you should be referencing `bounds.width` instead"
+        errorLine1="        val width = canvas.width"
+        errorLine2="                    ~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.java"
-            line="48"
+            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.kt"
+            line="45"
             column="21"/>
     </issue>
 
     <issue
         id="CanvasSize"
-        message="Calling `Canvas.getHeight()` is usually wrong; you should be calling `getBounds().getHeight()` instead"
-        errorLine1="        int height = canvas.getHeight();"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~">
+        message="Referencing `Canvas.height` is usually wrong; you should be referencing `bounds.height` instead"
+        errorLine1="        val height = canvas.height"
+        errorLine2="                     ~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.java"
-            line="49"
+            file="src/main/java/com/oriondev/moneywallet/ui/drawable/DoubleIconDrawable.kt"
+            line="46"
             column="22"/>
     </issue>
 
     <issue
         id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="            final String extension = name.substring(lastDot + 1).toLowerCase();"
-        errorLine2="                                                                 ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/api/saf/SAFBackendServiceAPI.java"
-            line="130"
-            column="66"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="        text = builder.toUpperCase ? builder.text.toUpperCase() : builder.text;"
-        errorLine2="                                                  ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/ui/drawable/TextDrawable.java"
-            line="61"
-            column="51"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                String.format(&quot;Server refused to %s (HTTP %d)&quot;, action, status),"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    String.format(&quot;Server refused to %s (HTTP %d)&quot;, action, status),"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/api/webdav/WebDAVException.java"
-            line="45"
-            column="17"/>
+            file="src/main/java/com/oriondev/moneywallet/api/webdav/WebDAVException.kt"
+            line="44"
+            column="21"/>
     </issue>
 
     <issue
@@ -6664,45 +6642,45 @@
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                        Date date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE)));"
-        errorLine2="                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        val date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE)))"
+        errorLine2="                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.java"
-            line="130"
-            column="93"/>
+            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.kt"
+            line="138"
+            column="92"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            int direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION));"
+        errorLine1="                            val direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION))"
         errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.java"
-            line="132"
+            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.kt"
+            line="140"
             column="59"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            String currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY));"
-        errorLine2="                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            val currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY))"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.java"
-            line="133"
-            column="64"/>
+            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.kt"
+            line="141"
+            column="61"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            long money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY));"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            val money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY))"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.java"
-            line="134"
-            column="57"/>
+            file="src/main/java/com/oriondev/moneywallet/background/OverviewDataLoader.kt"
+            line="142"
+            column="56"/>
     </issue>
 
     <issue
@@ -6752,12 +6730,12 @@
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    long ownId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_ID));"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    val ownId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_ID))"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="107"
-            column="49"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="109"
+            column="48"/>
     </issue>
 
     <issue
@@ -6766,53 +6744,53 @@
         errorLine1="                    if (cursor.isNull(cursor.getColumnIndex(Contract.Transaction.CATEGORY_PARENT_ID))) {"
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="110"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="112"
             column="39"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                        categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_PARENT_ID));"
+        errorLine1="                        categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.CATEGORY_PARENT_ID))"
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="114"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="116"
             column="53"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    long money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY));"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    val money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY))"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="117"
-            column="49"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="119"
+            column="48"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    String iso = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY));"
-        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    val iso = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY))"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="118"
-            column="51"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="120"
+            column="48"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    long categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Category.ID));"
-        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    val categoryId = cursor.getLong(cursor.getColumnIndex(Contract.Category.ID))"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="252"
-            column="54"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="253"
+            column="53"/>
     </issue>
 
     <issue
@@ -6821,8 +6799,8 @@
         errorLine1="                            cursor.getString(cursor.getColumnIndex(Contract.Category.NAME)),"
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="254"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="255"
             column="46"/>
     </issue>
 
@@ -6832,8 +6810,8 @@
         errorLine1="                            IconLoader.parse(cursor.getString(cursor.getColumnIndex(Contract.Category.ICON))),"
         errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="255"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="256"
             column="63"/>
     </issue>
 
@@ -6843,53 +6821,53 @@
         errorLine1="                            Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndex(Contract.Category.TYPE)))"
         errorLine2="                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.java"
-            line="256"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailFlowLoader.kt"
+            line="257"
             column="75"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                        Date date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE)));"
-        errorLine2="                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        val date = DateUtils.getDateFromSQLDateTimeString(cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE)))"
+        errorLine2="                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="104"
-            column="93"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="108"
+            column="92"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            int direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION));"
+        errorLine1="                            val direction = cursor.getInt(cursor.getColumnIndex(Contract.Transaction.DIRECTION))"
         errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="106"
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="110"
             column="59"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            String currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY));"
-        errorLine2="                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            val currency = cursor.getString(cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY))"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="107"
-            column="64"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="111"
+            column="61"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            long money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY));"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            val money = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.MONEY))"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.java"
-            line="108"
-            column="57"/>
+            file="src/main/java/com/oriondev/moneywallet/background/PeriodDetailSummaryLoader.kt"
+            line="112"
+            column="56"/>
     </issue>
 
     <issue
@@ -12728,8 +12706,8 @@
         errorLine1="                    cursor.getLong(cursor.getColumnIndex(Contract.Wallet.ID)),"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="168"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="158"
             column="36"/>
     </issue>
 
@@ -12739,8 +12717,8 @@
         errorLine1="                    cursor.getString(cursor.getColumnIndex(Contract.Wallet.NAME)),"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="169"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="159"
             column="38"/>
     </issue>
 
@@ -12750,8 +12728,8 @@
         errorLine1="                    IconLoader.parse(cursor.getString(cursor.getColumnIndex(Contract.Wallet.ICON))),"
         errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="170"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="160"
             column="55"/>
     </issue>
 
@@ -12761,8 +12739,8 @@
         errorLine1="                    CurrencyManager.getCurrency(cursor.getString(cursor.getColumnIndex(Contract.Wallet.CURRENCY))),"
         errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="171"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="161"
             column="66"/>
     </issue>
 
@@ -12772,8 +12750,8 @@
         errorLine1="                    cursor.getLong(cursor.getColumnIndex(Contract.Wallet.START_MONEY)),"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="172"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="162"
             column="36"/>
     </issue>
 
@@ -12783,53 +12761,53 @@
         errorLine1="                    cursor.getLong(cursor.getColumnIndex(Contract.Wallet.TOTAL_MONEY))"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.java"
-            line="173"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetConfigureActivity.kt"
+            line="163"
             column="36"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    name = cursor.getString(cursor.getColumnIndex(Contract.Wallet.NAME));"
-        errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        name = cursor.getString(cursor.getColumnIndex(Contract.Wallet.NAME))"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.java"
-            line="155"
-            column="45"/>
-    </issue>
-
-    <issue
-        id="Range"
-        message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    long money = cursor.getLong(cursor.getColumnIndex(Contract.Wallet.START_MONEY))"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.java"
-            line="159"
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.kt"
+            line="123"
             column="49"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            + cursor.getLong(cursor.getColumnIndex(Contract.Wallet.TOTAL_MONEY));"
-        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        val money = cursor.getLong(cursor.getColumnIndex(Contract.Wallet.START_MONEY)) +"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.java"
-            line="160"
-            column="46"/>
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.kt"
+            line="127"
+            column="52"/>
     </issue>
 
     <issue
         id="Range"
         message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                            cursor.getString(cursor.getColumnIndex(Contract.Wallet.CURRENCY)));"
-        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                                cursor.getLong(cursor.getColumnIndex(Contract.Wallet.TOTAL_MONEY))"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.java"
-            line="167"
-            column="46"/>
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.kt"
+            line="128"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="Range"
+        message="Value must be ≥ 0 but `getColumnIndex` can be -1"
+        errorLine1="                                cursor.getString(cursor.getColumnIndex(Contract.Wallet.CURRENCY)))"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetProvider.kt"
+            line="135"
+            column="50"/>
     </issue>
 
     <issue
@@ -12978,12 +12956,12 @@
     <issue
         id="RestrictedApi"
         message="SnackbarLayout can only be accessed from within the same library group (referenced groupId=`com.google.android.material` from groupId=`moneywallet-fix10b`)"
-        errorLine1="        return dependency instanceof AppBarLayout || dependency instanceof Snackbar.SnackbarLayout;"
-        errorLine2="                                                                           ~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        return dependency is Snackbar.SnackbarLayout"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/behavior/ScrollingFloatingActionButtonBehavior.java"
-            line="52"
-            column="76"/>
+            file="src/main/java/com/oriondev/moneywallet/ui/behavior/ScrollingFloatingActionButtonBehavior.kt"
+            line="42"
+            column="30"/>
     </issue>
 
     <issue
@@ -13055,12 +13033,12 @@
     <issue
         id="DiscouragedApi"
         message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
-        errorLine1="        int resId = context.getResources().getIdentifier(name, &quot;string&quot;, packageName);"
-        errorLine2="                                           ~~~~~~~~~~~~~">
+        errorLine1="        val resId = context.resources.getIdentifier(name, &quot;string&quot;, packageName)"
+        errorLine2="                                      ~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/background/IconGroupLoader.java"
-            line="98"
-            column="44"/>
+            file="src/main/java/com/oriondev/moneywallet/background/IconGroupLoader.kt"
+            line="97"
+            column="39"/>
     </issue>
 
     <issue

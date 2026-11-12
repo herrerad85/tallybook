@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,7 +39,7 @@ import static org.junit.Assert.fail;
  *
  * The same holds for NOT_TRANSFER, which keeps money moved between two of the user's own wallets
  * out of a figure that sums one direction on its own. Two of the three append it, and the third
- * shows a net and classifies its rows in Java, so it is absent there on purpose.
+ * shows a net and classifies its rows in Kotlin, so it is absent there on purpose.
  *
  * This reads the source, so it is a tripwire against a revert and not a proof of behavior. It
  * cannot see a loader that appends the filter and then reassigns selection underneath it, or one
@@ -54,8 +53,6 @@ import static org.junit.Assert.fail;
  */
 public class ReportLoaderSourceTest {
 
-    private static final Pattern COMMENTS = Pattern.compile("//.*?$|/[*].*?[*]/", Pattern.DOTALL | Pattern.MULTILINE);
-
     private static final String[] LOADERS = new String[] {
             "OverviewDataLoader",
             "PeriodDetailFlowLoader",
@@ -63,7 +60,7 @@ public class ReportLoaderSourceTest {
     };
 
     private static final String APPEND =
-            "selection += \" AND \" + Contract.Transaction.REPORT_FILTER;";
+            "selection += \" AND \" + Contract.Transaction.REPORT_FILTER";
 
     private static final String NOT_TRANSFER = "AND \" + Contract.Transaction.NOT_TRANSFER";
 
@@ -72,7 +69,7 @@ public class ReportLoaderSourceTest {
         for (String loader : LOADERS) {
             assertTrue("a report screen that stops filtering on REPORT_FILTER counts a category "
                     + "kept out of the reports again, and disagrees with the other two: " + loader,
-                    readSource(loader).contains(APPEND));
+                    endsAStatement(readSource(loader), APPEND));
         }
     }
 
@@ -93,7 +90,37 @@ public class ReportLoaderSourceTest {
                 1, countOf(NOT_TRANSFER, readSource("PeriodDetailFlowLoader")));
     }
 
-    private int countOf(String statement, String source) {
+    private boolean endsAStatement(String source, String statement) {
+        String flat = source.replace('\n', ' ');
+        int at = flat.indexOf(statement);
+        while (at >= 0) {
+            if (isStatementEnd(source, at + statement.length())) {
+                return true;
+            }
+            at = flat.indexOf(statement, at + 1);
+        }
+        return false;
+    }
+
+    private boolean isStatementEnd(String source, int at) {
+        if (at < source.length() && source.charAt(at) == ' ') {
+            at++;
+        }
+        if (at == source.length()) {
+            return true;
+        }
+        char c = source.charAt(at);
+        if (c == ';' || c == '}') {
+            return true;
+        }
+        if (c != '\n') {
+            return false;
+        }
+        return at + 1 == source.length() || ".?&|".indexOf(source.charAt(at + 1)) < 0;
+    }
+
+    private int countOf(String statement, String text) {
+        String source = text.replace('\n', ' ');
         int count = 0;
         int at = source.indexOf(statement);
         while (at >= 0) {
@@ -104,7 +131,7 @@ public class ReportLoaderSourceTest {
     }
 
     private String readSource(String loader) {
-        String path = "src/main/java/com/oriondev/moneywallet/background/" + loader + ".java";
+        String path = "src/main/java/com/oriondev/moneywallet/background/" + loader + ".kt";
         File file = new File(path);
         if (!file.exists()) {
             // a runner rooted at the repo root instead of the module, which the precedent
@@ -112,15 +139,154 @@ public class ReportLoaderSourceTest {
             file = new File("app/" + path);
         }
         if (!file.exists()) {
-            fail("Cannot find " + loader + ".java at " + file.getAbsolutePath());
+            fail("Cannot find " + loader + ".kt at " + file.getAbsolutePath());
         }
         try {
             String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-            return COMMENTS.matcher(source).replaceAll(" ").replaceAll("\\s+", " ");
+            return stripComments(source).replaceAll("[^\\S\\n]*\\n\\s*", "\n").replaceAll("[^\\S\\n]+", " ");
         } catch (IOException e) {
-            fail("Cannot read " + loader + ".java: " + e.getMessage());
+            fail("Cannot read " + loader + ".kt: " + e.getMessage());
             return null;
         }
+    }
+
+    private static String stripComments(String source) {
+        StringBuilder stripped = new StringBuilder();
+        int at = 0;
+        while (at < source.length()) {
+            int end = literalEnd(source, at);
+            if (end >= 0) {
+                stripped.append(source, at, end);
+                at = end;
+                continue;
+            }
+            end = commentEnd(source, at);
+            if (end >= 0) {
+                stripped.append(' ');
+                at = end;
+            } else {
+                stripped.append(source.charAt(at));
+                at++;
+            }
+        }
+        return stripped.toString();
+    }
+
+    private static int literalEnd(String source, int at) {
+        if (source.startsWith("\"\"\"", at)) {
+            return rawStringEnd(source, at + 3);
+        }
+        char c = source.charAt(at);
+        if (c == '"') {
+            return stringEnd(source, at + 1);
+        }
+        if (c == '\'') {
+            return charEnd(source, at + 1);
+        }
+        return -1;
+    }
+
+    private static int commentEnd(String source, int at) {
+        if (source.startsWith("//", at)) {
+            int newline = source.indexOf('\n', at);
+            return newline < 0 ? source.length() : newline;
+        }
+        if (source.startsWith("/*", at)) {
+            return blockCommentEnd(source, at);
+        }
+        return -1;
+    }
+
+    private static int rawStringEnd(String source, int at) {
+        while (at < source.length()) {
+            if (source.startsWith("\"\"\"", at)) {
+                at += 3;
+                while (at < source.length() && source.charAt(at) == '"') {
+                    at++;
+                }
+                return at;
+            }
+            if (source.startsWith("${", at)) {
+                at = templateEnd(source, at + 2);
+            } else {
+                at++;
+            }
+        }
+        return source.length();
+    }
+
+    private static int stringEnd(String source, int at) {
+        while (at < source.length()) {
+            char c = source.charAt(at);
+            if (c == '\\') {
+                at += 2;
+            } else if (c == '"') {
+                return at + 1;
+            } else if (source.startsWith("${", at)) {
+                at = templateEnd(source, at + 2);
+            } else if (c == '\n') {
+                return at;
+            } else {
+                at++;
+            }
+        }
+        return source.length();
+    }
+
+    private static int templateEnd(String source, int at) {
+        int depth = 1;
+        while (at < source.length()) {
+            int end = literalEnd(source, at);
+            if (end < 0) {
+                end = commentEnd(source, at);
+            }
+            if (end >= 0) {
+                at = end;
+                continue;
+            }
+            char c = source.charAt(at);
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    return at + 1;
+                }
+            }
+            at++;
+        }
+        return source.length();
+    }
+
+    private static int charEnd(String source, int at) {
+        if (at < source.length() && source.charAt(at) == '\\') {
+            at += 2;
+        } else {
+            at++;
+        }
+        while (at < source.length() && source.charAt(at) != '\'' && source.charAt(at) != '\n') {
+            at++;
+        }
+        return at < source.length() && source.charAt(at) == '\'' ? at + 1 : at;
+    }
+
+    private static int blockCommentEnd(String source, int at) {
+        int depth = 0;
+        while (at < source.length()) {
+            if (source.startsWith("/*", at)) {
+                depth++;
+                at += 2;
+            } else if (source.startsWith("*/", at)) {
+                depth--;
+                at += 2;
+                if (depth == 0) {
+                    return at;
+                }
+            } else {
+                at++;
+            }
+        }
+        return source.length();
     }
 
 }
