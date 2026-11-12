@@ -17,135 +17,138 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.service;
 
-import android.app.IntentService;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import androidx.annotation.Nullable;
+package com.oriondev.moneywallet.service
 
-import com.oriondev.moneywallet.broadcast.LocalAction;
-import com.oriondev.moneywallet.model.Attachment;
-import com.oriondev.moneywallet.storage.database.Contract;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import android.app.IntentService
+import android.content.ContentResolver
+import android.content.ContentUris
+import android.content.ContentValues
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import com.oriondev.moneywallet.broadcast.LocalAction
+import com.oriondev.moneywallet.model.Attachment
+import com.oriondev.moneywallet.storage.database.Contract
+import com.oriondev.moneywallet.storage.database.DataContentProvider
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
+
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
 /**
  * Created by andrea on 27/03/18.
  */
-public class AttachmentHandlerIntentService extends IntentService {
+class AttachmentHandlerIntentService : IntentService {
 
-    public static final String ATTACHMENT = "AttachmentHandlerIntentService::Parameters::Attachment";
-    public static final String ACTION = "AttachmentHandlerIntentService::Parameters::Action";
-    public static final String ERROR = "AttachmentHandlerIntentService::Parameters::Error";
+    companion object {
 
-    public static final int ACTION_CREATE = 1;
-    public static final int ACTION_DELETE = 2;
+        const val ATTACHMENT = "AttachmentHandlerIntentService::Parameters::Attachment"
+        const val ACTION = "AttachmentHandlerIntentService::Parameters::Action"
+        const val ERROR = "AttachmentHandlerIntentService::Parameters::Error"
 
-    private TaskReporter mReporter;
-
-    public AttachmentHandlerIntentService() {
-        super("AttachmentHandlerIntentService");
+        const val ACTION_CREATE = 1
+        const val ACTION_DELETE = 2
     }
 
-    @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
+    private var mReporter: TaskReporter? = null
+
+    constructor() : super("AttachmentHandlerIntentService")
+
+    override fun onHandleIntent(intent: Intent?) {
         if (intent != null) {
-            mReporter = new TaskReporter(this);
-            int action = intent.getIntExtra(ACTION, 0);
-            Attachment attachment = intent.getParcelableExtra(ATTACHMENT);
-            notifyOperationStarted(attachment, action);
+            mReporter = TaskReporter(this)
+            val action = intent.getIntExtra(ACTION, 0)
+            val attachment: Attachment? = intent.getParcelableExtra(ATTACHMENT)
+            notifyOperationStarted(attachment, action)
             try {
-                switch (action) {
-                    case ACTION_CREATE:
-                        Uri uri = createAttachment(intent.getData(), attachment);
-                        attachment.setId(ContentUris.parseId(uri));
-                        break;
-                    case ACTION_DELETE:
-                        deleteAttachment(attachment);
-                        break;
+                when (action) {
+                    ACTION_CREATE -> {
+                        val uri = createAttachment(intent.data, attachment)
+                        attachment!!.setId(ContentUris.parseId(uri!!))
+                    }
+                    ACTION_DELETE -> {
+                        deleteAttachment(attachment)
+                    }
                 }
-                notifyOperationFinished(attachment, action);
-            } catch (IOException e) {
-                notifyOperationFailed(attachment, action, e.getMessage());
+                notifyOperationFinished(attachment, action)
+            } catch (e: IOException) {
+                notifyOperationFailed(attachment, action, e.message)
             }
         }
     }
 
-    private File getAttachmentFile(Attachment attachment) throws IOException {
-        File folder = new File(getExternalFilesDir(null), "attachments");
-        FileUtils.forceMkdir(folder);
-        File file = new File(folder, attachment.getFile());
+    @Throws(IOException::class)
+    private fun getAttachmentFile(attachment: Attachment?): File {
+        val folder = File(getExternalFilesDir(null), "attachments")
+        FileUtils.forceMkdir(folder)
+        val file = File(folder, attachment!!.getFile())
         if (!file.exists() && !file.createNewFile()) {
-            throw new IOException("Failed to create a new file");
+            throw IOException("Failed to create a new file")
         }
-        return file;
+        return file
     }
 
-    private Uri createAttachment(Uri uri, Attachment attachment) throws IOException {
-        ContentResolver contentResolver = getContentResolver();
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
+    @Throws(IOException::class)
+    private fun createAttachment(uri: Uri?, attachment: Attachment?): Uri? {
+        val contentResolver: ContentResolver = getContentResolver()
+        var inputStream: InputStream? = null
+        var outputStream: OutputStream? = null
         try {
-            inputStream = contentResolver.openInputStream(uri);
+            inputStream = contentResolver.openInputStream(uri!!)
             if (inputStream != null) {
-                outputStream = new FileOutputStream(getAttachmentFile(attachment));
-                IOUtils.copy(inputStream, outputStream);
+                outputStream = FileOutputStream(getAttachmentFile(attachment))
+                IOUtils.copy(inputStream, outputStream)
             }
         } finally {
             if (inputStream != null) {
-                try {inputStream.close();} catch (IOException ignore) {}
+                try {inputStream.close()} catch (ignore: IOException) {}
             }
             if (outputStream != null) {
-                try {outputStream.close();} catch (IOException ignore) {}
+                try {outputStream.close()} catch (ignore: IOException) {}
             }
         }
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(Contract.Attachment.FILE, attachment.getFile());
-        contentValues.put(Contract.Attachment.NAME, attachment.getName());
-        contentValues.put(Contract.Attachment.TYPE, attachment.getType());
-        contentValues.put(Contract.Attachment.SIZE, attachment.getSize());
-        return contentResolver.insert(DataContentProvider.CONTENT_ATTACHMENTS, contentValues);
+        val contentValues = ContentValues()
+        contentValues.put(Contract.Attachment.FILE, attachment!!.getFile())
+        contentValues.put(Contract.Attachment.NAME, attachment.getName())
+        contentValues.put(Contract.Attachment.TYPE, attachment.getType())
+        contentValues.put(Contract.Attachment.SIZE, attachment.getSize())
+        return contentResolver.insert(DataContentProvider.CONTENT_ATTACHMENTS, contentValues)
     }
 
-    private void deleteAttachment(Attachment attachment) throws IOException {
-        ContentResolver contentResolver = getContentResolver();
-        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_ATTACHMENTS, attachment.getId());
-        contentResolver.delete(uri, null, null);
-        FileUtils.forceDelete(getAttachmentFile(attachment));
+    @Throws(IOException::class)
+    private fun deleteAttachment(attachment: Attachment?) {
+        val contentResolver: ContentResolver = getContentResolver()
+        val uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_ATTACHMENTS, attachment!!.getId())
+        contentResolver.delete(uri, null, null)
+        FileUtils.forceDelete(getAttachmentFile(attachment))
     }
 
-    private void notifyOperationStarted(Attachment attachment, int action) {
-        Bundle extras = new Bundle();
-        extras.putParcelable(ATTACHMENT, attachment);
-        extras.putInt(ACTION, action);
-        mReporter.broadcast(LocalAction.ACTION_ATTACHMENT_OP_STARTED, extras);
+    private fun notifyOperationStarted(attachment: Attachment?, action: Int) {
+        val extras = Bundle()
+        extras.putParcelable(ATTACHMENT, attachment)
+        extras.putInt(ACTION, action)
+        mReporter!!.broadcast(LocalAction.ACTION_ATTACHMENT_OP_STARTED, extras)
     }
 
-    private void notifyOperationFinished(Attachment attachment, int action) {
-        Bundle extras = new Bundle();
-        extras.putParcelable(ATTACHMENT, attachment);
-        extras.putInt(ACTION, action);
-        mReporter.broadcast(LocalAction.ACTION_ATTACHMENT_OP_FINISHED, extras);
+    private fun notifyOperationFinished(attachment: Attachment?, action: Int) {
+        val extras = Bundle()
+        extras.putParcelable(ATTACHMENT, attachment)
+        extras.putInt(ACTION, action)
+        mReporter!!.broadcast(LocalAction.ACTION_ATTACHMENT_OP_FINISHED, extras)
     }
 
-    private void notifyOperationFailed(Attachment attachment, int action, String error) {
-        Bundle extras = new Bundle();
-        extras.putParcelable(ATTACHMENT, attachment);
-        extras.putInt(ACTION, action);
-        extras.putString(ERROR, error);
-        mReporter.broadcast(LocalAction.ACTION_ATTACHMENT_OP_FAILED, extras);
+    private fun notifyOperationFailed(attachment: Attachment?, action: Int, error: String?) {
+        val extras = Bundle()
+        extras.putParcelable(ATTACHMENT, attachment)
+        extras.putInt(ACTION, action)
+        extras.putString(ERROR, error)
+        mReporter!!.broadcast(LocalAction.ACTION_ATTACHMENT_OP_FAILED, extras)
     }
 }
