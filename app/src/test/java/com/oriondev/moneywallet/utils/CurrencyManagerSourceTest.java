@@ -358,7 +358,7 @@ public class CurrencyManagerSourceTest {
     @Test
     public void nothingNewCallsTheReloadWithoutBeingChecked() {
         String[] allowed = {
-                "service/BackupHandlerIntentService.java",
+                "service/BackupHandlerIntentService.kt",
                 "service/UpgradeLegacyEditionIntentService.java",
                 "ui/activity/NewEditCurrencyActivity.java",
                 "moneywallet/App.kt",
