@@ -250,6 +250,17 @@ public class NewEditEventActivity extends NewEditItemActivity implements IconPic
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mNameEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                String.valueOf(mStartDatePicker.getCurrentDateTime()),
+                String.valueOf(mEndDatePicker.getCurrentDateTime()),
+                mNoteEditText.getTextAsString()
+        };
+    }
+
     private boolean validate() {
         return mNameEditText.validate() && mStartDateEditText.validate() && mEndDateEditText.validate();
     }

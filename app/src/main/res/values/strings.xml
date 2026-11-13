@@ -86,6 +86,8 @@
     <string name="action_undo">"Undo"</string>
     <string name="action_skip">"Skip"</string>
     <string name="action_back">"Back"</string>
+    <string name="action_discard">"Discard"</string>
+    <string name="action_keep_editing">"Keep editing"</string>
 
     <string name="msg_no_wallet_found">"No wallet found"</string>
     <string name="msg_add_one_wallet">"Please add one wallet"</string>
@@ -448,6 +450,7 @@
     <string name="title_changelog">"Changelog"</string>
     <string name="title_licenses">"Licenses"</string>
     <string name="title_debt_insert_master_transaction">"Well done"</string>
+    <string name="title_discard_changes">"Discard changes?"</string>
     <string name="title_currency_exchange_rate">"Exchange rate"</string>
     <string name="title_data_importing">"Importing data"</string>
     <string name="title_data_exporting">"Exporting data"</string>

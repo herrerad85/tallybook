@@ -396,6 +396,24 @@ public class NewEditRecurrentTransactionActivity extends NewEditItemActivity imp
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        RecurrenceSetting recurrenceSetting = mRecurrencePicker.getCurrentSettings();
+        return new String[] {
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                mDescriptionEditText.getTextAsString(),
+                mCategoryPicker.isSelected() ? String.valueOf(mCategoryPicker.getCurrentCategory().getId()) : null,
+                mWalletPicker.isSelected() ? String.valueOf(mWalletPicker.getCurrentWallet().getId()) : null,
+                recurrenceSetting != null ? recurrenceSetting.getRule() : null,
+                recurrenceSetting != null ? String.valueOf(recurrenceSetting.getStartDate()) : null,
+                mEventPicker.isSelected() ? String.valueOf(mEventPicker.getCurrentEvent().getId()) : null,
+                mPlacePicker.isSelected() ? String.valueOf(mPlacePicker.getCurrentPlace().getId()) : null,
+                mNoteEditText.getTextAsString(),
+                String.valueOf(mConfirmedCheckBox.isChecked()),
+                String.valueOf(mCountInTotalCheckBox.isChecked())
+        };
+    }
+
     private boolean validate() {
         return mCategoryEditText.validate() && mWalletEditText.validate();
     }

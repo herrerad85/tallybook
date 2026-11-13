@@ -288,6 +288,19 @@ public class NewEditSavingActivity extends NewEditItemActivity implements IconPi
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mDescriptionEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                String.valueOf(mStartMoneyPicker.getCurrentMoney()),
+                String.valueOf(mExpDatePicker.getCurrentDateTime()),
+                mWalletPicker.isSelected() ? String.valueOf(mWalletPicker.getCurrentWallet().getId()) : null,
+                mNoteEditText.getTextAsString()
+        };
+    }
+
     private boolean validate() {
         return mDescriptionEditText.validate() && mWalletEditText.validate();
     }

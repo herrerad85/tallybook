@@ -203,6 +203,17 @@ public class NewEditCategoryActivity extends NewEditItemActivity implements Icon
     }
 
     @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mNameEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                mCategoryPicker.isSelected() ? String.valueOf(mCategoryPicker.getCurrentCategory().getId()) : null,
+                String.valueOf(getCurrentCategoryType()),
+                String.valueOf(mShowReportCheckBox.isChecked())
+        };
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(SS_SYSTEM_CATEGORY, mIsSystemCategory);

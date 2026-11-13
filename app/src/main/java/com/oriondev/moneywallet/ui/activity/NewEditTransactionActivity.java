@@ -993,6 +993,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
         super.onPostCreate(savedInstanceState);
         if (savedInstanceState == null) {
             fillCategoryFromRules();
+            onFieldsFilled();
         } else {
             mCategoryFilledByRule = savedInstanceState.getBoolean(SS_CATEGORY_FILLED_BY_RULE);
         }
@@ -1162,6 +1163,29 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     }
 
     @Override
+    protected String[] getFieldValues() {
+        StringBuilder attachments = new StringBuilder();
+        for (Attachment attachment : mAttachmentPicker.getCurrentAttachments()) {
+            attachments.append(attachment.getFile()).append(',');
+        }
+        return new String[] {
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                mDescriptionEditText.getTextAsString(),
+                mCategoryPicker.isSelected() ? String.valueOf(mCategoryPicker.getCurrentCategory().getId()) : null,
+                String.valueOf(mDateTimePicker.getCurrentDateTime()),
+                mWalletPicker.isSelected() ? String.valueOf(mWalletPicker.getCurrentWallet().getId()) : null,
+                mEventPicker.isSelected() ? String.valueOf(mEventPicker.getCurrentEvent().getId()) : null,
+                Contract.getObjectIds(mPersonPicker.getCurrentPeople()),
+                mPlacePicker.isSelected() ? String.valueOf(mPlacePicker.getCurrentPlace().getId()) : null,
+                mNoteEditText.getTextAsString(),
+                String.valueOf(mConfirmedCheckBox.isChecked()),
+                String.valueOf(mCountInTotalCheckBox.isChecked()),
+                attachments.toString(),
+                mSplitPartsEditor.encodeParts()
+        };
+    }
+
+    @Override
     @MenuRes
     protected int onInflateMenu() {
         return R.menu.menu_new_edit_item_with_attachment;
@@ -1179,8 +1203,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
+    protected void onDiscardChanges() {
         mAttachmentPicker.cleanUp(true);
     }
 

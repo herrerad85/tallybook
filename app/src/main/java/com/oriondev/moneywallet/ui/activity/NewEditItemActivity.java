@@ -19,8 +19,10 @@
 
 package com.oriondev.moneywallet.ui.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.CallSuper;
 import androidx.annotation.MenuRes;
 import androidx.annotation.Nullable;
@@ -31,7 +33,9 @@ import android.widget.Toast;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.ui.activity.base.SinglePanelActivity;
 import com.oriondev.moneywallet.ui.activity.base.SinglePanelScrollActivity;
+import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -43,6 +47,8 @@ public abstract class NewEditItemActivity extends SinglePanelScrollActivity {
 
     public static final String MODE = "NewEditItemActivity::Mode";
     public static final String ID = "NewEditItemActivity::Id";
+
+    private static final String SS_FILLED_VALUES = "NewEditItemActivity::SavedState::FilledValues";
 
     public enum Mode {
 
@@ -60,6 +66,8 @@ public abstract class NewEditItemActivity extends SinglePanelScrollActivity {
 
     private Mode mMode;
     private Long mId;
+
+    private String[] mFilledValues;
 
     @Override
     @CallSuper
@@ -81,6 +89,50 @@ public abstract class NewEditItemActivity extends SinglePanelScrollActivity {
                 mId = -1L;
             }
         }
+    }
+
+    @Override
+    @CallSuper
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            onFieldsFilled();
+        } else {
+            mFilledValues = savedInstanceState.getStringArray(SS_FILLED_VALUES);
+        }
+        if (getFieldValues() != null) {
+            getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+
+                @Override
+                public void handleOnBackPressed() {
+                    if (!Arrays.equals(mFilledValues, getFieldValues())) {
+                        ThemedDialog.buildMaterialDialog(NewEditItemActivity.this)
+                                .setTitle(R.string.title_discard_changes)
+                                .setPositiveButton(R.string.action_discard, new DialogInterface.OnClickListener() {
+
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        onDiscardChanges();
+                                        finish();
+                                    }
+
+                                })
+                                .setNegativeButton(R.string.action_keep_editing, null)
+                                .show();
+                    } else {
+                        onDiscardChanges();
+                        finish();
+                    }
+                }
+
+            });
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putStringArray(SS_FILLED_VALUES, mFilledValues);
     }
 
     @Override
@@ -127,6 +179,23 @@ public abstract class NewEditItemActivity extends SinglePanelScrollActivity {
      * @param mode current mode of the activity.
      */
     protected abstract void onSaveChanges(Mode mode);
+
+    /**
+     * @return the values of every field the user can change, compared on back with the ones the
+     *         editor was filled with to decide whether to ask before closing, or null when the
+     *         editor closes without asking.
+     */
+    protected String[] getFieldValues() {
+        return null;
+    }
+
+    protected void onFieldsFilled() {
+        mFilledValues = getFieldValues();
+    }
+
+    protected void onDiscardChanges() {
+
+    }
 
     /**
      * Ends a save, saying first that the item is not counted yet when the date it was saved with

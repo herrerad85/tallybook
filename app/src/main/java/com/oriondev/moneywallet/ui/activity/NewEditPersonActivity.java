@@ -122,6 +122,15 @@ public class NewEditPersonActivity extends NewEditItemActivity implements IconPi
     }
 
     @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mNameEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                mNoteEditText.getTextAsString()
+        };
+    }
+
+    @Override
     protected void onSaveChanges(Mode mode) {
         if (mNameEditText.validate()) {
             ContentResolver contentResolver = getContentResolver();

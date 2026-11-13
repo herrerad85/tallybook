@@ -205,6 +205,18 @@ public class NewEditPlaceActivity extends NewEditItemActivity implements IconPic
     }
 
     @Override
+    protected String[] getFieldValues() {
+        Place place = mPlacePicker.getCurrentPlace();
+        Coordinates coordinates = place != null ? place.getCoordinates() : null;
+        return new String[] {
+                mNameEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                mAddressEditText.getTextAsString(),
+                coordinates != null ? coordinates.getLatitude() + "," + coordinates.getLongitude() : null
+        };
+    }
+
+    @Override
     protected void onSaveChanges(Mode mode) {
         if (mNameEditText.validate()) {
             ContentResolver contentResolver = getContentResolver();

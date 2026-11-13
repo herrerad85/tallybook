@@ -235,6 +235,20 @@ public class NewEditWalletActivity extends NewEditItemActivity implements IconPi
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        CurrencyUnit currency = mCurrencyPicker.getCurrentCurrency();
+        return new String[] {
+                mNameEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                currency != null ? currency.getIso() : null,
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                mGroupEditText.getTextAsString(),
+                mNoteEditText.getTextAsString(),
+                String.valueOf(mNotExcludeTotalCheckBox.isChecked())
+        };
+    }
+
     /**
      * Offers the group names already in use, plus an entry that puts the wallet in no group and
      * one that asks for a new name. A name is typed once, on the wallet that first uses it, and

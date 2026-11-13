@@ -394,6 +394,23 @@ public class NewEditTransferModelActivity extends NewEditItemActivity implements
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mDescriptionEditText.getTextAsString(),
+                mWalletFromPicker.isSelected() ? String.valueOf(mWalletFromPicker.getCurrentWallet().getId()) : null,
+                mWalletToPicker.isSelected() ? String.valueOf(mWalletToPicker.getCurrentWallet().getId()) : null,
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                mConverterPicker.isReady() ? String.valueOf(mConverterPicker.convert(mMoneyPicker.getCurrentMoney())) : null,
+                String.valueOf(mTaxPicker.getCurrentMoney()),
+                mEventPicker.isSelected() ? String.valueOf(mEventPicker.getCurrentEvent().getId()) : null,
+                mPlacePicker.isSelected() ? String.valueOf(mPlacePicker.getCurrentPlace().getId()) : null,
+                mNoteEditText.getTextAsString(),
+                String.valueOf(mConfirmedCheckBox.isChecked()),
+                String.valueOf(mCountInTotalCheckBox.isChecked())
+        };
+    }
+
     private boolean validate() {
         if (mWalletFromEditText.validate() && mWalletToEditText.validate()) {
             if (mConverterPicker.isReady()) {

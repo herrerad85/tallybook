@@ -904,6 +904,23 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        RecurrenceSetting recurrenceSetting = mRecurrencePicker.getCurrentSettings();
+        return new String[] {
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                String.valueOf(mBudgetTypePicker.getCurrentType()),
+                Contract.getObjectIds(mCategoryPicker.getCurrentCategories()),
+                String.valueOf(mRepeatCheckBox.isChecked()),
+                String.valueOf(mFollowCheckBox.isChecked()),
+                recurrenceSetting != null ? recurrenceSetting.getRule() : null,
+                recurrenceSetting != null ? String.valueOf(recurrenceSetting.getStartDate()) : null,
+                String.valueOf(mStartDatePicker.getCurrentDateTime()),
+                String.valueOf(mEndDatePicker.getCurrentDateTime()),
+                Contract.getObjectIds(mWalletsPicker.getCurrentWallets())
+        };
+    }
+
     private boolean validate() {
         boolean datesValid = mRepeatCheckBox.isChecked() ? mRecurrenceEditText.validate()
                 : mStartDateEditText.validate() && mEndDateEditText.validate();

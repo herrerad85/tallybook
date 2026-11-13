@@ -611,6 +611,30 @@ public class NewEditTransferActivity extends NewEditItemActivity  implements Cur
     }
 
     @Override
+    protected String[] getFieldValues() {
+        StringBuilder attachments = new StringBuilder();
+        for (Attachment attachment : mAttachmentPicker.getCurrentAttachments()) {
+            attachments.append(attachment.getFile()).append(',');
+        }
+        return new String[] {
+                mDescriptionEditText.getTextAsString(),
+                String.valueOf(mDateTimePicker.getCurrentDateTime()),
+                mWalletFromPicker.isSelected() ? String.valueOf(mWalletFromPicker.getCurrentWallet().getId()) : null,
+                mWalletToPicker.isSelected() ? String.valueOf(mWalletToPicker.getCurrentWallet().getId()) : null,
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                mConverterPicker.isReady() ? String.valueOf(mConverterPicker.convert(mMoneyPicker.getCurrentMoney())) : null,
+                String.valueOf(mTaxPicker.getCurrentMoney()),
+                mEventPicker.isSelected() ? String.valueOf(mEventPicker.getCurrentEvent().getId()) : null,
+                Contract.getObjectIds(mPersonPicker.getCurrentPeople()),
+                mPlacePicker.isSelected() ? String.valueOf(mPlacePicker.getCurrentPlace().getId()) : null,
+                mNoteEditText.getTextAsString(),
+                String.valueOf(mConfirmedCheckBox.isChecked()),
+                String.valueOf(mCountInTotalCheckBox.isChecked()),
+                attachments.toString()
+        };
+    }
+
+    @Override
     @MenuRes
     protected int onInflateMenu() {
         return R.menu.menu_new_edit_item_with_attachment;
@@ -628,8 +652,7 @@ public class NewEditTransferActivity extends NewEditItemActivity  implements Cur
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
+    protected void onDiscardChanges() {
         mAttachmentPicker.cleanUp(true);
     }
 

@@ -167,6 +167,14 @@ public class NewEditCategoryRuleActivity extends NewEditItemActivity implements 
     }
 
     @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mPatternEditText.getTextAsString(),
+                mCategoryPicker.isSelected() ? String.valueOf(mCategoryPicker.getCurrentCategory().getId()) : null
+        };
+    }
+
+    @Override
     protected void onSaveChanges(Mode mode) {
         if (mPatternEditText.validate() && mCategoryEditText.validate()) {
             ContentResolver contentResolver = getContentResolver();

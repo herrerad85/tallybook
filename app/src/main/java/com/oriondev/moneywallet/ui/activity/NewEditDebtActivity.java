@@ -419,6 +419,21 @@ public class NewEditDebtActivity extends NewEditItemActivity implements IconPick
         }
     }
 
+    @Override
+    protected String[] getFieldValues() {
+        return new String[] {
+                mDescriptionEditText.getTextAsString(),
+                String.valueOf(mIconPicker.getCurrentIconWithoutLetters()),
+                String.valueOf(mMoneyPicker.getCurrentMoney()),
+                String.valueOf(mDatePicker.getCurrentDateTime()),
+                String.valueOf(mExpDatePicker.getCurrentDateTime()),
+                mWalletPicker.isSelected() ? String.valueOf(mWalletPicker.getCurrentWallet().getId()) : null,
+                Contract.getObjectIds(mPersonPicker.getCurrentPeople()),
+                mPlacePicker.isSelected() ? String.valueOf(mPlacePicker.getCurrentPlace().getId()) : null,
+                mNoteEditText.getTextAsString()
+        };
+    }
+
     private boolean validate() {
         return mDescriptionEditText.validate() && mDescriptionEditText.validate() && mWalletEditText.validate();
     }

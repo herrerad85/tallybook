@@ -157,6 +157,11 @@ class IconPicker : Fragment(), ColorChooserDialog.Callback {
         return mCurrentIcon
     }
 
+    fun getCurrentIconWithoutLetters(): Icon? {
+        val currentIcon = mCurrentIcon
+        return if (currentIcon is ColorIcon) ColorIcon(currentIcon, null) else currentIcon
+    }
+
     fun setCurrentIcon(icon: Icon?) {
         mCurrentIcon = icon
         fireCallbackSafely()
