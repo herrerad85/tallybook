@@ -151,6 +151,7 @@ public class DataContentProvider extends ContentProvider {
     private static final int CATEGORY_SHARE_LIST = 51;
     private static final int TRANSACTION_SPLIT_LIST = 52;
     private static final int BUDGET_CATEGORY_SUM = 53;
+    private static final int BUDGET_CATEGORY_BUDGETS = 54;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -178,6 +179,7 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "budgets", BUDGET_LIST);
         matcher.addURI(AUTHORITY, "budgets/#", BUDGET_ITEM);
         matcher.addURI(AUTHORITY, "budgets/#/wallets", BUDGET_WALLETS);
+        matcher.addURI(AUTHORITY, "budgets/#/category_budgets", BUDGET_CATEGORY_BUDGETS);
         matcher.addURI(AUTHORITY, "budgets/#/categories", BUDGET_CATEGORIES);
         matcher.addURI(AUTHORITY, "budgets/#/transactions", BUDGET_TRANSACTION_LIST);
         matcher.addURI(AUTHORITY, "budgets/category_sum", BUDGET_CATEGORY_SUM);
@@ -319,6 +321,9 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case BUDGET_WALLETS:
                 cursor = new MultiUriCursorWrapper(db().getBudgetWallets(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));
+                break;
+            case BUDGET_CATEGORY_BUDGETS:
+                cursor = new MultiUriCursorWrapper(db().getBudgetCategoryBudgets(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));
                 break;
             case BUDGET_CATEGORIES:
                 cursor = new MultiUriCursorWrapper(db().getBudgetCategories(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));
@@ -468,6 +473,8 @@ public class DataContentProvider extends ContentProvider {
                 return "vnd.android.cursor.item/vnd.com.oriondev.moneywallet.storage.budget";
             case BUDGET_WALLETS:
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.wallet";
+            case BUDGET_CATEGORY_BUDGETS:
+                return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.budget";
             case BUDGET_CATEGORIES:
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.category";
             case BUDGET_TRANSACTION_LIST:

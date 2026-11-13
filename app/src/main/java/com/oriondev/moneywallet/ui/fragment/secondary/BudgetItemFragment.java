@@ -57,8 +57,10 @@ import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by andrea on 03/04/18.
@@ -67,6 +69,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
 
     private static final int BUDGET_LOADER_ID = 53320;
     private static final int WALLETS_LOADER_ID = 53321;
+    private static final int CATEGORY_BUDGETS_LOADER_ID = 53322;
 
     @VisibleForTesting
     static Long sToday;
@@ -88,6 +91,11 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     private TextView mRecurrenceTextView;
 
     private ContentValues mCategorySumAsLimit;
+
+    private Long mCategorySum;
+    private CurrencyUnit mCategorySumCurrency;
+    private List<String> mCategoryBudgetNames = new ArrayList<>();
+    private List<Long> mCategoryBudgetMoney = new ArrayList<>();
 
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
 
@@ -187,8 +195,12 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     @Override
     protected void onShowItemId(long itemId) {
         setLoadingScreen(true);
+        mCategorySum = null;
+        mCategoryBudgetNames.clear();
+        mCategoryBudgetMoney.clear();
         LoaderManager.getInstance(this).restartLoader(BUDGET_LOADER_ID, null, this);
         LoaderManager.getInstance(this).restartLoader(WALLETS_LOADER_ID, null, this);
+        LoaderManager.getInstance(this).restartLoader(CATEGORY_BUDGETS_LOADER_ID, null, this);
     }
 
     private void setLoadingScreen(boolean loading) {
@@ -238,6 +250,11 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                         "*"
                 };
                 return new CursorLoader(getActivity(), Uri.withAppendedPath(uri, "wallets"), projection, null, null, null);
+            } else if (id == CATEGORY_BUDGETS_LOADER_ID) {
+                String[] projection = new String[] {
+                        "*"
+                };
+                return new CursorLoader(getActivity(), Uri.withAppendedPath(uri, "category_budgets"), projection, null, null, null);
             }
         }
         return null;
@@ -259,11 +276,10 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                 int sumIndex = cursor.getColumnIndexOrThrow(Contract.Budget.CATEGORY_SUM);
                 mCategorySumAsLimit = null;
                 if (cursor.isNull(sumIndex)) {
-                    mCategorySumTextView.setVisibility(View.GONE);
+                    mCategorySum = null;
                 } else {
                     long sum = cursor.getLong(sumIndex);
-                    mCategorySumTextView.setText(mMoneyFormatter.getNotTintedString(currency, sum));
-                    mCategorySumTextView.setVisibility(View.VISIBLE);
+                    mCategorySum = sum;
                     String tag = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.TAG));
                     if (!Contract.Budget.TAG_FOLLOWS_CATEGORIES.equals(tag) && sum != money) {
                         mCategorySumAsLimit = new ContentValues();
@@ -274,6 +290,8 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                         mCategorySumAsLimit.put(Contract.Budget.MONEY, sum);
                     }
                 }
+                mCategorySumCurrency = currency;
+                showCategoryBudgets();
                 mCategorySumTextView.setClickable(mCategorySumAsLimit != null);
                 Contract.BudgetType budgetType = Contract.BudgetType.fromValue(cursor.getInt(cursor.getColumnIndex(Contract.Budget.TYPE)));
                 if (budgetType != null) {
@@ -340,6 +358,31 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
             } else {
                 mWalletsTextView.setVisibility(View.GONE);
             }
+        } else if (loader.getId() == CATEGORY_BUDGETS_LOADER_ID) {
+            mCategoryBudgetNames.clear();
+            mCategoryBudgetMoney.clear();
+            if (cursor != null) {
+                for (int i = 0; cursor.moveToPosition(i); i++) {
+                    mCategoryBudgetNames.add(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.CATEGORY_NAME)));
+                    mCategoryBudgetMoney.add(cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.MONEY)));
+                }
+            }
+            showCategoryBudgets();
+        }
+    }
+
+    private void showCategoryBudgets() {
+        if (mCategorySum == null) {
+            mCategorySumTextView.setVisibility(View.GONE);
+        } else {
+            StringBuilder builder = new StringBuilder(mMoneyFormatter.getNotTintedString(mCategorySumCurrency, mCategorySum));
+            for (int i = 0; i < mCategoryBudgetNames.size(); i++) {
+                String money = mMoneyFormatter.getNotTintedString(mCategorySumCurrency, mCategoryBudgetMoney.get(i));
+                builder.append("\n").append(getString(R.string.hint_category_budget_limit, mCategoryBudgetNames.get(i), money));
+            }
+            builder.append("\n").append(getString(R.string.hint_category_budgets_counted));
+            mCategorySumTextView.setText(builder);
+            mCategorySumTextView.setVisibility(View.VISIBLE);
         }
     }
 

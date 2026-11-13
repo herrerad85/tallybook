@@ -3653,13 +3653,7 @@ import java.util.function.Supplier;
                 "b." + Schema.Budget.ID + " AS " + Contract.Budget.ID + ", " +
                 "b." + Schema.Budget.TYPE + " AS " + Contract.Budget.TYPE + ", " +
                 "b." + Schema.Budget.CATEGORY + " AS " + Contract.Budget.CATEGORY_ID + ", " +
-                "(SELECT GROUP_CONCAT(n, ', ') FROM (SELECT c2." + Schema.Category.NAME +
-                " AS n FROM " + Schema.BudgetCategory.TABLE + " AS bc2 JOIN " +
-                Schema.Category.TABLE + " AS c2 ON bc2." + Schema.BudgetCategory.CATEGORY +
-                " = c2." + Schema.Category.ID + " AND c2." + Schema.Category.DELETED +
-                " = 0 WHERE bc2." + Schema.BudgetCategory.BUDGET + " = b." + Schema.Budget.ID +
-                " AND bc2." + Schema.BudgetCategory.DELETED + " = 0 ORDER BY c2." +
-                Schema.Category.NAME + " COLLATE LOCALIZED)) AS " + Contract.Budget.CATEGORY_NAME + ", " +
+                categoryNamesOf("b") + " AS " + Contract.Budget.CATEGORY_NAME + ", " +
                 "(SELECT GROUP_CONCAT(i) FROM (SELECT '<' || bc3." + Schema.BudgetCategory.CATEGORY +
                 " || '>' AS i FROM " + Schema.BudgetCategory.TABLE + " AS bc3 JOIN " +
                 Schema.Category.TABLE + " AS c3 ON bc3." + Schema.BudgetCategory.CATEGORY +
@@ -3807,6 +3801,20 @@ import java.util.function.Supplier;
                 Schema.BudgetWallet.DELETED + " = 0 AND w." + Schema.Wallet.DELETED + " = 0 AND " +
                 Schema.BudgetWallet.BUDGET + " = " + String.valueOf(id);
         return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
+    /*package-local*/ Cursor getBudgetCategoryBudgets(long id, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String subQuery = "SELECT " +
+                "k." + Schema.Budget.ID + " AS " + Contract.Budget.ID + ", " +
+                categoryNamesOf("k") + " AS " + Contract.Budget.CATEGORY_NAME + ", " +
+                "k." + Schema.Budget.MONEY + " AS " + Contract.Budget.MONEY + " " +
+                "FROM " + Schema.Budget.TABLE + " AS b JOIN " + CATEGORY_BUDGET_DAYS + " AS k ON b." +
+                Schema.Budget.ID + " = " + String.valueOf(id) + " AND b." + Schema.Budget.TYPE + " = " +
+                Schema.BudgetType.EXPENSES + " AND b." + Schema.Budget.DELETED + " = 0 AND " +
+                isCategoryBudgetCounted("k", "b." + Schema.Budget.START_DATE, "b." + Schema.Budget.END_DATE,
+                        liveWalletsOf("b"));
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder != null ? sortOrder :
+                Contract.Budget.CATEGORY_NAME + " COLLATE LOCALIZED, " + Contract.Budget.ID);
     }
 
     /**
@@ -6300,13 +6308,19 @@ import java.util.function.Supplier;
 
     private static String categoryBudgetSum(String startDate, String endDate, String wallets) {
         return "(SELECT SUM(k." + Schema.Budget.MONEY + ") FROM " + CATEGORY_BUDGET_DAYS + " AS k WHERE " +
-                isCategoryBudgetInside("k", startDate, endDate, wallets) + " AND NOT EXISTS (SELECT 1 FROM " +
-                CATEGORY_BUDGET_DAYS + " AS a WHERE a." + Schema.Budget.ID + " != k." + Schema.Budget.ID +
+                isCategoryBudgetCounted("k", startDate, endDate, wallets) + ")";
+    }
+
+    private static String isCategoryBudgetCounted(String categoryAlias, String startDate, String endDate,
+                                                  String wallets) {
+        String k = categoryAlias + ".";
+        return isCategoryBudgetInside(categoryAlias, startDate, endDate, wallets) + " AND NOT EXISTS (SELECT 1 FROM " +
+                CATEGORY_BUDGET_DAYS + " AS a WHERE a." + Schema.Budget.ID + " != " + k + Schema.Budget.ID +
                 " AND " + isCategoryBudgetInside("a", startDate, endDate, wallets) + " AND " +
-                coversCategoriesOf("a", "k") + " AND " + coversWalletsOf("a", "k") + " AND (NOT (" +
-                coversCategoriesOf("k", "a") + " AND " + coversWalletsOf("k", "a") + ") OR a." + Schema.Budget.MONEY + " > k." + Schema.Budget.MONEY + " OR (a." +
-                Schema.Budget.MONEY + " = k." + Schema.Budget.MONEY + " AND a." + Schema.Budget.ID +
-                " < k." + Schema.Budget.ID + "))))";
+                coversCategoriesOf("a", categoryAlias) + " AND " + coversWalletsOf("a", categoryAlias) + " AND (NOT (" +
+                coversCategoriesOf(categoryAlias, "a") + " AND " + coversWalletsOf(categoryAlias, "a") + ") OR a." + Schema.Budget.MONEY + " > " + k + Schema.Budget.MONEY + " OR (a." +
+                Schema.Budget.MONEY + " = " + k + Schema.Budget.MONEY + " AND a." + Schema.Budget.ID +
+                " < " + k + Schema.Budget.ID + ")))";
     }
 
     private static String isCategoryBudgetInside(String categoryAlias, String startDate, String endDate,
@@ -6349,6 +6363,16 @@ import java.util.function.Supplier;
                 " AND " + w + "." + Schema.Wallet.DELETED + " = 0 WHERE " + bw + "." +
                 Schema.BudgetWallet.BUDGET + " = " + budgetAlias + "." + Schema.Budget.ID + " AND " +
                 bw + "." + Schema.BudgetWallet.DELETED + " = 0)";
+    }
+
+    private static String categoryNamesOf(String budgetAlias) {
+        return "(SELECT GROUP_CONCAT(n, ', ') FROM (SELECT c2." + Schema.Category.NAME +
+                " AS n FROM " + Schema.BudgetCategory.TABLE + " AS bc2 JOIN " +
+                Schema.Category.TABLE + " AS c2 ON bc2." + Schema.BudgetCategory.CATEGORY +
+                " = c2." + Schema.Category.ID + " AND c2." + Schema.Category.DELETED +
+                " = 0 WHERE bc2." + Schema.BudgetCategory.BUDGET + " = " + budgetAlias + "." + Schema.Budget.ID +
+                " AND bc2." + Schema.BudgetCategory.DELETED + " = 0 ORDER BY c2." +
+                Schema.Category.NAME + " COLLATE LOCALIZED))";
     }
 
     private static String liveCategoriesOf(String budgetAlias) {

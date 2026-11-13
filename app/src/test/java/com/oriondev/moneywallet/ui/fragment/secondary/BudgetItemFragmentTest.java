@@ -1,11 +1,15 @@
 package com.oriondev.moneywallet.ui.fragment.secondary;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorWrapper;
+import android.net.Uri;
 import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
@@ -13,6 +17,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
@@ -23,10 +28,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,6 +46,7 @@ public class BudgetItemFragmentTest {
 
     private static final long CATEGORY_LIMIT = 100000;
     private static final long PACE = 990;
+    private static final String COUNTED = "Counts category budgets with the same dates, inside these wallets";
 
     private Context mContext;
     private TimeZone mTimeZone;
@@ -226,7 +235,137 @@ public class BudgetItemFragmentTest {
         }
     }
 
-    private View showSumRow(FragmentActivity activity, long budget) {
+    @Test
+    public void theSumRowListsEachCountedCategoryBudgetByNameAndWhatCounts() {
+        insertCategoryBudget(1104, 30000, SplitLedger.PHARMACY);
+        insertCategoryBudget(1105, 20000, SplitLedger.FUEL);
+        insertCategoryBudget(1109, 70000, SplitLedger.SALARY);
+        insertExpensesBudget(1101, 999, null);
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView row = showSumRow(activity, 1101);
+                awaitText(row, text(money(150000), line("Fuel", 20000), line("Groceries", CATEGORY_LIMIT),
+                        line("Pharmacy", 30000), COUNTED));
+                assertEquals(View.VISIBLE, row.getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void theSumRowHidesForABudgetWithNoCountedCategoryBudget() {
+        insertExpensesBudget(1101, 999, null);
+        insertExpensesBudget(1106, 999, null, "2026-02-01", "2026-02-28");
+        SlowDataContentProvider provider = Robolectric.setupContentProvider(SlowDataContentProvider.class,
+                DataContentProvider.CONTENT_BUDGETS.getAuthority());
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                BudgetItemFragment fragment = addPanel(activity);
+                TextView row = load(fragment, 1101).findViewById(R.id.category_sum_text_view);
+                awaitText(row, text(money(CATEGORY_LIMIT), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                SlowDataContentProvider.watch(categoryBudgetsUri(1106));
+                load(fragment, 1106);
+                awaitCountDown(SlowDataContentProvider.sRead);
+                assertEquals(View.GONE, row.getVisibility());
+            });
+        } finally {
+            SlowDataContentProvider.reset();
+            provider.shutdown();
+        }
+    }
+
+    @Test
+    public void theSumRowIsTheSameWhicheverLoaderFinishesFirst() {
+        insertCategoryBudget(1104, 30000, SplitLedger.FUEL);
+        insertExpensesBudget(1101, 999, null);
+        String full = text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED);
+        SlowDataContentProvider provider = Robolectric.setupContentProvider(SlowDataContentProvider.class,
+                DataContentProvider.CONTENT_BUDGETS.getAuthority());
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                BudgetItemFragment fragment = addPanel(activity);
+                SlowDataContentProvider.hold(categoryBudgetsUri(1101));
+                TextView row = load(fragment, 1101).findViewById(R.id.category_sum_text_view);
+                assertEquals(text(money(130000), COUNTED), row.getText().toString());
+                SlowDataContentProvider.sRelease.countDown();
+                awaitText(row, full);
+                SlowDataContentProvider.hold(ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, 1101));
+                SlowDataContentProvider.watch(categoryBudgetsUri(1101));
+                fragment.showItemId(1101);
+                awaitCountDown(SlowDataContentProvider.sRead);
+                SlowDataContentProvider.sRelease.countDown();
+                awaitLoaded(fragment);
+                assertEquals(full, row.getText().toString());
+                assertEquals(View.VISIBLE, row.getVisibility());
+            });
+        } finally {
+            SlowDataContentProvider.reset();
+            provider.shutdown();
+        }
+    }
+
+    @Test
+    public void theSumRowListsEachCategoryBudgetOnceAfterTheDataChanges() {
+        insertCategoryBudget(1104, 30000, SplitLedger.FUEL);
+        insertExpensesBudget(1101, 999, null);
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView row = showSumRow(activity, 1101);
+                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                mContext.getContentResolver().delete(
+                        ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, 1104), null, null);
+                awaitText(row, text(money(CATEGORY_LIMIT), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                assertEquals(View.VISIBLE, row.getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void aPanelShowingASecondBudgetListsOnlyItsOwnCategoryBudgets() {
+        insertCategoryBudget(1104, 30000, SplitLedger.FUEL);
+        insertCategoryBudget(1108, 40000, SplitLedger.PHARMACY, "2026-02-01", "2026-02-28");
+        insertExpensesBudget(1101, 999, null);
+        insertExpensesBudget(1106, 999, null, "2026-02-01", "2026-02-28");
+        SlowDataContentProvider provider = Robolectric.setupContentProvider(SlowDataContentProvider.class,
+                DataContentProvider.CONTENT_BUDGETS.getAuthority());
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                BudgetItemFragment fragment = addPanel(activity);
+                TextView row = load(fragment, 1101).findViewById(R.id.category_sum_text_view);
+                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                SlowDataContentProvider.hold(categoryBudgetsUri(1106));
+                load(fragment, 1106);
+                assertEquals(text(money(40000), COUNTED), row.getText().toString());
+                SlowDataContentProvider.sRelease.countDown();
+                awaitText(row, text(money(40000), line("Pharmacy", 40000), COUNTED));
+            });
+        } finally {
+            SlowDataContentProvider.reset();
+            provider.shutdown();
+        }
+    }
+
+    @Test
+    public void tappingTheSumUnderItsListStillMakesTheSumTheLimit() {
+        insertCategoryBudget(1104, 30000, SplitLedger.FUEL);
+        insertExpensesBudget(1101, 999, null);
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView row = showSumRow(activity, 1101);
+                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                assertTrue(row.isClickable());
+                row.performClick();
+            });
+        }
+        assertEquals(130000, storedMoneyOf(1101));
+    }
+
+    private TextView showSumRow(FragmentActivity activity, long budget) {
         return showPanel(activity, budget).findViewById(R.id.category_sum_text_view);
     }
 
@@ -245,17 +384,62 @@ public class BudgetItemFragmentTest {
 
     private View load(BudgetItemFragment fragment, long budget) {
         fragment.showItemId(budget);
+        return awaitLoaded(fragment);
+    }
+
+    private static View awaitLoaded(BudgetItemFragment fragment) {
         View wheel = fragment.getView().findViewById(R.id.secondary_panel_progress_wheel);
         for (int i = 0; i < 200 && wheel.getVisibility() != View.GONE; i++) {
-            shadowOf(Looper.getMainLooper()).idle();
-            try {
-                Thread.sleep(25);
-            } catch (InterruptedException e) {
-                throw new AssertionError(e);
-            }
+            idle();
         }
         assertEquals("the budget never loaded", View.GONE, wheel.getVisibility());
         return fragment.getView();
+    }
+
+    private static void awaitText(TextView view, String text) {
+        for (int i = 0; i < 200 && !text.equals(view.getText().toString()); i++) {
+            idle();
+        }
+        assertEquals(text, view.getText().toString());
+    }
+
+    private static void awaitCountDown(CountDownLatch latch) {
+        for (int i = 0; i < 200 && latch.getCount() > 0; i++) {
+            idle();
+        }
+        assertEquals("the category budgets never loaded", 0, latch.getCount());
+    }
+
+    private static void idle() {
+        shadowOf(Looper.getMainLooper()).idle();
+        try {
+            Thread.sleep(25);
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static Uri categoryBudgetsUri(long budget) {
+        return Uri.withAppendedPath(ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, budget),
+                "category_budgets");
+    }
+
+    private static String text(String... lines) {
+        return String.join("\n", lines);
+    }
+
+    private static String line(String name, long money) {
+        return name + ": " + money(money);
+    }
+
+    private void insertCategoryBudget(long id, long money, long category) {
+        insertCategoryBudget(id, money, category, "2026-01-01", "2026-01-31");
+    }
+
+    private void insertCategoryBudget(long id, long money, long category, String startDate, String endDate) {
+        SplitLedger.insertCategoryBudget(mContext, id, category);
+        SplitLedger.database(mContext).execSQL("UPDATE budgets SET budget_money = ?, budget_start_date = ?, " +
+                "budget_end_date = ? WHERE budget_id = ?", new Object[] {money, startDate, endDate, id});
     }
 
     private void insertPaceWallet() {
@@ -310,10 +494,14 @@ public class BudgetItemFragmentTest {
     }
 
     private void insertExpensesBudget(long id, long money, String tag) {
+        insertExpensesBudget(id, money, tag, "2026-01-01", "2026-01-31");
+    }
+
+    private void insertExpensesBudget(long id, long money, String tag, String startDate, String endDate) {
         SplitLedger.database(mContext).execSQL("INSERT INTO budgets (budget_id, budget_type, " +
                         "budget_start_date, budget_end_date, budget_money, budget_currency, budget_tag, " +
-                        "uuid, last_edit, deleted) VALUES (?, ?, '2026-01-01', '2026-01-31', ?, 'EUR', ?, ?, 1, 0)",
-                new Object[] {id, Contract.BudgetType.EXPENSES.getValue(), money, tag, "budget-" + id});
+                        "uuid, last_edit, deleted) VALUES (?, ?, ?, ?, ?, 'EUR', ?, ?, 1, 0)",
+                new Object[] {id, Contract.BudgetType.EXPENSES.getValue(), startDate, endDate, money, tag, "budget-" + id});
         for (long wallet : new long[] {SplitLedger.CASH, SplitLedger.BANK}) {
             SplitLedger.database(mContext).execSQL("INSERT INTO budget_wallets (_budget, _wallet, uuid, " +
                     "last_edit, deleted) VALUES (?, ?, ?, 1, 0)", new Object[] {id, wallet, "bw-" + id + "-" + wallet});
@@ -325,6 +513,60 @@ public class BudgetItemFragmentTest {
                 "SELECT budget_money FROM budgets WHERE budget_id = " + budget, null)) {
             assertTrue(cursor.moveToFirst());
             return cursor.getLong(0);
+        }
+    }
+
+    public static class SlowDataContentProvider extends DataContentProvider {
+
+        static Uri sHeld;
+        static CountDownLatch sRelease;
+        static Uri sWatched;
+        static CountDownLatch sRead;
+
+        static void hold(Uri uri) {
+            sHeld = uri;
+            sRelease = new CountDownLatch(1);
+        }
+
+        static void watch(Uri uri) {
+            sWatched = uri;
+            sRead = new CountDownLatch(1);
+        }
+
+        static void reset() {
+            if (sRelease != null) {
+                sRelease.countDown();
+            }
+            sHeld = null;
+            sRelease = null;
+            sWatched = null;
+            sRead = null;
+        }
+
+        @Override
+        public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+            CountDownLatch release = uri.equals(sHeld) ? sRelease : null;
+            if (release != null) {
+                try {
+                    release.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            Cursor cursor = super.query(uri, projection, selection, selectionArgs, sortOrder);
+            CountDownLatch read = uri.equals(sWatched) ? sRead : null;
+            if (cursor != null && read != null) {
+                return new CursorWrapper(cursor) {
+
+                    @Override
+                    public boolean moveToPosition(int position) {
+                        read.countDown();
+                        return super.moveToPosition(position);
+                    }
+
+                };
+            }
+            return cursor;
         }
     }
 }
