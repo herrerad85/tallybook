@@ -238,6 +238,15 @@ object DateUtils {
         return (span / TimeUnit.DAYS.toMillis(1)).toInt()
     }
 
+    @JvmStatic
+    fun getCalendarDaysBetween(start: Date?, end: Date?): Int {
+        val calendar1 = getCalendar(start)
+        val calendar2 = getCalendar(end)
+        return getCalendarDaysBetween(calendar1.get(Calendar.YEAR), calendar1.get(Calendar.MONTH),
+                calendar1.get(Calendar.DAY_OF_MONTH), calendar2.get(Calendar.YEAR),
+                calendar2.get(Calendar.MONTH), calendar2.get(Calendar.DAY_OF_MONTH))
+    }
+
     private fun utcMidnight(year: Int, month: Int, day: Int): Long {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         calendar.clear()

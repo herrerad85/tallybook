@@ -31,6 +31,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
@@ -56,6 +57,7 @@ import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -65,6 +67,9 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
 
     private static final int BUDGET_LOADER_ID = 53320;
     private static final int WALLETS_LOADER_ID = 53321;
+
+    @VisibleForTesting
+    static Long sToday;
 
     private View mProgressLayout;
     private View mMainLayout;
@@ -77,6 +82,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     private TextView mCategoryTextView;
     private TextView mStartDateTextView;
     private TextView mEndDateTextView;
+    private TextView mSpentPerDayTextView;
     private TextView mWalletsTextView;
 
     private TextView mRecurrenceTextView;
@@ -103,6 +109,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
         mRecurrenceTextView = view.findViewById(R.id.recurrence_text_view);
         mStartDateTextView = view.findViewById(R.id.start_date_text_view);
         mEndDateTextView = view.findViewById(R.id.end_date_text_view);
+        mSpentPerDayTextView = view.findViewById(R.id.spent_per_day_text_view);
         mWalletsTextView = view.findViewById(R.id.wallets_text_view);
         mCategorySumTextView.setOnClickListener(new View.OnClickListener() {
 
@@ -193,6 +200,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
             mCategoryTextView.setText(null);
             mStartDateTextView.setText(null);
             mEndDateTextView.setText(null);
+            mSpentPerDayTextView.setText(null);
             mWalletsTextView.setText(null);
             mProgressLayout.setVisibility(View.VISIBLE);
             mMainLayout.setVisibility(View.GONE);
@@ -214,8 +222,10 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                         Contract.Budget.MONEY,
                         Contract.Budget.TYPE,
                         Contract.Budget.CATEGORY_NAME,
+                        Contract.Budget.CATEGORY_TYPE,
                         Contract.Budget.START_DATE,
                         Contract.Budget.END_DATE,
+                        Contract.Budget.PROGRESS,
                         Contract.Budget.RULE,
                         Contract.Budget.RULE_START,
                         Contract.Budget.TAG,
@@ -287,6 +297,21 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                 Date endDate = DateUtils.getDateFromSQLDateString(cursor.getString(cursor.getColumnIndex(Contract.Budget.END_DATE)));
                 DateFormatter.applyDate(mStartDateTextView, startDate);
                 DateFormatter.applyDate(mEndDateTextView, endDate);
+                boolean expenses = budgetType == Contract.BudgetType.EXPENSES || (budgetType == Contract.BudgetType.CATEGORY
+                        && Contract.CategoryType.fromValue(cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Budget.CATEGORY_TYPE))) == Contract.CategoryType.EXPENSE);
+                Date today = today().getTime();
+                long days = 0L;
+                if (expenses && !DateUtils.isBefore(today, startDate)) {
+                    Date to = DateUtils.isBefore(endDate, today) ? endDate : today;
+                    days = DateUtils.getCalendarDaysBetween(startDate, to) + 1;
+                }
+                if (days > 0) {
+                    long progress = Math.abs(cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.PROGRESS)));
+                    mSpentPerDayTextView.setText(mMoneyFormatter.getNotTintedString(currency, progress / days));
+                    mSpentPerDayTextView.setVisibility(View.VISIBLE);
+                } else {
+                    mSpentPerDayTextView.setVisibility(View.GONE);
+                }
                 String rule = cursor.getString(cursor.getColumnIndex(Contract.Budget.RULE));
                 String ruleStartString = cursor.getString(cursor.getColumnIndex(Contract.Budget.RULE_START));
                 Date anchor = ruleStartString != null ? DateUtils.getDateFromSQLDateString(ruleStartString) : startDate;
@@ -321,5 +346,14 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         // nothing to release
+    }
+
+    private static Calendar today() {
+        Calendar today = Calendar.getInstance();
+        if (sToday != null) {
+            today.setTimeInMillis(sToday);
+        }
+        DateUtils.setTime(today, 0, 0, 0, 0);
+        return today;
     }
 }

@@ -21,7 +21,9 @@ package com.oriondev.moneywallet.ui.adapter.recycler;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,13 +36,16 @@ import com.oriondev.moneywallet.model.ColorIcon;
 import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.storage.database.Contract;
+import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.view.MaterialProgressBar;
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -51,11 +56,16 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
     private static final String COLOR_INCOMES = "#43A047";
     private static final String COLOR_EXPENSES = "#D32F2F";
 
+    @VisibleForTesting
+    static Long sToday;
+
     private int mIndexId;
     private int mIndexType;
     private int mIndexTarget;
+    private int mIndexStartDate;
     private int mIndexEndDate;
     private int mIndexCategoryIcon;
+    private int mIndexCategoryType;
     private int mIndexCategoryName;
     private int mIndexCurrency;
     private int mIndexProgress;
@@ -75,8 +85,10 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
         mIndexId = cursor.getColumnIndex(Contract.Budget.ID);
         mIndexType = cursor.getColumnIndex(Contract.Budget.TYPE);
         mIndexTarget = cursor.getColumnIndex(Contract.Budget.MONEY);
+        mIndexStartDate = cursor.getColumnIndex(Contract.Budget.START_DATE);
         mIndexEndDate = cursor.getColumnIndex(Contract.Budget.END_DATE);
         mIndexCategoryIcon = cursor.getColumnIndex(Contract.Budget.CATEGORY_ICON);
+        mIndexCategoryType = cursor.getColumnIndex(Contract.Budget.CATEGORY_TYPE);
         mIndexCategoryName = cursor.getColumnIndex(Contract.Budget.CATEGORY_NAME);
         mIndexCurrency = cursor.getColumnIndex(Contract.Budget.CURRENCY);
         mIndexProgress = cursor.getColumnIndex(Contract.Budget.PROGRESS);
@@ -112,18 +124,65 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
         holder.mProgressBar.setMaxValue(target);
         holder.mProgressBar.setProgressValue(progress);
         long difference = Math.max(target - progress, 0L);
+        boolean expenses = type == Contract.BudgetType.EXPENSES || (type == Contract.BudgetType.CATEGORY
+                && Contract.CategoryType.fromValue(cursor.getInt(mIndexCategoryType)) == Contract.CategoryType.EXPENSE);
+        boolean overrun = expenses && progress > target;
         // fill the views
         mMoneyFormatter.applyNotTinted(holder.mUsedTextView, currency, progress);
-        mMoneyFormatter.applyNotTinted(holder.mAvailableTextView, currency, difference);
+        if (overrun) {
+            holder.mAvailableHeaderTextView.setText(R.string.adapter_over_money);
+            holder.mProgressBar.setReachedBarColor(ThemeEngine.getTheme().getVisibleColor(
+                    PreferenceManager.getCurrentExpenseColor(), PreferenceManager.getDefaultColorExpense()));
+            mMoneyFormatter.applyNotTinted(holder.mAvailableTextView, currency, progress - target);
+        } else {
+            holder.mAvailableHeaderTextView.setText(R.string.adapter_available_money);
+            ThemeEngine.applyTheme(holder.mProgressBar, false);
+            mMoneyFormatter.applyNotTinted(holder.mAvailableTextView, currency, difference);
+        }
         // check if budget is expired
         Context context = holder.mDateTextView.getContext();
+        Date today = today().getTime();
         Date endDate = DateUtils.getDateFromSQLDateString(cursor.getString(mIndexEndDate));
         String formattedEndDate = DateFormatter.getFormattedDate(endDate);
-        if (DateUtils.isBeforeToday(endDate)) {
+        boolean expired = DateUtils.isBefore(endDate, today);
+        if (expired) {
             holder.mDateTextView.setText(context.getString(R.string.relative_string_ended_on, formattedEndDate));
         } else {
             holder.mDateTextView.setText(context.getString(R.string.relative_string_will_end_on, formattedEndDate));
         }
+        long leftPerDay = 0L;
+        if (expenses && !overrun && !expired) {
+            Date startDate = null;
+            try {
+                startDate = DateUtils.getDateFromSQLDateString(cursor.getString(mIndexStartDate));
+            } catch (RuntimeException e) {
+                Log.w("BudgetCursorAdapter", "Budget start date does not parse", e);
+            }
+            if (startDate != null) {
+                Date from = DateUtils.isAfter(startDate, today) ? startDate : today;
+                long days = DateUtils.getCalendarDaysBetween(from, endDate) + 1;
+                if (days > 0) {
+                    leftPerDay = difference / days;
+                }
+            }
+        }
+        if (leftPerDay > 0) {
+            mMoneyFormatter.applyNotTinted(holder.mLeftPerDayTextView, currency, leftPerDay);
+            holder.mLeftPerDayHeaderTextView.setVisibility(View.VISIBLE);
+            holder.mLeftPerDayTextView.setVisibility(View.VISIBLE);
+        } else {
+            holder.mLeftPerDayHeaderTextView.setVisibility(View.GONE);
+            holder.mLeftPerDayTextView.setVisibility(View.GONE);
+        }
+    }
+
+    private static Calendar today() {
+        Calendar today = Calendar.getInstance();
+        if (sToday != null) {
+            today.setTimeInMillis(sToday);
+        }
+        DateUtils.setTime(today, 0, 0, 0, 0);
+        return today;
     }
 
     @NonNull
@@ -141,7 +200,10 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
         private TextView mMoneyTextView;
         private MaterialProgressBar mProgressBar;
         private TextView mUsedTextView;
+        private TextView mAvailableHeaderTextView;
         private TextView mAvailableTextView;
+        private TextView mLeftPerDayHeaderTextView;
+        private TextView mLeftPerDayTextView;
         private TextView mDateTextView;
 
         /*package-local*/ ViewHolder(View itemView) {
@@ -151,7 +213,10 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mProgressBar = itemView.findViewById(R.id.progress_bar);
             mUsedTextView = itemView.findViewById(R.id.used_body_text_view);
+            mAvailableHeaderTextView = itemView.findViewById(R.id.available_header_text_view);
             mAvailableTextView = itemView.findViewById(R.id.available_body_text_view);
+            mLeftPerDayHeaderTextView = itemView.findViewById(R.id.left_per_day_header_text_view);
+            mLeftPerDayTextView = itemView.findViewById(R.id.left_per_day_body_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);
             itemView.setOnClickListener(this);
         }

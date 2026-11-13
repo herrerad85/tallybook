@@ -166,7 +166,6 @@
                 android:text="@string/adapter_available_money"
                 app:layout_constraintTop_toBottomOf="@+id/used_header_text_view"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:theme_textColor="textColorSecondary" />
 
             <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
@@ -176,6 +175,27 @@
                 android:gravity="end"
                 app:layout_constraintTop_toBottomOf="@+id/used_body_text_view"
                 app:layout_constraintStart_toEndOf="@+id/available_header_text_view"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:theme_textColor="textColorSecondary"
+                tools:text="€ 0,00" />
+
+            <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+                android:id="@+id/left_per_day_header_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/adapter_left_per_day_money"
+                app:layout_constraintTop_toBottomOf="@+id/available_header_text_view"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:theme_textColor="textColorSecondary" />
+
+            <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+                android:id="@+id/left_per_day_body_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                app:layout_constraintTop_toBottomOf="@+id/available_body_text_view"
+                app:layout_constraintStart_toEndOf="@+id/left_per_day_header_text_view"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:theme_textColor="textColorSecondary"

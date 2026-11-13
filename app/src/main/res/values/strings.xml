@@ -390,6 +390,9 @@
     <string name="adapter_needed_money">"Needed:"</string>
     <string name="adapter_used_money">"Used:"</string>
     <string name="adapter_available_money">"Available:"</string>
+    <string name="adapter_over_money">"Over by:"</string>
+    <string name="adapter_left_per_day_money">"Left per day:"</string>
+    <string name="adapter_spent_per_day_money">"Spent per day:"</string>
     <string name="adapter_tax_money">"Tax:"</string>
 
     <string name="header_debts_to_pay">"To pay:"</string>
