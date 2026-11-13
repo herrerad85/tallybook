@@ -317,6 +317,7 @@ public class Contract {
          * is counted, and the lower id when the limits are equal.
          */
         public static final String CATEGORY_SUM = "budget_category_sum";
+        public static final String UNCOVERED_SUM = "budget_uncovered_sum";
         /**
          * The {@link #TAG} value that has an Expenses budget read its {@link #MONEY} from its
          * {@link #CATEGORY_SUM}, and from its stored limit while that sum is null. Any other value

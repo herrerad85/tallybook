@@ -93,6 +93,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     private ContentValues mCategorySumAsLimit;
 
     private Long mCategorySum;
+    private Long mUncoveredSum;
     private CurrencyUnit mCategorySumCurrency;
     private List<String> mCategoryBudgetNames = new ArrayList<>();
     private List<Long> mCategoryBudgetMoney = new ArrayList<>();
@@ -196,6 +197,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
     protected void onShowItemId(long itemId) {
         setLoadingScreen(true);
         mCategorySum = null;
+        mUncoveredSum = null;
         mCategoryBudgetNames.clear();
         mCategoryBudgetMoney.clear();
         LoaderManager.getInstance(this).restartLoader(BUDGET_LOADER_ID, null, this);
@@ -242,7 +244,8 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                         Contract.Budget.RULE_START,
                         Contract.Budget.TAG,
                         Contract.Budget.WALLET_IDS,
-                        Contract.Budget.CATEGORY_SUM
+                        Contract.Budget.CATEGORY_SUM,
+                        Contract.Budget.UNCOVERED_SUM
                 };
                 return new CursorLoader(activity, uri, projection, null, null, null);
             } else if (id == WALLETS_LOADER_ID) {
@@ -290,6 +293,8 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                         mCategorySumAsLimit.put(Contract.Budget.MONEY, sum);
                     }
                 }
+                int uncoveredIndex = cursor.getColumnIndexOrThrow(Contract.Budget.UNCOVERED_SUM);
+                mUncoveredSum = cursor.isNull(uncoveredIndex) ? null : cursor.getLong(uncoveredIndex);
                 mCategorySumCurrency = currency;
                 showCategoryBudgets();
                 mCategorySumTextView.setClickable(mCategorySumAsLimit != null);
@@ -379,6 +384,10 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
             for (int i = 0; i < mCategoryBudgetNames.size(); i++) {
                 String money = mMoneyFormatter.getNotTintedString(mCategorySumCurrency, mCategoryBudgetMoney.get(i));
                 builder.append("\n").append(getString(R.string.hint_category_budget_limit, mCategoryBudgetNames.get(i), money));
+            }
+            if (mUncoveredSum != null && mUncoveredSum > 0) {
+                String money = mMoneyFormatter.getNotTintedString(mCategorySumCurrency, mUncoveredSum);
+                builder.append("\n").append(getString(R.string.hint_category_budgets_uncovered, money));
             }
             builder.append("\n").append(getString(R.string.hint_category_budgets_counted));
             mCategorySumTextView.setText(builder);

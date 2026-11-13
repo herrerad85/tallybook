@@ -47,6 +47,7 @@ public class BudgetItemFragmentTest {
     private static final long CATEGORY_LIMIT = 100000;
     private static final long PACE = 990;
     private static final String COUNTED = "Counts category budgets with the same dates, inside these wallets";
+    private static final String UNCOVERED = "Not in a category budget";
 
     private Context mContext;
     private TimeZone mTimeZone;
@@ -246,7 +247,7 @@ public class BudgetItemFragmentTest {
             scenario.onActivity(activity -> {
                 TextView row = showSumRow(activity, 1101);
                 awaitText(row, text(money(150000), line("Fuel", 20000), line("Groceries", CATEGORY_LIMIT),
-                        line("Pharmacy", 30000), COUNTED));
+                        line("Pharmacy", 30000), line(UNCOVERED, 41300 - 10600 - 14500 - 2500), COUNTED));
                 assertEquals(View.VISIBLE, row.getVisibility());
             });
         }
@@ -263,7 +264,8 @@ public class BudgetItemFragmentTest {
             scenario.onActivity(activity -> {
                 BudgetItemFragment fragment = addPanel(activity);
                 TextView row = load(fragment, 1101).findViewById(R.id.category_sum_text_view);
-                awaitText(row, text(money(CATEGORY_LIMIT), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                awaitText(row, text(money(CATEGORY_LIMIT), line("Groceries", CATEGORY_LIMIT),
+                        line(UNCOVERED, 41300 - 10600), COUNTED));
                 SlowDataContentProvider.watch(categoryBudgetsUri(1106));
                 load(fragment, 1106);
                 awaitCountDown(SlowDataContentProvider.sRead);
@@ -279,7 +281,8 @@ public class BudgetItemFragmentTest {
     public void theSumRowIsTheSameWhicheverLoaderFinishesFirst() {
         insertCategoryBudget(1104, 30000, SplitLedger.FUEL);
         insertExpensesBudget(1101, 999, null);
-        String full = text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED);
+        String full = text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT),
+                line(UNCOVERED, 41300 - 10600 - 14500), COUNTED);
         SlowDataContentProvider provider = Robolectric.setupContentProvider(SlowDataContentProvider.class,
                 DataContentProvider.CONTENT_BUDGETS.getAuthority());
         try (ActivityScenario<BackupListActivity> scenario =
@@ -288,7 +291,8 @@ public class BudgetItemFragmentTest {
                 BudgetItemFragment fragment = addPanel(activity);
                 SlowDataContentProvider.hold(categoryBudgetsUri(1101));
                 TextView row = load(fragment, 1101).findViewById(R.id.category_sum_text_view);
-                assertEquals(text(money(130000), COUNTED), row.getText().toString());
+                assertEquals(text(money(130000), line(UNCOVERED, 41300 - 10600 - 14500), COUNTED),
+                        row.getText().toString());
                 SlowDataContentProvider.sRelease.countDown();
                 awaitText(row, full);
                 SlowDataContentProvider.hold(ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, 1101));
@@ -314,10 +318,12 @@ public class BudgetItemFragmentTest {
                      ActivityScenario.launch(BackupListActivity.class)) {
             scenario.onActivity(activity -> {
                 TextView row = showSumRow(activity, 1101);
-                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT),
+                        line(UNCOVERED, 41300 - 10600 - 14500), COUNTED));
                 mContext.getContentResolver().delete(
                         ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, 1104), null, null);
-                awaitText(row, text(money(CATEGORY_LIMIT), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                awaitText(row, text(money(CATEGORY_LIMIT), line("Groceries", CATEGORY_LIMIT),
+                        line(UNCOVERED, 41300 - 10600), COUNTED));
                 assertEquals(View.VISIBLE, row.getVisibility());
             });
         }
@@ -336,7 +342,8 @@ public class BudgetItemFragmentTest {
             scenario.onActivity(activity -> {
                 BudgetItemFragment fragment = addPanel(activity);
                 TextView row = load(fragment, 1101).findViewById(R.id.category_sum_text_view);
-                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT),
+                        line(UNCOVERED, 41300 - 10600 - 14500), COUNTED));
                 SlowDataContentProvider.hold(categoryBudgetsUri(1106));
                 load(fragment, 1106);
                 assertEquals(text(money(40000), COUNTED), row.getText().toString());
@@ -357,7 +364,8 @@ public class BudgetItemFragmentTest {
                      ActivityScenario.launch(BackupListActivity.class)) {
             scenario.onActivity(activity -> {
                 TextView row = showSumRow(activity, 1101);
-                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT), COUNTED));
+                awaitText(row, text(money(130000), line("Fuel", 30000), line("Groceries", CATEGORY_LIMIT),
+                        line(UNCOVERED, 41300 - 10600 - 14500), COUNTED));
                 assertTrue(row.isClickable());
                 row.performClick();
             });
