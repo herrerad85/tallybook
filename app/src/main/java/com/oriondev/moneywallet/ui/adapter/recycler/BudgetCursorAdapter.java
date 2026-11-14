@@ -84,7 +84,7 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
     protected void onLoadColumnIndices(@NonNull Cursor cursor) {
         mIndexId = cursor.getColumnIndex(Contract.Budget.ID);
         mIndexType = cursor.getColumnIndex(Contract.Budget.TYPE);
-        mIndexTarget = cursor.getColumnIndex(Contract.Budget.MONEY);
+        mIndexTarget = cursor.getColumnIndex(Contract.Budget.SHOWN_MONEY);
         mIndexStartDate = cursor.getColumnIndex(Contract.Budget.START_DATE);
         mIndexEndDate = cursor.getColumnIndex(Contract.Budget.END_DATE);
         mIndexCategoryIcon = cursor.getColumnIndex(Contract.Budget.CATEGORY_ICON);

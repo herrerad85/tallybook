@@ -99,6 +99,20 @@ public class BudgetItemFragmentTest {
     }
 
     @Test
+    public void aFollowedBudgetShowsTheSumAsItsLimit() {
+        insertExpensesBudget(1102, 999, Contract.Budget.TAG_FOLLOWS_CATEGORIES);
+        try (ActivityScenario<BackupListActivity> scenario =
+                     ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView limit = showPanel(activity, 1102).findViewById(R.id.money_text_view);
+                assertEquals(MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("EUR"),
+                        CATEGORY_LIMIT, MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN), limit.getText().toString());
+            });
+        }
+        assertEquals(999, storedMoneyOf(1102));
+    }
+
+    @Test
     public void spentPerDayDividesWhatWasSpentOverTheDaysSoFarCountingToday() {
         insertPaceWallet();
         insertPaceTransaction(1201, SplitLedger.GROCERIES, Contract.Direction.EXPENSE, 1000);

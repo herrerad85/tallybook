@@ -131,10 +131,48 @@ public class BudgetCategorySumTest {
         insertBudget(1021, Schema.BudgetType.EXPENSES, "2026-02-01", "2026-02-28", 777, 0, new long[] {YEN});
         followCategoryBudgets(1020);
         followCategoryBudgets(1021);
-        assertEquals(Long.valueOf(400), longOf(1020, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(400), longOf(1020, Contract.Budget.SHOWN_MONEY));
         assertEquals(Long.valueOf(999), longOf(EXPENSES, Contract.Budget.MONEY));
         assertNull(categorySumOf(1021));
         assertEquals(Long.valueOf(777), longOf(1021, Contract.Budget.MONEY));
+    }
+
+    @Test
+    public void aFlaggedExpensesBudgetKeepsItsTypedLimitAndShowsTheSum() {
+        insertMatchingRules();
+        insertBudget(1020, Schema.BudgetType.EXPENSES, JAN_START, JAN_END, 999, 0, EURO);
+        followCategoryBudgets(1020);
+        assertEquals(Long.valueOf(999), singleLongOf(1020, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(400), singleLongOf(1020, Contract.Budget.SHOWN_MONEY));
+        assertEquals(Long.valueOf(999), longOf(1020, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(400), longOf(1020, Contract.Budget.SHOWN_MONEY));
+    }
+
+    @Test
+    public void aFlaggedExpensesBudgetWithNoCategoryBudgetShowsItsTypedLimit() {
+        insertBudget(1021, Schema.BudgetType.EXPENSES, "2026-02-01", "2026-02-28", 777, 0, new long[] {YEN});
+        followCategoryBudgets(1021);
+        assertNull(categorySumOf(1021));
+        assertEquals(Long.valueOf(777), singleLongOf(1021, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(777), singleLongOf(1021, Contract.Budget.SHOWN_MONEY));
+        assertEquals(Long.valueOf(777), longOf(1021, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(777), longOf(1021, Contract.Budget.SHOWN_MONEY));
+    }
+
+    @Test
+    public void aBudgetThatDoesNotFollowShowsItsTypedLimit() {
+        insertMatchingRules();
+        insertBudget(1009, Schema.BudgetType.INCOMES, JAN_START, JAN_END, 5000, 0, EURO);
+        assertEquals(Long.valueOf(400), categorySumOf(EXPENSES));
+        for (long budget : new long[] {EXPENSES, 1009, 1002}) {
+            Long money = singleLongOf(budget, Contract.Budget.MONEY);
+            assertEquals(money, singleLongOf(budget, Contract.Budget.SHOWN_MONEY));
+            assertEquals(money, longOf(budget, Contract.Budget.MONEY));
+            assertEquals(money, longOf(budget, Contract.Budget.SHOWN_MONEY));
+        }
+        assertEquals(Long.valueOf(999), singleLongOf(EXPENSES, Contract.Budget.SHOWN_MONEY));
+        assertEquals(Long.valueOf(5000), singleLongOf(1009, Contract.Budget.SHOWN_MONEY));
+        assertEquals(Long.valueOf(400), singleLongOf(1002, Contract.Budget.SHOWN_MONEY));
     }
 
     @Test
@@ -195,6 +233,15 @@ public class BudgetCategorySumTest {
         try (Cursor cursor = mContext.getContentResolver().query(
                 ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, budget),
                 new String[] {Contract.Budget.CATEGORY_SUM}, null, null, null)) {
+            assertTrue(cursor.moveToFirst());
+            return cursor.isNull(0) ? null : cursor.getLong(0);
+        }
+    }
+
+    private Long singleLongOf(long budget, String column) {
+        try (Cursor cursor = mContext.getContentResolver().query(
+                ContentUris.withAppendedId(DataContentProvider.CONTENT_BUDGETS, budget),
+                new String[] {column}, null, null, null)) {
             assertTrue(cursor.moveToFirst());
             return cursor.isNull(0) ? null : cursor.getLong(0);
         }

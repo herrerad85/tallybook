@@ -150,7 +150,7 @@ public class BudgetCategoryBudgetsTest {
         followCategoryBudgets(1020);
         followCategoryBudgets(1021);
         assertCategoryBudgets(1020, row(1002, "Groceries", 400));
-        assertEquals(Long.valueOf(400), longOf(1020, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(400), longOf(1020, Contract.Budget.SHOWN_MONEY));
         assertCategoryBudgets(EXPENSES, row(1002, "Groceries", 400));
         assertCategoryBudgets(1021);
     }

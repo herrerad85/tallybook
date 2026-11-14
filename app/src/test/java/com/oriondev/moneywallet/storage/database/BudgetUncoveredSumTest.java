@@ -82,7 +82,7 @@ public class BudgetUncoveredSumTest {
         assertUncovered(1101, 10000, 3000);
         assertEquals(Long.valueOf(13000), longOf(1101, Contract.Budget.PROGRESS));
         assertEquals(Long.valueOf(10000), longOf(1101, Contract.Budget.CATEGORY_SUM));
-        assertEquals(Long.valueOf(10000), longOf(1101, Contract.Budget.MONEY));
+        assertEquals(Long.valueOf(10000), longOf(1101, Contract.Budget.SHOWN_MONEY));
     }
 
     @Test

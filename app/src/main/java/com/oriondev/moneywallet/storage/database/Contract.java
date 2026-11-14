@@ -318,8 +318,9 @@ public class Contract {
          */
         public static final String CATEGORY_SUM = "budget_category_sum";
         public static final String UNCOVERED_SUM = "budget_uncovered_sum";
+        public static final String SHOWN_MONEY = "budget_shown_money";
         /**
-         * The {@link #TAG} value that has an Expenses budget read its {@link #MONEY} from its
+         * The {@link #TAG} value that has an Expenses budget read its {@link #SHOWN_MONEY} from its
          * {@link #CATEGORY_SUM}, and from its stored limit while that sum is null. Any other value
          * leaves the stored limit in place.
          */

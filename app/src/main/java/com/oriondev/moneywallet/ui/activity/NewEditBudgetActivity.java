@@ -453,6 +453,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
     protected void onViewCreated(Bundle savedInstanceState) {
         super.onViewCreated(savedInstanceState);
         long money = 0L;
+        long storedMoney = 0L;
         Contract.BudgetType type = null;
         Category[] categories = null;
         Date startDate = null;
@@ -474,6 +475,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                         Contract.Budget.START_DATE,
                         Contract.Budget.END_DATE,
                         Contract.Budget.MONEY,
+                        Contract.Budget.SHOWN_MONEY,
                         Contract.Budget.RULE,
                         Contract.Budget.RULE_START,
                         Contract.Budget.TAG
@@ -482,7 +484,8 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
                         type = Contract.BudgetType.fromValue(cursor.getInt(cursor.getColumnIndex(Contract.Budget.TYPE)));
-                        money = cursor.getLong(cursor.getColumnIndex(Contract.Budget.MONEY));
+                        money = cursor.getLong(cursor.getColumnIndex(Contract.Budget.SHOWN_MONEY));
+                        storedMoney = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.MONEY));
                         startDate = DateUtils.getDateFromSQLDateString(cursor.getString(cursor.getColumnIndex(Contract.Budget.START_DATE)));
                         endDate = DateUtils.getDateFromSQLDateString(cursor.getString(cursor.getColumnIndex(Contract.Budget.END_DATE)));
                         rule = cursor.getString(cursor.getColumnIndex(Contract.Budget.RULE));
@@ -611,7 +614,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
             mAnchored = ruleStart != null;
             mRepeatCheckBox.setChecked(repeats);
             if (follows) {
-                mLimitBeforeFollow = money;
+                mLimitBeforeFollow = storedMoney;
             }
             mFollowCheckBox.setChecked(follows);
             mClosedPeriod = !repeats && isSupersededPeriod();
@@ -968,7 +971,11 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                     contentValues.putNull(Contract.Budget.RULE_START);
                 }
             }
-            contentValues.put(Contract.Budget.MONEY, mMoneyPicker.getCurrentMoney());
+            if (mFollowCheckBox.isChecked() && mLimitBeforeFollow != null && mLimitBeforeFollow != 0L) {
+                contentValues.put(Contract.Budget.MONEY, mLimitBeforeFollow);
+            } else {
+                contentValues.put(Contract.Budget.MONEY, mMoneyPicker.getCurrentMoney());
+            }
             contentValues.put(Contract.Budget.TAG, mFollowCheckBox.isChecked() ? Contract.Budget.TAG_FOLLOWS_CATEGORIES : null);
             contentValues.put(Contract.Budget.WALLET_IDS, Contract.getObjectIds(mWalletsPicker.getCurrentWallets()));
             ContentResolver contentResolver = getContentResolver();

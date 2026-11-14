@@ -528,7 +528,7 @@ public class RecurrenceHandlerIntentServiceTest {
         SplitLedger.database(mContext).execSQL("UPDATE budgets SET budget_money = 45000 WHERE budget_type = ? " +
                 "AND budget_start_date > ?", new Object[] {Contract.BudgetType.CATEGORY.getValue(), start});
         Cursor cursor = mResolver.query(DataContentProvider.CONTENT_BUDGETS,
-                new String[] {Contract.Budget.START_DATE, Contract.Budget.TAG, Contract.Budget.MONEY},
+                new String[] {Contract.Budget.START_DATE, Contract.Budget.TAG, Contract.Budget.SHOWN_MONEY},
                 Contract.Budget.TYPE + " = ? AND " + Contract.Budget.RULE + " IS NOT NULL",
                 new String[] {String.valueOf(Contract.BudgetType.EXPENSES.getValue())}, null);
         assertNotNull(cursor);
@@ -537,7 +537,44 @@ public class RecurrenceHandlerIntentServiceTest {
             assertTrue(cursor.moveToFirst());
             assertTrue(start.compareTo(cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.START_DATE))) < 0);
             assertEquals(Contract.Budget.TAG_FOLLOWS_CATEGORIES, cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.TAG)));
-            assertEquals(45000L, cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.MONEY)));
+            assertEquals(45000L, cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.SHOWN_MONEY)));
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test
+    public void aRolledExpensesPeriodThatFollowsKeepsItsTypedLimitAndShowsTheSum() {
+        String start = DateUtils.getSQLDateString(new Date(System.currentTimeMillis() - 70L * DAY));
+        String end = DateUtils.getSQLDateString(new Date(System.currentTimeMillis() - 40L * DAY));
+        ContentValues expenses = monthlyBudget(Contract.BudgetType.EXPENSES, 100000L, start, end);
+        expenses.put(Contract.Budget.TAG, Contract.Budget.TAG_FOLLOWS_CATEGORIES);
+        mResolver.insert(DataContentProvider.CONTENT_BUDGETS, expenses);
+        ContentValues category = monthlyBudget(Contract.BudgetType.CATEGORY, 30000L, start, end);
+        category.put(Contract.Budget.CATEGORY_IDS, "<" + mCategory + ">");
+        mResolver.insert(DataContentProvider.CONTENT_BUDGETS, category);
+        runTask();
+        Cursor cursor = mResolver.query(DataContentProvider.CONTENT_BUDGETS,
+                new String[] {Contract.Budget.START_DATE, Contract.Budget.RULE, Contract.Budget.MONEY,
+                        Contract.Budget.SHOWN_MONEY},
+                Contract.Budget.TYPE + " = ?", new String[] {String.valueOf(Contract.BudgetType.EXPENSES.getValue())},
+                Contract.Budget.START_DATE + " ASC");
+        assertNotNull(cursor);
+        try {
+            assertTrue(cursor.getCount() >= 2);
+            int repeating = 0;
+            for (int i = 0; cursor.moveToPosition(i); i++) {
+                if (i == 0) {
+                    assertEquals(start, cursor.getString(cursor.getColumnIndexOrThrow(Contract.Budget.START_DATE)));
+                    assertTrue(cursor.isNull(cursor.getColumnIndexOrThrow(Contract.Budget.RULE)));
+                }
+                if (!cursor.isNull(cursor.getColumnIndexOrThrow(Contract.Budget.RULE))) {
+                    repeating++;
+                }
+                assertEquals(100000L, cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.MONEY)));
+                assertEquals(30000L, cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.SHOWN_MONEY)));
+            }
+            assertEquals(1, repeating);
         } finally {
             cursor.close();
         }

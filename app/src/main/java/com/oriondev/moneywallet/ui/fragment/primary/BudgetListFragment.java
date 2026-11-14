@@ -78,7 +78,7 @@ public class BudgetListFragment extends CursorListFragment implements BudgetCurs
             String[] projection = new String[] {
                     Contract.Budget.ID,
                     Contract.Budget.TYPE,
-                    Contract.Budget.MONEY,
+                    Contract.Budget.SHOWN_MONEY,
                     Contract.Budget.START_DATE,
                     Contract.Budget.END_DATE,
                     Contract.Budget.CATEGORY_ICON,

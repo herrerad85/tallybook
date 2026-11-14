@@ -233,7 +233,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                 String[] projection = new String[] {
                         Contract.Budget.ID,
                         Contract.Budget.CURRENCY,
-                        Contract.Budget.MONEY,
+                        Contract.Budget.SHOWN_MONEY,
                         Contract.Budget.TYPE,
                         Contract.Budget.CATEGORY_NAME,
                         Contract.Budget.CATEGORY_TYPE,
@@ -274,7 +274,7 @@ public class BudgetItemFragment extends SecondaryPanelFragment implements Loader
                 } else {
                     mCurrencyTextView.setText("?");
                 }
-                long money = cursor.getLong(cursor.getColumnIndex(Contract.Budget.MONEY));
+                long money = cursor.getLong(cursor.getColumnIndex(Contract.Budget.SHOWN_MONEY));
                 mMoneyTextView.setText(mMoneyFormatter.getNotTintedString(currency, money, MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN));
                 int sumIndex = cursor.getColumnIndexOrThrow(Contract.Budget.CATEGORY_SUM);
                 mCategorySumAsLimit = null;
