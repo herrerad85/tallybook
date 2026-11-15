@@ -158,3 +158,115 @@ dccf32e0c3f308bcab2da1cb69a93d332299ecce
 628d8023a3ec286c68202d3bbababf4ab77c2896
 # Convert WalletPicker to Kotlin
 3ac46ec29943ce8402bb9479f66c06e3addc2c99
+# Convert RecurrenceSettingTest to Kotlin
+ee22446a345a3a86e1eb544d04b017db38260237
+# Convert MoneyScaleTest to Kotlin
+6a6fdff049d7c42cb8f2c544bd1d5f5227fe3024
+# Convert ColorPickerPreviewEndTest to Kotlin
+64de7596fe4eef385abdb3a64c3d07ec3ade23f2
+# Convert SAFFileTest to Kotlin
+0e28b7b67289d8d720522818d89ebd0b482568a6
+# Convert AbstractBackendServiceAPI to Kotlin
+3b6c5c140c37c74773dd0678e4ad0d985ca359ad
+# Convert AbstractBackendServiceDelegate to Kotlin
+66fe4166c267f65d3bc9e755b66f5f32a05b253a
+# Convert BackendDescriptor to Kotlin
+ab065c9ae08b63997476fd96543bf38d208ed8ca
+# Convert BackendException to Kotlin
+3d2d9c430c1c147286aeb2778da6503461624cea
+# Convert IBackendServiceAPI to Kotlin
+9ff9077f3da8edd815d552afd7ba83402b189df5
+# Convert DiskBackendService to Kotlin
+02ae810564b68dd9ffa4bb97c8e0cb9315e8d2fe
+# Convert DiskBackendServiceAPI to Kotlin
+1af0a02d516f87520c2ce99d1bee92a835124e04
+# Convert SAFBackendService to Kotlin
+085f513370264ebe16395168e80055bd4ce14445
+# Convert SAFBackendServiceAPI to Kotlin
+664abb6ee05280e1a584cbad947df259af2c50d8
+# Convert WebDAVBackendService to Kotlin
+510d73309ab25c83ba62dc0566f32aaeb205428c
+# Convert WebDAVBackendServiceAPI to Kotlin
+15ff2c7f079b1b05d02a42290b49e495d030315b
+# Convert WebDAVClient to Kotlin
+7748456c456418e1f56c5aa2914ea722514590ab
+# Convert WebDAVException to Kotlin
+84180fe83d49db490233325d156db2a28c1ced04
+# Convert ScrollingFloatingActionButtonBehavior to Kotlin
+98fca8593af458c60d95f9856993e6ed8935fb88
+# Convert DotMatrixDrawable to Kotlin
+937a02ce37547c4f8d5054b46841f2b510c72792
+# Convert DoubleIconDrawable to Kotlin
+8b8fc500111e6f0b74d2d9a5a8adf1cdca08595f
+# Convert TextDrawable to Kotlin
+8798669ab99dc778ed0e81f1482e76a2e8c91f53
+# Convert NotificationContract to Kotlin
+07c8c8b9af6737da955446dc51aaef49a9ba5ec3
+# Convert ColorPreference to Kotlin
+5ad9d9442264acff9f29f5e1f7b6b901b18e1804
+# Convert ThemedInputPreference to Kotlin
+56468da2896454aae40b3c94869d246b31a9c976
+# Convert ThemedListPreference to Kotlin
+3087478743c6981acf497f211a2f3455b2771489
+# Convert ThemedPreference to Kotlin
+6faa25f9e01a278bf23623ea550a3dc96c5fa702
+# Convert ThemedPreferenceCategory to Kotlin
+66be698bfdac1254e70b410fc8f5095875122e55
+# Convert ThemedSwitchPreference to Kotlin
+5827209520a413c19f07d82f7b27761b80e97d53
+# Convert WalletWidgetConfigureActivity to Kotlin
+9dfd51d1c8d063884ccbe449b54ed948569a9b27
+# Convert WalletWidgetObserver to Kotlin
+bda388e60eb2b8c5c92a291fc7833c367e1b88f6
+# Convert WalletWidgetProvider to Kotlin
+de699831aeb3ba74fd3f106a116b97ff32002f6b
+# Convert WalletWidgetPreferences to Kotlin
+127e6918bd3a643b90a206ef0da0f87f57a8bf7a
+# Convert AbstractGenericLoader to Kotlin
+cba482f1cafb7c2e04790473d5579abf94e24f2e
+# Convert ChangeLogLoader to Kotlin
+bd17493c5eb1b68a4a4fb58f173601a12b116cc3
+# Convert IconGroupLoader to Kotlin
+556e2b72127fb9f581f0435f630aabdf5deb12be
+# Convert JsonResourceLoader to Kotlin
+733e13cc7851753c47a082216efcb1ad6a0d44ea
+# Convert LicenseLoader to Kotlin
+d2e823122966a1659c6d2fa4666ad8c7fade39c5
+# Convert OverviewDataLoader to Kotlin
+e082e8247ebc4739d5f9e80c57322278ed64d0ac
+# Convert PeriodDetailFlowLoader to Kotlin
+782f29aa08e28285b0e6faca9c18da0fc077baa0
+# Convert PeriodDetailSummaryLoader to Kotlin
+4b9fe3796b988a98263c0b63e18104f25b02222f
+# Convert SearchCategoryLoader to Kotlin
+016dfba4638e18239e560d5fb8b38dbd1b00c382
+# Convert SearchCursorLoader to Kotlin
+016b90483b2cc46dda1cd99aa1f532ed7047fcfe
+# Convert SearchPeopleLoader to Kotlin
+3017c2b9d50f4998b7aeb0ce0cc1ed5442d40bf2
+# Convert SearchRailLoader to Kotlin
+761cc847072c0dc35003b6bfd963428063d2564c
+# Convert AbstractCurrencyRateDownloadIntentService to Kotlin
+d1952cc7b946417547e658d6f296f611fdba17da
+# Convert AttachmentHandlerIntentService to Kotlin
+600085c1ebcdd203c65289ed24265b181129e78b
+# Convert AutoBackupJobService to Kotlin
+b1b7778b21f16b364246cb9ff042e4709854035b
+# Convert BackendHandlerIntentService to Kotlin
+2d9904137929bb53cec912252ebbf6df7dc6bea0
+# Convert BackupHandlerIntentService to Kotlin
+4548d9b6e8cc3e38a99ce293a7a27e4f8b43fbc8
+# Convert BackupOperation to Kotlin
+af566bea6155079bb76ca6e64d1039f386022589
+# Convert ForegroundServices to Kotlin
+0527295a376fd1d00cc39689522adac7db4938b2
+# Convert ImportExportIntentService to Kotlin
+f6b18dc7b80f1ed55a860546a8f9f8db43b814bb
+# Convert RecurrenceHandlerIntentService to Kotlin
+48bbb4f456effca79409f70ccc59fb148eeab88f
+# Convert TaskReporter to Kotlin
+b98887e423e875362f8c90afca9ca868c727a0c0
+# Convert UpgradeLegacyEditionIntentService to Kotlin
+d1b5eee8cd1dd33d244d5f20b9d34b6297378a2e
+# Convert OpenExchangeRatesCurrencyRateDownloadIntentService to Kotlin
+19967f94d0de5dce985a3b39f14b956a80328ba0
