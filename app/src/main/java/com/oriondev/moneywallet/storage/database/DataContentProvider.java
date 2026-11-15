@@ -36,6 +36,7 @@ import com.oriondev.moneywallet.BuildConfig;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.widget.WalletWidgetProvider;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,6 +83,7 @@ public class DataContentProvider extends ContentProvider {
      * the form {@link Contract#getObjectIds} writes, and the selection itself is ignored.
      */
     public static final Uri CONTENT_BUDGET_CATEGORY_SUM = Uri.parse("content://" + AUTHORITY + "/budgets/category_sum");
+    public static final Uri CONTENT_BUDGET_PERIOD_PROGRESS = Uri.parse("content://" + AUTHORITY + "/budgets/period_progress");
 
     /**
      * Every uri above sits under this one. An observer registered here with descendants included
@@ -152,6 +154,7 @@ public class DataContentProvider extends ContentProvider {
     private static final int TRANSACTION_SPLIT_LIST = 52;
     private static final int BUDGET_CATEGORY_SUM = 53;
     private static final int BUDGET_CATEGORY_BUDGETS = 54;
+    private static final int BUDGET_PERIOD_PROGRESS = 55;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -183,6 +186,7 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "budgets/#/categories", BUDGET_CATEGORIES);
         matcher.addURI(AUTHORITY, "budgets/#/transactions", BUDGET_TRANSACTION_LIST);
         matcher.addURI(AUTHORITY, "budgets/category_sum", BUDGET_CATEGORY_SUM);
+        matcher.addURI(AUTHORITY, "budgets/period_progress", BUDGET_PERIOD_PROGRESS);
         matcher.addURI(AUTHORITY, "savings", SAVING_LIST);
         matcher.addURI(AUTHORITY, "savings/#", SAVING_ITEM);
         matcher.addURI(AUTHORITY, "savings/#/transactions", SAVING_TRANSACTION_LIST);
@@ -330,6 +334,10 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case BUDGET_CATEGORY_SUM:
                 cursor = new MultiUriCursorWrapper(db().getCategoryBudgetSum(selectionArgs[0], selectionArgs[1], selectionArgs[2]));
+                break;
+            case BUDGET_PERIOD_PROGRESS:
+                cursor = new MultiUriCursorWrapper(db().getBudgetPeriodProgress(Integer.parseInt(selectionArgs[0]),
+                        selectionArgs[1], selectionArgs[2], Arrays.copyOfRange(selectionArgs, 3, selectionArgs.length)));
                 break;
             case BUDGET_TRANSACTION_LIST:
                 cursor = new MultiUriCursorWrapper(db().getBudgetTransactions(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));

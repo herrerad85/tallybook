@@ -65,6 +65,7 @@ import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by andrea on 06/03/18.
@@ -92,8 +93,11 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
 
     private static final float DIMMED_ALPHA = 0.5f;
 
+    private static final int AVERAGE_PERIODS = 3;
+
     private TextView mCurrencyTextView;
     private TextView mMoneyTextView;
+    private TextView mAverageLimitTextView;
     private MaterialEditText mTypeEditText;
     private MaterialEditText mCategoryEditText;
     private CheckBox mRepeatCheckBox;
@@ -117,6 +121,8 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
 
     private Long mLimitBeforeFollow;
 
+    private long mAverageLimit;
+
     private MoneyFormatter mMoneyFormatter = MoneyFormatter.getInstance();
 
     @Override
@@ -138,6 +144,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
     @Override
     protected void onCreatePanelView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.layout_panel_new_edit_budget, parent, true);
+        mAverageLimitTextView = view.findViewById(R.id.average_limit_text_view);
         mTypeEditText = view.findViewById(R.id.type_edit_text);
         mCategoryEditText = view.findViewById(R.id.category_edit_text);
         mRepeatCheckBox = view.findViewById(R.id.repeat_checkbox);
@@ -166,6 +173,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 if (mFollowCheckBox.isChecked()) {
                     showCategorySum();
                 }
+                showAverageLimit();
             }
 
         });
@@ -203,6 +211,15 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                     mMoneyPicker.setMoney(mLimitBeforeFollow);
                     mLimitBeforeFollow = null;
                 }
+                showAverageLimit();
+            }
+
+        });
+        mAverageLimitTextView.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                mMoneyPicker.setMoney(mAverageLimit);
             }
 
         });
@@ -885,6 +902,57 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         }
     }
 
+    private void showAverageLimit() {
+        mAverageLimitTextView.setVisibility(View.GONE);
+        if (!mRepeatCheckBox.isChecked() || mFollowCheckBox.isChecked() || mRecurrencePicker == null
+                || mRecurrencePicker.getCurrentSettings() == null || mBudgetTypePicker.getCurrentType() == null) {
+            return;
+        }
+        Wallet[] wallets = mWalletsPicker.getCurrentWallets();
+        if (wallets == null || wallets.length == 0) {
+            return;
+        }
+        Date[] period = periodToSave(getMode());
+        if (period == null || period[0] == null) {
+            return;
+        }
+        Date today = new Date();
+        Date date = DateUtils.getCalendarDaysBetween(today, period[0]) > 0 ? today : period[0];
+        RecurrenceSetting schedule = scheduleToSave();
+        List<Date[]> periods = RecurrenceSetting.periodsBefore(schedule.getRule(), schedule.getStartDate(),
+                date, AVERAGE_PERIODS);
+        if (periods.isEmpty()) {
+            return;
+        }
+        String[] selectionArgs = new String[3 + 2 * periods.size()];
+        selectionArgs[0] = String.valueOf(mBudgetTypePicker.getCurrentType().getValue());
+        selectionArgs[1] = Contract.getObjectIds(mCategoryPicker.getCurrentCategories());
+        selectionArgs[2] = Contract.getObjectIds(wallets);
+        for (int i = 0; i < periods.size(); i++) {
+            selectionArgs[3 + 2 * i] = DateUtils.getSQLDateString(periods.get(i)[0]);
+            selectionArgs[4 + 2 * i] = DateUtils.getSQLDateString(periods.get(i)[1]);
+        }
+        long progress = 0L;
+        Cursor cursor = getContentResolver().query(DataContentProvider.CONTENT_BUDGET_PERIOD_PROGRESS,
+                null, null, selectionArgs, null);
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    progress += cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Budget.PROGRESS));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        mAverageLimit = (progress + AVERAGE_PERIODS / 2) / AVERAGE_PERIODS;
+        if (mAverageLimit > 0L) {
+            mAverageLimitTextView.setText(getString(R.string.hint_budget_average_limit,
+                    mMoneyFormatter.getNotTintedString(wallets[0].getCurrency(), mAverageLimit,
+                            MoneyFormatter.CurrencyMode.ALWAYS_SHOWN)));
+            mAverageLimitTextView.setVisibility(View.VISIBLE);
+        }
+    }
+
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -1045,6 +1113,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
                 mFollowCheckBox.setVisibility(View.GONE);
                 break;
         }
+        showAverageLimit();
     }
 
     @Override
@@ -1061,6 +1130,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         } else {
             mCategoryEditText.setText(null);
         }
+        showAverageLimit();
     }
 
     @Override
@@ -1084,6 +1154,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         if (mFollowCheckBox.isChecked()) {
             showCategorySum();
         }
+        showAverageLimit();
     }
 
     @Override
@@ -1094,6 +1165,7 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         if (mFollowCheckBox.isChecked()) {
             showCategorySum();
         }
+        showAverageLimit();
     }
 
     @Override
@@ -1115,5 +1187,6 @@ public class NewEditBudgetActivity extends NewEditItemActivity implements MoneyP
         if (mFollowCheckBox.isChecked()) {
             showCategorySum();
         }
+        showAverageLimit();
     }
 }

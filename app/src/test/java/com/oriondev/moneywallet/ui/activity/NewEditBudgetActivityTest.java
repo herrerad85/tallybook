@@ -1916,6 +1916,254 @@ public class NewEditBudgetActivityTest {
         row.close();
     }
 
+    @Test
+    public void aNewMonthlyBudgetOffersTheAverageOfTheThreeMonthsBeforeAndATapSavesIt() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.EXPENSE, mFood, 1000L);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.INCOME, mSalary, 50L);
+        insertTransaction(mWalletB, monthsAgo(2), Contract.Direction.EXPENSE, mFood, 70000L);
+        insertTransaction(mWalletA, monthsAgo(3), Contract.Direction.EXPENSE, mRent, 3001L);
+        insertTransaction(mWalletA, monthsAgo(4), Contract.Direction.EXPENSE, mRent, 800000L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                assertEquals(averageText(activity, "EUR", 1334L), headerText(activity, R.id.average_limit_text_view));
+                activity.findViewById(R.id.average_limit_text_view).performClick();
+                assertEquals(1334L, moneyPicker(activity).getCurrentMoney());
+                assertEquals(formattedMoney("EUR", 1334L), headerText(activity, R.id.money_text_view));
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        Cursor row = budgetRow(newestBudget());
+        assertEquals(1334L, row.getLong(row.getColumnIndex(Contract.Budget.MONEY)));
+        assertNotNull(row.getString(row.getColumnIndex(Contract.Budget.RULE)));
+        row.close();
+    }
+
+    @Test
+    public void aNewBudgetWithNothingSpentInTheMonthsBeforeOffersNoAverage() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertTrue(checkBox(activity, R.id.repeat_checkbox).isChecked());
+                assertEquals(View.GONE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void aBudgetThatDoesNotRepeatOffersNoAverage() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.EXPENSE, mFood, 3000L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                assertFalse(checkBox(activity, R.id.repeat_checkbox).isChecked());
+                assertEquals(View.GONE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertFalse(checkBox(activity, R.id.repeat_checkbox).isChecked());
+                assertEquals(View.GONE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+            });
+        }
+    }
+
+    @Test
+    public void theFollowBoxHidesTheAverageUntilItIsUnticked() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(2), Contract.Direction.EXPENSE, mFood, 3000L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(View.GONE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                checkBox(activity, R.id.follow_category_budgets_checkbox).performClick();
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                assertEquals(averageText(activity, "EUR", 1000L), headerText(activity, R.id.average_limit_text_view));
+            });
+        }
+    }
+
+    @Test
+    public void pickingOtherWalletsChangesTheAverage() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.EXPENSE, mFood, 3000L);
+        insertTransaction(mWalletB, monthsAgo(2), Contract.Direction.EXPENSE, mFood, 60000L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(averageText(activity, "EUR", 1000L), headerText(activity, R.id.average_limit_text_view));
+                walletsPicker(activity).onWalletsSelected(new Wallet[] {
+                        wallet(mWalletA, "Cash", "EUR"), wallet(mWalletB, "Bank", "EUR")});
+                assertEquals(averageText(activity, "EUR", 21000L), headerText(activity, R.id.average_limit_text_view));
+                walletsPicker(activity).onWalletsSelected(new Wallet[] {wallet(mWalletB, "Bank", "EUR")});
+                assertEquals(averageText(activity, "EUR", 20000L), headerText(activity, R.id.average_limit_text_view));
+                activity.findViewById(R.id.average_limit_text_view).performClick();
+                assertEquals(20000L, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void theTypeAndCategoriesPickedDecideWhatIsAveraged() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.EXPENSE, mFood, 3000L);
+        insertTransaction(mWalletA, monthsAgo(2), Contract.Direction.EXPENSE, mSnacks, 600L);
+        insertTransaction(mWalletA, monthsAgo(3), Contract.Direction.EXPENSE, mRent, 90000L);
+        insertTransaction(mWalletA, monthsAgo(3), Contract.Direction.INCOME, mSalary, 4500L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(averageText(activity, "EUR", 31200L), headerText(activity, R.id.average_limit_text_view));
+                budgetTypePicker(activity).onBudgetTypeSelected(Contract.BudgetType.CATEGORY);
+                assertEquals(View.GONE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                categoryPicker(activity).onCategoriesSelected(new Category[] {category(mFood, "Food")});
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                assertEquals(averageText(activity, "EUR", 1200L), headerText(activity, R.id.average_limit_text_view));
+                budgetTypePicker(activity).onBudgetTypeSelected(Contract.BudgetType.INCOMES);
+                assertEquals(averageText(activity, "EUR", 1500L), headerText(activity, R.id.average_limit_text_view));
+            });
+        }
+    }
+
+    @Test
+    public void anExistingRepeatingBudgetAveragesThePeriodsBeforeItsOwnStart() {
+        insertTransaction(mWalletB, "2019-01-14 12:00:00", Contract.Direction.EXPENSE, mFood, 7L);
+        insertTransaction(mWalletB, "2019-01-15 12:00:00", Contract.Direction.EXPENSE, mFood, 100L);
+        insertTransaction(mWalletB, "2019-02-14 12:00:00", Contract.Direction.EXPENSE, mFood, 2000L);
+        insertTransaction(mWalletB, "2019-04-15 12:00:00", Contract.Direction.EXPENSE, mFood, 900L);
+        long budget = insertBudget(Contract.BudgetType.EXPENSES, 300000L, "EUR", new long[] {mWalletB},
+                null, "2019-04-15", "2019-05-14", monthlyOn(date("2019-01-15")).getRule(), "2019-01-15", null);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                assertTrue(checkBox(activity, R.id.repeat_checkbox).isChecked());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                assertEquals(averageText(activity, "EUR", 16667367L),
+                        headerText(activity, R.id.average_limit_text_view));
+                activity.findViewById(R.id.average_limit_text_view).performClick();
+                save(activity);
+                assertTrue(activity.isFinishing());
+            });
+        }
+        assertRepeatingRow(budget, "2019-04-15", "2019-05-14", monthlyOn(date("2019-01-15")).getRule(), "2019-01-15");
+        Cursor row = budgetRow(budget);
+        assertEquals(16667367L, row.getLong(row.getColumnIndex(Contract.Budget.MONEY)));
+        row.close();
+    }
+
+    @Test
+    public void aRecreateKeepsTheAverage() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.EXPENSE, mFood, 3000L);
+        insertTransaction(mWalletA, monthsAgo(3), Contract.Direction.EXPENSE, mFood, 300L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(averageText(activity, "EUR", 1100L), headerText(activity, R.id.average_limit_text_view));
+            });
+            scenario.recreate();
+            scenario.onActivity(activity -> {
+                assertTrue(checkBox(activity, R.id.repeat_checkbox).isChecked());
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.average_limit_text_view).getVisibility());
+                assertEquals(averageText(activity, "EUR", 1100L), headerText(activity, R.id.average_limit_text_view));
+                activity.findViewById(R.id.average_limit_text_view).performClick();
+                assertEquals(1100L, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void anAverageWithARemainderOfOneRoundsDown() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, monthsAgo(1), Contract.Direction.EXPENSE, mFood, 3001L);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                assertEquals(averageText(activity, "EUR", 1000L), headerText(activity, R.id.average_limit_text_view));
+                activity.findViewById(R.id.average_limit_text_view).performClick();
+                assertEquals(1000L, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void aNewScheduleAnchoredAfterTodayAveragesTheFullPeriodsBeforeToday() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, daysAgo(22), Contract.Direction.EXPENSE, mFood, 5L);
+        insertTransaction(mWalletA, daysAgo(21), Contract.Direction.EXPENSE, mFood, 30000L);
+        insertTransaction(mWalletA, daysAgo(10), Contract.Direction.EXPENSE, mFood, 600L);
+        insertTransaction(mWalletA, daysAgo(1), Contract.Direction.EXPENSE, mFood, 3L);
+        insertTransaction(mWalletA, secondsAgo(5), Contract.Direction.EXPENSE, mFood, 70000000L);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 14);
+        RecurrenceSetting weekly = weeklyEvery(calendar.getTime(), 1);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                recurrencePicker(activity).onRecurrenceSettingChanged(weekly);
+                assertEquals(averageText(activity, "EUR", (30000L + 600L + 3L) / 3),
+                        headerText(activity, R.id.average_limit_text_view));
+                activity.findViewById(R.id.average_limit_text_view).performClick();
+                assertEquals((30000L + 600L + 3L) / 3, moneyPicker(activity).getCurrentMoney());
+            });
+        }
+    }
+
+    @Test
+    public void aNewScheduleAnchoredTomorrowLeavesOutTheWeekEndingToday() {
+        PreferenceManager.setCurrentWallet(mContext, mWalletA);
+        insertTransaction(mWalletA, daysAgo(25), Contract.Direction.EXPENSE, mFood, 30000L);
+        insertTransaction(mWalletA, daysAgo(10), Contract.Direction.EXPENSE, mFood, 600L);
+        insertTransaction(mWalletA, daysAgo(3), Contract.Direction.EXPENSE, mFood, 3L);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        RecurrenceSetting weekly = weeklyEvery(calendar.getTime(), 1);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(newItemIntent())) {
+            scenario.onActivity(activity -> {
+                checkBox(activity, R.id.repeat_checkbox).performClick();
+                recurrencePicker(activity).onRecurrenceSettingChanged(weekly);
+                assertEquals(averageText(activity, "EUR", (30000L + 600L) / 3),
+                        headerText(activity, R.id.average_limit_text_view));
+            });
+        }
+    }
+
+    @Test
+    public void aChangedScheduleAveragesTheFullPeriodsBeforeTheStartItKeeps() {
+        insertTransaction(mWalletB, "2019-01-28 12:00:00", Contract.Direction.EXPENSE, mFood, 7L);
+        insertTransaction(mWalletB, "2019-01-29 12:00:00", Contract.Direction.EXPENSE, mFood, 100L);
+        insertTransaction(mWalletB, "2019-02-12 12:00:00", Contract.Direction.EXPENSE, mFood, 2000L);
+        insertTransaction(mWalletB, "2019-03-11 12:00:00", Contract.Direction.EXPENSE, mFood, 30000L);
+        insertTransaction(mWalletB, "2019-03-12 12:00:00", Contract.Direction.EXPENSE, mFood, 400000L);
+        insertTransaction(mWalletB, "2019-03-14 12:00:00", Contract.Direction.EXPENSE, mFood, 5000000L);
+        insertTransaction(mWalletB, "2019-03-15 12:00:00", Contract.Direction.EXPENSE, mFood, 60000000L);
+        long budget = insertBudget(Contract.BudgetType.EXPENSES, 300000L, "EUR", new long[] {mWalletB},
+                null, "2019-03-15", "2019-04-14", monthlyOn(date("2019-01-15")).getRule(), "2019-01-15", null);
+        try (ActivityScenario<NewEditBudgetActivity> scenario =
+                     ActivityScenario.launch(editIntent(budget))) {
+            scenario.onActivity(activity -> {
+                recurrencePicker(activity).onRecurrenceSettingChanged(weeklyEvery(date("2019-01-20"), 2));
+                assertEquals(averageText(activity, "EUR", (100L + 2000L + 30000L) / 3),
+                        headerText(activity, R.id.average_limit_text_view));
+            });
+        }
+    }
+
     // expected figures
 
     /**
@@ -2073,6 +2321,18 @@ public class NewEditBudgetActivityTest {
     private static String secondsAgo(int seconds) {
         return DateUtils.getSQLDateTimeString(
                 new Date(System.currentTimeMillis() - seconds * 1000L));
+    }
+
+    private static String monthsAgo(int months) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -months);
+        return DateUtils.getSQLDateString(calendar.getTime()) + " 12:00:00";
+    }
+
+    private static String daysAgo(int days) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -days);
+        return DateUtils.getSQLDateString(calendar.getTime()) + " 12:00:00";
     }
 
     private static Date date(String sqlDate) {
@@ -2251,6 +2511,11 @@ public class NewEditBudgetActivityTest {
     private static String formattedMoney(String currency, long money) {
         return MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency(currency),
                 money, MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN);
+    }
+
+    private static String averageText(NewEditBudgetActivity activity, String currency, long money) {
+        return activity.getString(R.string.hint_budget_average_limit, MoneyFormatter.getInstance()
+                .getNotTintedString(CurrencyManager.getCurrency(currency), money, MoneyFormatter.CurrencyMode.ALWAYS_SHOWN));
     }
 
     /**

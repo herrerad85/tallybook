@@ -573,6 +573,51 @@ class RecurrenceSetting : Parcelable {
             return null
         }
 
+        @JvmStatic
+        fun periodsBefore(rule: String?, anchor: Date?, date: Date?, count: Int): List<Array<Date>> {
+            val periods: MutableList<Array<Date>> = ArrayList()
+            try {
+                val recurrenceRule = RecurrenceRule(rule)
+                val field = when (recurrenceRule.freq) {
+                    Freq.WEEKLY -> Calendar.WEEK_OF_YEAR
+                    Freq.MONTHLY -> Calendar.MONTH
+                    Freq.YEARLY -> Calendar.YEAR
+                    else -> Calendar.DAY_OF_MONTH
+                }
+                val interval = recurrenceRule.interval
+                val oldest = DateUtils.getCalendar(date)
+                oldest.add(field, -Math.multiplyExact(count + 2, interval))
+                val oldestDateTime = DateUtils.getFixedDateTime(oldest.time)
+                var seed = DateUtils.getFixedDateTime(anchor)
+                var cycles = 0
+                while (seed.after(oldestDateTime)) {
+                    cycles++
+                    val calendar = DateUtils.getCalendar(anchor)
+                    calendar.add(field, -Math.multiplyExact(cycles, interval))
+                    seed = DateUtils.getFixedDateTime(calendar.time)
+                }
+                val dateTime = DateUtils.getFixedDateTime(date)
+                val starts: MutableList<Date> = ArrayList()
+                val iterator = recurrenceRule.iterator(seed)
+                while (iterator.hasNext()) {
+                    val instance = iterator.nextDateTime()
+                    if (instance.after(dateTime)) {
+                        break
+                    }
+                    if (instance.after(seed)) {
+                        starts.add(DateUtils.getFixedDate(instance))
+                    }
+                }
+                val first = maxOf(0, starts.size - 1 - count)
+                for (i in first until starts.size - 1) {
+                    periods.add(arrayOf(starts[i], DateUtils.addDays(DateUtils.getCalendar(starts[i + 1]), -1)))
+                }
+            } catch (ignore: InvalidRecurrenceRuleException) {
+            } catch (ignore: ArithmeticException) {
+            }
+            return periods
+        }
+
         private fun getFreq(type: Int): Freq {
             when (type) {
                 TYPE_DAILY ->

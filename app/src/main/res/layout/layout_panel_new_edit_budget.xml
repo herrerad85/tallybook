@@ -27,6 +27,16 @@
     tools:parentTag="android.widget.LinearLayout"
     tools:orientation="vertical" >
 
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+        android:id="@+id/average_limit_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/material_activity_body_check_box_top_bottom_margin"
+        android:layout_marginLeft="@dimen/material_activity_body_check_box_start_end_margin"
+        android:layout_marginRight="@dimen/material_activity_body_check_box_start_end_margin"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:visibility="gone" />
+
     <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialEditText
         android:id="@+id/type_edit_text"
         android:layout_width="match_parent"

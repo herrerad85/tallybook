@@ -3711,25 +3711,7 @@ import java.util.function.Supplier;
                 " = 0 AND b." + Schema.Budget.DELETED + " = 0 AND w." + Schema.Wallet.DELETED +
                 " = 0 AND b." + Schema.Budget.TYPE + " = " + Schema.BudgetType.INCOMES +
                 " ) AS b LEFT JOIN " + Schema.Transaction.TABLE + " AS t ON b._wallet_id = t." +
-                Schema.Transaction.WALLET + " AND t." + Schema.Transaction.DELETED + " = 0 AND t." +
-                Schema.Transaction.CONFIRMED + " = 1 AND t." +
-                Schema.Transaction.DIRECTION + " = 1 AND DATETIME(t." + Schema.Transaction.DATE +
-                ") <= DATETIME('now', 'localtime') AND DATE(t." + Schema.Transaction.DATE +
-                ") >= DATE(b." + Schema.Budget.START_DATE + ") AND DATE(t." +
-                Schema.Transaction.DATE + ") <= DATE(b." + Schema.Budget.END_DATE + ") " +
-                // exclude transfers within the budget
-                "AND t." + Schema.Transaction.ID + " NOT IN ( " +
-                "SELECT tf." + Schema.Transfer.TRANSACTION_TO + " " +
-                "FROM " + Schema.Transfer.TABLE + " AS tf " +
-                "LEFT JOIN " + Schema.Transaction.TABLE + " AS t2 " +
-                "ON tf." + Schema.Transfer.TRANSACTION_FROM + " = t2." + Schema.Transaction.ID + " " +
-                "LEFT JOIN " + Schema.BudgetWallet.TABLE + " AS bw2 " +
-                "ON t2." + Schema.Transaction.WALLET + " = bw2." + Schema.BudgetWallet.WALLET + " " +
-                "WHERE bw2." + Schema.BudgetWallet.BUDGET + " = b." + Schema.Budget.ID + " " +
-                "AND bw2." + Schema.BudgetWallet.DELETED + " = 0 " +
-                "AND bw2." + Schema.BudgetWallet.WALLET + " != b._wallet_id " +
-                ") " +
-
+                Schema.Transaction.WALLET + " AND " + isIncomeCounted("t", "b", "b._wallet_id") + " " +
                 "GROUP BY b."
                 + Schema.Budget.ID + ", _wallet_id UNION " +
                 // query all budgets of type category
@@ -3741,21 +3723,10 @@ import java.util.function.Supplier;
                 " JOIN " + Schema.Wallet.TABLE + " AS w ON bw._wallet = w." + Schema.Wallet.ID +
                 " WHERE bw. " + Schema.BudgetWallet.DELETED + " = 0 AND b." + Schema.Budget.DELETED +
                 " = 0 AND w." + Schema.Wallet.DELETED + " = 0 AND b." + Schema.Budget.TYPE + " = " +
-                Schema.BudgetType.CATEGORY + ") AS b LEFT JOIN (SELECT tr." + Schema.Transaction.WALLET +
-                ", tr." + Schema.Transaction.DATE + ", tr." + Schema.Transaction.DIRECTION +
-                ", l._line_category AS " + Schema.Transaction.CATEGORY + ", l._line_money AS " +
-                Schema.Transaction.MONEY + ", tc." + Schema.Category.PARENT + " AS _parent_category FROM (" +
-                CATEGORY_LINES + ") AS l JOIN " + Schema.Transaction.TABLE + " AS tr ON l._line_transaction = tr." +
-                Schema.Transaction.ID + " JOIN " + Schema.Category.TABLE + " AS tc ON l._line_category" +
-                " = tc." + Schema.Category.ID + " WHERE tr." + Schema.Transaction.DELETED + " = 0 " +
-                " AND tr." + Schema.Transaction.CONFIRMED + " = 1 " +
-                " AND tc." + Schema.Category.DELETED + " = 0) AS t ON (b._wallet_id = t." +
-                Schema.Transaction.WALLET + " AND DATETIME(t." + Schema.Transaction.DATE +
-                ") <= DATETIME('now', 'localtime') AND DATE(t." + Schema.Transaction.DATE +
-                ") >= DATE(b." + Schema.Budget.START_DATE + ") AND DATE(t." +
-                Schema.Transaction.DATE + ") <=  DATE(b." + Schema.Budget.END_DATE + ") AND (t."
-                + Schema.Transaction.CATEGORY + " IN " + budgetCategoriesOf("b") +
-                " OR t._parent_category IN " + budgetCategoriesOf("b") + ")) GROUP BY b." + Schema.Budget.ID +
+                Schema.BudgetType.CATEGORY + ") AS b LEFT JOIN (" + CATEGORY_BUDGET_LINES +
+                ") AS t ON (b._wallet_id = t." + Schema.Transaction.WALLET + " AND " +
+                isCategoryCounted("t", "b." + Schema.Budget.START_DATE, "b." + Schema.Budget.END_DATE,
+                        budgetCategoriesOf("b")) + ") GROUP BY b." + Schema.Budget.ID +
                 ", _wallet_id) AS b LEFT JOIN " + Schema.Category.TABLE + " AS c ON b." +
                 Schema.Budget.CATEGORY + " = c." + Schema.Category.ID + " AND c." +
                 Schema.Category.DELETED + " = 0 GROUP BY b." + Schema.Budget.ID;
@@ -6272,19 +6243,61 @@ import java.util.function.Supplier;
     }
 
     /*package-local*/ Cursor getCategoryBudgetSum(String startDate, String endDate, String walletIds) {
-        StringBuilder wallets = new StringBuilder();
-        long[] ids = parseIds(walletIds);
-        if (ids != null) {
-            for (long id : ids) {
-                if (wallets.length() > 0) {
-                    wallets.append(",");
-                }
-                wallets.append(id);
-            }
-        }
-        String query = "SELECT " + categoryBudgetSum("p._start", "p._end", "(" + wallets + ")") +
+        String query = "SELECT " + categoryBudgetSum("p._start", "p._end", idsOf(walletIds)) +
                 " AS " + Contract.Budget.CATEGORY_SUM + " FROM (SELECT ? AS _start, ? AS _end) AS p";
         return getReadableDatabase().rawQuery(query, new String[] {startDate, endDate});
+    }
+
+    /*package-local*/ Cursor getBudgetPeriodProgress(int type, String categoryIds, String walletIds, String[] periods) {
+        String wallets = idsOf(walletIds);
+        String liveWallets = "(SELECT w." + Schema.Wallet.ID + " FROM " + Schema.Wallet.TABLE + " AS w WHERE w." +
+                Schema.Wallet.ID + " IN " + wallets + " AND w." + Schema.Wallet.DELETED + " = 0)";
+        String progress;
+        if (type == Schema.BudgetType.CATEGORY) {
+            progress = "(SELECT SUM(((t." + Schema.Transaction.DIRECTION + " * 2) - 1) * t." +
+                    Schema.Transaction.MONEY + ") FROM (" + CATEGORY_BUDGET_LINES + ") AS t WHERE t." +
+                    Schema.Transaction.WALLET + " IN " + liveWallets + " AND " +
+                    isCategoryCounted("t", "p._start", "p._end", idsOf(categoryIds)) + ")";
+        } else if (type == Schema.BudgetType.INCOMES) {
+            progress = "(SELECT SUM(t." + Schema.Transaction.MONEY + ") FROM " + Schema.Transaction.TABLE +
+                    " AS t WHERE t." + Schema.Transaction.WALLET + " IN " + liveWallets + " AND " +
+                    isIncomeCounted("t", "p._start", "p._end",
+                            otherWallet(wallets, "t." + Schema.Transaction.WALLET)) + ")";
+        } else {
+            progress = "(SELECT SUM(t." + Schema.Transaction.MONEY + ") FROM " + Schema.Transaction.TABLE +
+                    " AS t WHERE t." + Schema.Transaction.WALLET + " IN " + liveWallets + " AND " +
+                    isExpenseCounted("t", "p._start", "p._end",
+                            otherWallet(wallets, "t." + Schema.Transaction.WALLET)) + ")";
+        }
+        StringBuilder dates = new StringBuilder();
+        for (int i = 0; i < periods.length / 2; i++) {
+            if (i == 0) {
+                dates.append("SELECT 0 AS _period, ? AS _start, ? AS _end");
+            } else {
+                dates.append(" UNION ALL SELECT ").append(i).append(", ?, ?");
+            }
+        }
+        if (dates.length() == 0) {
+            dates.append("SELECT 0 AS _period, NULL AS _start, NULL AS _end WHERE 0");
+        }
+        String query = "SELECT p._start AS " + Contract.Budget.START_DATE + ", p._end AS " +
+                Contract.Budget.END_DATE + ", ABS(COALESCE(" + progress + ", 0)) AS " +
+                Contract.Budget.PROGRESS + " FROM (" + dates + ") AS p ORDER BY p._period";
+        return getReadableDatabase().rawQuery(query, periods);
+    }
+
+    private String idsOf(String objectIds) {
+        StringBuilder builder = new StringBuilder();
+        long[] ids = parseIds(objectIds);
+        if (ids != null) {
+            for (long id : ids) {
+                if (builder.length() > 0) {
+                    builder.append(",");
+                }
+                builder.append(id);
+            }
+        }
+        return "(" + builder + ")";
     }
 
     private static final String CATEGORY_BUDGET_DAYS = "(SELECT " + Schema.Budget.ID + ", " +
@@ -6319,26 +6332,84 @@ import java.util.function.Supplier;
     }
 
     private static String isExpenseCounted(String transactionAlias, String budgetAlias, String walletId) {
-        String t = transactionAlias + ".";
         String b = budgetAlias + ".";
+        return isExpenseCounted(transactionAlias, b + Schema.Budget.START_DATE, b + Schema.Budget.END_DATE,
+                otherBudgetWallet(budgetAlias, walletId));
+    }
+
+    private static String isExpenseCounted(String transactionAlias, String startDate, String endDate,
+                                           String otherWallet) {
+        String t = transactionAlias + ".";
         return t + Schema.Transaction.DELETED + " = 0 AND " + t +
                 Schema.Transaction.CONFIRMED + " = 1 AND " + t +
                 Schema.Transaction.DIRECTION + " = 0 AND DATETIME(" + t + Schema.Transaction.DATE +
                 ") <= DATETIME('now', 'localtime') AND DATE(" + t + Schema.Transaction.DATE +
-                ") >= DATE(" + b + Schema.Budget.START_DATE + ") AND DATE(" + t + Schema.Transaction.DATE +
-                ") <=  DATE(" + b + Schema.Budget.END_DATE + ") " +
+                ") >= DATE(" + startDate + ") AND DATE(" + t + Schema.Transaction.DATE +
+                ") <=  DATE(" + endDate + ") " +
                 // exclude transfers within the budget
                 "AND " + t + Schema.Transaction.ID + " NOT IN ( " +
                 "SELECT tf." + Schema.Transfer.TRANSACTION_FROM + " " +
                 "FROM " + Schema.Transfer.TABLE + " AS tf " +
                 "LEFT JOIN " + Schema.Transaction.TABLE + " AS t2 " +
                 "ON tf." + Schema.Transfer.TRANSACTION_TO + " = t2." + Schema.Transaction.ID + " " +
-                "LEFT JOIN " + Schema.BudgetWallet.TABLE + " AS bw2 " +
+                otherWallet + ")";
+    }
+
+    private static String isIncomeCounted(String transactionAlias, String budgetAlias, String walletId) {
+        String b = budgetAlias + ".";
+        return isIncomeCounted(transactionAlias, b + Schema.Budget.START_DATE, b + Schema.Budget.END_DATE,
+                otherBudgetWallet(budgetAlias, walletId));
+    }
+
+    private static String isIncomeCounted(String transactionAlias, String startDate, String endDate,
+                                          String otherWallet) {
+        String t = transactionAlias + ".";
+        return t + Schema.Transaction.DELETED + " = 0 AND " + t +
+                Schema.Transaction.CONFIRMED + " = 1 AND " + t +
+                Schema.Transaction.DIRECTION + " = 1 AND DATETIME(" + t + Schema.Transaction.DATE +
+                ") <= DATETIME('now', 'localtime') AND DATE(" + t + Schema.Transaction.DATE +
+                ") >= DATE(" + startDate + ") AND DATE(" + t + Schema.Transaction.DATE +
+                ") <= DATE(" + endDate + ") " +
+                "AND " + t + Schema.Transaction.ID + " NOT IN ( " +
+                "SELECT tf." + Schema.Transfer.TRANSACTION_TO + " " +
+                "FROM " + Schema.Transfer.TABLE + " AS tf " +
+                "LEFT JOIN " + Schema.Transaction.TABLE + " AS t2 " +
+                "ON tf." + Schema.Transfer.TRANSACTION_FROM + " = t2." + Schema.Transaction.ID + " " +
+                otherWallet + ")";
+    }
+
+    private static String otherBudgetWallet(String budgetAlias, String walletId) {
+        return "LEFT JOIN " + Schema.BudgetWallet.TABLE + " AS bw2 " +
                 "ON t2." + Schema.Transaction.WALLET + " = bw2." + Schema.BudgetWallet.WALLET + " " +
-                "WHERE bw2." + Schema.BudgetWallet.BUDGET + " = " + b + Schema.Budget.ID + " " +
+                "WHERE bw2." + Schema.BudgetWallet.BUDGET + " = " + budgetAlias + "." + Schema.Budget.ID + " " +
                 "AND bw2." + Schema.BudgetWallet.DELETED + " = 0 " +
-                "AND bw2." + Schema.BudgetWallet.WALLET + " != " + walletId + " " +
-                ")";
+                "AND bw2." + Schema.BudgetWallet.WALLET + " != " + walletId + " ";
+    }
+
+    private static String otherWallet(String wallets, String walletId) {
+        return "WHERE t2." + Schema.Transaction.WALLET + " IN " + wallets + " " +
+                "AND t2." + Schema.Transaction.WALLET + " != " + walletId + " ";
+    }
+
+    private static final String CATEGORY_BUDGET_LINES = "SELECT tr." + Schema.Transaction.WALLET +
+            ", tr." + Schema.Transaction.DATE + ", tr." + Schema.Transaction.DIRECTION +
+            ", l._line_category AS " + Schema.Transaction.CATEGORY + ", l._line_money AS " +
+            Schema.Transaction.MONEY + ", tc." + Schema.Category.PARENT + " AS _parent_category FROM (" +
+            CATEGORY_LINES + ") AS l JOIN " + Schema.Transaction.TABLE + " AS tr ON l._line_transaction = tr." +
+            Schema.Transaction.ID + " JOIN " + Schema.Category.TABLE + " AS tc ON l._line_category" +
+            " = tc." + Schema.Category.ID + " WHERE tr." + Schema.Transaction.DELETED + " = 0 " +
+            " AND tr." + Schema.Transaction.CONFIRMED + " = 1 " +
+            " AND tc." + Schema.Category.DELETED + " = 0";
+
+    private static String isCategoryCounted(String transactionAlias, String startDate, String endDate,
+                                            String categories) {
+        String t = transactionAlias + ".";
+        return "DATETIME(" + t + Schema.Transaction.DATE +
+                ") <= DATETIME('now', 'localtime') AND DATE(" + t + Schema.Transaction.DATE +
+                ") >= DATE(" + startDate + ") AND DATE(" + t +
+                Schema.Transaction.DATE + ") <=  DATE(" + endDate + ") AND (" + t
+                + Schema.Transaction.CATEGORY + " IN " + categories +
+                " OR " + t + "_parent_category IN " + categories + ")";
     }
 
     private static String isCategoryBudgetCounted(String categoryAlias, String startDate, String endDate,
