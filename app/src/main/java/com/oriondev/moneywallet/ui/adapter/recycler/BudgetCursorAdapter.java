@@ -21,6 +21,7 @@ package com.oriondev.moneywallet.ui.adapter.recycler;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
@@ -55,6 +56,7 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
 
     private static final String COLOR_INCOMES = "#43A047";
     private static final String COLOR_EXPENSES = "#D32F2F";
+    private static final String COLOR_AMBER = "#FFA000";
 
     @VisibleForTesting
     static Long sToday;
@@ -136,7 +138,11 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
             mMoneyFormatter.applyNotTinted(holder.mAvailableTextView, currency, progress - target);
         } else {
             holder.mAvailableHeaderTextView.setText(R.string.adapter_available_money);
-            ThemeEngine.applyTheme(holder.mProgressBar, false);
+            if (expenses && target > 0 && progress * 100 >= target * 80) {
+                holder.mProgressBar.setReachedBarColor(Color.parseColor(COLOR_AMBER));
+            } else {
+                ThemeEngine.applyTheme(holder.mProgressBar, false);
+            }
             mMoneyFormatter.applyNotTinted(holder.mAvailableTextView, currency, difference);
         }
         // check if budget is expired

@@ -39,6 +39,8 @@ public class BudgetCursorAdapterTest {
 
     private static final String[] BAD_STARTS = new String[] {"", "null"};
 
+    private static final int AMBER = 0xFFFFA000;
+
     private static final String ICON = "{\"type\":\"color\",\"color\":\"#000000\",\"name\":\"T\"}";
 
     private static final String[] COLUMNS = new String[] {
@@ -75,7 +77,8 @@ public class BudgetCursorAdapterTest {
 
     @Test
     public void aBudgetExactlyOnTargetHasNothingAvailableAndTheDefaultBar() {
-        View row = bindOne(expenses(100000, 100000));
+        View row = bindOne(row(Contract.BudgetType.INCOMES, null, 100000, 100000,
+                "2019-11-01", "2019-11-30"));
         assertEquals(mActivity.getString(R.string.adapter_available_money), availableHeader(row));
         assertEquals(money(0), availableBody(row));
         assertEquals(defaultBarColor(), barColor(row));
@@ -130,6 +133,80 @@ public class BudgetCursorAdapterTest {
         measure(row);
         assertEquals(mActivity.getString(R.string.adapter_available_money), availableHeader(row));
         assertEquals(money(60000), availableBody(row));
+        assertEquals(defaultBarColor(), barColor(row));
+    }
+
+    @Test
+    public void anExpensesBudgetAtEightyPercentOfItsLimitDrawsAnAmberBar() {
+        View row = bindOne(expenses(100000, 80000));
+        assertEquals(mActivity.getString(R.string.adapter_available_money), availableHeader(row));
+        assertEquals(money(20000), availableBody(row));
+        assertEquals(AMBER, barColor(row));
+        assertNotEquals(defaultBarColor(), AMBER);
+        assertNotEquals(expenseColor(), AMBER);
+    }
+
+    @Test
+    public void anExpensesBudgetOneUnitUnderEightyPercentKeepsTheDefaultBar() {
+        View row = bindOne(expenses(100000, 79999));
+        assertEquals(defaultBarColor(), barColor(row));
+    }
+
+    @Test
+    public void anExpensesBudgetExactlyOnItsLimitDrawsAnAmberBarWithNothingAvailable() {
+        View row = bindOne(expenses(100000, 100000));
+        assertEquals(mActivity.getString(R.string.adapter_available_money), availableHeader(row));
+        assertEquals(money(0), availableBody(row));
+        assertEquals(AMBER, barColor(row));
+    }
+
+    @Test
+    public void anExpensesBudgetOneUnitOverItsLimitIsOverInTheExpenseColor() {
+        View row = bindOne(expenses(100000, 100001));
+        assertEquals(mActivity.getString(R.string.adapter_over_money), availableHeader(row));
+        assertEquals(money(1), availableBody(row));
+        assertEquals(expenseColor(), barColor(row));
+    }
+
+    @Test
+    public void anExpenseCategoryBudgetAtNinetyPercentDrawsAnAmberBar() {
+        View row = bindOne(category(Contract.CategoryType.EXPENSE, 100000, -90000));
+        assertEquals(mActivity.getString(R.string.adapter_available_money), availableHeader(row));
+        assertEquals(AMBER, barColor(row));
+    }
+
+    @Test
+    public void anIncomesBudgetAtNinetyPercentKeepsTheDefaultBar() {
+        View row = bindOne(row(Contract.BudgetType.INCOMES, null, 100000, 90000,
+                "2019-11-01", "2019-11-30"));
+        assertEquals(defaultBarColor(), barColor(row));
+    }
+
+    @Test
+    public void anIncomeCategoryBudgetAtNinetyPercentKeepsTheDefaultBar() {
+        View row = bindOne(category(Contract.CategoryType.INCOME, 100000, 90000));
+        assertEquals(defaultBarColor(), barColor(row));
+    }
+
+    @Test
+    public void anExpensesBudgetWithAZeroLimitAndNothingUsedKeepsTheDefaultBar() {
+        View row = bindOne(expenses(0, 0));
+        assertEquals(mActivity.getString(R.string.adapter_available_money), availableHeader(row));
+        assertEquals(defaultBarColor(), reachedBarColor(row));
+    }
+
+    @Test
+    public void aRowBoundAmberAndThenAtTenPercentGoesBackToTheDefaultBar() {
+        MatrixCursor cursor = new MatrixCursor(COLUMNS);
+        cursor.addRow(expenses(100000, 90000));
+        cursor.addRow(expenses(100000, 10000));
+        BudgetCursorAdapter adapter = adapter(cursor);
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        assertEquals(AMBER, barColor(row));
+        adapter.onBindViewHolder(holder, 1);
+        measure(row);
         assertEquals(defaultBarColor(), barColor(row));
     }
 
@@ -327,6 +404,13 @@ public class BudgetCursorAdapterTest {
 
     private int defaultBarColor() {
         View row = measure(new BudgetCursorAdapter(null).onCreateViewHolder(new FrameLayout(mActivity), 0).itemView);
+        MaterialProgressBar bar = row.findViewById(R.id.progress_bar);
+        bar.setMaxValue(1);
+        bar.setProgressValue(1);
+        return barColor(row);
+    }
+
+    private static int reachedBarColor(View row) {
         MaterialProgressBar bar = row.findViewById(R.id.progress_bar);
         bar.setMaxValue(1);
         bar.setProgressValue(1);

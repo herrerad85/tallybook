@@ -103,7 +103,14 @@ public class BudgetListFragment extends CursorListFragment implements BudgetCurs
                 sortOrder += " DESC";
             } else {
                 selection += Contract.Budget.END_DATE + " >= DATE('now', 'localtime')";
-                sortOrder += " ASC";
+                String progress = "ABS(COALESCE(" + Contract.Budget.PROGRESS + ", 0))";
+                sortOrder = "CASE WHEN (" + Contract.Budget.TYPE + " = " + Contract.BudgetType.EXPENSES.getValue() +
+                        " OR (" + Contract.Budget.TYPE + " = " + Contract.BudgetType.CATEGORY.getValue() + " AND " +
+                        Contract.Budget.CATEGORY_TYPE + " = " + Contract.CategoryType.EXPENSE.getValue() + ")) AND " +
+                        progress + " > " + Contract.Budget.SHOWN_MONEY + " THEN 0 ELSE 1 END ASC, CASE WHEN " +
+                        Contract.Budget.SHOWN_MONEY + " > 0 THEN CAST(" + progress + " AS REAL) / " +
+                        Contract.Budget.SHOWN_MONEY + " END DESC, " + sortOrder + " ASC, " +
+                        Contract.Budget.ID + " ASC";
             }
             return new CursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
         }
