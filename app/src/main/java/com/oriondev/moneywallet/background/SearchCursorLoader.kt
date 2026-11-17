@@ -116,7 +116,7 @@ class SearchCursorLoader : CursorLoader {
          */
         @VisibleForTesting
         @JvmStatic
-        fun loadDecimals(context: Context): MutableMap<String, Int> {
+        internal fun loadDecimals(context: Context): MutableMap<String, Int> {
             val decimals: MutableMap<String, Int> = HashMap()
             val projection = arrayOf(Contract.Wallet.CURRENCY)
             val cursor: Cursor? = context.contentResolver.query(DataContentProvider.CONTENT_WALLETS, projection, null, null, null)
