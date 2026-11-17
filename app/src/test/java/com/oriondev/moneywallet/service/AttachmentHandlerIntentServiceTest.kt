@@ -1,163 +1,171 @@
-package com.oriondev.moneywallet.service;
+package com.oriondev.moneywallet.service
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Looper;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
+import android.os.Looper
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.test.core.app.ApplicationProvider
 
-import com.oriondev.moneywallet.broadcast.LocalAction;
-import com.oriondev.moneywallet.model.Attachment;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
-import com.oriondev.moneywallet.storage.database.TestDatabases;
+import com.oriondev.moneywallet.broadcast.LocalAction
+import com.oriondev.moneywallet.model.Attachment
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.storage.database.TestDatabases
 
-import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
+import org.apache.commons.io.FileUtils
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.util.ReflectionHelpers
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.util.ArrayList
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.robolectric.Shadows.shadowOf;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.robolectric.Shadows.shadowOf
 
-@RunWith(RobolectricTestRunner.class)
-public class AttachmentHandlerIntentServiceTest {
+@RunWith(RobolectricTestRunner::class)
+class AttachmentHandlerIntentServiceTest {
 
-    private static final String[] NOT_PLAIN_FILE_NAMES = {"", ".", "..", "../marker", "..\\marker"};
+    companion object {
 
-    @Rule
-    public TemporaryFolder mSource = new TemporaryFolder();
+        private val NOT_PLAIN_FILE_NAMES = arrayOf("", ".", "..", "../marker", "..\\marker")
+    }
 
-    private Context mContext;
-    private File mExternalFolder;
-    private File mAttachmentFolder;
-    private final List<Intent> mBroadcasts = new ArrayList<>();
+    @get:Rule
+    val mSource = TemporaryFolder()
+
+    private lateinit var mContext: Context
+    private var mExternalFolder: File? = null
+    private lateinit var mAttachmentFolder: File
+    private val mBroadcasts: MutableList<Intent> = ArrayList()
 
     @Before
-    public void setUp() {
-        mContext = ApplicationProvider.getApplicationContext();
-        TestDatabases.useFreshDatabase(mContext);
-        mExternalFolder = mContext.getExternalFilesDir(null);
-        mAttachmentFolder = new File(mExternalFolder, Attachment.FOLDER_NAME);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(LocalAction.ACTION_ATTACHMENT_OP_FINISHED);
-        filter.addAction(LocalAction.ACTION_ATTACHMENT_OP_FAILED);
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(new BroadcastReceiver() {
+    fun setUp() {
+        mContext = ApplicationProvider.getApplicationContext()
+        TestDatabases.useFreshDatabase(mContext)
+        mExternalFolder = mContext.getExternalFilesDir(null)
+        mAttachmentFolder = File(mExternalFolder, Attachment.FOLDER_NAME)
+        val filter = IntentFilter()
+        filter.addAction(LocalAction.ACTION_ATTACHMENT_OP_FINISHED)
+        filter.addAction(LocalAction.ACTION_ATTACHMENT_OP_FAILED)
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(object : BroadcastReceiver() {
 
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mBroadcasts.add(intent);
+            override fun onReceive(context: Context, intent: Intent) {
+                mBroadcasts.add(intent)
             }
 
-        }, filter);
+        }, filter)
     }
 
     @Test
-    public void aDeleteOfANameThatIsNotAPlainFileNameFailsAndDeletesNothing() throws IOException {
-        for (String name : NOT_PLAIN_FILE_NAMES) {
-            write(new File(mAttachmentFolder, "kept"), "kept attachment");
-            write(new File(mExternalFolder, "marker"), "marker");
+    @Throws(IOException::class)
+    fun aDeleteOfANameThatIsNotAPlainFileNameFailsAndDeletesNothing() {
+        for (name in NOT_PLAIN_FILE_NAMES) {
+            write(File(mAttachmentFolder, "kept"), "kept attachment")
+            write(File(mExternalFolder, "marker"), "marker")
 
-            run(AttachmentHandlerIntentService.ACTION_DELETE, name, null);
+            run(AttachmentHandlerIntentService.ACTION_DELETE, name, null)
 
-            assertFailed(name);
-            assertEquals(name, "kept attachment", read(new File(mAttachmentFolder, "kept")));
-            assertEquals(name, "marker", read(new File(mExternalFolder, "marker")));
+            assertFailed(name)
+            assertEquals(name, "kept attachment", read(File(mAttachmentFolder, "kept")))
+            assertEquals(name, "marker", read(File(mExternalFolder, "marker")))
         }
     }
 
     @Test
-    public void aDeleteOfAPlainFileNameDeletesOnlyThatFile() throws IOException {
-        write(new File(mAttachmentFolder, "kept"), "kept attachment");
-        write(new File(mAttachmentFolder, "3f9c0a7d1e"), "receipt");
+    @Throws(IOException::class)
+    fun aDeleteOfAPlainFileNameDeletesOnlyThatFile() {
+        write(File(mAttachmentFolder, "kept"), "kept attachment")
+        write(File(mAttachmentFolder, "3f9c0a7d1e"), "receipt")
 
-        run(AttachmentHandlerIntentService.ACTION_DELETE, "3f9c0a7d1e", null);
+        run(AttachmentHandlerIntentService.ACTION_DELETE, "3f9c0a7d1e", null)
 
-        assertEquals(LocalAction.ACTION_ATTACHMENT_OP_FINISHED, last().getAction());
-        assertFalse(new File(mAttachmentFolder, "3f9c0a7d1e").exists());
-        assertEquals("kept attachment", read(new File(mAttachmentFolder, "kept")));
+        assertEquals(LocalAction.ACTION_ATTACHMENT_OP_FINISHED, last().action)
+        assertFalse(File(mAttachmentFolder, "3f9c0a7d1e").exists())
+        assertEquals("kept attachment", read(File(mAttachmentFolder, "kept")))
     }
 
     @Test
-    public void aCreateOfANameThatIsNotAPlainFileNameFailsAndCreatesNothing() throws IOException {
-        File source = mSource.newFile("receipt.pdf");
-        write(source, "receipt");
-        for (String name : NOT_PLAIN_FILE_NAMES) {
-            FileUtils.deleteQuietly(new File(mExternalFolder, "marker"));
+    @Throws(IOException::class)
+    fun aCreateOfANameThatIsNotAPlainFileNameFailsAndCreatesNothing() {
+        val source = mSource.newFile("receipt.pdf")
+        write(source, "receipt")
+        for (name in NOT_PLAIN_FILE_NAMES) {
+            FileUtils.deleteQuietly(File(mExternalFolder, "marker"))
 
-            run(AttachmentHandlerIntentService.ACTION_CREATE, name, Uri.fromFile(source));
+            run(AttachmentHandlerIntentService.ACTION_CREATE, name, Uri.fromFile(source))
 
-            assertFailed(name);
-            assertFalse(name, new File(mExternalFolder, "marker").exists());
-            assertFalse(name, new File(mAttachmentFolder, name).isFile());
-            assertEquals(name, 0, countAttachments());
+            assertFailed(name)
+            assertFalse(name, File(mExternalFolder, "marker").exists())
+            assertFalse(name, File(mAttachmentFolder, name).isFile)
+            assertEquals(name, 0, countAttachments())
         }
     }
 
     @Test
-    public void aCreateOfAPlainFileNameCopiesTheFileIntoTheAttachmentFolder() throws IOException {
-        File source = mSource.newFile("receipt.pdf");
-        write(source, "receipt");
+    @Throws(IOException::class)
+    fun aCreateOfAPlainFileNameCopiesTheFileIntoTheAttachmentFolder() {
+        val source = mSource.newFile("receipt.pdf")
+        write(source, "receipt")
 
-        run(AttachmentHandlerIntentService.ACTION_CREATE, "3f9c0a7d1e", Uri.fromFile(source));
+        run(AttachmentHandlerIntentService.ACTION_CREATE, "3f9c0a7d1e", Uri.fromFile(source))
 
-        assertEquals(LocalAction.ACTION_ATTACHMENT_OP_FINISHED, last().getAction());
-        assertEquals("receipt", read(new File(mAttachmentFolder, "3f9c0a7d1e")));
-        assertEquals(1, countAttachments());
+        assertEquals(LocalAction.ACTION_ATTACHMENT_OP_FINISHED, last().action)
+        assertEquals("receipt", read(File(mAttachmentFolder, "3f9c0a7d1e")))
+        assertEquals(1, countAttachments())
     }
 
-    private void run(int action, String name, Uri data) {
-        Intent intent = new Intent(mContext, AttachmentHandlerIntentService.class)
+    private fun run(action: Int, name: String, data: Uri?) {
+        val intent = Intent(mContext, AttachmentHandlerIntentService::class.java)
                 .putExtra(AttachmentHandlerIntentService.ACTION, action)
                 .putExtra(AttachmentHandlerIntentService.ATTACHMENT,
-                        new Attachment(0L, name, "receipt.pdf", "application/pdf", 7L))
-                .setData(data);
-        Robolectric.setupService(AttachmentHandlerIntentService.class).onHandleIntent(intent);
-        shadowOf(Looper.getMainLooper()).idle();
+                        Attachment(0L, name, "receipt.pdf", "application/pdf", 7L))
+                .setData(data)
+        ReflectionHelpers.callInstanceMethod<Any>(Robolectric.setupService(AttachmentHandlerIntentService::class.java), "onHandleIntent",
+                ReflectionHelpers.ClassParameter.from(Intent::class.java, intent))
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
-    private void assertFailed(String name) {
-        Intent intent = last();
-        assertEquals(name, LocalAction.ACTION_ATTACHMENT_OP_FAILED, intent.getAction());
-        assertEquals(name, "Invalid attachment file name", intent.getStringExtra(AttachmentHandlerIntentService.ERROR));
+    private fun assertFailed(name: String) {
+        val intent = last()
+        assertEquals(name, LocalAction.ACTION_ATTACHMENT_OP_FAILED, intent.action)
+        assertEquals(name, "Invalid attachment file name", intent.getStringExtra(AttachmentHandlerIntentService.ERROR))
     }
 
-    private Intent last() {
-        assertFalse(mBroadcasts.isEmpty());
-        return mBroadcasts.get(mBroadcasts.size() - 1);
+    private fun last(): Intent {
+        assertFalse(mBroadcasts.isEmpty())
+        return mBroadcasts.get(mBroadcasts.size - 1)
     }
 
-    private int countAttachments() {
-        Cursor cursor = mContext.getContentResolver().query(DataContentProvider.CONTENT_ATTACHMENTS, null, null, null, null);
-        assertNotNull(cursor);
+    private fun countAttachments(): Int {
+        val cursor = mContext.contentResolver.query(DataContentProvider.CONTENT_ATTACHMENTS, null, null, null, null)
+        assertNotNull(cursor)
         try {
-            return cursor.getCount();
+            return cursor!!.count
         } finally {
-            cursor.close();
+            cursor!!.close()
         }
     }
 
-    private static void write(File file, String content) throws IOException {
-        FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
+    @Throws(IOException::class)
+    private fun write(file: File, content: String) {
+        FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8)
     }
 
-    private static String read(File file) throws IOException {
-        return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+    @Throws(IOException::class)
+    private fun read(file: File): String {
+        return FileUtils.readFileToString(file, StandardCharsets.UTF_8)
     }
 }
