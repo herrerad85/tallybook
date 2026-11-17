@@ -65,10 +65,13 @@ One receipt can cover several categories. In **New transaction**, or when you ed
 **Budgets** has two tabs, Running and Expired. A budget has a **Type** (Incomes, Expenses or Category), dates and wallets.
 
 - Tick **Repeat this budget** and pick a **Recurrence**. When a period ends, the app opens the next one with the same settings, and the old period stays under Expired.
+- While **Repeat this budget** is ticked, the editor shows the average the budget counted over its last 3 periods. Tap it to use it as the limit. It is hidden while **Use the category budgets inside it as the limit** is ticked and when those periods counted nothing.
 - One budget can cover several wallets if they share a currency.
 - An Expenses budget shows a **Category budgets** row with the limits of the category budgets inside it added up. A category budget is inside when it has the same start and end days, covers no wallet outside the Expenses budget, and has only expense categories. A Groceries budget is left out when Groceries sits under Food and a Food budget on the same wallets already covers it.
 - Tap the row to make that total the limit. To keep the limit equal to the total as category budgets change, tick **Use the category budgets inside it as the limit** in the editor.
 - An Expenses budget also counts money lent, debt payments, interest paid, savings deposits, transfer fees and transfers to a wallet outside the budget. No category budget can cover those, so a limit set from the total can show over. After you save with the box ticked, unticking it keeps the total as the limit and does not bring back the one you typed.
+- An Expenses budget, or a category budget on expense categories, turns its bar amber once 80% of the limit is used and red once it goes over. On the Running tab, those over their limit come first, then the rest by how much of the limit is used, most first.
+- On the Running tab, a repeating budget's card shows a bar for each of its last 3 periods, with the date each one started and **Last 3 periods** beside them. The thin line is today's limit, and on an expenses budget a bar above it is red. Long press a bar to see the amount. The bars show once at least one of those periods counted something.
 
 ## Savings
 

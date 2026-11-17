@@ -228,7 +228,7 @@ public class BudgetListFragmentTest {
                         DateUtils.getDateFromSQLDateString(month(-3)).getTime(),
                         android.text.format.DateUtils.FORMAT_SHOW_DATE | android.text.format.DateUtils.FORMAT_ABBREV_MONTH
                                 | android.text.format.DateUtils.FORMAT_NO_YEAR);
-                assertEquals(activity.getString(R.string.description_budget_period, date,
+                assertEquals(activity.getString(R.string.description_budget_period_spent, date,
                         MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("EUR"), 1100)),
                         row.findViewById(R.id.period_column_layout_1).getContentDescription().toString());
             });

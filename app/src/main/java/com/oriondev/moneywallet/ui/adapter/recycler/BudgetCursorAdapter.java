@@ -25,6 +25,7 @@ import android.graphics.Color;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -206,6 +207,8 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
             for (long amount : periodProgress) {
                 scale = Math.max(scale, amount);
             }
+            int descriptionId = expenses ? R.string.description_budget_period_spent
+                    : R.string.description_budget_period_earned;
             for (int i = 0; i < holder.mPeriodBarViews.length; i++) {
                 View barView = holder.mPeriodBarViews[i];
                 ViewGroup.LayoutParams params = barView.getLayoutParams();
@@ -215,8 +218,10 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
                 String date = android.text.format.DateUtils.formatDateTime(context, periodStartDates[i].getTime(),
                         PERIOD_DATE_FLAGS);
                 holder.mPeriodDateTextViews[i].setText(date);
-                holder.mPeriodColumnViews[i].setContentDescription(context.getString(R.string.description_budget_period,
-                        date, mMoneyFormatter.getNotTintedString(currency, periodProgress[i])));
+                String description = context.getString(descriptionId, date,
+                        mMoneyFormatter.getNotTintedString(currency, periodProgress[i]));
+                holder.mPeriodColumnViews[i].setContentDescription(description);
+                TooltipCompat.setTooltipText(holder.mPeriodColumnViews[i], description);
             }
             if (target > 0) {
                 ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.mPeriodLimitView.getLayoutParams();
@@ -305,6 +310,9 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
             };
             mPeriodLimitView = itemView.findViewById(R.id.period_limit_view);
             itemView.setOnClickListener(this);
+            for (View columnView : mPeriodColumnViews) {
+                columnView.setOnClickListener(this);
+            }
         }
 
         @Override

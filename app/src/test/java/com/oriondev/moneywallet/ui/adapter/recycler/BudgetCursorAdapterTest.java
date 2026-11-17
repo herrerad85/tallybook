@@ -6,12 +6,20 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.RippleDrawable;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.text.Layout;
+import android.util.StateSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 
 import com.oriondev.moneywallet.R;
@@ -35,13 +43,18 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -417,14 +430,102 @@ public class BudgetCursorAdapterTest {
             View column = row.findViewById(PERIOD_COLUMN_IDS[i]);
             TextView date = row.findViewById(PERIOD_DATE_IDS[i]);
             assertEquals(dates[i], date.getText().toString());
-            assertEquals(mActivity.getString(R.string.description_budget_period, dates[i], money(amounts[i])),
+            assertEquals(mActivity.getString(R.string.description_budget_period_spent, dates[i], money(amounts[i])),
                     column.getContentDescription().toString());
-            assertEquals("Period starting " + dates[i] + ", " + money(amounts[i]),
+            assertEquals("Period starting " + dates[i] + ", spent " + money(amounts[i]),
                     column.getContentDescription().toString());
             assertTrue(column.isImportantForAccessibility());
             assertTrue(column.isFocusable());
             assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, date.getImportantForAccessibility());
         }
+    }
+
+    @Test
+    public void anExpensesPeriodReadsAsSpentWithTheSameTooltip() {
+        Object[][] rows = new Object[][] {
+                expenses(10000, 0),
+                category(Contract.CategoryType.EXPENSE, 10000, 0)
+        };
+        for (Object[] values : rows) {
+            assertPeriodsRead(bindPeriods(values, 5000, 10000, 15000), true);
+        }
+    }
+
+    @Test
+    public void anIncomesPeriodReadsAsEarnedWithTheSameTooltip() {
+        Object[][] rows = new Object[][] {
+                row(Contract.BudgetType.INCOMES, null, 10000, 0, "2019-11-01", "2019-11-30"),
+                category(Contract.CategoryType.INCOME, 10000, 0)
+        };
+        for (Object[] values : rows) {
+            assertPeriodsRead(bindPeriods(values, 5000, 10000, 15000), false);
+        }
+    }
+
+    @Test
+    public void aRecycledRowReadsSpentOrEarnedForTheBudgetItIsBoundTo() {
+        long[] progress = new long[] {5000, 10000, 15000};
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {
+                expenses(10000, 0),
+                row(Contract.BudgetType.INCOMES, null, 10000, 0, "2019-11-01", "2019-11-30"),
+                expenses(10000, 0)
+        }, new long[][] {progress, progress, progress});
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        assertPeriodsRead(row, true);
+        adapter.onBindViewHolder(holder, 1);
+        measure(row);
+        assertPeriodsRead(row, false);
+        adapter.onBindViewHolder(holder, 2);
+        measure(row);
+        assertPeriodsRead(row, true);
+    }
+
+    @Test
+    public void eachPeriodNodeReadsItsDescriptionAndTooltipAndCanBeClicked() {
+        View row = bindPeriods(category(Contract.CategoryType.EXPENSE, 10000, 0), 5000, 10000, 15000);
+        mActivity.setContentView(row);
+        measure(row);
+        String[] dates = new String[] {"Aug 14", "Sep 14", "Oct 14"};
+        long[] amounts = new long[] {5000, 10000, 15000};
+        for (int i = 0; i < PERIOD_COLUMN_IDS.length; i++) {
+            AccessibilityNodeInfo node = row.findViewById(PERIOD_COLUMN_IDS[i]).createAccessibilityNodeInfo();
+            String description = mActivity.getString(R.string.description_budget_period_spent, dates[i],
+                    money(amounts[i]));
+            assertEquals(description, node.getContentDescription().toString());
+            assertEquals(description, node.getTooltipText().toString());
+            assertTrue(node.isClickable());
+        }
+    }
+
+    @Test
+    public void theLastPeriodsHeaderShowsWithTheBarsAndHidesWithThem() {
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {
+                category(Contract.CategoryType.EXPENSE, 10000, 0),
+                row(Contract.BudgetType.INCOMES, null, 10000, 0, "2019-11-01", "2019-11-30"),
+                expenses(10000, 0)
+        }, new long[][] {null, new long[] {5000, 10000, 15000}, null});
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        mActivity.setContentView(holder.itemView);
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        TextView header = row.findViewById(R.id.period_header_text_view);
+        View period = row.findViewById(R.id.period_layout);
+        assertEquals(period, header.getParent());
+        assertEquals(View.GONE, period.getVisibility());
+        assertFalse(header.isShown());
+        adapter.onBindViewHolder(holder, 1);
+        measure(row);
+        assertEquals(mActivity.getString(R.string.adapter_previous_periods), header.getText().toString());
+        assertEquals("Last 3 periods", header.getText().toString());
+        assertEquals(View.VISIBLE, header.getVisibility());
+        assertEquals(View.VISIBLE, period.getVisibility());
+        assertTrue(header.isShown());
+        adapter.onBindViewHolder(holder, 2);
+        measure(row);
+        assertEquals(View.GONE, period.getVisibility());
+        assertFalse(header.isShown());
     }
 
     @Test
@@ -657,6 +758,144 @@ public class BudgetCursorAdapterTest {
         assertTrue(wrapped > 0);
     }
 
+    @Test
+    @Config(qualifiers = "en-w360dp-xhdpi", fontScale = 1.0f)
+    public void theLastPeriodsHeaderSitsAfterTheColumnsOnTheDateLine() {
+        View row = bindPeriods(expenses(10000, 0), 5000, 10000, 15000);
+        TextView header = row.findViewById(R.id.period_header_text_view);
+        View column = row.findViewById(PERIOD_COLUMN_IDS[2]);
+        View date = row.findViewById(PERIOD_DATE_IDS[2]);
+        assertEquals(1, header.getLayout().getLineCount());
+        assertTrue(left(header, row) + " < " + (left(column, row) + column.getWidth()),
+                left(header, row) >= left(column, row) + column.getWidth());
+        assertEquals(top(date, row) + date.getHeight(), top(header, row) + header.getHeight());
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-xhdpi", fontScale = 2.0f)
+    public void theLastPeriodsHeaderWrapsBesideTheColumnsAtTheLargestText() {
+        View row = bindPeriods(expenses(10000, 0), 5000, 10000, 15000);
+        assertHeaderLaidOut(row);
+        row.measure(View.MeasureSpec.makeMeasureSpec(640, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        row.layout(0, 0, row.getMeasuredWidth(), row.getMeasuredHeight());
+        TextView header = row.findViewById(R.id.period_header_text_view);
+        assertTrue(header.getLayout().getLineCount() > 1);
+        assertHeaderLaidOut(row);
+        assertPeriodLimitLaidOut(row);
+    }
+
+    @Test
+    @Config(qualifiers = "fa-ldrtl-w360dp-xhdpi")
+    public void theLastPeriodsHeaderSitsLeftOfTheColumnsRightToLeft() {
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {expenses(10000, 0)},
+                new long[][] {new long[] {5000, 10000, 15000}});
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        holder.itemView.setLayoutDirection(mActivity.getResources().getConfiguration().getLayoutDirection());
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        assertEquals(View.LAYOUT_DIRECTION_RTL, row.getLayoutDirection());
+        View header = row.findViewById(R.id.period_header_text_view);
+        for (int id : PERIOD_COLUMN_IDS) {
+            View column = row.findViewById(id);
+            assertTrue(left(header, row) + header.getWidth() + " > " + left(column, row),
+                    left(header, row) + header.getWidth() <= left(column, row));
+        }
+        assertHeaderLaidOut(row);
+    }
+
+    @Test
+    public void aTapOnAPeriodOpensItsBudgetAndALongPressDoesNot() {
+        Object[] first = expenses(10000, 0);
+        Object[] second = expenses(10000, 0);
+        first[0] = 7L;
+        second[0] = 8L;
+        MatrixCursor cursor = new MatrixCursor(COLUMNS);
+        cursor.addRow(first);
+        cursor.addRow(second);
+        List<Long> opened = new ArrayList<>();
+        BudgetCursorAdapter adapter = new BudgetCursorAdapter(opened::add);
+        adapter.changeCursor(new BudgetPeriodCursor(cursor, new Date[][] {periodStartDates(), periodStartDates()},
+                new long[][] {new long[] {5000, 10000, 15000}, new long[] {5000, 10000, 15000}}));
+        RecyclerView list = new RecyclerView(mActivity);
+        list.setLayoutManager(new LinearLayoutManager(mActivity));
+        list.setAdapter(adapter);
+        mActivity.setContentView(list);
+        shadowOf(Looper.getMainLooper()).idle();
+        list.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+        list.layout(0, 0, 1080, 1920);
+        View row = list.findViewHolderForAdapterPosition(1).itemView;
+        assertEquals(View.VISIBLE, row.findViewById(R.id.period_layout).getVisibility());
+        tap(row, row.findViewById(R.id.primary_text_view));
+        assertEquals(Collections.singletonList(8L), opened);
+        opened.clear();
+        for (int id : PERIOD_COLUMN_IDS) {
+            View column = row.findViewById(id);
+            tap(row, column);
+            assertEquals(Collections.singletonList(8L), opened);
+            opened.clear();
+            assertTrue(column.performLongClick());
+            shadowOf(Looper.getMainLooper()).idle();
+            assertEquals(Collections.emptyList(), opened);
+        }
+    }
+
+    @Test
+    public void aPressOnAPeriodShowsTheRippleOnItsColumn() {
+        View row = bindPeriods(expenses(10000, 0), 5000, 10000, 15000);
+        for (int id : PERIOD_COLUMN_IDS) {
+            View column = row.findViewById(id);
+            assertTrue(column.getBackground() instanceof RippleDrawable);
+            float x = left(column, row) + column.getWidth() / 2f;
+            float y = top(column, row) + column.getHeight() / 2f;
+            long time = SystemClock.uptimeMillis();
+            MotionEvent down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, y, 0);
+            MotionEvent cancel = MotionEvent.obtain(time, time + 50, MotionEvent.ACTION_CANCEL, x, y, 0);
+            row.dispatchTouchEvent(down);
+            assertTrue(column.isPressed());
+            assertFalse(row.isPressed());
+            assertTrue(StateSet.stateSetMatches(new int[] {android.R.attr.state_pressed},
+                    column.getBackground().getState()));
+            row.dispatchTouchEvent(cancel);
+            assertFalse(column.isPressed());
+            down.recycle();
+            cancel.recycle();
+        }
+    }
+
+    private static void tap(View row, View view) {
+        float x = left(view, row) + view.getWidth() / 2f;
+        float y = top(view, row) + view.getHeight() / 2f;
+        long time = SystemClock.uptimeMillis();
+        MotionEvent down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, y, 0);
+        MotionEvent up = MotionEvent.obtain(time, time + 50, MotionEvent.ACTION_UP, x, y, 0);
+        row.dispatchTouchEvent(down);
+        row.dispatchTouchEvent(up);
+        down.recycle();
+        up.recycle();
+        shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    private void assertPeriodsRead(View row, boolean expenses) {
+        String[] dates = new String[] {"Aug 14", "Sep 14", "Oct 14"};
+        long[] amounts = new long[] {5000, 10000, 15000};
+        for (int i = 0; i < PERIOD_COLUMN_IDS.length; i++) {
+            View column = row.findViewById(PERIOD_COLUMN_IDS[i]);
+            String description = column.getContentDescription().toString();
+            if (expenses) {
+                assertEquals(mActivity.getString(R.string.description_budget_period_spent, dates[i],
+                        money(amounts[i])), description);
+                assertEquals("Period starting " + dates[i] + ", spent " + money(amounts[i]), description);
+            } else {
+                assertEquals(mActivity.getString(R.string.description_budget_period_earned, dates[i],
+                        money(amounts[i])), description);
+                assertEquals("Period starting " + dates[i] + ", earned " + money(amounts[i]), description);
+            }
+            assertEquals(description, column.getTooltipText().toString());
+        }
+    }
+
     private void assertCard(View row, int header, long available) {
         assertEquals(mActivity.getString(header), availableHeader(row));
         assertEquals(money(available), availableBody(row));
@@ -844,6 +1083,44 @@ public class BudgetCursorAdapterTest {
         }
         assertTrue(limitLeft + " < " + barLeft, limitLeft >= barLeft);
         assertTrue(limitRight + " > " + barRight, limitRight <= barRight);
+    }
+
+    private static void assertHeaderLaidOut(View row) {
+        TextView header = row.findViewById(R.id.period_header_text_view);
+        int headerLeft = left(header, row);
+        int headerTop = top(header, row);
+        int headerRight = headerLeft + header.getWidth();
+        int headerBottom = headerTop + header.getHeight();
+        View section = (View) row.findViewById(R.id.period_layout).getParent();
+        int sectionLeft = left(section, row);
+        int margin = header.getResources().getDimensionPixelSize(
+                R.dimen.material_component_lists_two_line_primary_text_end_margin);
+        if (row.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            assertEquals(sectionLeft + section.getPaddingLeft() + margin, headerLeft);
+        } else {
+            assertEquals(sectionLeft + section.getWidth() - section.getPaddingRight() - margin, headerRight);
+        }
+        assertTrue(headerLeft >= 0);
+        assertTrue(headerRight + " > " + row.getWidth(), headerRight <= row.getWidth());
+        assertTrue(headerBottom + " > " + row.getHeight(), headerBottom <= row.getHeight());
+        String text = header.getText().toString();
+        Layout layout = header.getLayout();
+        assertEquals(text, text.length(), layout.getLineEnd(layout.getLineCount() - 1));
+        assertTrue(header.getHeight() >= header.getTotalPaddingTop() + layout.getLineBottom(layout.getLineCount() - 1)
+                + header.getTotalPaddingBottom());
+        for (int line = 0; line < layout.getLineCount() - 1; line++) {
+            assertEquals(text, ' ', text.charAt(layout.getLineEnd(line) - 1));
+        }
+        for (int[] ids : new int[][] {PERIOD_COLUMN_IDS, PERIOD_BAR_IDS, PERIOD_DATE_IDS}) {
+            for (int id : ids) {
+                View view = row.findViewById(id);
+                int left = left(view, row);
+                int top = top(view, row);
+                boolean apart = headerRight <= left || headerLeft >= left + view.getWidth()
+                        || headerBottom <= top || headerTop >= top + view.getHeight();
+                assertTrue(view.getResources().getResourceEntryName(id), apart);
+            }
+        }
     }
 
     private static int color(View view) {
