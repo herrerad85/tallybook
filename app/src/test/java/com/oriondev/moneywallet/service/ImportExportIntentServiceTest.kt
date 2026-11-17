@@ -1,166 +1,168 @@
-package com.oriondev.moneywallet.service;
+package com.oriondev.moneywallet.service
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
-import android.os.Looper;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
+import android.os.Looper
 
-import androidx.core.content.FileProvider;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.core.content.FileProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.test.core.app.ApplicationProvider
 
-import com.oriondev.moneywallet.broadcast.LocalAction;
-import com.oriondev.moneywallet.model.DataFormat;
-import com.oriondev.moneywallet.model.Wallet;
-import com.oriondev.moneywallet.storage.database.TestDatabases;
-import com.oriondev.moneywallet.utils.CurrencyManager;
-import com.oriondev.moneywallet.utils.IconLoader;
+import com.oriondev.moneywallet.broadcast.LocalAction
+import com.oriondev.moneywallet.model.DataFormat
+import com.oriondev.moneywallet.model.Wallet
+import com.oriondev.moneywallet.storage.database.TestDatabases
+import com.oriondev.moneywallet.utils.CurrencyManager
+import com.oriondev.moneywallet.utils.IconLoader
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.MockedStatic;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.util.ReflectionHelpers
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStreamWriter
+import java.util.HashMap
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockStatic;
-import static org.robolectric.Shadows.shadowOf;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.mockStatic
+import org.robolectric.Shadows.shadowOf
 
 /**
  * The service hands back the token it was started with on every broadcast, so the screen that
  * started the work can tell its own broadcasts apart.
  */
-@RunWith(RobolectricTestRunner.class)
-public class ImportExportIntentServiceTest {
+@RunWith(RobolectricTestRunner::class)
+class ImportExportIntentServiceTest {
 
-    private static final String ICON = "{\"type\":\"color\",\"color\":\"#000000\",\"name\":\"T\"}";
+    companion object {
 
-    private Context mContext;
-    private final Map<String, String> mTokens = new HashMap<>();
-    private final Map<String, Intent> mBroadcasts = new HashMap<>();
+        private const val ICON = "{\"type\":\"color\",\"color\":\"#000000\",\"name\":\"T\"}"
+    }
+
+    private lateinit var mContext: Context
+    private val mTokens: MutableMap<String?, String?> = HashMap()
+    private val mBroadcasts: MutableMap<String?, Intent> = HashMap()
 
     @Before
-    public void setUp() {
-        mContext = ApplicationProvider.getApplicationContext();
-        TestDatabases.useFreshDatabase(mContext);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(LocalAction.ACTION_IMPORT_SERVICE_STARTED);
-        filter.addAction(LocalAction.ACTION_IMPORT_SERVICE_FINISHED);
-        filter.addAction(LocalAction.ACTION_IMPORT_SERVICE_FAILED);
-        filter.addAction(LocalAction.ACTION_EXPORT_SERVICE_STARTED);
-        filter.addAction(LocalAction.ACTION_EXPORT_SERVICE_FINISHED);
-        filter.addAction(LocalAction.ACTION_EXPORT_SERVICE_FAILED);
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(new BroadcastReceiver() {
+    fun setUp() {
+        mContext = ApplicationProvider.getApplicationContext()
+        TestDatabases.useFreshDatabase(mContext)
+        val filter = IntentFilter()
+        filter.addAction(LocalAction.ACTION_IMPORT_SERVICE_STARTED)
+        filter.addAction(LocalAction.ACTION_IMPORT_SERVICE_FINISHED)
+        filter.addAction(LocalAction.ACTION_IMPORT_SERVICE_FAILED)
+        filter.addAction(LocalAction.ACTION_EXPORT_SERVICE_STARTED)
+        filter.addAction(LocalAction.ACTION_EXPORT_SERVICE_FINISHED)
+        filter.addAction(LocalAction.ACTION_EXPORT_SERVICE_FAILED)
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(object : BroadcastReceiver() {
 
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mTokens.put(intent.getAction(), intent.getStringExtra(ImportExportIntentService.TOKEN));
-                mBroadcasts.put(intent.getAction(), intent);
+            override fun onReceive(context: Context, intent: Intent) {
+                mTokens.put(intent.action, intent.getStringExtra(ImportExportIntentService.TOKEN))
+                mBroadcasts.put(intent.action, intent)
             }
 
-        }, filter);
+        }, filter)
     }
 
     @Test
-    public void theStartAndTheFailureOfAnImportCarryTheToken() {
-        run(new Intent(mContext, ImportExportIntentService.class)
-                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT));
-        assertEquals(2, mTokens.size());
-        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_STARTED));
-        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_FAILED));
+    fun theStartAndTheFailureOfAnImportCarryTheToken() {
+        run(Intent(mContext, ImportExportIntentService::class.java)
+                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT))
+        assertEquals(2, mTokens.size)
+        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_STARTED))
+        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_FAILED))
     }
 
     @Test
-    public void theStartAndTheFailureOfAnExportCarryTheToken() {
-        run(new Intent(mContext, ImportExportIntentService.class)
-                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_EXPORT));
-        assertEquals(2, mTokens.size());
-        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_STARTED));
-        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_FAILED));
+    fun theStartAndTheFailureOfAnExportCarryTheToken() {
+        run(Intent(mContext, ImportExportIntentService::class.java)
+                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_EXPORT))
+        assertEquals(2, mTokens.size)
+        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_STARTED))
+        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_FAILED))
     }
 
     /** The service handles queued jobs one after another on the same instance. */
     @Test
-    public void aQueuedJobCarriesItsOwnToken() {
-        ImportExportIntentService service = Robolectric.setupService(ImportExportIntentService.class);
-        run(service, new Intent(mContext, ImportExportIntentService.class)
-                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT), "a");
-        run(service, new Intent(mContext, ImportExportIntentService.class)
-                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT), "b");
-        assertEquals("b", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_STARTED));
-        assertEquals("b", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_FAILED));
+    fun aQueuedJobCarriesItsOwnToken() {
+        val service = Robolectric.setupService(ImportExportIntentService::class.java)
+        run(service, Intent(mContext, ImportExportIntentService::class.java)
+                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT), "a")
+        run(service, Intent(mContext, ImportExportIntentService::class.java)
+                .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT), "b")
+        assertEquals("b", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_STARTED))
+        assertEquals("b", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_FAILED))
     }
 
     @Test
-    public void theStartAndTheEndOfAnImportThatWorksCarryTheToken() throws IOException {
-        File file = File.createTempFile("tallybook-import", ".csv");
-        file.deleteOnExit();
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8")) {
+    @Throws(IOException::class)
+    fun theStartAndTheEndOfAnImportThatWorksCarryTheToken() {
+        val file = File.createTempFile("tallybook-import", ".csv")
+        file.deleteOnExit()
+        OutputStreamWriter(FileOutputStream(file), "UTF-8").use { writer ->
             writer.write("\"wallet\",\"currency\",\"category\",\"datetime\",\"money\"\n"
-                    + "\"Cash\",\"EUR\",\"Food\",\"2026-08-12 09:00:00\",\"-1.00\"\n");
+                    + "\"Cash\",\"EUR\",\"Food\",\"2026-08-12 09:00:00\",\"-1.00\"\n")
         }
-        run(new Intent(mContext, ImportExportIntentService.class)
+        run(Intent(mContext, ImportExportIntentService::class.java)
                 .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_IMPORT)
                 .putExtra(ImportExportIntentService.FORMAT, DataFormat.CSV)
-                .putExtra(ImportExportIntentService.FILE, file));
-        assertReached(LocalAction.ACTION_IMPORT_SERVICE_FINISHED, LocalAction.ACTION_IMPORT_SERVICE_FAILED);
-        assertEquals(2, mTokens.size());
-        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_STARTED));
-        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_FINISHED));
+                .putExtra(ImportExportIntentService.FILE, file))
+        assertReached(LocalAction.ACTION_IMPORT_SERVICE_FINISHED, LocalAction.ACTION_IMPORT_SERVICE_FAILED)
+        assertEquals(2, mTokens.size)
+        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_STARTED))
+        assertEquals("t", mTokens.get(LocalAction.ACTION_IMPORT_SERVICE_FINISHED))
     }
 
     @Test
-    public void theStartAndTheEndOfAnExportCarryTheToken() {
-        File folder = new File(mContext.getCacheDir(), "export");
-        assertTrue(folder.isDirectory() || folder.mkdirs());
-        Wallet wallet = new Wallet(1L, "Cash", IconLoader.parse(ICON), CurrencyManager.getCurrency("EUR"), 0L, 0L);
+    fun theStartAndTheEndOfAnExportCarryTheToken() {
+        val folder = File(mContext.cacheDir, "export")
+        assertTrue(folder.isDirectory || folder.mkdirs())
+        val wallet = Wallet(1L, "Cash", IconLoader.parse(ICON), CurrencyManager.getCurrency("EUR"), 0L, 0L)
         // FileProvider only accepts a path whose separator is a forward slash, so on a Windows
         // host it refuses every file. The uri it hands back is not what this test is about.
-        try (MockedStatic<FileProvider> provider = mockStatic(FileProvider.class)) {
-            provider.when(() -> FileProvider.getUriForFile(any(Context.class), anyString(), any(File.class)))
-                    .thenAnswer(call -> Uri.fromFile(call.getArgument(2)));
-            run(new Intent(mContext, ImportExportIntentService.class)
+        mockStatic(FileProvider::class.java).use { provider ->
+            provider.`when`<Uri> { FileProvider.getUriForFile(any(Context::class.java), anyString(), any(File::class.java)) }
+                    .thenAnswer { call -> Uri.fromFile(call.getArgument(2)) }
+            run(Intent(mContext, ImportExportIntentService::class.java)
                     .putExtra(ImportExportIntentService.MODE, ImportExportIntentService.MODE_EXPORT)
                     .putExtra(ImportExportIntentService.FORMAT, DataFormat.CSV)
-                    .putExtra(ImportExportIntentService.WALLETS, new Wallet[]{wallet})
-                    .putExtra(ImportExportIntentService.FOLDER, folder));
+                    .putExtra(ImportExportIntentService.WALLETS, arrayOf(wallet))
+                    .putExtra(ImportExportIntentService.FOLDER, folder))
         }
-        assertReached(LocalAction.ACTION_EXPORT_SERVICE_FINISHED, LocalAction.ACTION_EXPORT_SERVICE_FAILED);
-        assertEquals(2, mTokens.size());
-        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_STARTED));
-        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_FINISHED));
+        assertReached(LocalAction.ACTION_EXPORT_SERVICE_FINISHED, LocalAction.ACTION_EXPORT_SERVICE_FAILED)
+        assertEquals(2, mTokens.size)
+        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_STARTED))
+        assertEquals("t", mTokens.get(LocalAction.ACTION_EXPORT_SERVICE_FINISHED))
     }
 
-    private void run(Intent intent) {
-        run(Robolectric.setupService(ImportExportIntentService.class), intent, "t");
+    private fun run(intent: Intent) {
+        run(Robolectric.setupService(ImportExportIntentService::class.java), intent, "t")
     }
 
-    private void run(ImportExportIntentService service, Intent intent, String token) {
-        service.onHandleIntent(intent.putExtra(ImportExportIntentService.TOKEN, token));
-        shadowOf(Looper.getMainLooper()).idle();
+    private fun run(service: ImportExportIntentService, intent: Intent, token: String) {
+        ReflectionHelpers.callInstanceMethod<Any>(service, "onHandleIntent",
+                ReflectionHelpers.ClassParameter.from(Intent::class.java, intent.putExtra(ImportExportIntentService.TOKEN, token)))
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     /** Names the exception when the work failed, so a red run says why the end was not reached. */
-    private void assertReached(String finished, String failed) {
-        Intent failure = mBroadcasts.get(failed);
+    private fun assertReached(finished: String, failed: String) {
+        val failure = mBroadcasts.get(failed)
         if (failure != null) {
-            throw new AssertionError("the work failed instead of finishing",
-                    (Throwable) failure.getSerializableExtra(ImportExportIntentService.EXCEPTION));
+            throw AssertionError("the work failed instead of finishing",
+                    failure.getSerializableExtra(ImportExportIntentService.EXCEPTION) as Throwable?)
         }
-        assertTrue(finished + " was never sent", mBroadcasts.containsKey(finished));
+        assertTrue(finished + " was never sent", mBroadcasts.containsKey(finished))
     }
 }
