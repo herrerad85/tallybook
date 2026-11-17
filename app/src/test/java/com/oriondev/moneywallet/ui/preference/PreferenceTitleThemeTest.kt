@@ -17,30 +17,28 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.preference;
+package com.oriondev.moneywallet.ui.preference
 
-import android.widget.FrameLayout;
-import android.widget.TextView;
+import android.widget.FrameLayout
+import android.widget.TextView
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceGroupAdapter;
-import androidx.preference.PreferenceManager;
-import androidx.preference.PreferenceScreen;
-import androidx.preference.PreferenceViewHolder;
+import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.Preference
+import androidx.preference.PreferenceGroupAdapter
+import androidx.preference.PreferenceManager
+import androidx.preference.PreferenceViewHolder
 
-import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
 
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.android.controller.ActivityController;
+import org.junit.After
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 
 /**
  * A settings row keeps the current title color when its value changes.
@@ -50,16 +48,16 @@ import static org.junit.Assert.assertNotNull;
  * theme it was built with. Deep dark made that unreadable, because the copy was black and the
  * window behind it was too.
  */
-@RunWith(RobolectricTestRunner.class)
-public class PreferenceTitleThemeTest {
+@RunWith(RobolectricTestRunner::class)
+class PreferenceTitleThemeTest {
 
-    private PreferenceGroupAdapter mAdapter;
-    private int mTitleColorAsBuilt;
+    private lateinit var mAdapter: PreferenceGroupAdapter
+    private var mTitleColorAsBuilt: Int = 0
 
     /** The theme lives in shared preferences the engine holds open, so it outlives the test. */
     @After
-    public void restoreTheDefaultMode() {
-        ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+    fun restoreTheDefaultMode() {
+        ThemeEngine.setMode(ThemeEngine.Mode.LIGHT)
     }
 
     /**
@@ -68,18 +66,17 @@ public class PreferenceTitleThemeTest {
      * one that has to survive.
      */
     @Test
-    public void aRowReboundAfterAModeChangeKeepsTheNewModesTitleColor() {
-        ActivityController<AppCompatActivity> controller =
-                Robolectric.buildActivity(AppCompatActivity.class).setup();
+    fun aRowReboundAfterAModeChangeKeepsTheNewModesTitleColor() {
+        val controller = Robolectric.buildActivity(AppCompatActivity::class.java).setup()
         try {
-            AppCompatActivity activity = controller.get();
-            assertAModeChangeSurvivesARebind(activity, new ThemedPreference(activity));
-            assertAModeChangeSurvivesARebind(activity, new ColorPreference(activity));
-            assertAModeChangeSurvivesARebind(activity, new ThemedListPreference(activity));
-            assertAModeChangeSurvivesARebind(activity, new ThemedInputPreference(activity));
-            assertAModeChangeSurvivesARebind(activity, new ThemedSwitchPreference(activity));
+            val activity = controller.get()
+            assertAModeChangeSurvivesARebind(activity, ThemedPreference(activity))
+            assertAModeChangeSurvivesARebind(activity, ColorPreference(activity))
+            assertAModeChangeSurvivesARebind(activity, ThemedListPreference(activity))
+            assertAModeChangeSurvivesARebind(activity, ThemedInputPreference(activity))
+            assertAModeChangeSurvivesARebind(activity, ThemedSwitchPreference(activity))
         } finally {
-            controller.close();
+            controller.close()
         }
     }
 
@@ -91,53 +88,52 @@ public class PreferenceTitleThemeTest {
      * trusting it landed.
      */
     @Test
-    public void aCategoryReboundAfterAnAccentChangeKeepsTheNewAccent() {
-        ActivityController<AppCompatActivity> controller =
-                Robolectric.buildActivity(AppCompatActivity.class).setup();
-        int originalAccent = ThemeEngine.getTheme().getColorAccent();
+    fun aCategoryReboundAfterAnAccentChangeKeepsTheNewAccent() {
+        val controller = Robolectric.buildActivity(AppCompatActivity::class.java).setup()
+        val originalAccent = ThemeEngine.getTheme().colorAccent
         try {
-            AppCompatActivity activity = controller.get();
-            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
-            PreferenceViewHolder holder = buildRow(activity, new ThemedPreferenceCategory(activity));
-            TextView header = titleOf(holder);
+            val activity = controller.get()
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT)
+            val holder = buildRow(activity, ThemedPreferenceCategory(activity))
+            val header = titleOf(holder)
 
-            ThemeEngine.setColorAccent(0xFF009688);
-            ThemeEngine.applyTheme(holder.itemView, true);
-            int after = header.getCurrentTextColor();
+            ThemeEngine.setColorAccent(0xFF009688.toInt())
+            ThemeEngine.applyTheme(holder.itemView, true)
+            val after = header.currentTextColor
             assertEquals("the contrast floor dropped the accent before it reached the header",
-                    ThemeEngine.getTheme().getColorAccent(), after);
+                    ThemeEngine.getTheme().colorAccent, after)
             assertNotEquals("the header was built in the color the rebind has to keep, so a rebind"
-                    + " proves nothing", mTitleColorAsBuilt, after);
+                    + " proves nothing", mTitleColorAsBuilt, after)
 
-            mAdapter.onBindViewHolder(holder, 0);
+            mAdapter.onBindViewHolder(holder, 0)
             assertEquals("the rebind put back the accent the header was built with",
-                    after, header.getCurrentTextColor());
+                    after, header.currentTextColor)
         } finally {
-            ThemeEngine.setColorAccent(originalAccent);
-            controller.close();
+            ThemeEngine.setColorAccent(originalAccent)
+            controller.close()
         }
     }
 
-    private void assertAModeChangeSurvivesARebind(AppCompatActivity activity, Preference preference) {
-        String name = preference.getClass().getSimpleName();
-        ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
-        PreferenceViewHolder holder = buildRow(activity, preference);
-        TextView title = titleOf(holder);
-        int light = ThemeEngine.getTheme().getTextColorPrimary();
+    private fun assertAModeChangeSurvivesARebind(activity: AppCompatActivity, preference: Preference) {
+        val name = preference.javaClass.simpleName
+        ThemeEngine.setMode(ThemeEngine.Mode.LIGHT)
+        val holder = buildRow(activity, preference)
+        val title = titleOf(holder)
+        val light = ThemeEngine.getTheme().textColorPrimary
         assertEquals(name + " did not start in the light mode color",
-                light, title.getCurrentTextColor());
+                light, title.currentTextColor)
 
-        ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK);
-        ThemeEngine.applyTheme(holder.itemView, true);
-        int deepDark = ThemeEngine.getTheme().getTextColorPrimary();
+        ThemeEngine.setMode(ThemeEngine.Mode.DEEP_DARK)
+        ThemeEngine.applyTheme(holder.itemView, true)
+        val deepDark = ThemeEngine.getTheme().textColorPrimary
         assertEquals(name + " was not repainted for deep dark",
-                deepDark, title.getCurrentTextColor());
+                deepDark, title.currentTextColor)
         assertNotEquals(name + " was built in the color the rebind has to keep, so a rebind proves"
-                + " nothing", mTitleColorAsBuilt, deepDark);
+                + " nothing", mTitleColorAsBuilt, deepDark)
 
-        mAdapter.onBindViewHolder(holder, 0);
+        mAdapter.onBindViewHolder(holder, 0)
         assertEquals(name + " lost its title to the color it was built with",
-                deepDark, title.getCurrentTextColor());
+                deepDark, title.currentTextColor)
     }
 
     /**
@@ -149,22 +145,22 @@ public class PreferenceTitleThemeTest {
      * The color the row is built in is recorded, because that is what a rebind restores, and a
      * test that expects the rebind to land on that same color would pass with the fix deleted.
      */
-    private PreferenceViewHolder buildRow(AppCompatActivity activity, Preference preference) {
-        preference.setTitle("Income color");
-        PreferenceManager manager = new PreferenceManager(activity);
-        PreferenceScreen screen = manager.createPreferenceScreen(activity);
-        screen.addPreference(preference);
-        mAdapter = new PreferenceGroupAdapter(screen);
-        PreferenceViewHolder holder = mAdapter.onCreateViewHolder(
-                new FrameLayout(activity), mAdapter.getItemViewType(0));
-        mTitleColorAsBuilt = titleOf(holder).getCurrentTextColor();
-        ThemeEngine.applyTheme(holder.itemView, true);
-        return holder;
+    private fun buildRow(activity: AppCompatActivity, preference: Preference): PreferenceViewHolder {
+        preference.title = "Income color"
+        val manager = PreferenceManager(activity)
+        val screen = manager.createPreferenceScreen(activity)
+        screen.addPreference(preference)
+        mAdapter = PreferenceGroupAdapter(screen)
+        val holder = mAdapter.onCreateViewHolder(
+                FrameLayout(activity), mAdapter.getItemViewType(0))
+        mTitleColorAsBuilt = titleOf(holder).currentTextColor
+        ThemeEngine.applyTheme(holder.itemView, true)
+        return holder
     }
 
-    private TextView titleOf(PreferenceViewHolder holder) {
-        TextView title = (TextView) holder.findViewById(android.R.id.title);
-        assertNotNull("the row has no title view", title);
-        return title;
+    private fun titleOf(holder: PreferenceViewHolder): TextView {
+        val title = holder.findViewById(android.R.id.title) as TextView?
+        assertNotNull("the row has no title view", title)
+        return title!!
     }
 }
