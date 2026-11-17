@@ -398,6 +398,7 @@
     <string name="adapter_left_per_day_money">"Left per day:"</string>
     <string name="adapter_spent_per_day_money">"Spent per day:"</string>
     <string name="adapter_tax_money">"Tax:"</string>
+    <string name="adapter_previous_periods">"Last 3 periods"</string>
 
     <string name="header_debts_to_pay">"To pay:"</string>
     <string name="header_debts_to_receive">"To receive:"</string>
@@ -542,7 +543,8 @@
         <item quantity="one">"Split into %d category"</item>
         <item quantity="other">"Split into %d categories"</item>
     </plurals>
-    <string name="description_budget_period">"Period starting %1$s, %2$s"</string>
+    <string name="description_budget_period_spent">"Period starting %1$s, spent %2$s"</string>
+    <string name="description_budget_period_earned">"Period starting %1$s, earned %2$s"</string>
     <string name="message_selection_changed_nothing_changed">"The selection changed, so nothing was changed."</string>
     <string name="message_delete_transfer">"Are you sure you want to delete this transfer?"</string>
     <string name="message_error_delete_transaction_of_transfer">"This transaction cannot be deleted because is part of a transfer. Please remove the related transfer to delete this transaction."</string>
