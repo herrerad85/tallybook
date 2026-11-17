@@ -17,89 +17,90 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api.webdav;
+package com.oriondev.moneywallet.api.webdav
 
-import com.oriondev.moneywallet.model.WebDAVFile;
+import com.oriondev.moneywallet.model.WebDAVFile
 
-import org.junit.Test;
+import org.junit.Test
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.Charset;
-import java.util.List;
+import java.io.ByteArrayInputStream
+import java.nio.charset.Charset
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 /**
  * Covers the parts of the WebDAV client that do not touch the network: URL handling and the
  * PROPFIND response parser. Those are where the interoperability bugs live, because servers
  * disagree about href shape and namespace prefixes while the HTTP verbs themselves are trivial.
  */
-public class WebDAVClientTest {
+class WebDAVClientTest {
 
-    private static List<WebDAVFile> parse(String xml, String basePath, String requestedPath) throws Exception {
+    @Throws(Exception::class)
+    private fun parse(xml: String, basePath: String, requestedPath: String): List<WebDAVFile> {
         return WebDAVClient.parsePropfind(
-                new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))),
+                ByteArrayInputStream(xml.toByteArray(Charset.forName("UTF-8"))),
                 basePath,
                 requestedPath
-        );
+        )
     }
 
     @Test
-    public void normalizeBaseUrl_alwaysEndsWithExactlyOneSlash() {
-        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("https://cloud.example.org/dav"));
-        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("https://cloud.example.org/dav/"));
-        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("https://cloud.example.org/dav///"));
-        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("  https://cloud.example.org/dav  "));
+    fun normalizeBaseUrl_alwaysEndsWithExactlyOneSlash() {
+        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("https://cloud.example.org/dav"))
+        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("https://cloud.example.org/dav/"))
+        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("https://cloud.example.org/dav///"))
+        assertEquals("https://cloud.example.org/dav/", WebDAVClient.normalizeBaseUrl("  https://cloud.example.org/dav  "))
     }
 
     @Test
-    public void encodePath_escapesSegmentsButKeepsSeparators() {
-        assertEquals("backups/my%20backup.zip", WebDAVClient.encodePath("backups/my backup.zip"));
-        assertEquals("a/b/c.zip", WebDAVClient.encodePath("a/b/c.zip"));
-        assertEquals("", WebDAVClient.encodePath(""));
+    fun encodePath_escapesSegmentsButKeepsSeparators() {
+        assertEquals("backups/my%20backup.zip", WebDAVClient.encodePath("backups/my backup.zip"))
+        assertEquals("a/b/c.zip", WebDAVClient.encodePath("a/b/c.zip"))
+        assertEquals("", WebDAVClient.encodePath(""))
     }
 
     @Test
-    public void encodePath_escapesNonAsciiRatherThanSendingItRaw() {
-        assertEquals("d%C3%A9penses/f%C3%A9vrier.zip", WebDAVClient.encodePath("dépenses/février.zip"));
+    fun encodePath_escapesNonAsciiRatherThanSendingItRaw() {
+        assertEquals("d%C3%A9penses/f%C3%A9vrier.zip", WebDAVClient.encodePath("dépenses/février.zip"))
     }
 
     @Test
-    public void encodePath_usesPercentTwentyNotPlusForSpaces() {
-        assertFalse(WebDAVClient.encodePath("two words").contains("+"));
+    fun encodePath_usesPercentTwentyNotPlusForSpaces() {
+        assertFalse(WebDAVClient.encodePath("two words").contains("+"))
     }
 
     @Test
-    public void hrefToRelativePath_handlesAbsoluteUrlAndAbsolutePathForms() {
+    fun hrefToRelativePath_handlesAbsoluteUrlAndAbsolutePathForms() {
         assertEquals("backups/one.zip",
-                WebDAVClient.hrefToRelativePath("https://cloud.example.org/dav/backups/one.zip", "/dav/"));
+                WebDAVClient.hrefToRelativePath("https://cloud.example.org/dav/backups/one.zip", "/dav/"))
         assertEquals("backups/one.zip",
-                WebDAVClient.hrefToRelativePath("/dav/backups/one.zip", "/dav/"));
+                WebDAVClient.hrefToRelativePath("/dav/backups/one.zip", "/dav/"))
     }
 
     @Test
-    public void hrefToRelativePath_decodesAndTrimsTrailingSlashOnCollections() {
-        assertEquals("my backup", WebDAVClient.hrefToRelativePath("/dav/my%20backup/", "/dav/"));
+    fun hrefToRelativePath_decodesAndTrimsTrailingSlashOnCollections() {
+        assertEquals("my backup", WebDAVClient.hrefToRelativePath("/dav/my%20backup/", "/dav/"))
     }
 
     @Test
-    public void trimSlashes_stripsBothEnds() {
-        assertEquals("a/b", WebDAVClient.trimSlashes("/a/b/"));
-        assertEquals("", WebDAVClient.trimSlashes("/"));
-        assertEquals("", WebDAVClient.trimSlashes(null));
+    fun trimSlashes_stripsBothEnds() {
+        assertEquals("a/b", WebDAVClient.trimSlashes("/a/b/"))
+        assertEquals("", WebDAVClient.trimSlashes("/"))
+        assertEquals("", WebDAVClient.trimSlashes(null))
     }
 
     @Test
-    public void nameOf_takesTheLastSegment() {
-        assertEquals("one.zip", WebDAVClient.nameOf("backups/one.zip"));
-        assertEquals("one.zip", WebDAVClient.nameOf("one.zip"));
+    fun nameOf_takesTheLastSegment() {
+        assertEquals("one.zip", WebDAVClient.nameOf("backups/one.zip"))
+        assertEquals("one.zip", WebDAVClient.nameOf("one.zip"))
     }
 
     @Test
-    public void parsePropfind_readsChildrenAndDropsTheRequestedFolderItself() throws Exception {
-        String xml = "<?xml version=\"1.0\"?>"
+    @Throws(Exception::class)
+    fun parsePropfind_readsChildrenAndDropsTheRequestedFolderItself() {
+        val xml = ("<?xml version=\"1.0\"?>"
                 + "<d:multistatus xmlns:d=\"DAV:\">"
                 + "  <d:response><d:href>/dav/backups/</d:href><d:propstat><d:prop>"
                 + "    <d:resourcetype><d:collection/></d:resourcetype>"
@@ -110,18 +111,18 @@ public class WebDAVClientTest {
                 + "  <d:response><d:href>/dav/backups/nested/</d:href><d:propstat><d:prop>"
                 + "    <d:resourcetype><d:collection/></d:resourcetype>"
                 + "  </d:prop></d:propstat></d:response>"
-                + "</d:multistatus>";
+                + "</d:multistatus>")
 
-        List<WebDAVFile> files = parse(xml, "/dav/", "backups");
+        val files = parse(xml, "/dav/", "backups")
 
-        assertEquals(2, files.size());
-        assertEquals("one.zip", files.get(0).getName());
-        assertEquals("backups/one.zip", files.get(0).getPath());
-        assertEquals(1234L, files.get(0).getSize());
-        assertFalse(files.get(0).isDirectory());
-        assertEquals("nested", files.get(1).getName());
-        assertTrue(files.get(1).isDirectory());
-        assertEquals(0L, files.get(1).getSize());
+        assertEquals(2, files.size)
+        assertEquals("one.zip", files.get(0).getName())
+        assertEquals("backups/one.zip", files.get(0).getPath())
+        assertEquals(1234L, files.get(0).getSize())
+        assertFalse(files.get(0).isDirectory())
+        assertEquals("nested", files.get(1).getName())
+        assertTrue(files.get(1).isDirectory())
+        assertEquals(0L, files.get(1).getSize())
     }
 
     /**
@@ -130,48 +131,51 @@ public class WebDAVClientTest {
      * next.
      */
     @Test
-    public void parsePropfind_ignoresTheNamespacePrefixTheServerChose() throws Exception {
-        String xml = "<?xml version=\"1.0\"?>"
+    @Throws(Exception::class)
+    fun parsePropfind_ignoresTheNamespacePrefixTheServerChose() {
+        val xml = ("<?xml version=\"1.0\"?>"
                 + "<D:multistatus xmlns:D=\"DAV:\" xmlns:lp1=\"DAV:\">"
                 + "  <D:response><D:href>https://host.example.org/dav/two.zip</D:href><D:propstat><D:prop>"
                 + "    <lp1:resourcetype/><lp1:getcontentlength>7</lp1:getcontentlength>"
                 + "  </D:prop></D:propstat></D:response>"
-                + "</D:multistatus>";
+                + "</D:multistatus>")
 
-        List<WebDAVFile> files = parse(xml, "/dav/", "");
+        val files = parse(xml, "/dav/", "")
 
-        assertEquals(1, files.size());
-        assertEquals("two.zip", files.get(0).getName());
-        assertEquals(7L, files.get(0).getSize());
+        assertEquals(1, files.size)
+        assertEquals("two.zip", files.get(0).getName())
+        assertEquals(7L, files.get(0).getSize())
     }
 
     @Test
-    public void parsePropfind_decodesPercentEncodedNames() throws Exception {
-        String xml = "<?xml version=\"1.0\"?>"
+    @Throws(Exception::class)
+    fun parsePropfind_decodesPercentEncodedNames() {
+        val xml = ("<?xml version=\"1.0\"?>"
                 + "<d:multistatus xmlns:d=\"DAV:\">"
                 + "  <d:response><d:href>/dav/my%20backup.zip</d:href><d:propstat><d:prop>"
                 + "    <d:resourcetype/><d:getcontentlength>3</d:getcontentlength>"
                 + "  </d:prop></d:propstat></d:response>"
-                + "</d:multistatus>";
+                + "</d:multistatus>")
 
-        List<WebDAVFile> files = parse(xml, "/dav/", "");
+        val files = parse(xml, "/dav/", "")
 
-        assertEquals(1, files.size());
-        assertEquals("my backup.zip", files.get(0).getName());
+        assertEquals(1, files.size)
+        assertEquals("my backup.zip", files.get(0).getName())
     }
 
     @Test
-    public void parsePropfind_survivesAMissingContentLength() throws Exception {
-        String xml = "<?xml version=\"1.0\"?>"
+    @Throws(Exception::class)
+    fun parsePropfind_survivesAMissingContentLength() {
+        val xml = ("<?xml version=\"1.0\"?>"
                 + "<d:multistatus xmlns:d=\"DAV:\">"
                 + "  <d:response><d:href>/dav/odd.zip</d:href><d:propstat><d:prop>"
                 + "    <d:resourcetype/>"
                 + "  </d:prop></d:propstat></d:response>"
-                + "</d:multistatus>";
+                + "</d:multistatus>")
 
-        List<WebDAVFile> files = parse(xml, "/dav/", "");
+        val files = parse(xml, "/dav/", "")
 
-        assertEquals(1, files.size());
-        assertEquals(0L, files.get(0).getSize());
+        assertEquals(1, files.size)
+        assertEquals(0L, files.get(0).getSize())
     }
 }
