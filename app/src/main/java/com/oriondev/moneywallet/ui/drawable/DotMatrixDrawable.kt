@@ -65,7 +65,7 @@ class DotMatrixDrawable : Drawable {
 
         // TALL is for a single character and SMALL for two, both as rows of '#' for a dot and '.' for none
         @JvmField
-        val TALL: Map<Char, Array<String>> = font(
+        internal val TALL: Map<Char, Array<String>> = font(
                 "A", "..###.. .#...#. #.....# #.....# ####### #.....# #.....# #.....# #.....#",
                 "B", "######. #.....# #.....# #.....# ######. #.....# #.....# #.....# ######.",
                 "C", ".#####. #.....# #...... #...... #...... #...... #...... #.....# .#####.",
@@ -104,7 +104,7 @@ class DotMatrixDrawable : Drawable {
                 "9", ".#####. #.....# #.....# #.....# .###### ......# ......# .....#. .####..",
                 "?", ".#####. #.....# ......# .....#. ....#.. ...#... ...#... ....... ...#...")
         @JvmField
-        val SMALL: Map<Char, Array<String>> = font(
+        internal val SMALL: Map<Char, Array<String>> = font(
                 "A", ".###. #...# #...# ##### #...# #...# #...#",
                 "B", "####. #...# #...# ####. #...# #...# ####.",
                 "C", ".###. #...# #.... #.... #.... #...# .###.",
@@ -166,7 +166,7 @@ class DotMatrixDrawable : Drawable {
         }
 
         @JvmStatic
-        fun letters(text: String?): Array<String?>? {
+        internal fun letters(text: String?): Array<String?>? {
             if (text == null || text.isEmpty() || text.length > 2) {
                 return null
             }
@@ -220,7 +220,7 @@ class DotMatrixDrawable : Drawable {
          * the ink starts as the disc color, stepping toward black or white until it reads at 3:1.
          */
         @JvmStatic
-        fun tint(discColor: Int, dark: Boolean): IntArray {
+        internal fun tint(discColor: Int, dark: Boolean): IntArray {
             val tile = mix(if (dark) DARK_TILE else LIGHT_TILE, discColor, if (dark) 0.32 else 0.22)
             val stroke = mix(tile, discColor, 0.40)
             val target = if (luminance(tile) > 0.4) 0xFF000000.toInt() else 0xFFFFFFFF.toInt()
@@ -254,7 +254,7 @@ class DotMatrixDrawable : Drawable {
         }
 
         @JvmStatic
-        fun contrast(a: Int, b: Int): Double {
+        internal fun contrast(a: Int, b: Int): Double {
             val x = luminance(a)
             val y = luminance(b)
             return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
