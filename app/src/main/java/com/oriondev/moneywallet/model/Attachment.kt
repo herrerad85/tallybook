@@ -135,6 +135,9 @@ class Attachment : Parcelable, Identifiable {
     }
 
     fun getUri(context: Context?): Uri? {
+        if (!isPlainFileName(mFile)) {
+            return null
+        }
         val authority = context!!.packageName + ".storage.file"
         val folder = File(context.getExternalFilesDir(null), FOLDER_NAME)
         val attachment = File(folder, mFile)
@@ -169,6 +172,12 @@ class Attachment : Parcelable, Identifiable {
         @JvmStatic
         fun generateFileUID(): String {
             return UUID.randomUUID().toString().replace("-", "")
+        }
+
+        @JvmStatic
+        fun isPlainFileName(fileName: String?): Boolean {
+            return !fileName.isNullOrEmpty() && !fileName.contains("/") && !fileName.contains("\\") &&
+                    fileName != "." && fileName != ".."
         }
 
         @JvmStatic

@@ -88,7 +88,11 @@ class AttachmentHandlerIntentService : IntentService {
     private fun getAttachmentFile(attachment: Attachment?): File {
         val folder = File(getExternalFilesDir(null), "attachments")
         FileUtils.forceMkdir(folder)
-        val file = File(folder, attachment!!.getFile())
+        val fileName = attachment!!.getFile()
+        if (!Attachment.isPlainFileName(fileName)) {
+            throw IOException("Invalid attachment file name")
+        }
+        val file = File(folder, fileName)
         if (!file.exists() && !file.createNewFile()) {
             throw IOException("Failed to create a new file")
         }

@@ -6178,8 +6178,7 @@ import java.util.function.Supplier;
     private void deleteAttachmentFile(File folder, String fileName) {
         // the name is read back out of a column, and a restored backup writes that column through,
         // so it is used only when it is a plain file name and not a way out of this folder
-        if (TextUtils.isEmpty(fileName) || fileName.contains("/") || fileName.contains("\\")
-                || fileName.equals(".") || fileName.equals("..")) {
+        if (!Attachment.isPlainFileName(fileName)) {
             return;
         }
         // a file that will not delete is left where it is. Its row has gone either way, so it is

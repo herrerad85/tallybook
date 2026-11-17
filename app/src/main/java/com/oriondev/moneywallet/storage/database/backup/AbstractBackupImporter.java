@@ -49,6 +49,8 @@ public abstract class AbstractBackupImporter {
      * their whole ledger, and after that removal nothing in the app would ever collect it.
      */
     private static final String ABANDONED_BACKUP_COPY = "database.bk";
+    private static final String STAGING_ATTACHMENT_FOLDER = "attachments.staging";
+    private static final String ASIDE_ATTACHMENT_FOLDER = "attachments.bk";
 
     private final Context mContext;
     private final File mBackupFile;
@@ -84,12 +86,6 @@ public abstract class AbstractBackupImporter {
      * recurrence job on an emulator ended the run with FATAL EXCEPTION on the AsyncTask that
      * JobIntentService dispatches on, with the process gone. Every component here shares that
      * one process, so the restore died with it.
-     *
-     * What this does NOT cover is the attachments. BackupHandlerIntentService runs importDatabase
-     * and then importAttachments, and importAttachments empties the attachment folder before it
-     * extracts anything, so a failure there leaves the new ledger live and the files gone. True
-     * before this change and not made worse by it. No sentence anywhere may call the restore
-     * atomic without naming it.
      */
     public void importDatabase(@NonNull File temporaryFolder, @NonNull File databaseFolder) throws ImportException {
         File staged = new File(databaseFolder, SQLDatabaseImporter.STAGING_DATABASE_NAME);
@@ -124,16 +120,23 @@ public abstract class AbstractBackupImporter {
     protected abstract void importDatabase(@NonNull File temporaryFolder) throws ImportException;
 
     public void importAttachments(@NonNull File attachmentFolder) throws ImportException {
+        File stagingFolder = new File(attachmentFolder.getParentFile(), STAGING_ATTACHMENT_FOLDER);
+        File asideFolder = new File(attachmentFolder.getParentFile(), ASIDE_ATTACHMENT_FOLDER);
         try {
-            if (attachmentFolder.exists()) {
-                FileUtils.cleanDirectory(attachmentFolder);
-            } else {
-                FileUtils.forceMkdir(attachmentFolder);
-            }
-            importAttachmentFiles(attachmentFolder);
+            restoreAsideAttachments(attachmentFolder, asideFolder);
+            FileUtils.deleteQuietly(asideFolder);
+            FileUtils.deleteQuietly(stagingFolder);
+            FileUtils.forceMkdir(attachmentFolder);
+            FileUtils.forceMkdir(stagingFolder);
+            importAttachmentFiles(stagingFolder);
         } catch (IOException e) {
+            FileUtils.deleteQuietly(stagingFolder);
             throw new ImportException(e.getMessage());
+        } catch (ImportException | RuntimeException e) {
+            FileUtils.deleteQuietly(stagingFolder);
+            throw e;
         }
+        promoteStagedAttachments(attachmentFolder, stagingFolder, asideFolder);
     }
 
     protected abstract void importAttachmentFiles(File attachmentFolder) throws IOException, ImportException;
@@ -214,6 +217,29 @@ public abstract class AbstractBackupImporter {
     private void discardStagedDatabase(@NonNull File staged) {
         DataContentProvider.closeStagingDatabase();
         deleteDatabaseAndJournal(staged);
+    }
+
+    private static void restoreAsideAttachments(@NonNull File attachmentFolder, @NonNull File asideFolder) throws ImportException {
+        String[] attachments = attachmentFolder.list();
+        if (asideFolder.isDirectory() && (attachments == null || attachments.length == 0)) {
+            FileUtils.deleteQuietly(attachmentFolder);
+            if (!asideFolder.renameTo(attachmentFolder)) {
+                throw new ImportException("Cannot put the previous attachments back in place");
+            }
+        }
+    }
+
+    private static void promoteStagedAttachments(@NonNull File attachmentFolder, @NonNull File stagingFolder, @NonNull File asideFolder) throws ImportException {
+        if (!attachmentFolder.renameTo(asideFolder)) {
+            FileUtils.deleteQuietly(stagingFolder);
+            throw new ImportException("Cannot move the previous attachments aside");
+        }
+        if (!stagingFolder.renameTo(attachmentFolder)) {
+            asideFolder.renameTo(attachmentFolder);
+            FileUtils.deleteQuietly(stagingFolder);
+            throw new ImportException("Cannot put the imported attachments in place");
+        }
+        FileUtils.deleteQuietly(asideFolder);
     }
 
     private static void deleteDatabaseAndJournal(@NonNull File database) {

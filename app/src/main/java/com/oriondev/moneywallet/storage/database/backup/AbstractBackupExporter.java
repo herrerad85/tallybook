@@ -53,7 +53,7 @@ public abstract class AbstractBackupExporter {
             while (cursor.moveToNext()) {
                 Attachment attachment = SQLDatabaseExporter.getAttachment(cursor);
                 File file = new File(attachmentFolder, attachment.mFile);
-                if (file.exists()) {
+                if (com.oriondev.moneywallet.model.Attachment.isPlainFileName(attachment.mFile) && file.exists()) {
                     fileList.add(file);
                 }
             }
