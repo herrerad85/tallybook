@@ -29,15 +29,19 @@ The F-Droid build is reproducible and carries the developer signature, so the ap
 
 - **Wallets.** Keep as many as you need, each in its own currency.
 - **Categories.** Group spending into categories and subcategories, and open a category total into the ones underneath it.
-- **Budgets.** Set a limit for a period, cover more than one category with it, and let it repeat into the next period on its own.
+- **Split transactions.** Spread one receipt over several categories and count each part where it belongs.
+- **Search.** Find transactions by category, text, people, status, wallet, amount or date.
+- **Budgets.** Set a limit for a period, cover more than one category with it, and let it repeat into the next period on its own. A spending budget's bar turns amber near the limit and red past it, and a repeating budget shows bars for its last three periods.
 - **Recurring transactions.** Post on a schedule you set, including transfers between wallets.
 - **Debts and savings goals.** Track what you owe, what you are owed, and what you are putting aside.
 - **Reports.** See a period's income and spending, with charts by category.
 - **Calendar.** A day strip marks the days that have transactions.
 - **Widget.** A home screen widget shows one wallet's balance.
+- **Automation.** Tasker and other automation apps can open a new transaction already filled in, or save one with no tap once you allow it.
+- **Themes.** Light, Dark, Deep dark or following the phone, with colors from your wallpaper if you like.
 - **Backup.** Write to a local folder, to your own WebDAV server such as Nextcloud or a NAS, or through Android's own backup.
 - **Import and export.** CSV in, and CSV, XLS or PDF out, plus the older MoneyWallet backup file.
-- **Lock.** An optional PIN, pattern or fingerprint when the app opens.
+- **Lock.** An optional PIN, pattern or fingerprint when the app opens. While it is on, screenshots of the app come out black.
 
 ## Coming from MoneyWallet
 
@@ -45,7 +49,9 @@ Tallybook is a maintained fork of [MoneyWallet](https://github.com/AndreAle94/mo
 
 ## Docs
 
+- [Usage guide](https://herrerad85.github.io/tallybook/)
 - [FAQ](docs/FAQ.md)
+- [Adding transactions from another app](docs/AUTOMATION.md)
 - [Moving from MoneyWallet](MIGRATION.md)
 - [CSV import format](docs/CSV.md)
 - [Privacy](PRIVACY.md)
