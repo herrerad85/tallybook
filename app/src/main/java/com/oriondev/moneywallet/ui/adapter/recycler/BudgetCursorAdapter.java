@@ -38,7 +38,9 @@ import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.model.Icon;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.storage.wrapper.BudgetPeriodCursor;
 import com.oriondev.moneywallet.ui.view.MaterialProgressBar;
+import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateFormatter;
@@ -57,6 +59,9 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
     private static final String COLOR_INCOMES = "#43A047";
     private static final String COLOR_EXPENSES = "#D32F2F";
     private static final String COLOR_AMBER = "#FFA000";
+
+    private static final int PERIOD_DATE_FLAGS = android.text.format.DateUtils.FORMAT_SHOW_DATE
+            | android.text.format.DateUtils.FORMAT_ABBREV_MONTH | android.text.format.DateUtils.FORMAT_NO_YEAR;
 
     @VisibleForTesting
     static Long sToday;
@@ -180,6 +185,59 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
             holder.mLeftPerDayHeaderTextView.setVisibility(View.GONE);
             holder.mLeftPerDayTextView.setVisibility(View.GONE);
         }
+        bindPeriods(holder, cursor, context, currency, target, expenses);
+    }
+
+    private void bindPeriods(ViewHolder holder, Cursor cursor, Context context, CurrencyUnit currency, long target,
+                             boolean expenses) {
+        Date[] periodStartDates = null;
+        long[] periodProgress = null;
+        if (cursor instanceof BudgetPeriodCursor) {
+            periodStartDates = ((BudgetPeriodCursor) cursor).getPeriodStartDates();
+            periodProgress = ((BudgetPeriodCursor) cursor).getPeriodProgress();
+        }
+        if (periodStartDates != null && periodProgress != null) {
+            ITheme theme = ThemeEngine.getTheme();
+            int barColor = theme.getVisibleColor(theme.getColorAccent(), theme.getBestColor(theme.getColorCardBackground()));
+            int overrunColor = theme.getVisibleColor(PreferenceManager.getCurrentExpenseColor(),
+                    PreferenceManager.getDefaultColorExpense());
+            int areaHeight = ((View) holder.mPeriodBarViews[0].getParent()).getLayoutParams().height;
+            long scale = target;
+            for (long amount : periodProgress) {
+                scale = Math.max(scale, amount);
+            }
+            for (int i = 0; i < holder.mPeriodBarViews.length; i++) {
+                View barView = holder.mPeriodBarViews[i];
+                ViewGroup.LayoutParams params = barView.getLayoutParams();
+                params.height = getPeriodHeight(periodProgress[i], areaHeight, scale);
+                barView.setLayoutParams(params);
+                barView.setBackgroundColor(expenses && periodProgress[i] > target ? overrunColor : barColor);
+                String date = android.text.format.DateUtils.formatDateTime(context, periodStartDates[i].getTime(),
+                        PERIOD_DATE_FLAGS);
+                holder.mPeriodDateTextViews[i].setText(date);
+                holder.mPeriodColumnViews[i].setContentDescription(context.getString(R.string.description_budget_period,
+                        date, mMoneyFormatter.getNotTintedString(currency, periodProgress[i])));
+            }
+            if (target > 0) {
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.mPeriodLimitView.getLayoutParams();
+                params.topMargin = areaHeight - getPeriodHeight(target, areaHeight, scale);
+                holder.mPeriodLimitView.setLayoutParams(params);
+                holder.mPeriodLimitView.setVisibility(View.VISIBLE);
+            } else {
+                holder.mPeriodLimitView.setVisibility(View.GONE);
+            }
+            holder.mPeriodLimitView.setBackgroundColor(theme.getTextColorSecondary());
+            holder.mPeriodLayout.setVisibility(View.VISIBLE);
+        } else {
+            holder.mPeriodLayout.setVisibility(View.GONE);
+        }
+    }
+
+    private static int getPeriodHeight(long amount, int areaHeight, long scale) {
+        if (amount <= 0) {
+            return 0;
+        }
+        return (int) Math.max(amount * areaHeight / scale, 1L);
     }
 
     private static Calendar today() {
@@ -211,6 +269,11 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
         private TextView mLeftPerDayHeaderTextView;
         private TextView mLeftPerDayTextView;
         private TextView mDateTextView;
+        private View mPeriodLayout;
+        private View[] mPeriodColumnViews;
+        private View[] mPeriodBarViews;
+        private TextView[] mPeriodDateTextViews;
+        private View mPeriodLimitView;
 
         /*package-local*/ ViewHolder(View itemView) {
             super(itemView);
@@ -224,6 +287,23 @@ public class BudgetCursorAdapter extends AbstractCursorAdapter<BudgetCursorAdapt
             mLeftPerDayHeaderTextView = itemView.findViewById(R.id.left_per_day_header_text_view);
             mLeftPerDayTextView = itemView.findViewById(R.id.left_per_day_body_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);
+            mPeriodLayout = itemView.findViewById(R.id.period_layout);
+            mPeriodColumnViews = new View[] {
+                    itemView.findViewById(R.id.period_column_layout_1),
+                    itemView.findViewById(R.id.period_column_layout_2),
+                    itemView.findViewById(R.id.period_column_layout_3)
+            };
+            mPeriodBarViews = new View[] {
+                    itemView.findViewById(R.id.period_bar_view_1),
+                    itemView.findViewById(R.id.period_bar_view_2),
+                    itemView.findViewById(R.id.period_bar_view_3)
+            };
+            mPeriodDateTextViews = new TextView[] {
+                    itemView.findViewById(R.id.period_date_text_view_1),
+                    itemView.findViewById(R.id.period_date_text_view_2),
+                    itemView.findViewById(R.id.period_date_text_view_3)
+            };
+            mPeriodLimitView = itemView.findViewById(R.id.period_limit_view);
             itemView.setOnClickListener(this);
         }
 

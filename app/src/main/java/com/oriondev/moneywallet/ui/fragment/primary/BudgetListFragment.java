@@ -20,10 +20,14 @@
 package com.oriondev.moneywallet.ui.fragment.primary;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -32,13 +36,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.broadcast.LocalAction;
 import com.oriondev.moneywallet.broadcast.Message;
+import com.oriondev.moneywallet.model.RecurrenceSetting;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.storage.wrapper.BudgetPeriodCursor;
 import com.oriondev.moneywallet.ui.adapter.recycler.AbstractCursorAdapter;
 import com.oriondev.moneywallet.ui.adapter.recycler.BudgetCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.CursorListFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
+import com.oriondev.moneywallet.utils.DateUtils;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by andrea on 03/03/18.
@@ -46,6 +56,8 @@ import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 public class BudgetListFragment extends CursorListFragment implements BudgetCursorAdapter.ActionListener {
 
     private static final String ARG_BUDGET_EXPIRED = "BudgetListFragment::Arguments::BudgetExpired";
+
+    private static final int PREVIOUS_PERIODS = 3;
 
     public static BudgetListFragment newInstance(boolean expired) {
         Bundle arguments = new Bundle();
@@ -85,7 +97,11 @@ public class BudgetListFragment extends CursorListFragment implements BudgetCurs
                     Contract.Budget.CATEGORY_NAME,
                     Contract.Budget.CATEGORY_TYPE,
                     Contract.Budget.CURRENCY,
-                    Contract.Budget.PROGRESS
+                    Contract.Budget.PROGRESS,
+                    Contract.Budget.RULE,
+                    Contract.Budget.RULE_START,
+                    Contract.Budget.CATEGORY_IDS,
+                    Contract.Budget.WALLET_IDS
             };
             String selection;
             String[] selectionArgs;
@@ -111,10 +127,111 @@ public class BudgetListFragment extends CursorListFragment implements BudgetCurs
                         Contract.Budget.SHOWN_MONEY + " > 0 THEN CAST(" + progress + " AS REAL) / " +
                         Contract.Budget.SHOWN_MONEY + " END DESC, " + sortOrder + " ASC, " +
                         Contract.Budget.ID + " ASC";
+                return new WrappedCursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
             }
             return new CursorLoader(activity, uri, projection, selection, selectionArgs, sortOrder);
         }
         return null;
+    }
+
+    private static class WrappedCursorLoader extends CursorLoader {
+
+        private WrappedCursorLoader(@NonNull Context context, @NonNull Uri uri, @Nullable String[] projection, @Nullable String selection,
+                                    @Nullable String[] selectionArgs, @Nullable String sortOrder) {
+            super(context, uri, projection, selection, selectionArgs, sortOrder);
+        }
+
+        @Override
+        public Cursor loadInBackground() {
+            Cursor cursor = super.loadInBackground();
+            if (cursor == null) {
+                return null;
+            }
+            int indexType = cursor.getColumnIndex(Contract.Budget.TYPE);
+            int indexStartDate = cursor.getColumnIndex(Contract.Budget.START_DATE);
+            int indexRule = cursor.getColumnIndex(Contract.Budget.RULE);
+            int indexRuleStart = cursor.getColumnIndex(Contract.Budget.RULE_START);
+            int indexCategoryIds = cursor.getColumnIndex(Contract.Budget.CATEGORY_IDS);
+            int indexWalletIds = cursor.getColumnIndex(Contract.Budget.WALLET_IDS);
+            Date[][] periodStartDates = new Date[cursor.getCount()][];
+            long[][] periodProgress = new long[cursor.getCount()][];
+            Date today = new Date();
+            for (int position = 0; cursor.moveToPosition(position); position++) {
+                List<Date[]> periods = getPreviousPeriods(cursor, indexStartDate, indexRule, indexRuleStart, today);
+                if (periods == null) {
+                    continue;
+                }
+                long[] progress = getPeriodProgress(cursor, periods, indexType, indexCategoryIds, indexWalletIds);
+                if (progress == null) {
+                    continue;
+                }
+                Date[] starts = new Date[periods.size()];
+                for (int i = 0; i < periods.size(); i++) {
+                    starts[i] = periods.get(i)[0];
+                }
+                periodStartDates[position] = starts;
+                periodProgress[position] = progress;
+            }
+            cursor.moveToPosition(-1);
+            return new BudgetPeriodCursor(cursor, periodStartDates, periodProgress);
+        }
+
+        private static List<Date[]> getPreviousPeriods(Cursor cursor, int indexStartDate, int indexRule, int indexRuleStart,
+                                                       Date today) {
+            String rule = cursor.getString(indexRule);
+            if (rule == null) {
+                return null;
+            }
+            Date startDate;
+            Date ruleStart;
+            try {
+                startDate = DateUtils.getDateFromSQLDateString(cursor.getString(indexStartDate));
+                String ruleStartString = cursor.getString(indexRuleStart);
+                ruleStart = ruleStartString != null ? DateUtils.getDateFromSQLDateString(ruleStartString) : startDate;
+            } catch (RuntimeException e) {
+                Log.w("BudgetListFragment", "Budget rule start does not parse", e);
+                return null;
+            }
+            Date date = DateUtils.getCalendarDaysBetween(today, startDate) > 0 ? today : startDate;
+            List<Date[]> periods;
+            try {
+                periods = RecurrenceSetting.periodsBefore(rule, ruleStart, date, PREVIOUS_PERIODS);
+            } catch (RuntimeException e) {
+                Log.w("BudgetListFragment", "Budget rule does not give its previous periods", e);
+                return null;
+            }
+            if (periods.size() < PREVIOUS_PERIODS) {
+                return null;
+            }
+            return periods;
+        }
+
+        private long[] getPeriodProgress(Cursor cursor, List<Date[]> periods, int indexType, int indexCategoryIds,
+                                         int indexWalletIds) {
+            String[] selectionArgs = new String[3 + 2 * periods.size()];
+            selectionArgs[0] = String.valueOf(cursor.getInt(indexType));
+            selectionArgs[1] = cursor.getString(indexCategoryIds);
+            selectionArgs[2] = cursor.getString(indexWalletIds);
+            for (int i = 0; i < periods.size(); i++) {
+                selectionArgs[3 + 2 * i] = DateUtils.getSQLDateString(periods.get(i)[0]);
+                selectionArgs[4 + 2 * i] = DateUtils.getSQLDateString(periods.get(i)[1]);
+            }
+            long[] progress = new long[periods.size()];
+            boolean counted = false;
+            Cursor periodCursor = getContext().getContentResolver().query(DataContentProvider.CONTENT_BUDGET_PERIOD_PROGRESS,
+                    null, null, selectionArgs, null);
+            if (periodCursor != null) {
+                try {
+                    for (int i = 0; i < progress.length && periodCursor.moveToNext(); i++) {
+                        progress[i] = periodCursor.getLong(periodCursor.getColumnIndexOrThrow(Contract.Budget.PROGRESS));
+                        counted |= progress[i] > 0L;
+                    }
+                } finally {
+                    periodCursor.close();
+                }
+            }
+            return counted ? progress : null;
+        }
     }
 
     @Override

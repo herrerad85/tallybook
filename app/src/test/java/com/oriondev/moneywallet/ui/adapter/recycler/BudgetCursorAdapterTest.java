@@ -4,7 +4,11 @@ import android.app.Activity;
 import android.database.MatrixCursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.text.Layout;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -14,10 +18,13 @@ import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.CurrencyUnit;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
+import com.oriondev.moneywallet.storage.wrapper.BudgetPeriodCursor;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
 import com.oriondev.moneywallet.ui.view.MaterialProgressBar;
+import com.oriondev.moneywallet.ui.view.theme.ITheme;
 import com.oriondev.moneywallet.ui.view.theme.ThemeEngine;
 import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import org.junit.After;
@@ -25,13 +32,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -40,6 +50,10 @@ public class BudgetCursorAdapterTest {
     private static final String[] BAD_STARTS = new String[] {"", "null"};
 
     private static final int AMBER = 0xFFFFA000;
+
+    private static final int YELLOW = 0xFFFFEB3B;
+
+    private static final int INDIGO = 0xFF3F51B5;
 
     private static final String ICON = "{\"type\":\"color\",\"color\":\"#000000\",\"name\":\"T\"}";
 
@@ -54,6 +68,32 @@ public class BudgetCursorAdapterTest {
             Contract.Budget.CATEGORY_TYPE,
             Contract.Budget.CURRENCY,
             Contract.Budget.PROGRESS
+    };
+
+    private static final String[] FOLLOWED_COLUMNS = new String[] {
+            Contract.Budget.ID,
+            Contract.Budget.TYPE,
+            Contract.Budget.SHOWN_MONEY,
+            Contract.Budget.START_DATE,
+            Contract.Budget.END_DATE,
+            Contract.Budget.CATEGORY_ICON,
+            Contract.Budget.CATEGORY_NAME,
+            Contract.Budget.CATEGORY_TYPE,
+            Contract.Budget.CURRENCY,
+            Contract.Budget.PROGRESS,
+            Contract.Budget.MONEY
+    };
+
+    private static final int[] PERIOD_COLUMN_IDS = new int[] {
+            R.id.period_column_layout_1, R.id.period_column_layout_2, R.id.period_column_layout_3
+    };
+
+    private static final int[] PERIOD_BAR_IDS = new int[] {
+            R.id.period_bar_view_1, R.id.period_bar_view_2, R.id.period_bar_view_3
+    };
+
+    private static final int[] PERIOD_DATE_IDS = new int[] {
+            R.id.period_date_text_view_1, R.id.period_date_text_view_2, R.id.period_date_text_view_3
     };
 
     private ActivityScenario<BackupListActivity> mScenario;
@@ -302,6 +342,321 @@ public class BudgetCursorAdapterTest {
         }
     }
 
+    @Test
+    public void periodBarsAreScaledToTheBiggestPeriodWithTheLimitLineAtItsShare() {
+        View row = bindPeriods(expenses(10000, 0), 5000, 10000, 15000);
+        int area = periodAreaHeight(row);
+        assertTrue(area > 0);
+        assertEquals(View.VISIBLE, row.findViewById(R.id.period_layout).getVisibility());
+        assertEquals(area, periodHeight(row, 2));
+        assertEquals(area, 3 * periodHeight(row, 0));
+        assertEquals(2 * area, 3 * periodHeight(row, 1));
+        for (int i = 0; i < PERIOD_BAR_IDS.length; i++) {
+            assertEquals(area, row.findViewById(PERIOD_BAR_IDS[i]).getBottom());
+        }
+        assertEquals(View.VISIBLE, row.findViewById(R.id.period_limit_view).getVisibility());
+        assertEquals(2 * area, 3 * limitHeight(row));
+        assertEquals(ThemeEngine.getTheme().getTextColorSecondary(), color(row.findViewById(R.id.period_limit_view)));
+    }
+
+    @Test
+    public void anExpensesPeriodOneUnitOverTheLimitIsRedAndOneExactlyOnItKeepsTheBarColor() {
+        View row = bindPeriods(expenses(10000, 0), 10001, 10000, 5000);
+        assertEquals(expenseColor(), periodColor(row, 0));
+        assertEquals(periodBarColor(), periodColor(row, 1));
+        assertEquals(periodBarColor(), periodColor(row, 2));
+        assertNotEquals(periodBarColor(), expenseColor());
+    }
+
+    @Test
+    public void anExpenseCategoryPeriodOneUnitOverTheLimitIsRedAndOneExactlyOnItKeepsTheBarColor() {
+        View row = bindPeriods(category(Contract.CategoryType.EXPENSE, 10000, 0), 10001, 10000, 5000);
+        assertEquals(expenseColor(), periodColor(row, 0));
+        assertEquals(periodBarColor(), periodColor(row, 1));
+        assertEquals(periodBarColor(), periodColor(row, 2));
+        assertNotEquals(periodBarColor(), expenseColor());
+    }
+
+    @Test
+    public void incomePeriodsOverTheLimitAreNeverRed() {
+        Object[][] rows = new Object[][] {
+                row(Contract.BudgetType.INCOMES, null, 10000, 0, "2019-11-01", "2019-11-30"),
+                category(Contract.CategoryType.INCOME, 10000, 0)
+        };
+        for (Object[] values : rows) {
+            View row = bindPeriods(values, 20000, 10001, 5000);
+            assertEquals(View.VISIBLE, row.findViewById(R.id.period_layout).getVisibility());
+            for (int i = 0; i < PERIOD_BAR_IDS.length; i++) {
+                assertEquals(periodBarColor(), periodColor(row, i));
+            }
+        }
+    }
+
+    @Test
+    public void aZeroLimitHidesTheLimitLineAndKeepsTheBars() {
+        View row = bindPeriods(expenses(0, 0), 100, 200, 300);
+        assertEquals(View.VISIBLE, row.findViewById(R.id.period_layout).getVisibility());
+        assertEquals(View.GONE, row.findViewById(R.id.period_limit_view).getVisibility());
+        assertEquals(periodAreaHeight(row), periodHeight(row, 2));
+    }
+
+    @Test
+    public void aPeriodOfOneUnitIsStillOnePixelTallAndAnEmptyOneIsFlat() {
+        View row = bindPeriods(expenses(100000000, 0), 1, 0, 50000000);
+        assertEquals(1, periodHeight(row, 0));
+        assertEquals(0, periodHeight(row, 1));
+        assertEquals(periodAreaHeight(row) / 2, periodHeight(row, 2));
+    }
+
+    @Test
+    public void eachPeriodReadsAsOneNodeWithItsStartDateAndAmount() {
+        View row = bindPeriods(expenses(10000, 0), 5000, 10000, 15000);
+        String[] dates = new String[] {"Aug 14", "Sep 14", "Oct 14"};
+        long[] amounts = new long[] {5000, 10000, 15000};
+        for (int i = 0; i < PERIOD_COLUMN_IDS.length; i++) {
+            View column = row.findViewById(PERIOD_COLUMN_IDS[i]);
+            TextView date = row.findViewById(PERIOD_DATE_IDS[i]);
+            assertEquals(dates[i], date.getText().toString());
+            assertEquals(mActivity.getString(R.string.description_budget_period, dates[i], money(amounts[i])),
+                    column.getContentDescription().toString());
+            assertEquals("Period starting " + dates[i] + ", " + money(amounts[i]),
+                    column.getContentDescription().toString());
+            assertTrue(column.isImportantForAccessibility());
+            assertTrue(column.isFocusable());
+            assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, date.getImportantForAccessibility());
+        }
+    }
+
+    @Test
+    public void aRecycledRowDropsTheRedBarAndThenTheWholeRow() {
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {
+                expenses(10000, 0), expenses(10000, 0), expenses(10000, 0)
+        }, new long[][] {
+                new long[] {15000, 5000, 5000}, new long[] {5000, 6000, 7000}, null
+        });
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        assertEquals(expenseColor(), periodColor(row, 0));
+        adapter.onBindViewHolder(holder, 1);
+        measure(row);
+        assertEquals(View.VISIBLE, row.findViewById(R.id.period_layout).getVisibility());
+        int area = periodAreaHeight(row);
+        long[] amounts = new long[] {5000, 6000, 7000};
+        for (int i = 0; i < PERIOD_BAR_IDS.length; i++) {
+            assertEquals(periodBarColor(), periodColor(row, i));
+            assertEquals((int) (amounts[i] * area / 10000), periodHeight(row, i));
+        }
+        assertEquals(area, limitHeight(row));
+        adapter.onBindViewHolder(holder, 2);
+        measure(row);
+        assertEquals(View.GONE, row.findViewById(R.id.period_layout).getVisibility());
+    }
+
+    @Test
+    public void aFollowedBudgetScalesItsPeriodsToTheLimitTheCardShows() {
+        Object[] values = new Object[FOLLOWED_COLUMNS.length];
+        System.arraycopy(expenses(15000, 0), 0, values, 0, COLUMNS.length);
+        values[COLUMNS.length] = 30000L;
+        BudgetCursorAdapter adapter = periodAdapter(FOLLOWED_COLUMNS, new Object[][] {values},
+                new long[][] {new long[] {5000, 10000, 15000}});
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        int area = periodAreaHeight(row);
+        assertEquals(area, periodHeight(row, 2));
+        assertEquals(area, 3 * periodHeight(row, 0));
+        assertEquals(area, limitHeight(row));
+    }
+
+    @Test
+    public void aRowBoundWithAZeroLimitAndThenWithALimitShowsTheLimitLineAgainAtItsShare() {
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {
+                expenses(0, 0), expenses(10000, 0)
+        }, new long[][] {
+                new long[] {100, 200, 300}, new long[] {5000, 10000, 15000}
+        });
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        assertEquals(View.GONE, row.findViewById(R.id.period_limit_view).getVisibility());
+        adapter.onBindViewHolder(holder, 1);
+        measure(row);
+        assertEquals(View.VISIBLE, row.findViewById(R.id.period_limit_view).getVisibility());
+        assertEquals(2 * periodAreaHeight(row), 3 * limitHeight(row));
+    }
+
+    @Test
+    public void anAccentTheCardCannotShowGivesEveryPeriodBarTheColorTheMainBarDraws() {
+        boolean followSystem = ThemeEngine.isFollowingSystem();
+        ThemeEngine.Mode mode = ThemeEngine.getTheme().getMode();
+        int accent = ThemeEngine.getSavedColorAccent();
+        try {
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+            ThemeEngine.setColorAccent(YELLOW);
+            assertEquals(YELLOW, ThemeEngine.getTheme().getColorAccent());
+            View row = bindPeriods(expenses(10000, 0), 5000, 6000, 7000);
+            int barColor = reachedBarColor(row);
+            assertNotEquals(YELLOW, barColor);
+            for (int i = 0; i < PERIOD_BAR_IDS.length; i++) {
+                assertEquals(barColor, periodColor(row, i));
+            }
+        } finally {
+            ThemeEngine.setColorAccent(accent);
+            if (followSystem) {
+                ThemeEngine.setFollowSystem();
+            } else {
+                ThemeEngine.setMode(mode);
+            }
+        }
+    }
+
+    @Test
+    public void aCustomExpenseColorGivesAPeriodOverTheLimitTheColorTheMainBarDrawsOverItsLimit() {
+        boolean followSystem = ThemeEngine.isFollowingSystem();
+        ThemeEngine.Mode mode = ThemeEngine.getTheme().getMode();
+        int expenseColor = PreferenceManager.getCurrentExpenseColor();
+        try {
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+            PreferenceManager.setCurrentExpenseColor(INDIGO);
+            assertEquals(INDIGO, ThemeEngine.getTheme().getVisibleColor(INDIGO, PreferenceManager.getDefaultColorExpense()));
+            View row = bindPeriods(expenses(10000, 10500), 5000, 15000, 7000);
+            int barColor = barColor(row);
+            assertEquals(INDIGO, barColor);
+            assertEquals(barColor, periodColor(row, 1));
+            assertNotEquals(Color.RED, periodColor(row, 1));
+            assertEquals(periodBarColor(), periodColor(row, 0));
+            assertEquals(periodBarColor(), periodColor(row, 2));
+        } finally {
+            PreferenceManager.setCurrentExpenseColor(expenseColor);
+            if (followSystem) {
+                ThemeEngine.setFollowSystem();
+            } else {
+                ThemeEngine.setMode(mode);
+            }
+        }
+    }
+
+    @Test
+    public void anExpenseColorTheCardCannotShowGivesAPeriodOverTheLimitTheRedTheMainBarDrawsOverItsLimit() {
+        boolean followSystem = ThemeEngine.isFollowingSystem();
+        ThemeEngine.Mode mode = ThemeEngine.getTheme().getMode();
+        int expenseColor = PreferenceManager.getCurrentExpenseColor();
+        try {
+            ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+            PreferenceManager.setCurrentExpenseColor(YELLOW);
+            assertEquals(PreferenceManager.getDefaultColorExpense(),
+                    ThemeEngine.getTheme().getVisibleColor(YELLOW, PreferenceManager.getDefaultColorExpense()));
+            View row = bindPeriods(expenses(10000, 10500), 5000, 15000, 7000);
+            int barColor = barColor(row);
+            assertEquals(Color.RED, barColor);
+            assertNotEquals(YELLOW, barColor);
+            assertEquals(barColor, periodColor(row, 1));
+            assertEquals(periodBarColor(), periodColor(row, 0));
+            assertEquals(periodBarColor(), periodColor(row, 2));
+        } finally {
+            PreferenceManager.setCurrentExpenseColor(expenseColor);
+            if (followSystem) {
+                ThemeEngine.setFollowSystem();
+            } else {
+                ThemeEngine.setMode(mode);
+            }
+        }
+    }
+
+    @Test
+    public void aLimitFarUnderTheBiggestPeriodPutsTheLimitLineOnTheOnePixelBarOfAPeriodOnTheLimit() {
+        View row = bindPeriods(expenses(1, 0), 1, 0, 100000000);
+        View period = row.findViewById(R.id.period_layout);
+        View bar = row.findViewById(PERIOD_BAR_IDS[0]);
+        View limit = row.findViewById(R.id.period_limit_view);
+        assertEquals(1, bar.getHeight());
+        assertEquals(View.VISIBLE, limit.getVisibility());
+        assertEquals(top(bar, period), top(limit, period));
+    }
+
+    @Test
+    public void theLimitLineRunsUnderExactlyTheThreeColumnsInsideTheMainBar() {
+        assertPeriodLimitLaidOut(bindPeriods(expenses(10000, 0), 5000, 10000, 15000));
+    }
+
+    @Test
+    @Config(qualifiers = "fa-ldrtl-w360dp-xhdpi")
+    public void theLimitLineRunsUnderExactlyTheThreeColumnsInsideTheMainBarRightToLeft() {
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {expenses(10000, 0)},
+                new long[][] {new long[] {5000, 10000, 15000}});
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        holder.itemView.setLayoutDirection(mActivity.getResources().getConfiguration().getLayoutDirection());
+        adapter.onBindViewHolder(holder, 0);
+        View row = measure(holder.itemView);
+        assertEquals(View.LAYOUT_DIRECTION_RTL, row.getLayoutDirection());
+        assertTrue(left(row.findViewById(PERIOD_COLUMN_IDS[0]), row) > left(row.findViewById(PERIOD_COLUMN_IDS[2]), row));
+        assertPeriodLimitLaidOut(row);
+    }
+
+    @Test
+    @Config(qualifiers = "pt-rBR-w360dp-xhdpi", fontScale = 1.0f)
+    public void everyPeriodDateWrapsWholeUnderItsBarInBrazilianPortuguese() {
+        assertPeriodDatesLaidOut(bindPeriods(expenses(10000, 0), 5000, 10000, 15000), "\\d{1,2} de .+");
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-xhdpi", fontScale = 1.3f)
+    public void everyPeriodDateWrapsWholeUnderItsBarAtLargeText() {
+        Date[] startDates = new Date[] {
+                DateUtils.getDateFromSQLDateString("2019-03-14"),
+                DateUtils.getDateFromSQLDateString("2019-05-14"),
+                DateUtils.getDateFromSQLDateString("2019-11-14")
+        };
+        assertPeriodDatesLaidOut(bindPeriods(startDates, expenses(10000, 0), 5000, 10000, 15000),
+                "[A-Z][a-z]{2} \\d{1,2}");
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-xhdpi", fontScale = 2.0f)
+    public void everyPeriodDateWrapsWholeUnderItsBarAtTheLargestText() {
+        assertPeriodDatesLaidOut(bindPeriods(expenses(10000, 0), 5000, 10000, 15000), "[A-Z][a-z]{2} \\d{1,2}");
+    }
+
+    @Test
+    @Config(qualifiers = "pt-rBR-w360dp-xhdpi", fontScale = 2.0f)
+    public void aBrazilianPortugueseDateOnThreeLinesWrapsWholeUnderItsBarAtTheLargestText() {
+        Date[] startDates = new Date[] {
+                DateUtils.getDateFromSQLDateString("2019-03-14"),
+                DateUtils.getDateFromSQLDateString("2019-05-14"),
+                DateUtils.getDateFromSQLDateString("2019-11-04")
+        };
+        View row = bindPeriods(startDates, expenses(10000, 0), 5000, 10000, 15000);
+        TextView date = row.findViewById(PERIOD_DATE_IDS[1]);
+        assertEquals("14 de mai.", date.getText().toString());
+        assertEquals(3, date.getLayout().getLineCount());
+        assertPeriodDatesLaidOut(row, "\\d{1,2} de .+");
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-xhdpi", fontScale = 2.0f)
+    public void everyPeriodDateBreaksOnlyAfterASpaceAtTheLargestText() {
+        Date[] startDates = new Date[] {
+                DateUtils.getDateFromSQLDateString("2019-05-14"),
+                DateUtils.getDateFromSQLDateString("2019-09-04"),
+                DateUtils.getDateFromSQLDateString("2019-12-24")
+        };
+        View row = bindPeriods(startDates, expenses(10000, 0), 5000, 10000, 15000);
+        int wrapped = 0;
+        for (int id : PERIOD_DATE_IDS) {
+            TextView date = row.findViewById(id);
+            String text = date.getText().toString();
+            Layout layout = date.getLayout();
+            if (layout.getLineCount() > 1) {
+                wrapped++;
+            }
+            for (int line = 0; line < layout.getLineCount() - 1; line++) {
+                assertEquals(text, ' ', text.charAt(layout.getLineEnd(line) - 1));
+            }
+        }
+        assertTrue(wrapped > 0);
+    }
+
     private void assertCard(View row, int header, long available) {
         assertEquals(mActivity.getString(header), availableHeader(row));
         assertEquals(money(available), availableBody(row));
@@ -367,6 +722,137 @@ public class BudgetCursorAdapterTest {
         BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
         adapter.onBindViewHolder(holder, 0);
         return measure(holder.itemView);
+    }
+
+    private static Date[] periodStartDates() {
+        return new Date[] {
+                DateUtils.getDateFromSQLDateString("2019-08-14"),
+                DateUtils.getDateFromSQLDateString("2019-09-14"),
+                DateUtils.getDateFromSQLDateString("2019-10-14")
+        };
+    }
+
+    private static BudgetCursorAdapter periodAdapter(String[] columns, Object[][] rows, long[][] progress) {
+        MatrixCursor cursor = new MatrixCursor(columns);
+        Date[][] startDates = new Date[rows.length][];
+        for (int i = 0; i < rows.length; i++) {
+            cursor.addRow(rows[i]);
+            if (progress[i] != null) {
+                startDates[i] = periodStartDates();
+            }
+        }
+        BudgetCursorAdapter adapter = new BudgetCursorAdapter(null);
+        adapter.changeCursor(new BudgetPeriodCursor(cursor, startDates, progress));
+        return adapter;
+    }
+
+    private View bindPeriods(Object[] values, long... progress) {
+        BudgetCursorAdapter adapter = periodAdapter(COLUMNS, new Object[][] {values}, new long[][] {progress});
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        return measure(holder.itemView);
+    }
+
+    private View bindPeriods(Date[] startDates, Object[] values, long... progress) {
+        MatrixCursor cursor = new MatrixCursor(COLUMNS);
+        cursor.addRow(values);
+        BudgetCursorAdapter adapter = new BudgetCursorAdapter(null);
+        adapter.changeCursor(new BudgetPeriodCursor(cursor, new Date[][] {startDates}, new long[][] {progress}));
+        BudgetCursorAdapter.ViewHolder holder = adapter.onCreateViewHolder(new FrameLayout(mActivity), 0);
+        adapter.onBindViewHolder(holder, 0);
+        return measure(holder.itemView);
+    }
+
+    private static int periodAreaHeight(View row) {
+        return ((View) row.findViewById(PERIOD_BAR_IDS[0]).getParent()).getHeight();
+    }
+
+    private static int periodHeight(View row, int index) {
+        return row.findViewById(PERIOD_BAR_IDS[index]).getHeight();
+    }
+
+    private static int periodColor(View row, int index) {
+        return color(row.findViewById(PERIOD_BAR_IDS[index]));
+    }
+
+    private static int limitHeight(View row) {
+        return periodAreaHeight(row) - row.findViewById(R.id.period_limit_view).getTop();
+    }
+
+    private static int top(View view, View parent) {
+        int top = 0;
+        for (View child = view; child != parent; child = (View) child.getParent()) {
+            top += child.getTop();
+        }
+        return top;
+    }
+
+    private static int left(View view, View parent) {
+        int left = 0;
+        for (View child = view; child != parent; child = (View) child.getParent()) {
+            left += child.getLeft();
+        }
+        return left;
+    }
+
+    private static void assertPeriodDatesLaidOut(View row, String pattern) {
+        View period = row.findViewById(R.id.period_layout);
+        assertEquals(View.VISIBLE, period.getVisibility());
+        for (int id : PERIOD_DATE_IDS) {
+            TextView date = row.findViewById(id);
+            String text = date.getText().toString();
+            assertTrue(text, text.matches(pattern));
+            Layout layout = date.getLayout();
+            int lines = layout.getLineCount();
+            assertEquals(text, text.length(), layout.getLineEnd(lines - 1));
+            assertTrue(text, date.getHeight() >= date.getTotalPaddingTop() + layout.getLineBottom(lines - 1)
+                    + date.getTotalPaddingBottom());
+        }
+        int bottom = top(period, row) + period.getHeight();
+        ViewGroup section = (ViewGroup) period.getParent();
+        View[] below = new View[] {
+                section.getChildAt(section.indexOfChild(period) + 1),
+                row.findViewById(R.id.progress_layout),
+                row.findViewById(R.id.date_text_view)
+        };
+        for (View view : below) {
+            assertTrue(top(view, row) + " < " + bottom, top(view, row) >= bottom);
+        }
+    }
+
+    private static void assertPeriodLimitLaidOut(View row) {
+        View limit = row.findViewById(R.id.period_limit_view);
+        View bar = row.findViewById(R.id.progress_bar);
+        assertEquals(View.VISIBLE, limit.getVisibility());
+        int columnLeft = Integer.MAX_VALUE;
+        int columnRight = Integer.MIN_VALUE;
+        for (int id : PERIOD_COLUMN_IDS) {
+            View column = row.findViewById(id);
+            columnLeft = Math.min(columnLeft, left(column, row));
+            columnRight = Math.max(columnRight, left(column, row) + column.getWidth());
+        }
+        int limitLeft = left(limit, row);
+        int limitRight = limitLeft + limit.getWidth();
+        int barLeft = left(bar, row);
+        int barRight = barLeft + bar.getWidth();
+        assertEquals(columnLeft, limitLeft);
+        assertEquals(columnRight, limitRight);
+        if (row.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            assertEquals(barRight, limitRight);
+        } else {
+            assertEquals(barLeft, limitLeft);
+        }
+        assertTrue(limitLeft + " < " + barLeft, limitLeft >= barLeft);
+        assertTrue(limitRight + " > " + barRight, limitRight <= barRight);
+    }
+
+    private static int color(View view) {
+        return ((ColorDrawable) view.getBackground()).getColor();
+    }
+
+    private static int periodBarColor() {
+        ITheme theme = ThemeEngine.getTheme();
+        return theme.getVisibleColor(theme.getColorAccent(), theme.getBestColor(theme.getColorCardBackground()));
     }
 
     private static View measure(View row) {
