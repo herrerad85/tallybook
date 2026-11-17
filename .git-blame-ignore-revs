@@ -270,3 +270,43 @@ b98887e423e875362f8c90afca9ca868c727a0c0
 d1b5eee8cd1dd33d244d5f20b9d34b6297378a2e
 # Convert OpenExchangeRatesCurrencyRateDownloadIntentService to Kotlin
 19967f94d0de5dce985a3b39f14b956a80328ba0
+# Convert BackendServiceFactoryTest to Kotlin
+3c5330b9401113245ac97d88f9847ad03a3ccaed
+# Convert DiskBackendServiceTest to Kotlin
+eb010b8448417921126e0353d4a5b0764e7e6d3e
+# Convert WebDAVClientTest to Kotlin
+77b5ef86db1642660916654e15d779893c1540a3
+# Convert AbstractGenericLoaderTest to Kotlin
+36b2ca0e160f27dbcc1eb151326464e52a0630dc
+# Convert PeriodDetailSummaryLoaderTest to Kotlin
+84beafce93d4460d1c471e2fa03ffc3111fc871a
+# Convert ReportLoaderSourceTest to Kotlin
+6616dcf98ee3caf1d6052403d93e93fb789eb1ab
+# Convert SearchCategoryLoaderTest to Kotlin
+15b8f6358e6830a0b94fa77241e8baab1626d30f
+# Convert SearchCursorLoaderTest to Kotlin
+00e911a170b049a8468c0665ee49171efcdabdee
+# Convert SplitReportsTest to Kotlin
+aa3702a8888df49d8e2a477dde824087845d3d06
+# Convert AttachmentHandlerIntentServiceTest to Kotlin
+cf4d54f847dac3067393ad303b070f776590fcda
+# Convert ImportExportIntentServiceTest to Kotlin
+b86d36018154f8c36e996de85b86870c0c87a87f
+# Convert RecurrenceHandlerIntentServiceTest to Kotlin
+d9a9eac4d0be9831b17f8275d61fbc5306ba8a17
+# Convert SplitExportTest to Kotlin
+c09c633e65f9b14110cb3bdf1af2d82ff9983229
+# Convert ScrollingFloatingActionButtonBehaviorTest to Kotlin
+5331f0a63790d874e9a97de6da6f72ce81dd10bc
+# Convert DotMatrixGridsTest to Kotlin
+d979509d18c616b84fbf9bbbb69088130bec1f36
+# Convert DotMatrixLettersTest to Kotlin
+0cb6aa8076d84e43f20efe700e3c75031dca20e3
+# Convert PreferenceTitleThemeTest to Kotlin
+41b2c96f3ddf915d785093d425a4a11868162b47
+# Convert WalletWidgetObserverSourceTest to Kotlin
+9cf2aa76800744d891bff98cbd8228d2fd1a6e92
+# Convert IconGroupLoaderTest to Kotlin
+d0698c101e6044a1bd43474a1fd71e35dc485dcb
+# Convert WalletWidgetPreferencesTest to Kotlin
+046a68edcb2cb83fadb305af5e5db0a788a4921f
