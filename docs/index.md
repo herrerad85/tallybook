@@ -5,9 +5,11 @@ nav_order: 1
 
 # Tallybook usage guide
 
-Tallybook tracks what you spend and earn, wallet by wallet, on your own phone. This page takes each part of the app in the order you are likely to meet it. Quick answers are in the [FAQ](FAQ.md), and the import file layout is in [CSV import format](CSV.md). Opening a new transaction from Tasker or another automation app is covered in [Adding transactions from another app](AUTOMATION.md).
+Tallybook tracks what you spend and earn, wallet by wallet, on your own phone. This page takes each part of the app in the order you are likely to meet it. Quick answers are in the [FAQ](FAQ.md), and the import file layout is in [CSV import format](CSV.md). Opening or saving a new transaction from Tasker or another automation app is covered in [Adding transactions from another app](AUTOMATION.md).
 
 Most screens open from the navigation drawer, reached from the icon in the toolbar. **Settings, User interface, Drawer entries** hides sections you never use. Transactions and Settings always stay.
+
+In any editor, Back or the arrow in the toolbar closes it straight away when nothing changed. When something did, it asks **Discard changes?** first, and **Keep editing** takes you back to what you typed.
 
 ## First launch and wallets
 
@@ -68,9 +70,12 @@ One receipt can cover several categories. In **New transaction**, or when you ed
 - While **Repeat this budget** is ticked, the editor shows the average the budget counted over its last 3 periods. Tap it to use it as the limit. It is hidden while **Use the category budgets inside it as the limit** is ticked and when those periods counted nothing.
 - One budget can cover several wallets if they share a currency.
 - An Expenses budget shows a **Category budgets** row with the limits of the category budgets inside it added up. A category budget is inside when it has the same start and end days, covers no wallet outside the Expenses budget, and has only expense categories. A Groceries budget is left out when Groceries sits under Food and a Food budget on the same wallets already covers it.
+- Under the total, the row lists each category budget it counted, with its limit. **Not in a category budget** adds up what the Expenses budget counted that none of them covers, such as a category with no budget of its own. It is hidden at zero.
 - Tap the row to make that total the limit. To keep the limit equal to the total as category budgets change, tick **Use the category budgets inside it as the limit** in the editor.
 - An Expenses budget also counts money lent, debt payments, interest paid, savings deposits, transfer fees and transfers to a wallet outside the budget. No category budget can cover those, so a limit set from the total can show over. After you save with the box ticked, unticking it keeps the total as the limit and does not bring back the one you typed.
 - An Expenses budget, or a category budget on expense categories, turns its bar amber once 80% of the limit is used and red once it goes over. On the Running tab, those over their limit come first, then the rest by how much of the limit is used, most first.
+- Once one of those goes over, its card says **Over by** and the amount over, where it otherwise says **Available**. While it is running and under its limit, **Left per day** is the money left divided by the days it has left.
+- Tap a budget to open it. On an expenses budget, **Spent per day** is what it counted divided by the days from its start to today, or to its end once it has ended.
 - On the Running tab, a repeating budget's card shows a bar for each of its last 3 periods, with the date each one started and **Last 3 periods** beside them. The thin line is today's limit, and on an expenses budget a bar above it is red. Long press a bar to see the amount. The bars show once at least one of those periods counted something.
 
 ## Savings
@@ -129,6 +134,7 @@ One receipt can cover several categories. In **New transaction**, or when you ed
 
 - The lock asks again whenever you come back after more than a second away.
 - While it is on, the notification for an added recurrence leaves out the description.
+- While it is on, a screenshot of the app, and its preview in your recent apps, come out black.
 
 ## The widget
 
@@ -140,5 +146,7 @@ Add **Wallet balance** from your home screen's widgets and choose a wallet. It s
 
 **Settings** has User interface, Utilities, Database and About. The navigation drawer also holds **Calculator** and **Converter**.
 
+- **Settings, User interface, Theme** offers Light, Dark, Deep dark and Follow system, which switches between Light and Dark with your phone's dark mode.
+- On phones that support it, **Use system colors** takes the app's colors from your wallpaper, and **Color primary** and **Color accent** are hidden while it is on. **Income color** and **Expense color** set the colors for money coming in and going out.
 - **Settings, User interface, Open the calculator first** starts each new transaction on the calculator, and **Default wallet** picks the wallet it starts in.
 - The Converter shows **Unknown** until it has a rate. **Settings, Utilities, Update exchange rates** downloads them.

@@ -12,7 +12,7 @@ Features:
 * Select several transactions and delete them together or move them to another wallet or category
 * Automatic categories, so a rule fills the category in from what you type
 * Automation apps such as Tasker can fill in or save transactions
-* Budgets to keep categories on track
+* Budgets that warn you as spending nears the limit, show what is left per day, and compare the last three periods
 * Recurring transactions for bills and regular income
 * Multi-currency with exchange rates
 * Debts and credits, with interest kept apart from what is paid back
