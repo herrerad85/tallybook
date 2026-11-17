@@ -1,33 +1,32 @@
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
-import android.database.ContentObserver;
-import android.net.Uri;
-import android.os.Looper;
+import android.content.Context
+import android.database.ContentObserver
+import android.net.Uri
+import android.os.Looper
 
-import androidx.loader.content.Loader;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.loader.content.Loader
+import androidx.test.core.app.ApplicationProvider
 
-import com.oriondev.moneywallet.model.Group;
-import com.oriondev.moneywallet.model.OverviewSetting;
-import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.model.Group
+import com.oriondev.moneywallet.model.OverviewSetting
+import com.oriondev.moneywallet.storage.database.DataContentProvider
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.Shadows;
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
+import org.robolectric.util.ReflectionHelpers
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.ArrayList
+import java.util.Arrays
+import java.util.Collections
+import java.util.Date
+import java.util.concurrent.atomic.AtomicReference
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 /**
  * The screens behind these loaders are reached from a drawer entry and left for a child activity,
@@ -42,49 +41,49 @@ import static org.junit.Assert.assertNull;
  * that a method was entered. The loading itself is stubbed out, so nothing here covers what a
  * real load does on its way back, only which branch the loader takes.
  */
-@RunWith(RobolectricTestRunner.class)
-public class AbstractGenericLoaderTest {
+@RunWith(RobolectricTestRunner::class)
+class AbstractGenericLoaderTest {
 
-    private Context mContext;
-    private List<String> mReceived;
+    private lateinit var mContext: Context
+    private lateinit var mReceived: MutableList<String?>
 
     @Before
-    public void setUp() {
-        mContext = ApplicationProvider.getApplicationContext();
-        mReceived = new ArrayList<>();
+    fun setUp() {
+        mContext = ApplicationProvider.getApplicationContext()
+        mReceived = ArrayList()
     }
 
     @Test
-    public void aFirstStartLoadsAndHandsBackNothing() {
-        CountingLoader loader = watching(DataContentProvider.CONTENT_ALL);
-        loader.startLoading();
-        assertEquals(1, loader.mLoads);
-        assertEquals(Collections.emptyList(), mReceived);
+    fun aFirstStartLoadsAndHandsBackNothing() {
+        val loader = watching(DataContentProvider.CONTENT_ALL)
+        loader.startLoading()
+        assertEquals(1, loader.mLoads)
+        assertEquals(Collections.emptyList<String>(), mReceived)
     }
 
     @Test
-    public void aStartWithNothingWrittenSinceHandsBackWhatItHasAndDoesNotLoadAgain() {
-        CountingLoader loader = watching(DataContentProvider.CONTENT_ALL);
-        loader.startLoading();
-        loader.deliverResult("first");
-        loader.stopLoading();
-        loader.startLoading();
-        assertEquals(1, loader.mLoads);
+    fun aStartWithNothingWrittenSinceHandsBackWhatItHasAndDoesNotLoadAgain() {
+        val loader = watching(DataContentProvider.CONTENT_ALL)
+        loader.startLoading()
+        loader.deliverResult("first")
+        loader.stopLoading()
+        loader.startLoading()
+        assertEquals(1, loader.mLoads)
         // the one the load itself handed over, then the same one again on the way back
-        assertEquals(Arrays.asList("first", "first"), mReceived);
+        assertEquals(Arrays.asList("first", "first"), mReceived)
     }
 
     @Test
-    public void aWriteWhileTheScreenIsAwayLoadsAgainAndSkipsTheOldAnswer() {
-        CountingLoader loader = watching(DataContentProvider.CONTENT_ALL);
-        loader.startLoading();
-        loader.deliverResult("first");
-        loader.stopLoading();
-        loader.onContentChanged();
-        loader.startLoading();
-        assertEquals(2, loader.mLoads);
+    fun aWriteWhileTheScreenIsAwayLoadsAgainAndSkipsTheOldAnswer() {
+        val loader = watching(DataContentProvider.CONTENT_ALL)
+        loader.startLoading()
+        loader.deliverResult("first")
+        loader.stopLoading()
+        loader.onContentChanged()
+        loader.startLoading()
+        assertEquals(2, loader.mLoads)
         // still only the one the load handed over, since the old answer is on its way out
-        assertEquals(Collections.singletonList("first"), mReceived);
+        assertEquals(Collections.singletonList("first"), mReceived)
     }
 
     /**
@@ -93,34 +92,34 @@ public class AbstractGenericLoaderTest {
      * asking for descendants or the watcher stops being one that forces a load.
      */
     @Test
-    public void aWriteOnTheProviderReachesALoaderWhoseScreenIsAway() {
-        CountingLoader loader = watching(DataContentProvider.CONTENT_ALL);
-        loader.startLoading();
-        loader.deliverResult("first");
-        loader.stopLoading();
-        mContext.getContentResolver().notifyChange(DataContentProvider.CONTENT_TRANSACTIONS, null);
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
-        loader.startLoading();
-        assertEquals(2, loader.mLoads);
-        assertEquals(Collections.singletonList("first"), mReceived);
+    fun aWriteOnTheProviderReachesALoaderWhoseScreenIsAway() {
+        val loader = watching(DataContentProvider.CONTENT_ALL)
+        loader.startLoading()
+        loader.deliverResult("first")
+        loader.stopLoading()
+        mContext.contentResolver.notifyChange(DataContentProvider.CONTENT_TRANSACTIONS, null)
+        Shadows.shadowOf(Looper.getMainLooper()).idle()
+        loader.startLoading()
+        assertEquals(2, loader.mLoads)
+        assertEquals(Collections.singletonList("first"), mReceived)
     }
 
     @Test
-    public void aLoaderWatchesItsUriWhileItLivesAndLetsItGoOnReset() {
-        Uri uri = DataContentProvider.CONTENT_ALL;
+    fun aLoaderWatchesItsUriWhileItLivesAndLetsItGoOnReset() {
+        val uri = DataContentProvider.CONTENT_ALL
         // the app puts a watcher of its own on this uri when it starts, so what this reads is the
         // one the loader adds and not the total
-        int before = watchersOf(uri).size();
-        CountingLoader loader = watching(uri);
-        loader.startLoading();
-        assertEquals(before + 1, watchersOf(uri).size());
-        loader.stopLoading();
+        val before = watchersOf(uri).size
+        val loader = watching(uri)
+        loader.startLoading()
+        assertEquals(before + 1, watchersOf(uri).size)
+        loader.stopLoading()
         // a stopped loader keeps watching, which is how a write reaches it while the screen is away
-        assertEquals(before + 1, watchersOf(uri).size());
-        loader.startLoading();
-        assertEquals(before + 1, watchersOf(uri).size());
-        loader.reset();
-        assertEquals(before, watchersOf(uri).size());
+        assertEquals(before + 1, watchersOf(uri).size)
+        loader.startLoading()
+        assertEquals(before + 1, watchersOf(uri).size)
+        loader.reset()
+        assertEquals(before, watchersOf(uri).size)
     }
 
     /**
@@ -130,15 +129,15 @@ public class AbstractGenericLoaderTest {
      * outlive the screen.
      */
     @Test
-    public void anAbandonedLoaderLetsItsUriGoWithoutWaitingForAReset() {
-        Uri uri = DataContentProvider.CONTENT_ALL;
-        int before = watchersOf(uri).size();
-        CountingLoader loader = watching(uri);
-        loader.startLoading();
-        loader.deliverResult("first");
-        assertEquals(before + 1, watchersOf(uri).size());
-        loader.abandon();
-        assertEquals(before, watchersOf(uri).size());
+    fun anAbandonedLoaderLetsItsUriGoWithoutWaitingForAReset() {
+        val uri = DataContentProvider.CONTENT_ALL
+        val before = watchersOf(uri).size
+        val loader = watching(uri)
+        loader.startLoading()
+        loader.deliverResult("first")
+        assertEquals(before + 1, watchersOf(uri).size)
+        loader.abandon()
+        assertEquals(before, watchersOf(uri).size)
     }
 
     /**
@@ -146,95 +145,90 @@ public class AbstractGenericLoaderTest {
      * loader off the main one, so building it with the loader would throw there and nowhere here.
      */
     @Test
-    public void aLoaderCanBeBuiltOnAThreadWithNoLooper() throws Exception {
-        final AtomicReference<Throwable> thrown = new AtomicReference<>();
-        Thread thread = new Thread(new Runnable() {
+    @Throws(Exception::class)
+    fun aLoaderCanBeBuiltOnAThreadWithNoLooper() {
+        val thrown = AtomicReference<Throwable>()
+        val thread = Thread(object : Runnable {
 
-            @Override
-            public void run() {
+            override fun run() {
                 try {
-                    new CountingLoader(mContext, DataContentProvider.CONTENT_ALL);
-                } catch (Throwable t) {
-                    thrown.set(t);
+                    CountingLoader(mContext, DataContentProvider.CONTENT_ALL)
+                } catch (t: Throwable) {
+                    thrown.set(t)
                 }
             }
-        });
-        thread.start();
-        thread.join();
-        assertNull(thrown.get());
+        })
+        thread.start()
+        thread.join()
+        assertNull(thrown.get())
     }
 
     @Test
-    public void aLoaderWithNoUriWatchesNothing() {
-        Uri uri = DataContentProvider.CONTENT_ALL;
-        int before = watchersOf(uri).size();
-        CountingLoader loader = watching(null);
-        loader.startLoading();
-        assertEquals(before, watchersOf(uri).size());
+    fun aLoaderWithNoUriWatchesNothing() {
+        val uri = DataContentProvider.CONTENT_ALL
+        val before = watchersOf(uri).size
+        val loader = watching(null)
+        loader.startLoading()
+        assertEquals(before, watchersOf(uri).size)
     }
 
     @Test
-    public void everyLoaderOverTheLedgerWatchesItAndTheOthersDoNot() {
-        Date start = new Date(0L);
-        Date end = new Date(1L);
-        OverviewSetting setting = new OverviewSetting(start, end, Group.MONTHLY,
-                OverviewSetting.CashFlow.NET_INCOMES);
+    fun everyLoaderOverTheLedgerWatchesItAndTheOthersDoNot() {
+        val start = Date(0L)
+        val end = Date(1L)
+        val setting = OverviewSetting(start, end, Group.MONTHLY,
+                OverviewSetting.CashFlow.NET_INCOMES)
         assertEquals(DataContentProvider.CONTENT_ALL,
-                new OverviewDataLoader(mContext, setting).getObservedUri());
+                ReflectionHelpers.callInstanceMethod<Uri>(OverviewDataLoader(mContext, setting), "getObservedUri"))
         assertEquals(DataContentProvider.CONTENT_ALL,
-                new PeriodDetailFlowLoader(mContext, start, end, false).getObservedUri());
+                ReflectionHelpers.callInstanceMethod<Uri>(PeriodDetailFlowLoader(mContext, start, end, false), "getObservedUri"))
         assertEquals(DataContentProvider.CONTENT_ALL,
-                new PeriodDetailSummaryLoader(mContext, start, end,
-                        PeriodDetailSummaryLoader.GROUP_BY_MONTH).getObservedUri());
-        assertNull(new LicenseLoader(mContext).getObservedUri());
-        assertNull(new ChangeLogLoader(mContext).getObservedUri());
-        assertNull(new IconGroupLoader(mContext).getObservedUri());
-        assertNull(new JsonResourceLoader(mContext, "anything").getObservedUri());
+                ReflectionHelpers.callInstanceMethod<Uri>(PeriodDetailSummaryLoader(mContext, start, end,
+                        PeriodDetailSummaryLoader.GROUP_BY_MONTH), "getObservedUri"))
+        assertNull(ReflectionHelpers.callInstanceMethod<Uri>(LicenseLoader(mContext), "getObservedUri"))
+        assertNull(ReflectionHelpers.callInstanceMethod<Uri>(ChangeLogLoader(mContext), "getObservedUri"))
+        assertNull(ReflectionHelpers.callInstanceMethod<Uri>(IconGroupLoader(mContext), "getObservedUri"))
+        assertNull(ReflectionHelpers.callInstanceMethod<Uri>(JsonResourceLoader(mContext, "anything"), "getObservedUri"))
     }
 
-    private CountingLoader watching(Uri uri) {
-        CountingLoader loader = new CountingLoader(mContext, uri);
-        loader.registerListener(1, new Loader.OnLoadCompleteListener<String>() {
+    private fun watching(uri: Uri?): CountingLoader {
+        val loader = CountingLoader(mContext, uri)
+        loader.registerListener(1, object : Loader.OnLoadCompleteListener<String> {
 
-            @Override
-            public void onLoadComplete(Loader<String> source, String data) {
-                mReceived.add(data);
+            override fun onLoadComplete(source: Loader<String>, data: String?) {
+                mReceived.add(data)
             }
-        });
-        return loader;
+        })
+        return loader
     }
 
-    private Collection<ContentObserver> watchersOf(Uri uri) {
-        return Shadows.shadowOf(mContext.getContentResolver()).getContentObservers(uri);
+    private fun watchersOf(uri: Uri): Collection<ContentObserver> {
+        return Shadows.shadowOf(mContext.contentResolver).getContentObservers(uri)
     }
 
     /**
      * Counts the loads without running any, so what is read is the branching and not the loading.
      */
-    private static class CountingLoader extends AbstractGenericLoader<String> {
+    private class CountingLoader : AbstractGenericLoader<String> {
 
-        private final Uri mObserved;
+        private val mObserved: Uri?
 
-        private int mLoads;
+        var mLoads = 0
 
-        private CountingLoader(Context context, Uri observed) {
-            super(context);
-            mObserved = observed;
+        constructor(context: Context, observed: Uri?) : super(context) {
+            mObserved = observed
         }
 
-        @Override
-        protected Uri getObservedUri() {
-            return mObserved;
+        override fun getObservedUri(): Uri? {
+            return mObserved
         }
 
-        @Override
-        public String loadInBackground() {
-            return "loaded";
+        override fun loadInBackground(): String {
+            return "loaded"
         }
 
-        @Override
-        public void forceLoad() {
-            mLoads++;
+        override fun forceLoad() {
+            mLoads++
         }
     }
 }
