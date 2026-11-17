@@ -17,20 +17,21 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.widget;
+package com.oriondev.moneywallet.ui.widget
 
-import org.junit.Test;
+import com.oriondev.moneywallet.testing.SourceScanner
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.junit.Test
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import java.io.File
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.util.regex.Pattern
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 
 /**
  * One registration that nothing which runs can check, pinned as text the way
@@ -58,14 +59,17 @@ import static org.junit.Assert.fail;
  *
  * A failure means read the source and decide, not that the app is broken.
  */
-public class WalletWidgetObserverSourceTest {
+class WalletWidgetObserverSourceTest {
 
-    private static final Pattern WATCHES_THE_WHOLE_PROVIDER = Pattern.compile(
-            "registerContentObserver\\(\\s*DataContentProvider\\.CONTENT_ALL\\s*,\\s*true\\s*,");
+    companion object {
 
-    /** The leading dot keeps unregisterContentObserver out, which contains the rest of this. */
-    private static final Pattern ANY_REGISTRATION = Pattern.compile(
-            "\\.\\s*registerContentObserver\\s*\\(");
+        private val WATCHES_THE_WHOLE_PROVIDER = Pattern.compile(
+                "registerContentObserver\\(\\s*DataContentProvider\\.CONTENT_ALL\\s*,\\s*true\\s*,")
+
+        /** The leading dot keeps unregisterContentObserver out, which contains the rest of this. */
+        private val ANY_REGISTRATION = Pattern.compile(
+                "\\.\\s*registerContentObserver\\s*\\(")
+    }
 
     /**
      * A Kotlin raw string, a Kotlin string literal, a char literal, a line comment, then a block
@@ -74,172 +78,70 @@ public class WalletWidgetObserverSourceTest {
      * in the list so that a lone quote written as a character cannot invert the quote parity of
      * everything below it and stop comments being stripped at all.
      */
-    private static String strip(String source) {
-        StringBuilder stripped = new StringBuilder();
-        int at = 0;
-        while (at < source.length()) {
-            int end = skipped(source, at);
+    private fun strip(source: String): String {
+        val stripped = StringBuilder()
+        var at = 0
+        while (at < source.length) {
+            val end = skipped(source, at)
             if (end >= 0) {
-                stripped.append(' ');
-                at = end;
+                stripped.append(' ')
+                at = end
             } else {
-                stripped.append(source.charAt(at));
-                at++;
+                stripped.append(source[at])
+                at++
             }
         }
-        return stripped.toString();
+        return stripped.toString()
     }
 
-    private static int skipped(String source, int at) {
-        if (source.startsWith("\"\"\"", at)) {
-            return rawStringEnd(source, at + 3);
+    private fun skipped(source: String, at: Int): Int {
+        val end = SourceScanner.literalEnd(source, at)
+        if (end >= 0) {
+            return end
         }
-        char c = source.charAt(at);
-        if (c == '"') {
-            return stringEnd(source, at + 1);
-        }
-        if (c == '\'') {
-            return charEnd(source, at + 1);
-        }
-        if (source.startsWith("//", at)) {
-            int newline = source.indexOf('\n', at);
-            return newline < 0 ? source.length() : newline;
-        }
-        if (source.startsWith("/*", at)) {
-            return blockCommentEnd(source, at);
-        }
-        return -1;
+        return SourceScanner.commentEnd(source, at)
     }
 
-    private static int rawStringEnd(String source, int at) {
-        while (at < source.length()) {
-            if (source.startsWith("\"\"\"", at)) {
-                at += 3;
-                while (at < source.length() && source.charAt(at) == '"') {
-                    at++;
-                }
-                return at;
-            }
-            if (source.startsWith("${", at)) {
-                at = templateEnd(source, at + 2);
-            } else {
-                at++;
-            }
-        }
-        return source.length();
-    }
-
-    private static int stringEnd(String source, int at) {
-        while (at < source.length()) {
-            char c = source.charAt(at);
-            if (c == '\\') {
-                at += 2;
-            } else if (c == '"') {
-                return at + 1;
-            } else if (source.startsWith("${", at)) {
-                at = templateEnd(source, at + 2);
-            } else if (c == '\n') {
-                return at;
-            } else {
-                at++;
-            }
-        }
-        return source.length();
-    }
-
-    private static int templateEnd(String source, int at) {
-        int depth = 1;
-        while (at < source.length()) {
-            int end = skipped(source, at);
-            if (end >= 0) {
-                at = end;
-                continue;
-            }
-            char c = source.charAt(at);
-            if (c == '{') {
-                depth++;
-            } else if (c == '}') {
-                depth--;
-                if (depth == 0) {
-                    return at + 1;
-                }
-            }
-            at++;
-        }
-        return source.length();
-    }
-
-    private static int charEnd(String source, int at) {
-        if (at < source.length() && source.charAt(at) == '\\') {
-            at += 2;
-        } else {
-            at++;
-        }
-        while (at < source.length() && source.charAt(at) != '\'' && source.charAt(at) != '\n') {
-            at++;
-        }
-        return at < source.length() && source.charAt(at) == '\'' ? at + 1 : at;
-    }
-
-    private static int blockCommentEnd(String source, int at) {
-        int depth = 0;
-        while (at < source.length()) {
-            if (source.startsWith("/*", at)) {
-                depth++;
-                at += 2;
-            } else if (source.startsWith("*/", at)) {
-                depth--;
-                at += 2;
-                if (depth == 0) {
-                    return at;
-                }
-            } else {
-                at++;
-            }
-        }
-        return source.length();
-    }
-
-    private String source() {
-        String path = "src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetObserver.kt";
-        File file = new File(path);
+    private fun source(): String? {
+        val path = "src/main/java/com/oriondev/moneywallet/ui/widget/WalletWidgetObserver.kt"
+        var file = File(path)
         if (!file.exists()) {
             // a runner rooted at the repo root instead of the module, which the precedent
             // handles the same way
-            file = new File("app/" + path);
+            file = File("app/" + path)
         }
         if (!file.exists()) {
-            fail("Cannot find " + path + " at " + file.getAbsolutePath());
+            fail("Cannot find " + path + " at " + file.absolutePath)
         }
         try {
-            String read = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-            return strip(read);
-        } catch (IOException e) {
-            fail("Cannot read " + path + ": " + e.getMessage());
-            return null;
+            val read = String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+            return strip(read)
+        } catch (e: IOException) {
+            fail("Cannot read " + path + ": " + e.message)
+            return null
         }
     }
 
     @Test
-    public void theWidgetWatchesTheWholeProviderAndAsksForWhatIsUnderIt() {
+    fun theWidgetWatchesTheWholeProviderAndAsksForWhatIsUnderIt() {
         assertTrue("the widget no longer registers on the whole provider with descendants "
                         + "included. Nothing announces CONTENT_ALL itself, so without the flag it "
                         + "is told about nothing at all, and with a narrower uri it is told about "
                         + "nothing outside that one",
-                WATCHES_THE_WHOLE_PROVIDER.matcher(source()).find());
+                WATCHES_THE_WHOLE_PROVIDER.matcher(source()).find())
     }
 
     @Test
-    public void theWidgetRegistersOnce() {
-        Matcher matcher = ANY_REGISTRATION.matcher(source());
-        int registrations = 0;
+    fun theWidgetRegistersOnce() {
+        val matcher = ANY_REGISTRATION.matcher(source())
+        var registrations = 0
         while (matcher.find()) {
-            registrations++;
+            registrations++
         }
-        assertTrue("the widget registers on nothing at all", registrations > 0);
+        assertTrue("the widget registers on nothing at all", registrations > 0)
         // a second registration is how the deleted list would grow back, and it would also mean
         // two redraws asked for per write
         assertEquals("the widget registers on something as well as the whole provider",
-                1, registrations);
+                1, registrations)
     }
 }
