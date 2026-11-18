@@ -371,8 +371,6 @@
     <string name="message_error_delete_category_with_children">"ഈ വിഭാഗത്തിന് ഒന്നോ അതിലധികമോ കുട്ടികളുള്ളതിനാൽ ഇല്ലാതാക്കാൻ കഴിയില്ല. ദയവായി അവരെ മുമ്പ് നീക്കംചെയ്യുക."</string>
     <string name="message_error_delete_category_in_use">"ഈ വിഭാഗം ഉപയോഗത്തിലുള്ളതിനാൽ ഇല്ലാതാക്കാൻ കഴിയില്ല. ദയവായി ഈ വിഭാഗത്തിലേക്കുള്ള ഏതെങ്കിലും റഫറൻസുകൾ നീക്കംചെയ്ത് വീണ്ടും ശ്രമിക്കുക."</string>
     <string name="message_error_delete_system_category">"ഈ വിഭാഗം ഇല്ലാതാക്കാൻ കഴിയില്ല കാരണം ഇത് ഒരു സിസ്റ്റം വിഭാഗമാണ്."</string>
-    <string name="message_delete_transaction">"ഈ ഇടപാട് ഇല്ലാതാക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>
-    <string name="message_delete_transfer">"ഈ കൈമാറ്റം ഇല്ലാതാക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>
     <string name="message_error_delete_transaction_of_transfer">"ഈ ഇടപാട് ഇല്ലാതാക്കാൻ കഴിയില്ല കാരണം ഇത് ഒരു കൈമാറ്റത്തിന്റെ ഭാഗമാണ്. ഈ ഇടപാട് ഇല്ലാതാക്കാൻ ദയവായി ബന്ധപ്പെട്ട കൈമാറ്റം നീക്കംചെയ്യുക."</string>
     <string name="message_delete_debt">"ഈ കടം ഇല്ലാതാക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ? അനുബന്ധ ഡാറ്റയെല്ലാം നീക്കംചെയ്യും."</string>
     <string name="message_delete_budget">"ഈ ബജറ്റ് ഇല്ലാതാക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>

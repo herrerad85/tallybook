@@ -46,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -109,7 +108,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     assertTrue("the row went away inside the click", rowExists(mTransactionId));
                 } finally {
                     release.countDown();
@@ -133,7 +132,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     activity.getSupportFragmentManager()
                             .beginTransaction()
                             .remove(fragment)
@@ -158,7 +157,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     fragment.showItemId(mSecondTransactionId);
                     idleMainLooper();
                 } finally {
@@ -186,7 +185,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     toolbar.getMenu().performIdentifierAction(R.id.action_edit_item, 0);
                     idleMainLooper();
                     assertNull("the edit went through while the delete was in flight",
@@ -212,7 +211,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     fragment.showItemId(mTransactionId);
                     idleMainLooper();
                     toolbar.getMenu().performIdentifierAction(R.id.action_edit_item, 0);
@@ -241,7 +240,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     fragment.showItemId(mSecondTransactionId);
                     idleMainLooper();
                     fragment.showItemId(mTransactionId);
@@ -272,7 +271,7 @@ public class TransactionItemFragmentTest {
                 CountDownLatch release = parkDeleteWorker();
                 boolean reached;
                 try {
-                    clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     fragment.showItemId(mSecondTransactionId);
                     idleMainLooper();
                 } finally {
@@ -303,10 +302,9 @@ public class TransactionItemFragmentTest {
                 long legId = transferFromTransactionId(transferId);
                 TransactionItemFragment fragment = showTransaction(activity, legId);
                 CountDownLatch release = parkDeleteWorker();
-                AlertDialog confirm;
                 boolean reached;
                 try {
-                    confirm = clickDeleteAndConfirm(fragment);
+                    clickDelete(fragment);
                     fragment.showItemId(mSecondTransactionId);
                     idleMainLooper();
                 } finally {
@@ -319,7 +317,7 @@ public class TransactionItemFragmentTest {
                 assertEquals(mSecondTransactionId, fragment.getItemId());
                 AlertDialog reported = (AlertDialog) ShadowDialog.getLatestDialog();
                 assertNotNull(reported);
-                assertNotSame("no error dialog was put up", confirm, reported);
+                assertEquals("a confirm dialog was put up", 1, ShadowDialog.getShownDialogs().size());
                 assertTrue("the error dialog was not showing", reported.isShowing());
                 TextView message = reported.findViewById(android.R.id.message);
                 assertNotNull(message);
@@ -491,24 +489,13 @@ public class TransactionItemFragmentTest {
         return fragment;
     }
 
-    /**
-     * AlertController hands a button press to the dialog's listener through a message on the main
-     * looper, so the queue is drained once here to get the press across. The worker is parked
-     * before this call, so the delete only lands in the worker queue and no result of it can
-     * reach the main queue while this drain is running. The confirm dialog is returned so a
-     * caller can tell it apart from a dialog the delete itself puts up later.
-     */
-    private AlertDialog clickDeleteAndConfirm(TransactionItemFragment fragment) {
+    private void clickDelete(TransactionItemFragment fragment) {
         Toolbar toolbar = fragment.requireView().findViewById(R.id.secondary_toolbar);
         assertNotNull(toolbar);
         MenuItem delete = toolbar.getMenu().findItem(R.id.action_delete_item);
         assertNotNull(delete);
         fragment.onMenuItemClick(delete);
-        AlertDialog dialog = (AlertDialog) ShadowDialog.getLatestDialog();
-        assertNotNull(dialog);
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         idleMainLooper();
-        return dialog;
     }
 
     private boolean rowExists(long transactionId) {

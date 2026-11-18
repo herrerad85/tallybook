@@ -21,8 +21,6 @@ package com.oriondev.moneywallet.ui.fragment.secondary;
 
 import android.app.Activity;
 import android.content.ContentUris;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -49,7 +47,6 @@ import com.oriondev.moneywallet.ui.activity.NewEditItemActivity;
 import com.oriondev.moneywallet.ui.activity.NewEditTransferActivity;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
 import com.oriondev.moneywallet.ui.view.AttachmentView;
-import com.oriondev.moneywallet.ui.view.theme.ThemedDialog;
 import com.oriondev.moneywallet.utils.CurrencyManager;
 import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
@@ -136,26 +133,14 @@ public class TransferItemFragment extends SecondaryPanelFragment implements Atta
             intent.putExtra(NewEditItemActivity.ID, getItemId());
             startActivity(intent);
         } else if (itemId == R.id.action_delete_item) {
-            showDeleteDialog(getActivity());
+            deleteTransfer();
         }
         return false;
     }
 
-    private void showDeleteDialog(Context context) {
-        ThemedDialog.buildMaterialDialog(context)
-                .setTitle(R.string.title_warning)
-                .setMessage(R.string.message_delete_transfer)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSFERS, getItemId());
-                        deleteItemInBackground(uri, null);
-                    }
-
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+    private void deleteTransfer() {
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSFERS, getItemId());
+        deleteItemWithUndoInBackground(uri, R.string.snackbar_message_transfer_deleted, null);
     }
 
     @Override

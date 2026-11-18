@@ -343,8 +343,6 @@
     <string name="message_error_delete_category_with_children">Эту категорию нельзя удалить пока у неё есть подкатегории.</string>
     <string name="message_error_delete_category_in_use">Эту категорию нельзя удалить пока она используется. Удалите все связанные операции сначала.</string>
     <string name="message_error_delete_system_category">Системные категории удалять нельзя.</string>
-    <string name="message_delete_transaction">Удалить платёж?</string>
-    <string name="message_delete_transfer">Удалить перевод?</string>
     <string name="message_error_delete_transaction_of_transfer">Этот платёж является частью перевода. Удалите перевод, чтобы удалить этот платёж.</string>
     <string name="message_delete_debt">Удалить этот долг? Все связанные данные будут удалены.</string>
     <string name="message_delete_budget">Удалить этот бюджет?</string>

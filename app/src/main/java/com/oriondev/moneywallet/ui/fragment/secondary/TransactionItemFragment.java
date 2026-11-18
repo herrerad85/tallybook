@@ -21,8 +21,6 @@ package com.oriondev.moneywallet.ui.fragment.secondary;
 
 import android.app.Activity;
 import android.content.ContentUris;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -147,34 +145,22 @@ public class TransactionItemFragment extends SecondaryPanelFragment implements L
             intent.putExtra(NewEditTransactionActivity.DUPLICATE_ID, getItemId());
             startActivity(intent);
         } else if (itemId == R.id.action_delete_item) {
-            showDeleteDialog(getActivity());
+            deleteTransaction();
         }
         return false;
     }
 
-    private void showDeleteDialog(Context context) {
-        ThemedDialog.buildMaterialDialog(context)
-                .setTitle(R.string.title_warning)
-                .setMessage(R.string.message_delete_transaction)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, getItemId());
-                        deleteItemInBackground(uri, e -> {
-                            if (e.getErrorCode() == Contract.ErrorCode.TRANSACTION_USED_IN_TRANSFER) {
-                                ThemedDialog.buildMaterialDialog(requireActivity())
-                                        .setTitle(R.string.title_error)
-                                        .setMessage(R.string.message_error_delete_transaction_of_transfer)
-                                        .setPositiveButton(android.R.string.ok, null)
-                                        .show();
-                            }
-                        });
-                    }
-
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+    private void deleteTransaction() {
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, getItemId());
+        deleteItemWithUndoInBackground(uri, R.string.snackbar_message_transaction_deleted, e -> {
+            if (e.getErrorCode() == Contract.ErrorCode.TRANSACTION_USED_IN_TRANSFER) {
+                ThemedDialog.buildMaterialDialog(requireActivity())
+                        .setTitle(R.string.title_error)
+                        .setMessage(R.string.message_error_delete_transaction_of_transfer)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
+            }
+        });
     }
 
     @Override

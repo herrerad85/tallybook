@@ -402,9 +402,7 @@
     <string name="message_delete_recurrent_transaction">Sicher, dass du diese wiederholende Transaktion löschen möchtest? Alle bereits generierten Transaktionen werden nicht gelöscht.</string>
     <string name="message_delete_recurrent_transfer">Sicher, dass du diesen wiederholenden Transfer löschen möchtest? Alle bereits generierten Transfers werden nicht gelöscht.</string>
     <string name="message_delete_saving">Sicher, dass du diese Ersparnisse löschen möchtest? Alle zugehörigen Daten werden gelöscht.</string>
-    <string name="message_delete_transaction">Sicher, dass du diese Transaktion löschen möchtest?</string>
     <string name="message_delete_transaction_model">Sicher, dass du diese Transaktionsvorlage löschen möchtest?</string>
-    <string name="message_delete_transfer">Sicher, dass du diesen Transfer löschen möchtest?</string>
     <string name="message_delete_transfer_model">Sicher, dass du diese Transfervorlage löschen möchtest?</string>
     <string name="message_delete_wallet">Sicher, dass du diese Geldbörse löschen möchtest? Alle zugehörigen Daten werden gelöscht.</string>
     <string name="message_divide_currency_decimals">Die Beträge in der Datenbank müssen aktualisiert werden um die neue Anzahl der Nachkommastellen zu übernehmen. Diese Operation könnte etwas Zeit in Anspruch nehmen. Wenn du möchtest, kannst du dies überspringen, die Beträge werden dann aber als mit %d multipliziert dargestellt. Wenn die Beträge aktualisiert werden sollen, können die aktuellen Nachkommastellen verloren gehen.</string>

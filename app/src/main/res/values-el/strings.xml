@@ -385,8 +385,6 @@
     <string name="message_error_delete_category_with_children">"Αυτή η κατηγορία δεν μπορεί να διαγραφεί επειδή έχει μία ή περισσότερες υποκατηγορίες. Παρακαλώ αφαιρέστε πρώτα τις υποκατηγορίες."</string>
     <string name="message_error_delete_category_in_use">"Αυτή η κατηγορία δεν μπορεί να διαγραφεί επειδή χρησιμοποιείται. Παρακαλώ αφαιρέστε όποιες αναφορές σε αυτή τη κατηγορία και προσπαθήστε ξανά."</string>
     <string name="message_error_delete_system_category">"Αυτή η κατηγορία δεν μπορεί να διαγραφεί επειδή είναι κατηγορία συστήματος."</string>
-    <string name="message_delete_transaction">"Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή τη συναλλαγή;"</string>
-    <string name="message_delete_transfer">"Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή τη μεταφόρα;"</string>
     <string name="message_error_delete_transaction_of_transfer">"Αυτή η συναλλαγή δεν μπορεί να διαγραφεί επειδή αποτελεί μέρος μεταφοράς. Παρακαλώ αφαιρέστε όποιες αναφορές σε αυτή τη συναλλαγή."</string>
     <string name="message_delete_debt">"Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την οφειλή; Όλα τα σχετικά δεδομένα θα αφαιρεθούν."</string>
     <string name="message_delete_budget">"Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον προϋπολογισμό;"</string>

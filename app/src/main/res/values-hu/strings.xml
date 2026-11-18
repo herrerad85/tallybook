@@ -322,9 +322,7 @@
     <string name="message_delete_recurrent_transaction">Biztosan törölni szeretnéd?</string>
     <string name="message_delete_recurrent_transfer">Biztosan törölni szeretnéd?</string>
     <string name="message_delete_saving">Biztosan törölni szeretnéd?</string>
-    <string name="message_delete_transaction">Biztosan törölni szeretnéd?</string>
     <string name="message_delete_transaction_model">Biztosan törölni szeretnéd?</string>
-    <string name="message_delete_transfer">Biztosan törölni szeretnéd?</string>
     <string name="message_delete_transfer_model">Biztosan törölni szeretnéd?</string>
     <string name="message_delete_wallet">Biztosan törölni szeretnéd?</string>
     <string name="message_divide_currency_decimals">Az összegek az adatbázisban frissítésre szorulnak, hogy kerekítve legyenek az új tizedes számra. A művelet időbe telhet. Ha szeretnéd kihagyhatod a frissítést, viszont ekkor az összegek %d-szeressükként fognak megjelenni. Ha az összegek frissíve lesznek, a jelenlegi törtpontosságuk csökkeni fog.</string>

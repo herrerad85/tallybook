@@ -387,8 +387,6 @@
     <string name="message_error_delete_category_with_children">"Tej kategorii nie można usunąć, ponieważ ma jedno lub więcej dzieci. Usuń je wcześniej."</string>
     <string name="message_error_delete_category_in_use">"Tej kategorii nie można usunąć, ponieważ jest używana. Usuń wszelkie odniesienia do tej kategorii i spróbuj ponownie."</string>
     <string name="message_error_delete_system_category">"Tej kategorii nie można usunąć, ponieważ jest to kategoria systemowa."</string>
-    <string name="message_delete_transaction">"Czy na pewno chcesz usunąć tę transakcję?"</string>
-    <string name="message_delete_transfer">"Czy na pewno chcesz usunąć ten przelew?"</string>
     <string name="message_error_delete_transaction_of_transfer">"Nie można usunąć tej transakcji, ponieważ jest ona częścią przelewu. Usuń powiązany przelew, aby usunąć tę transakcję."</string>
     <string name="message_delete_debt">"Czy na pewno chcesz usunąć ten dług? Wszystkie powiązane dane zostaną usunięte."</string>
     <string name="message_delete_budget">"Czy na pewno chcesz usunąć ten budżet?"</string>

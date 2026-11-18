@@ -159,7 +159,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
     public boolean onMenuItemClick(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_delete_selected_items) {
-            showDeleteDialog(mListFragment.requireActivity());
+            delete(mListFragment.requireActivity(), mAdapter.getSelectedIds());
             return true;
         } else if (itemId == R.id.action_move_selected_items) {
             FragmentManager fragmentManager = mListFragment.getChildFragmentManager();
@@ -258,48 +258,62 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
         }
     }
 
-    private void showDeleteDialog(Context context) {
-        long[] ids = mAdapter.getSelectedIds();
-        ThemedDialog.buildMaterialDialog(context)
-                .setTitle(R.string.title_warning)
-                .setMessage(context.getResources().getQuantityString(
-                        R.plurals.message_delete_selected_transactions, ids.length, ids.length))
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> delete(context, ids))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
     private void delete(Context context, long[] ids) {
         ContentResolver resolver = context.getApplicationContext().getContentResolver();
+        long deletedAt = System.currentTimeMillis();
         finish();
         sDeleteExecutor.execute(() -> {
-            Set<Long> refused = deleteTransactions(resolver, ids);
+            DeletedRows deleted = deleteTransactions(resolver, ids, deletedAt);
             sMainHandler.post(() -> {
                 if (mListFragment.getView() == null) {
                     return;
                 }
-                closePanelShowingAnyOf(ids, refused);
-                if (!refused.isEmpty()) {
+                closePanelShowingAnyOf(ids, deleted.mRefused);
+                if (deleted.mRefused.isEmpty()) {
+                    if (!deleted.mDeleted.isEmpty()) {
+                        showDeletedSnackbar(deleted.mDeleted);
+                    }
+                } else {
                     ThemedDialog.buildMaterialDialog(mListFragment.requireActivity())
                             .setTitle(R.string.title_error)
                             .setMessage(R.string.message_error_delete_transaction_of_transfer)
                             .setPositiveButton(android.R.string.ok, null)
+                            .setOnDismissListener(dialog -> {
+                                if (mListFragment.getView() != null && !deleted.mDeleted.isEmpty()) {
+                                    showDeletedSnackbar(deleted.mDeleted);
+                                }
+                            })
                             .show();
                 }
             });
         });
     }
 
-    /*package-local*/ static Set<Long> deleteTransactions(ContentResolver resolver, long[] ids) {
+    private void showDeletedSnackbar(List<Long> deletedIds) {
+        List<Uri> uris = new ArrayList<>();
+        for (long id : deletedIds) {
+            uris.add(ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, id));
+        }
+        String message = mListFragment.getResources().getQuantityString(
+                R.plurals.snackbar_message_transactions_deleted, uris.size(), uris.size());
+        DeletedItemSnackbar.show(mListFragment, mOwner.getPrimaryPanel(), message, uris, sDeleteExecutor);
+    }
+
+    /*package-local*/ static DeletedRows deleteTransactions(ContentResolver resolver, long[] ids, long deletedAt) {
+        String[] selectionArgs = new String[] {String.valueOf(deletedAt)};
+        List<Long> deleted = new ArrayList<>();
         Set<Long> refused = new HashSet<>();
         for (long id : ids) {
+            Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, id);
             try {
-                resolver.delete(ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, id), null, null);
+                if (resolver.delete(DeletedItemSnackbar.deletedUri(uri), null, selectionArgs) > 0) {
+                    deleted.add(id);
+                }
             } catch (SQLiteDataException e) {
                 refused.add(id);
             }
         }
-        return refused;
+        return new DeletedRows(deleted, refused);
     }
 
     private void showChangeDialog(Context context, long[] ids, String message, Supplier<SkippedRows> write) {
@@ -550,6 +564,17 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
                     panel.showItemId(0L);
                 }
             }
+        }
+    }
+
+    /*package-local*/ static final class DeletedRows {
+
+        /*package-local*/ final List<Long> mDeleted;
+        /*package-local*/ final Set<Long> mRefused;
+
+        /*package-local*/ DeletedRows(List<Long> deleted, Set<Long> refused) {
+            mDeleted = deleted;
+            mRefused = refused;
         }
     }
 

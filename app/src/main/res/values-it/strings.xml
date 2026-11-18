@@ -384,8 +384,6 @@
     <string name="message_error_delete_category_with_children">"Questa categoria non può essere eliminata perché ha uno o più figli. Si prega di rimuoverli prima."</string>
     <string name="message_error_delete_category_in_use">"Questa categoria non può essere eliminata perché è in uso. Si prega di rimuovere eventuali riferimenti a questa categoria e riprovare."</string>
     <string name="message_error_delete_system_category">"Questa categoria non può essere eliminata perché è una categoria di sistema."</string>
-    <string name="message_delete_transaction">"Sei sicuro di voler eliminare questa transazione?"</string>
-    <string name="message_delete_transfer">"Sei sicuro di voler eliminare questo trasferimento?"</string>
     <string name="message_error_delete_transaction_of_transfer">"Questa transazione non può essere eliminata perché è parte di un trasferimento. Si prega di eliminare il relativo trasferimento per eliminare questa transazione."</string>
     <string name="message_delete_debt">"Sei sicuro di voler eliminare questo debito? Tutti i dati relativi saranno rimossi."</string>
     <string name="message_delete_budget">"Sei sicuro di voler eliminare questo budget?"</string>

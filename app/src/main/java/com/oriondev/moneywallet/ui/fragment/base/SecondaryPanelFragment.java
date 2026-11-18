@@ -28,6 +28,7 @@ import android.os.Looper;
 import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -41,6 +42,7 @@ import com.oriondev.moneywallet.ui.activity.base.ThemedActivity;
 import com.oriondev.moneywallet.storage.database.SQLiteDataException;
 import com.oriondev.moneywallet.utils.Utils;
 
+import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -147,6 +149,23 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
     }
 
     protected void deleteItemInBackground(Uri uri, @Nullable Consumer<SQLiteDataException> onError, @Nullable Runnable onDeleted) {
+        deleteItemInBackground(uri, onError, onDeleted, null);
+    }
+
+    protected void deleteItemWithUndoInBackground(Uri itemUri, @StringRes int message, @Nullable Consumer<SQLiteDataException> onError) {
+        deleteItemInBackground(DeletedItemSnackbar.deletedUri(itemUri), onError, null,
+                () -> showDeletedSnackbar(message, itemUri));
+    }
+
+    private void showDeletedSnackbar(@StringRes int message, Uri itemUri) {
+        if (getParentFragment() instanceof MultiPanelFragment) {
+            MultiPanelFragment host = (MultiPanelFragment) getParentFragment();
+            DeletedItemSnackbar.show(host, host.getPrimaryPanel(), getString(message),
+                    Collections.singletonList(itemUri), sDeleteExecutor);
+        }
+    }
+
+    private void deleteItemInBackground(Uri uri, @Nullable Consumer<SQLiteDataException> onError, @Nullable Runnable onDeleted, @Nullable Runnable onRowsDeleted) {
         Context context = getContext();
         if (context == null) {
             return;
@@ -156,8 +175,9 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
         mDeleting = true;
         sDeleteExecutor.execute(() -> {
             SQLiteDataException failure = null;
+            int rows = 0;
             try {
-                resolver.delete(uri, null, null);
+                rows = resolver.delete(uri, null, null);
             } catch (SQLiteDataException e) {
                 failure = e;
             }
@@ -165,6 +185,7 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
                 onDeleted.run();
             }
             SQLiteDataException error = failure;
+            int deleted = rows;
             sMainHandler.post(() -> {
                 if (getView() == null) {
                     return;
@@ -177,6 +198,9 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
                         throw error;
                     }
                     return;
+                }
+                if (deleted > 0 && onRowsDeleted != null) {
+                    onRowsDeleted.run();
                 }
                 if (getItemId() != itemId) {
                     return;

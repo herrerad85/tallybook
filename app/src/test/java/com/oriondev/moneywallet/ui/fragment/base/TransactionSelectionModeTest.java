@@ -44,7 +44,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -76,8 +75,9 @@ public class TransactionSelectionModeTest {
         insertTransfer(cash, bank);
         long leg = idOfType(Contract.TransactionType.TRANSFER);
         long after = insertTransaction(cash, category, 1250L);
-        Set<Long> refused = TransactionSelectionMode.deleteTransactions(mResolver, new long[] {before, leg, after});
-        assertEquals(Collections.singleton(leg), refused);
+        TransactionSelectionMode.DeletedRows deleted = TransactionSelectionMode.deleteTransactions(mResolver,
+                new long[] {before, leg, after}, 1765000000000L);
+        assertEquals(Collections.singleton(leg), deleted.mRefused);
         assertFalse(rowExists(before));
         assertTrue(rowExists(leg));
         assertFalse(rowExists(after));

@@ -351,8 +351,6 @@
     <string name="message_error_delete_category_with_children">"این دسته را نمی توان حذف کرد چرا که دارای یک یا چند فرزند است. لطفا اول آنها را حذف کنید."</string>
     <string name="message_error_delete_category_in_use">"این دسته را نمی توان حذف کرد چرا که در حال استفاده است. لطفا هر گونه ارجاع به این دسته را حذف کنید و دوباره امتحان کنید"</string>
     <string name="message_error_delete_system_category">"این دسته را نمی توان حذف کرد زیرا این یک طبقه بندی سیستم است."</string>
-    <string name="message_delete_transaction">"آیا مطمئن هستید که میخواهید این تراکنش را حذف کنید؟"</string>
-    <string name="message_delete_transfer">"آیا مطمئن هستید که می خواهید این انتقال را حذف کنید؟"</string>
     <string name="message_error_delete_transaction_of_transfer">"این تراکنش نمی تواند حذف شود، زیرا بخشی از انتقال است. لطفا برای انتقال این تراکنش را حذف کنید."</string>
     <string name="message_delete_debt">"آیا مطمئنید که میخواهید این بدهی را حذف کنید؟ تمام داده های مرتبط حذف خواهند شد."</string>
     <string name="message_delete_budget">"آیا مطمئن هستید که می خواهید این بودجه را حذف کنید؟"</string>

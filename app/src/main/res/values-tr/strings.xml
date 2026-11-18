@@ -372,8 +372,6 @@
     <string name="message_error_delete_category_with_children"> "Bu kategori bir veya daha fazla çocuğu olduğu için silinemiyor. Lütfen daha önce bunları kaldırın." </string>
     <string name="message_error_delete_category_in_use"> "Bu kategori kullanımda olduğu için silinemiyor. Lütfen bu kategoriye yapılan başvuruları kaldırın ve yeniden deneyin." </string>
     <string name="message_error_delete_system_category"> "Bu kategori bir sistem kategorisi olduğu için silinemiyor." </string>
-    <string name="message_delete_transaction"> "Bu işlemi silmek istediğinize emin misiniz?" </string>
-    <string name="message_delete_transfer"> "Bu transferi silmek istediğinize emin misiniz?" </string>
     <string name="message_error_delete_transaction_of_transfer"> "Bu işlem bir transferin parçası olduğu için silinemiyor. Lütfen bu işlemi silmek için ilgili transferi kaldırın." </string>
     <string name="message_delete_debt"> "Bu borcunu silmek istediğinize emin misiniz? İlgili tüm veriler kaldırılacak." </string>
     <string name="message_delete_budget"> "Bu bütçeyi silmek istediğinize emin misiniz?" </string>
