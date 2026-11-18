@@ -155,6 +155,13 @@ public class DataContentProvider extends ContentProvider {
     private static final int BUDGET_CATEGORY_SUM = 53;
     private static final int BUDGET_CATEGORY_BUDGETS = 54;
     private static final int BUDGET_PERIOD_PROGRESS = 55;
+    private static final int TRANSACTION_DELETED = 56;
+    private static final int TRANSACTION_RESTORE = 57;
+    private static final int TRANSFER_DELETED = 58;
+    private static final int TRANSFER_RESTORE = 59;
+    private static final int DELETED_LIST = 60;
+    private static final int TRANSACTION_DELETED_LIST = 61;
+    private static final int CATEGORY_LINE_DELETED_LIST = 62;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -217,6 +224,13 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "category_lines", CATEGORY_LINE_LIST);
         matcher.addURI(AUTHORITY, "category_shares", CATEGORY_SHARE_LIST);
         matcher.addURI(AUTHORITY, "transactions/#/splits", TRANSACTION_SPLIT_LIST);
+        matcher.addURI(AUTHORITY, "transactions/#/deleted", TRANSACTION_DELETED);
+        matcher.addURI(AUTHORITY, "transactions/#/restore", TRANSACTION_RESTORE);
+        matcher.addURI(AUTHORITY, "transfers/#/deleted", TRANSFER_DELETED);
+        matcher.addURI(AUTHORITY, "transfers/#/restore", TRANSFER_RESTORE);
+        matcher.addURI(AUTHORITY, "deleted", DELETED_LIST);
+        matcher.addURI(AUTHORITY, "transactions/deleted", TRANSACTION_DELETED_LIST);
+        matcher.addURI(AUTHORITY, "category_lines/deleted", CATEGORY_LINE_DELETED_LIST);
         return matcher;
     }
 
@@ -426,6 +440,12 @@ public class DataContentProvider extends ContentProvider {
             case TRANSACTION_SPLIT_LIST:
                 cursor = new MultiUriCursorWrapper(db().getTransactionSplits(parseIdAtIndex(uri, 1), projection, selection, selectionArgs, sortOrder));
                 break;
+            case TRANSACTION_DELETED_LIST:
+                cursor = new MultiUriCursorWrapper(db().getDeletedTransactions(projection, selection, selectionArgs, sortOrder));
+                break;
+            case CATEGORY_LINE_DELETED_LIST:
+                cursor = new MultiUriCursorWrapper(db().getDeletedCategoryLines(projection, selection, selectionArgs, sortOrder));
+                break;
         }
         if (cursor != null) {
             cursor.setNotificationUri(getContentResolver(), CONTENT_ALL);
@@ -541,6 +561,9 @@ public class DataContentProvider extends ContentProvider {
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.transaction";
             case TRANSACTION_SPLIT_LIST:
                 return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.transaction.split";
+            case TRANSACTION_DELETED_LIST:
+            case CATEGORY_LINE_DELETED_LIST:
+                return "vnd.android.cursor.dir/vnd.com.oriondev.moneywallet.storage.transaction";
         }
         return null;
     }
@@ -635,7 +658,7 @@ public class DataContentProvider extends ContentProvider {
         // sixteen cases written twice
         Uri[] notifyUri = new Uri[1];
         int result = SQLDatabase.inSharedTransaction(getContext(),
-                database -> deleteInTransaction(database, uri, notifyUri));
+                database -> deleteInTransaction(database, uri, selectionArgs, notifyUri));
         // out here with the notify, and not in the WALLET_ITEM case where it used to sit, because
         // it writes a preference and broadcasts to every open screen and neither of those can be
         // rolled back. Reading the preference after the delete is the same read, nothing in the
@@ -657,11 +680,15 @@ public class DataContentProvider extends ContentProvider {
         if (notifyUri[0] != null) {
             notifyObservers(notifyUri[0], notifyUri[0]);
         }
+        if (result > 0 && mUriMatcher.match(uri) == DELETED_LIST) {
+            notifyObservers(CONTENT_TRANSFERS, CONTENT_TRANSFERS);
+        }
         return result;
     }
 
-    private int deleteInTransaction(SQLDatabase database, Uri uri, Uri[] notifyUri) {
+    private int deleteInTransaction(SQLDatabase database, Uri uri, String[] selectionArgs, Uri[] notifyUri) {
         int result = 0;
+        long deletedAt;
         switch (mUriMatcher.match(uri)) {
             case CURRENCY_ITEM:
                 notifyUri[0] = DataContentProvider.CONTENT_CURRENCIES;
@@ -731,8 +758,46 @@ public class DataContentProvider extends ContentProvider {
                 notifyUri[0] = DataContentProvider.CONTENT_ATTACHMENTS;
                 result = database.deleteAttachment(ContentUris.parseId(uri));
                 break;
+            case TRANSACTION_DELETED:
+                deletedAt = deletedAt(selectionArgs, System.currentTimeMillis());
+                if (deletedAt > 0L) {
+                    result = database.flagTransactionDeleted(parseIdAtIndex(uri, 1), deletedAt);
+                }
+                if (result > 0) {
+                    notifyUri[0] = DataContentProvider.CONTENT_TRANSACTIONS;
+                }
+                break;
+            case TRANSFER_DELETED:
+                deletedAt = deletedAt(selectionArgs, System.currentTimeMillis());
+                if (deletedAt > 0L) {
+                    result = database.flagTransferDeleted(parseIdAtIndex(uri, 1), deletedAt);
+                }
+                if (result > 0) {
+                    notifyUri[0] = DataContentProvider.CONTENT_TRANSFERS;
+                }
+                break;
+            case DELETED_LIST:
+                deletedAt = deletedAt(selectionArgs, 0L);
+                if (deletedAt > 0L) {
+                    result = database.deleteFlaggedItems(deletedAt);
+                }
+                if (result > 0) {
+                    notifyUri[0] = DataContentProvider.CONTENT_TRANSACTIONS;
+                }
+                break;
         }
         return result;
+    }
+
+    private static long deletedAt(String[] selectionArgs, long defaultDeletedAt) {
+        if (selectionArgs == null || selectionArgs.length == 0) {
+            return defaultDeletedAt;
+        }
+        try {
+            return Long.parseLong(selectionArgs[0]);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     @Override
@@ -740,7 +805,17 @@ public class DataContentProvider extends ContentProvider {
         int result = SQLDatabase.inSharedTransaction(getContext(),
                 database -> updateInTransaction(database, uri, values));
         if (result > 0) {
-            notifyObservers(uri, uri);
+            switch (mUriMatcher.match(uri)) {
+                case TRANSACTION_RESTORE:
+                    notifyObservers(CONTENT_TRANSACTIONS, CONTENT_TRANSACTIONS);
+                    break;
+                case TRANSFER_RESTORE:
+                    notifyObservers(CONTENT_TRANSFERS, CONTENT_TRANSFERS);
+                    break;
+                default:
+                    notifyObservers(uri, uri);
+                    break;
+            }
         }
         return result;
     }
@@ -795,6 +870,12 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case PERSON_ITEM:
                 result = database.updatePerson(ContentUris.parseId(uri), values);
+                break;
+            case TRANSACTION_RESTORE:
+                result = database.restoreTransaction(parseIdAtIndex(uri, 1));
+                break;
+            case TRANSFER_RESTORE:
+                result = database.restoreTransfer(parseIdAtIndex(uri, 1));
                 break;
         }
         return result;

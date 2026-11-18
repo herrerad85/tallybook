@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.MergeCursor;
 import android.net.Uri;
 import android.text.TextUtils;
 
@@ -272,20 +273,18 @@ public abstract class AbstractDataImporter {
         }
     }
 
-    // one query per source per wallet and not one per row, at the cost of holding the wallet's
-    // rows until the import ends. The category lines are kept only for a transaction with a part
-    // among them, since any other gives one line equal to its total
     private static SavedRows readSavedRows(ContentResolver contentResolver, long walletId) {
         Map<Long, List<Object>> totals = new HashMap<>();
         List<String> arguments = new ArrayList<>(CSVDataExporter.ROWS_SELECTION_ARGS);
         arguments.add(String.valueOf(walletId));
         String selection = CSVDataExporter.ROWS_SELECTION + " AND " + Contract.Transaction.WALLET_ID + " = ?";
         String[] selectionArgs = arguments.toArray(new String[0]);
-        Cursor cursor = contentResolver.query(DataContentProvider.CONTENT_TRANSACTIONS,
-                new String[] {Contract.Transaction.ID, Contract.Transaction.DATE,
-                        Contract.Transaction.DIRECTION, Contract.Transaction.MONEY,
-                        Contract.Transaction.DESCRIPTION},
-                selection, selectionArgs, null);
+        String[] projection = new String[] {Contract.Transaction.ID, Contract.Transaction.DATE,
+                Contract.Transaction.DIRECTION, Contract.Transaction.MONEY, Contract.Transaction.DESCRIPTION};
+        Cursor cursor = new MergeCursor(new Cursor[] {
+                contentResolver.query(DataContentProvider.CONTENT_TRANSACTIONS, projection, selection, selectionArgs, null),
+                contentResolver.query(Uri.withAppendedPath(DataContentProvider.CONTENT_TRANSACTIONS, "deleted"),
+                        projection, selection, selectionArgs, null)});
         if (cursor != null) {
             try {
                 while (cursor.moveToNext()) {
@@ -298,11 +297,13 @@ public abstract class AbstractDataImporter {
         }
         Map<Long, List<List<Object>>> lines = new HashMap<>();
         Set<Long> split = new HashSet<>();
-        cursor = contentResolver.query(DataContentProvider.CONTENT_CATEGORY_LINES,
-                new String[] {Contract.Transaction.ID, Contract.Transaction.SPLIT_ID,
-                        Contract.Transaction.DATE, Contract.Transaction.DIRECTION,
-                        Contract.Transaction.MONEY, Contract.Transaction.DESCRIPTION},
-                selection, selectionArgs, null);
+        projection = new String[] {Contract.Transaction.ID, Contract.Transaction.SPLIT_ID,
+                Contract.Transaction.DATE, Contract.Transaction.DIRECTION,
+                Contract.Transaction.MONEY, Contract.Transaction.DESCRIPTION};
+        cursor = new MergeCursor(new Cursor[] {
+                contentResolver.query(DataContentProvider.CONTENT_CATEGORY_LINES, projection, selection, selectionArgs, null),
+                contentResolver.query(Uri.withAppendedPath(DataContentProvider.CONTENT_CATEGORY_LINES, "deleted"),
+                        projection, selection, selectionArgs, null)});
         if (cursor != null) {
             try {
                 while (cursor.moveToNext()) {

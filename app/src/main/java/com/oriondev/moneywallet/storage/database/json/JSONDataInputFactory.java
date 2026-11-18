@@ -47,6 +47,7 @@ import java.util.Map;
     private final Map<String, Long> mCacheTransactions = new HashMap<>();
     private final Map<String, Long> mCacheTransfers = new HashMap<>();
     private final Map<String, Long> mCacheAttachments = new HashMap<>();
+    private final long mImportTime = System.currentTimeMillis();
 
     /*package-local*/ void cacheWallet(String uuid, long id) {
         mCacheWallets.put(uuid, id);
@@ -358,6 +359,7 @@ import java.util.Map;
         transaction.mUUID = object.optString(JSONDatabase.Transaction.ID, null);
         transaction.mLastEdit = object.optLong(JSONDatabase.Transaction.LAST_EDIT, 0L);
         transaction.mDeleted = object.optBoolean(JSONDatabase.Transaction.DELETED, false);
+        transaction.mDeletedAt = getDeletedAt(object, transaction.mDeleted, JSONDatabase.Transaction.DELETED_AT);
         return transaction;
     }
 
@@ -370,6 +372,7 @@ import java.util.Map;
         transactionSplit.mUUID = object.optString(JSONDatabase.TransactionSplit.ID, null);
         transactionSplit.mLastEdit = object.optLong(JSONDatabase.TransactionSplit.LAST_EDIT, 0L);
         transactionSplit.mDeleted = object.optBoolean(JSONDatabase.TransactionSplit.DELETED, false);
+        transactionSplit.mDeletedAt = getDeletedAt(object, transactionSplit.mDeleted, JSONDatabase.TransactionSplit.DELETED_AT);
         return transactionSplit;
     }
 
@@ -380,6 +383,7 @@ import java.util.Map;
         transactionPerson.mUUID = object.optString(JSONDatabase.TransactionPeople.ID, null);
         transactionPerson.mLastEdit = object.optLong(JSONDatabase.TransactionPeople.LAST_EDIT, 0L);
         transactionPerson.mDeleted = object.optBoolean(JSONDatabase.TransactionPeople.DELETED, false);
+        transactionPerson.mDeletedAt = getDeletedAt(object, transactionPerson.mDeleted, JSONDatabase.TransactionPeople.DELETED_AT);
         return transactionPerson;
     }
 
@@ -419,6 +423,7 @@ import java.util.Map;
         transfer.mUUID = object.optString(JSONDatabase.Transfer.ID, null);
         transfer.mLastEdit = object.optLong(JSONDatabase.Transfer.LAST_EDIT, 0L);
         transfer.mDeleted = object.optBoolean(JSONDatabase.Transfer.DELETED, false);
+        transfer.mDeletedAt = getDeletedAt(object, transfer.mDeleted, JSONDatabase.Transfer.DELETED_AT);
         return transfer;
     }
 
@@ -429,6 +434,7 @@ import java.util.Map;
         transferPerson.mUUID = object.optString(JSONDatabase.TransferPeople.ID, null);
         transferPerson.mLastEdit = object.optLong(JSONDatabase.TransferPeople.LAST_EDIT, 0L);
         transferPerson.mDeleted = object.optBoolean(JSONDatabase.TransferPeople.DELETED, false);
+        transferPerson.mDeletedAt = getDeletedAt(object, transferPerson.mDeleted, JSONDatabase.TransferPeople.DELETED_AT);
         return transferPerson;
     }
 
@@ -462,6 +468,7 @@ import java.util.Map;
         attachment.mUUID = object.optString(JSONDatabase.Attachment.ID, null);
         attachment.mLastEdit = object.optLong(JSONDatabase.Attachment.LAST_EDIT, 0L);
         attachment.mDeleted = object.optBoolean(JSONDatabase.Attachment.DELETED, false);
+        attachment.mDeletedAt = getDeletedAt(object, attachment.mDeleted, JSONDatabase.Attachment.DELETED_AT);
         return attachment;
     }
 
@@ -472,6 +479,7 @@ import java.util.Map;
         transactionAttachment.mUUID = object.optString(JSONDatabase.TransactionAttachment.ID, null);
         transactionAttachment.mLastEdit = object.optLong(JSONDatabase.TransactionAttachment.LAST_EDIT, 0L);
         transactionAttachment.mDeleted = object.optBoolean(JSONDatabase.TransactionAttachment.DELETED, false);
+        transactionAttachment.mDeletedAt = getDeletedAt(object, transactionAttachment.mDeleted, JSONDatabase.TransactionAttachment.DELETED_AT);
         return transactionAttachment;
     }
 
@@ -482,6 +490,15 @@ import java.util.Map;
         transferAttachment.mUUID = object.optString(JSONDatabase.TransferAttachment.ID, null);
         transferAttachment.mLastEdit = object.optLong(JSONDatabase.TransferAttachment.LAST_EDIT, 0L);
         transferAttachment.mDeleted = object.optBoolean(JSONDatabase.TransferAttachment.DELETED, false);
+        transferAttachment.mDeletedAt = getDeletedAt(object, transferAttachment.mDeleted, JSONDatabase.TransferAttachment.DELETED_AT);
         return transferAttachment;
+    }
+
+    private long getDeletedAt(JSONObject object, boolean deleted, String name) {
+        if (!deleted) {
+            return 0L;
+        }
+        long deletedAt = object.optLong(name, 0L);
+        return deletedAt != 0L ? deletedAt : mImportTime;
     }
 }

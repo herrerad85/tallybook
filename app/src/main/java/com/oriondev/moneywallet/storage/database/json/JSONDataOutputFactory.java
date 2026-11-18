@@ -337,6 +337,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.Transaction.ID, transaction.mUUID);
         object.put(JSONDatabase.Transaction.LAST_EDIT, transaction.mLastEdit);
         object.put(JSONDatabase.Transaction.DELETED, transaction.mDeleted);
+        if (transaction.mDeleted) {
+            object.put(JSONDatabase.Transaction.DELETED_AT, transaction.mDeletedAt);
+        }
         mCacheTransactions.put(transaction.mId, transaction.mUUID);
         return object;
     }
@@ -350,6 +353,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.TransactionSplit.ID, transactionSplit.mUUID);
         object.put(JSONDatabase.TransactionSplit.LAST_EDIT, transactionSplit.mLastEdit);
         object.put(JSONDatabase.TransactionSplit.DELETED, transactionSplit.mDeleted);
+        if (transactionSplit.mDeleted) {
+            object.put(JSONDatabase.TransactionSplit.DELETED_AT, transactionSplit.mDeletedAt);
+        }
         return object;
     }
 
@@ -360,6 +366,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.TransactionPeople.ID, transactionPerson.mUUID);
         object.put(JSONDatabase.TransactionPeople.LAST_EDIT, transactionPerson.mLastEdit);
         object.put(JSONDatabase.TransactionPeople.DELETED, transactionPerson.mDeleted);
+        if (transactionPerson.mDeleted) {
+            object.put(JSONDatabase.TransactionPeople.DELETED_AT, transactionPerson.mDeletedAt);
+        }
         return object;
     }
 
@@ -399,6 +408,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.Transfer.ID, transfer.mUUID);
         object.put(JSONDatabase.Transfer.LAST_EDIT, transfer.mLastEdit);
         object.put(JSONDatabase.Transfer.DELETED, transfer.mDeleted);
+        if (transfer.mDeleted) {
+            object.put(JSONDatabase.Transfer.DELETED_AT, transfer.mDeletedAt);
+        }
         mCacheTransfers.put(transfer.mId, transfer.mUUID);
         return object;
     }
@@ -410,6 +422,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.TransferPeople.ID, transferPerson.mUUID);
         object.put(JSONDatabase.TransferPeople.LAST_EDIT, transferPerson.mLastEdit);
         object.put(JSONDatabase.TransferPeople.DELETED, transferPerson.mDeleted);
+        if (transferPerson.mDeleted) {
+            object.put(JSONDatabase.TransferPeople.DELETED_AT, transferPerson.mDeletedAt);
+        }
         return object;
     }
 
@@ -443,6 +458,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.Attachment.ID, attachment.mUUID);
         object.put(JSONDatabase.Attachment.LAST_EDIT, attachment.mLastEdit);
         object.put(JSONDatabase.Attachment.DELETED, attachment.mDeleted);
+        if (attachment.mDeleted) {
+            object.put(JSONDatabase.Attachment.DELETED_AT, attachment.mDeletedAt);
+        }
         mCacheAttachments.put(attachment.mId, attachment.mUUID);
         return object;
     }
@@ -454,6 +472,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.TransactionAttachment.ID, transactionAttachment.mUUID);
         object.put(JSONDatabase.TransactionAttachment.LAST_EDIT, transactionAttachment.mLastEdit);
         object.put(JSONDatabase.TransactionAttachment.DELETED, transactionAttachment.mDeleted);
+        if (transactionAttachment.mDeleted) {
+            object.put(JSONDatabase.TransactionAttachment.DELETED_AT, transactionAttachment.mDeletedAt);
+        }
         return object;
     }
 
@@ -464,6 +485,9 @@ import java.util.HashMap;
         object.put(JSONDatabase.TransferAttachment.ID, transferAttachment.mUUID);
         object.put(JSONDatabase.TransferAttachment.LAST_EDIT, transferAttachment.mLastEdit);
         object.put(JSONDatabase.TransferAttachment.DELETED, transferAttachment.mDeleted);
+        if (transferAttachment.mDeleted) {
+            object.put(JSONDatabase.TransferAttachment.DELETED_AT, transferAttachment.mDeletedAt);
+        }
         return object;
     }
 }

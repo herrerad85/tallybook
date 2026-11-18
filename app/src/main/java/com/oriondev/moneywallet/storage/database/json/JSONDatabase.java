@@ -285,6 +285,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String TAG = "tag";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class TransactionSplit {
@@ -296,6 +297,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String NOTE = "note";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class TransactionPeople {
@@ -305,6 +307,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String PERSON = "person";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class Transfer {
@@ -324,6 +327,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String TAG = "tag";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class TransferPeople {
@@ -333,6 +337,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String PERSON = "person";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class TransactionModel {
@@ -382,6 +387,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String TAG = "tag";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class TransactionAttachment {
@@ -391,6 +397,7 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String ATTACHMENT = "attachment";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 
     /*package-local*/ static final class TransferAttachment {
@@ -400,5 +407,6 @@ package com.oriondev.moneywallet.storage.database.json;
         /*package-local*/ static final String ATTACHMENT = "attachment";
         /*package-local*/ static final String LAST_EDIT = "last_edit";
         /*package-local*/ static final String DELETED = "deleted";
+        /*package-local*/ static final String DELETED_AT = "deleted_at";
     }
 }

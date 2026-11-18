@@ -329,7 +329,8 @@ public class SQLDatabaseExporter {
         object.mTag = cursor.getString(cursor.getColumnIndex(Schema.Transaction.TAG));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.Transaction.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.Transaction.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.Transaction.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.Transaction.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -341,7 +342,8 @@ public class SQLDatabaseExporter {
         object.mNote = cursor.getString(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.NOTE));
         object.mUUID = cursor.getString(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndexOrThrow(Schema.TransactionSplit.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -351,7 +353,8 @@ public class SQLDatabaseExporter {
         object.mPerson = cursor.isNull(cursor.getColumnIndex(Schema.TransactionPeople.PERSON)) ? null : cursor.getLong(cursor.getColumnIndex(Schema.TransactionPeople.PERSON));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.TransactionPeople.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.TransactionPeople.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.TransactionPeople.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.TransactionPeople.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -392,7 +395,8 @@ public class SQLDatabaseExporter {
         object.mTag = cursor.getString(cursor.getColumnIndex(Schema.Transfer.TAG));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.Transfer.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.Transfer.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.Transfer.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.Transfer.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -402,7 +406,8 @@ public class SQLDatabaseExporter {
         object.mPerson = cursor.isNull(cursor.getColumnIndex(Schema.TransferPeople.PERSON)) ? null : cursor.getLong(cursor.getColumnIndex(Schema.TransferPeople.PERSON));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.TransferPeople.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.TransferPeople.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.TransferPeople.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.TransferPeople.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -437,7 +442,8 @@ public class SQLDatabaseExporter {
         object.mTag = cursor.getString(cursor.getColumnIndex(Schema.Attachment.TAG));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.Attachment.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.Attachment.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.Attachment.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.Attachment.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -447,7 +453,8 @@ public class SQLDatabaseExporter {
         object.mAttachment = cursor.isNull(cursor.getColumnIndex(Schema.TransactionAttachment.ATTACHMENT)) ? null : cursor.getLong(cursor.getColumnIndex(Schema.TransactionAttachment.ATTACHMENT));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.TransactionAttachment.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.TransactionAttachment.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.TransactionAttachment.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.TransactionAttachment.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -457,7 +464,8 @@ public class SQLDatabaseExporter {
         object.mAttachment = cursor.isNull(cursor.getColumnIndex(Schema.TransferAttachment.ATTACHMENT)) ? null : cursor.getLong(cursor.getColumnIndex(Schema.TransferAttachment.ATTACHMENT));
         object.mUUID = cursor.getString(cursor.getColumnIndex(Schema.TransferAttachment.UUID));
         object.mLastEdit = cursor.getLong(cursor.getColumnIndex(Schema.TransferAttachment.LAST_EDIT));
-        object.mDeleted = cursor.getInt(cursor.getColumnIndex(Schema.TransferAttachment.DELETED)) == 1;
+        object.mDeletedAt = cursor.getLong(cursor.getColumnIndex(Schema.TransferAttachment.DELETED));
+        object.mDeleted = object.mDeletedAt != 0L;
         return object;
     }
 
@@ -569,21 +577,18 @@ public class SQLDatabaseExporter {
 
     public static Cursor getAllTransactions(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION;
-        String selection = Schema.Transaction.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 
     public static Cursor getAllTransactionSplits(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_SPLIT;
-        String selection = Schema.TransactionSplit.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
     public static Cursor getAllTransactionPeople(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_PEOPLE;
-        String selection = Schema.TransactionPeople.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 
@@ -596,15 +601,13 @@ public class SQLDatabaseExporter {
 
     public static Cursor getAllTransfers(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSFER;
-        String selection = Schema.Transfer.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 
     public static Cursor getAllTransferPeople(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSFER_PEOPLE;
-        String selection = Schema.TransferPeople.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 
@@ -617,22 +620,19 @@ public class SQLDatabaseExporter {
 
     public static Cursor getAllAttachments(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_ATTACHMENT;
-        String selection = Schema.Attachment.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 
     public static Cursor getAllTransactionAttachments(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_ATTACHMENT;
-        String selection = Schema.TransactionAttachment.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 
     public static Cursor getAllTransferAttachments(ContentResolver contentResolver) {
         Uri uri = SyncContentProvider.CONTENT_TRANSFER_ATTACHMENT;
-        String selection = Schema.TransferAttachment.DELETED + " = 0";
-        return contentResolver.query(uri, null, selection, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
 }

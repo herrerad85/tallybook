@@ -27,4 +27,5 @@ package com.oriondev.moneywallet.storage.database.model;
     public String mUUID;
     public long mLastEdit;
     public boolean mDeleted;
+    public long mDeletedAt;
 }

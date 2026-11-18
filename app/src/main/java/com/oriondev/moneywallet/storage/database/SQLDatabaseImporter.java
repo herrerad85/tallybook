@@ -353,7 +353,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.Transaction.TAG, transaction.mTag);
         contentValues.put(Schema.Transaction.UUID, transaction.mUUID);
         contentValues.put(Schema.Transaction.LAST_EDIT, transaction.mLastEdit);
-        contentValues.put(Schema.Transaction.DELETED, transaction.mDeleted);
+        contentValues.put(Schema.Transaction.DELETED, deleted(transaction.mDeleted, transaction.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -367,7 +367,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.TransactionSplit.NOTE, transactionSplit.mNote);
         contentValues.put(Schema.TransactionSplit.UUID, transactionSplit.mUUID);
         contentValues.put(Schema.TransactionSplit.LAST_EDIT, transactionSplit.mLastEdit);
-        contentValues.put(Schema.TransactionSplit.DELETED, transactionSplit.mDeleted);
+        contentValues.put(Schema.TransactionSplit.DELETED, deleted(transactionSplit.mDeleted, transactionSplit.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_SPLIT;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -379,7 +379,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.TransactionPeople.PERSON, transactionPeople.mPerson);
         contentValues.put(Schema.TransactionPeople.UUID, transactionPeople.mUUID);
         contentValues.put(Schema.TransactionPeople.LAST_EDIT, transactionPeople.mLastEdit);
-        contentValues.put(Schema.TransactionPeople.DELETED, transactionPeople.mDeleted);
+        contentValues.put(Schema.TransactionPeople.DELETED, deleted(transactionPeople.mDeleted, transactionPeople.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_PEOPLE;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -422,7 +422,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.Transfer.TAG, transfers.mTag);
         contentValues.put(Schema.Transfer.UUID, transfers.mUUID);
         contentValues.put(Schema.Transfer.LAST_EDIT, transfers.mLastEdit);
-        contentValues.put(Schema.Transfer.DELETED, transfers.mDeleted);
+        contentValues.put(Schema.Transfer.DELETED, deleted(transfers.mDeleted, transfers.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSFER;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -434,7 +434,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.TransferPeople.PERSON, transferPerson.mPerson);
         contentValues.put(Schema.TransferPeople.UUID, transferPerson.mUUID);
         contentValues.put(Schema.TransferPeople.LAST_EDIT, transferPerson.mLastEdit);
-        contentValues.put(Schema.TransferPeople.DELETED, transferPerson.mDeleted);
+        contentValues.put(Schema.TransferPeople.DELETED, deleted(transferPerson.mDeleted, transferPerson.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSFER_PEOPLE;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -471,7 +471,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.Attachment.TAG, attachment.mTag);
         contentValues.put(Schema.Attachment.UUID, attachment.mUUID);
         contentValues.put(Schema.Attachment.LAST_EDIT, attachment.mLastEdit);
-        contentValues.put(Schema.Attachment.DELETED, attachment.mDeleted);
+        contentValues.put(Schema.Attachment.DELETED, deleted(attachment.mDeleted, attachment.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_ATTACHMENT;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -483,7 +483,7 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.TransactionAttachment.ATTACHMENT, transactionAttachment.mAttachment);
         contentValues.put(Schema.TransactionAttachment.UUID, transactionAttachment.mUUID);
         contentValues.put(Schema.TransactionAttachment.LAST_EDIT, transactionAttachment.mLastEdit);
-        contentValues.put(Schema.TransactionAttachment.DELETED, transactionAttachment.mDeleted);
+        contentValues.put(Schema.TransactionAttachment.DELETED, deleted(transactionAttachment.mDeleted, transactionAttachment.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSACTION_ATTACHMENT;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
@@ -495,9 +495,16 @@ public class SQLDatabaseImporter {
         contentValues.put(Schema.TransferAttachment.ATTACHMENT, transferAttachment.mAttachment);
         contentValues.put(Schema.TransferAttachment.UUID, transferAttachment.mUUID);
         contentValues.put(Schema.TransferAttachment.LAST_EDIT, transferAttachment.mLastEdit);
-        contentValues.put(Schema.TransferAttachment.DELETED, transferAttachment.mDeleted);
+        contentValues.put(Schema.TransferAttachment.DELETED, deleted(transferAttachment.mDeleted, transferAttachment.mDeletedAt));
         Uri uri = SyncContentProvider.CONTENT_TRANSFER_ATTACHMENT;
         uri = contentResolver.insert(uri, contentValues);
         return ContentUris.parseId(uri);
+    }
+
+    private static long deleted(boolean deleted, long deletedAt) {
+        if (!deleted) {
+            return 0L;
+        }
+        return deletedAt != 0L ? deletedAt : 1L;
     }
 }

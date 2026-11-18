@@ -23,6 +23,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -959,13 +960,14 @@ import java.util.function.Supplier;
             }
         }
         // if this line is reached it means that the wallet can be deleted
+        deleteFlaggedItems("t." + Schema.Transaction.WALLET + " = ?", new String[] {String.valueOf(walletId)});
         // the attachments go first: the transactions below are removed in one statement rather
         // than through deleteTransactionItem, and on the build that ships, where deletes are
         // hard, the link rows go with them on the cascade
         deleteAttachmentsOf(Schema.TransactionAttachment.TABLE, Schema.TransactionAttachment.ATTACHMENT,
                 Schema.TransactionAttachment.TRANSACTION + " IN (SELECT " + Schema.Transaction.ID +
                         " FROM " + Schema.Transaction.TABLE + " WHERE " + Schema.Transaction.WALLET +
-                        " = ?) AND " + Schema.TransactionAttachment.DELETED + " = 0",
+                        " = ?)",
                 new String[] {String.valueOf(walletId)});
         // we can start to delete all the transactions related to this wallet
         String where = Schema.Transaction.WALLET + " = ?";
@@ -1036,6 +1038,12 @@ import java.util.function.Supplier;
         return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
     }
 
+    /*package-local*/ Cursor getDeletedTransactions(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String subQuery = transactionRows(true, "t." + Schema.Transaction.MONEY, "t." + Schema.Transaction.CATEGORY,
+                Schema.Transaction.TABLE + " AS t", "t." + Schema.Transaction.ID);
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
     /**
      * The transactions whose live parts are valid, each with the sum of those parts. Parts are
      * ignored, and the transaction reads as unsplit under its main category, when they add up to
@@ -1050,6 +1058,10 @@ import java.util.function.Supplier;
      * The same, counting only the live parts that also match the given condition on s.
      */
     private static String validParts(String partCondition) {
+        return validParts(false, partCondition);
+    }
+
+    private static String validParts(boolean deleted, String partCondition) {
         return "SELECT s." + Schema.TransactionSplit.TRANSACTION +
             " AS _parts_transaction, SUM(s." + Schema.TransactionSplit.MONEY + ") AS _parts_money, " +
             "COUNT(DISTINCT s." + Schema.TransactionSplit.CATEGORY + ") AS _parts_categories, MAX(s." +
@@ -1059,7 +1071,8 @@ import java.util.function.Supplier;
             Schema.TransactionSplit.TRANSACTION + " = st." + Schema.Transaction.ID + " LEFT JOIN " +
             Schema.Category.TABLE + " AS sc ON s." + Schema.TransactionSplit.CATEGORY + " = sc." +
             Schema.Category.ID + " AND sc." + Schema.Category.DELETED + " = 0 WHERE s." +
-            Schema.TransactionSplit.DELETED + " = 0 AND st." + Schema.Transaction.DELETED + " = 0" +
+            Schema.TransactionSplit.DELETED + (deleted ? " = st." + Schema.Transaction.DELETED + " AND st." +
+            Schema.Transaction.DELETED + " != 0" : " = 0 AND st." + Schema.Transaction.DELETED + " = 0") +
             partCondition + " GROUP BY s." +
             Schema.TransactionSplit.TRANSACTION + " HAVING SUM(s." + Schema.TransactionSplit.MONEY +
             ") <= MAX(st." + Schema.Transaction.MONEY + ") AND MIN(s." + Schema.TransactionSplit.MONEY +
@@ -1080,21 +1093,33 @@ import java.util.function.Supplier;
      * main category. It is unique across both, and the lowest key of a transaction is its main
      * line when it has one and its first part otherwise.
      */
-    private static final String CATEGORY_LINES = "SELECT -t." + Schema.Transaction.ID + " AS _line_id, " +
-            "NULL AS _line_split, t." + Schema.Transaction.ID + " AS _line_transaction, t." +
-            Schema.Transaction.CATEGORY + " AS _line_category, t." + Schema.Transaction.MONEY +
-            " - IFNULL(v._parts_money, 0) AS _line_money FROM " + Schema.Transaction.TABLE +
-            " AS t LEFT JOIN (" + VALID_PARTS + ") AS v ON v._parts_transaction = t." +
-            Schema.Transaction.ID + " WHERE t." + Schema.Transaction.DELETED + " = 0 AND (" +
-            "v._parts_transaction IS NULL OR t." + Schema.Transaction.MONEY + " > v._parts_money) " +
-            "UNION ALL SELECT s." + Schema.TransactionSplit.ID + ", s." + Schema.TransactionSplit.ID +
-            ", s." + Schema.TransactionSplit.TRANSACTION + ", s." + Schema.TransactionSplit.CATEGORY +
-            ", s." + Schema.TransactionSplit.MONEY + " FROM " + Schema.TransactionSplit.TABLE +
-            " AS s JOIN (" + VALID_PARTS + ") AS v ON v._parts_transaction = s." +
-            Schema.TransactionSplit.TRANSACTION + " WHERE s." + Schema.TransactionSplit.DELETED + " = 0";
+    private static final String CATEGORY_LINES = categoryLines(false);
 
-    private static final String CATEGORY_LINES_FROM = "(" + CATEGORY_LINES + ") AS l JOIN " +
-            Schema.Transaction.TABLE + " AS t ON l._line_transaction = t." + Schema.Transaction.ID;
+    private static String categoryLines(boolean deleted) {
+        String parts = validParts(deleted, "");
+        return "SELECT -t." + Schema.Transaction.ID + " AS _line_id, " +
+                "NULL AS _line_split, t." + Schema.Transaction.ID + " AS _line_transaction, t." +
+                Schema.Transaction.CATEGORY + " AS _line_category, t." + Schema.Transaction.MONEY +
+                " - IFNULL(v._parts_money, 0) AS _line_money FROM " + Schema.Transaction.TABLE +
+                " AS t LEFT JOIN (" + parts + ") AS v ON v._parts_transaction = t." +
+                Schema.Transaction.ID + " WHERE t." + Schema.Transaction.DELETED + (deleted ? " != 0" : " = 0") +
+                " AND (v._parts_transaction IS NULL OR t." + Schema.Transaction.MONEY + " > v._parts_money) " +
+                "UNION ALL SELECT s." + Schema.TransactionSplit.ID + ", s." + Schema.TransactionSplit.ID +
+                ", s." + Schema.TransactionSplit.TRANSACTION + ", s." + Schema.TransactionSplit.CATEGORY +
+                ", s." + Schema.TransactionSplit.MONEY + " FROM " + Schema.TransactionSplit.TABLE +
+                " AS s JOIN (" + parts + ") AS v ON v._parts_transaction = s." +
+                Schema.TransactionSplit.TRANSACTION + (deleted ? " JOIN " + Schema.Transaction.TABLE +
+                " AS st ON s." + Schema.TransactionSplit.TRANSACTION + " = st." + Schema.Transaction.ID +
+                " WHERE s." + Schema.TransactionSplit.DELETED + " = st." + Schema.Transaction.DELETED :
+                " WHERE s." + Schema.TransactionSplit.DELETED + " = 0");
+    }
+
+    private static final String CATEGORY_LINES_FROM = categoryLinesFrom(false);
+
+    private static String categoryLinesFrom(boolean deleted) {
+        return "(" + categoryLines(deleted) + ") AS l JOIN " + Schema.Transaction.TABLE +
+                " AS t ON l._line_transaction = t." + Schema.Transaction.ID;
+    }
 
     /**
      * This method is called by the content provider when the user is querying the category lines
@@ -1108,6 +1133,13 @@ import java.util.function.Supplier;
      */
     /*package-local*/ Cursor getCategoryLines(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         String subQuery = transactionRows("l._line_money", "l._line_category", CATEGORY_LINES_FROM,
+                "l._line_id", "l._line_id AS " + Contract.Transaction.LINE_ID,
+                "l._line_split AS " + Contract.Transaction.SPLIT_ID);
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
+    }
+
+    /*package-local*/ Cursor getDeletedCategoryLines(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String subQuery = transactionRows(true, "l._line_money", "l._line_category", categoryLinesFrom(true),
                 "l._line_id", "l._line_id AS " + Contract.Transaction.LINE_ID,
                 "l._line_split AS " + Contract.Transaction.SPLIT_ID);
         return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
@@ -1211,6 +1243,10 @@ import java.util.function.Supplier;
      * @param extraColumns further columns, each an expression with its name.
      */
     private static String transactionRows(String money, String category, String from, String groupBy, String... extraColumns) {
+        return transactionRows(false, money, category, from, groupBy, extraColumns);
+    }
+
+    private static String transactionRows(boolean deleted, String money, String category, String from, String groupBy, String... extraColumns) {
         StringBuilder columns = new StringBuilder();
         for (String[] column : transactionColumns(money, category)) {
             columns.append(columns.length() > 0 ? ", " : "").append(column[0]).append(" AS ").append(column[1]);
@@ -1219,7 +1255,7 @@ import java.util.function.Supplier;
             columns.append(", ").append(column);
         }
         return "SELECT " + columns + " " +
-                "FROM " + from + " LEFT JOIN (" + VALID_PARTS + ") AS vp ON vp._parts_transaction = t." +
+                "FROM " + from + " LEFT JOIN (" + validParts(deleted, "") + ") AS vp ON vp._parts_transaction = t." +
                 Schema.Transaction.ID + " LEFT JOIN " + Schema.Category.TABLE +
                 " AS c ON " + category + " = c." + Schema.Category.ID + " AND c." +
                 Schema.Category.DELETED + " = 0 LEFT JOIN " + Schema.Category.TABLE + " AS pc ON c." +
@@ -1228,13 +1264,14 @@ import java.util.function.Supplier;
                 Schema.Transaction.WALLET + " = w." + Schema.Wallet.ID + " AND w." +
                 Schema.Wallet.DELETED + " = 0 LEFT JOIN " + Schema.TransactionPeople.TABLE + " AS tp ON t." +
                 Schema.Transaction.ID + " = tp." + Schema.TransactionPeople.TRANSACTION + " AND tp." +
-                Schema.TransactionPeople.DELETED + " = 0 LEFT JOIN " + Schema.Person.TABLE + " AS pe ON tp." +
+                Schema.TransactionPeople.DELETED + (deleted ? " = t." + Schema.Transaction.DELETED : " = 0") +
+                " LEFT JOIN " + Schema.Person.TABLE + " AS pe ON tp." +
                 Schema.TransactionPeople.PERSON + " = pe." + Schema.Person.ID + " AND pe." +
                 Schema.Person.DELETED + " = 0 LEFT JOIN " + Schema.Place.TABLE + " AS p ON t." +
                 Schema.Transaction.PLACE + " = " + Schema.Place.ID + " AND p." + Schema.Place.DELETED +
                 " = 0 LEFT JOIN " + Schema.Event.TABLE + " AS e ON t." + Schema.Transaction.EVENT +
                 " = e." + Schema.Event.ID + " AND e." + Schema.Event.DELETED + " = 0 WHERE t." +
-                Schema.Transaction.DELETED + " = 0 GROUP BY " + groupBy;
+                Schema.Transaction.DELETED + (deleted ? " != 0" : " = 0") + " GROUP BY " + groupBy;
     }
 
     /**
@@ -1374,6 +1411,23 @@ import java.util.function.Supplier;
      * A sum past the largest long wraps below zero and would pass the check against the total.
      */
     private void checkSplitParts(long transactionId, List<ContentValues> parts) {
+        long total = checkSplitPartCategories(transactionId, parts);
+        long sum = 0L;
+        for (ContentValues part : parts) {
+            long money = part.getAsLong(Schema.TransactionSplit.MONEY);
+            if (money <= 0L) {
+                throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                        String.format(Locale.ENGLISH, "A part of the transaction (id: %d) holds %d", transactionId, money));
+            }
+            sum = money > Long.MAX_VALUE - sum ? Long.MAX_VALUE : sum + money;
+        }
+        if (sum > total) {
+            throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
+                    String.format(Locale.ENGLISH, "The parts of the transaction (id: %d) add up to %d, more than its total of %d", transactionId, sum, total));
+        }
+    }
+
+    private long checkSplitPartCategories(long transactionId, List<ContentValues> parts) {
         long total;
         int direction;
         int type;
@@ -1396,15 +1450,8 @@ import java.util.function.Supplier;
                     String.format(Locale.ENGLISH, "The transaction (id: %d) is of type %d and cannot be split", transactionId, type));
         }
         int categoryType = direction == Schema.Direction.INCOME ? Schema.CategoryType.INCOME : Schema.CategoryType.EXPENSE;
-        long sum = 0L;
         for (ContentValues part : parts) {
-            long money = part.getAsLong(Schema.TransactionSplit.MONEY);
             long categoryId = part.getAsLong(Schema.TransactionSplit.CATEGORY);
-            if (money <= 0L) {
-                throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
-                        String.format(Locale.ENGLISH, "A part of the transaction (id: %d) holds %d", transactionId, money));
-            }
-            sum = money > Long.MAX_VALUE - sum ? Long.MAX_VALUE : sum + money;
             cursor = getReadableDatabase().query(Schema.Category.TABLE, new String[] {Schema.Category.TYPE},
                     Schema.Category.ID + " = ? AND " + Schema.Category.DELETED + " = 0",
                     new String[] {String.valueOf(categoryId)}, null, null, null);
@@ -1417,10 +1464,7 @@ import java.util.function.Supplier;
                 cursor.close();
             }
         }
-        if (sum > total) {
-            throw new SQLiteDataException(Contract.ErrorCode.SPLIT_NOT_VALID,
-                    String.format(Locale.ENGLISH, "The parts of the transaction (id: %d) add up to %d, more than its total of %d", transactionId, sum, total));
-        }
+        return total;
     }
 
     /**
@@ -1516,6 +1560,9 @@ import java.util.function.Supplier;
      *                             than the debt's.
      */
     /*package-local*/ int updateTransaction(long transactionId, ContentValues contentValues) {
+        if (isDeleted(Schema.Transaction.TABLE, Schema.Transaction.ID, Schema.Transaction.DELETED, transactionId)) {
+            return 0;
+        }
         checkDebtOfMasterTransactionWallet(transactionId, contentValues);
         checkDebtPaymentOfTransactionWallet(transactionId, contentValues);
         int rows = updateTransactionRow(transactionId, contentValues);
@@ -1557,50 +1604,7 @@ import java.util.function.Supplier;
             }
         }
         // if this line is reached it means that the transaction can be updated
-        ContentValues cv = new ContentValues();
-        if (contentValues.containsKey(Contract.Transaction.MONEY)) {
-            cv.put(Schema.Transaction.MONEY, contentValues.getAsLong(Contract.Transaction.MONEY));
-        }
-        if (contentValues.containsKey(Contract.Transaction.DATE)) {
-            cv.put(Schema.Transaction.DATE, contentValues.getAsString(Contract.Transaction.DATE));
-        }
-        if (contentValues.containsKey(Contract.Transaction.DESCRIPTION)) {
-            cv.put(Schema.Transaction.DESCRIPTION, contentValues.getAsString(Contract.Transaction.DESCRIPTION));
-        }
-        if (contentValues.containsKey(Contract.Transaction.CATEGORY_ID)) {
-            cv.put(Schema.Transaction.CATEGORY, contentValues.getAsLong(Contract.Transaction.CATEGORY_ID));
-        }
-        if (contentValues.containsKey(Contract.Transaction.DIRECTION)) {
-            cv.put(Schema.Transaction.DIRECTION, contentValues.getAsInteger(Contract.Transaction.DIRECTION));
-        }
-        if (contentValues.containsKey(Contract.Transaction.WALLET_ID)) {
-            cv.put(Schema.Transaction.WALLET, contentValues.getAsLong(Contract.Transaction.WALLET_ID));
-        }
-        if (contentValues.containsKey(Contract.Transaction.PLACE_ID)) {
-            cv.put(Schema.Transaction.PLACE, contentValues.getAsLong(Contract.Transaction.PLACE_ID));
-        }
-        if (contentValues.containsKey(Contract.Transaction.NOTE)) {
-            cv.put(Schema.Transaction.NOTE, contentValues.getAsString(Contract.Transaction.NOTE));
-        }
-        if (contentValues.containsKey(Contract.Transaction.SAVING_ID)) {
-            cv.put(Schema.Transaction.SAVING, contentValues.getAsLong(Contract.Transaction.SAVING_ID));
-        }
-        if (contentValues.containsKey(Contract.Transaction.DEBT_ID)) {
-            cv.put(Schema.Transaction.DEBT, contentValues.getAsLong(Contract.Transaction.DEBT_ID));
-        }
-        if (contentValues.containsKey(Contract.Transaction.EVENT_ID)) {
-            cv.put(Schema.Transaction.EVENT, contentValues.getAsLong(Contract.Transaction.EVENT_ID));
-        }
-        if (contentValues.containsKey(Contract.Transaction.CONFIRMED)) {
-            cv.put(Schema.Transaction.CONFIRMED, contentValues.getAsBoolean(Contract.Transaction.CONFIRMED));
-        }
-        if (contentValues.containsKey(Contract.Transaction.COUNT_IN_TOTAL)) {
-            cv.put(Schema.Transaction.COUNT_IN_TOTAL, contentValues.getAsBoolean(Contract.Transaction.COUNT_IN_TOTAL));
-        }
-        if (contentValues.containsKey(Contract.Transaction.TAG)) {
-            cv.put(Schema.Transaction.TAG, contentValues.getAsString(Contract.Transaction.TAG));
-        }
-        cv.put(Schema.Transaction.LAST_EDIT, System.currentTimeMillis());
+        ContentValues cv = transactionRowValues(contentValues);
         where = Schema.Transaction.ID + " = ?";
         whereArgs = new String[]{String.valueOf(transactionId)};
         int rows = getWritableDatabase().update(Schema.Transaction.TABLE, cv, where, whereArgs);
@@ -1706,6 +1710,54 @@ import java.util.function.Supplier;
         return rows;
     }
 
+    private ContentValues transactionRowValues(ContentValues contentValues) {
+        ContentValues cv = new ContentValues();
+        if (contentValues.containsKey(Contract.Transaction.MONEY)) {
+            cv.put(Schema.Transaction.MONEY, contentValues.getAsLong(Contract.Transaction.MONEY));
+        }
+        if (contentValues.containsKey(Contract.Transaction.DATE)) {
+            cv.put(Schema.Transaction.DATE, contentValues.getAsString(Contract.Transaction.DATE));
+        }
+        if (contentValues.containsKey(Contract.Transaction.DESCRIPTION)) {
+            cv.put(Schema.Transaction.DESCRIPTION, contentValues.getAsString(Contract.Transaction.DESCRIPTION));
+        }
+        if (contentValues.containsKey(Contract.Transaction.CATEGORY_ID)) {
+            cv.put(Schema.Transaction.CATEGORY, contentValues.getAsLong(Contract.Transaction.CATEGORY_ID));
+        }
+        if (contentValues.containsKey(Contract.Transaction.DIRECTION)) {
+            cv.put(Schema.Transaction.DIRECTION, contentValues.getAsInteger(Contract.Transaction.DIRECTION));
+        }
+        if (contentValues.containsKey(Contract.Transaction.WALLET_ID)) {
+            cv.put(Schema.Transaction.WALLET, contentValues.getAsLong(Contract.Transaction.WALLET_ID));
+        }
+        if (contentValues.containsKey(Contract.Transaction.PLACE_ID)) {
+            cv.put(Schema.Transaction.PLACE, contentValues.getAsLong(Contract.Transaction.PLACE_ID));
+        }
+        if (contentValues.containsKey(Contract.Transaction.NOTE)) {
+            cv.put(Schema.Transaction.NOTE, contentValues.getAsString(Contract.Transaction.NOTE));
+        }
+        if (contentValues.containsKey(Contract.Transaction.SAVING_ID)) {
+            cv.put(Schema.Transaction.SAVING, contentValues.getAsLong(Contract.Transaction.SAVING_ID));
+        }
+        if (contentValues.containsKey(Contract.Transaction.DEBT_ID)) {
+            cv.put(Schema.Transaction.DEBT, contentValues.getAsLong(Contract.Transaction.DEBT_ID));
+        }
+        if (contentValues.containsKey(Contract.Transaction.EVENT_ID)) {
+            cv.put(Schema.Transaction.EVENT, contentValues.getAsLong(Contract.Transaction.EVENT_ID));
+        }
+        if (contentValues.containsKey(Contract.Transaction.CONFIRMED)) {
+            cv.put(Schema.Transaction.CONFIRMED, contentValues.getAsBoolean(Contract.Transaction.CONFIRMED));
+        }
+        if (contentValues.containsKey(Contract.Transaction.COUNT_IN_TOTAL)) {
+            cv.put(Schema.Transaction.COUNT_IN_TOTAL, contentValues.getAsBoolean(Contract.Transaction.COUNT_IN_TOTAL));
+        }
+        if (contentValues.containsKey(Contract.Transaction.TAG)) {
+            cv.put(Schema.Transaction.TAG, contentValues.getAsString(Contract.Transaction.TAG));
+        }
+        cv.put(Schema.Transaction.LAST_EDIT, System.currentTimeMillis());
+        return cv;
+    }
+
     /**
      * Delete a transaction from the database. The transaction is NOT removed if part of a transfer.
      * @param transactionId id of the transaction to remove.
@@ -1713,10 +1765,15 @@ import java.util.function.Supplier;
      * @throws SQLiteDataException if the transaction is part of a transfer.
      */
     /*package-local*/ int deleteTransaction(long transactionId) {
+        checkTransactionNotInTransfer(transactionId);
+        return deleteTransactionItem(transactionId);
+    }
+
+    private void checkTransactionNotInTransfer(long transactionId) {
         // we must checks that the transaction is not part of a transfer
         String[] projection = new String[]{Schema.Transfer.ID};
         String where = Schema.Transfer.TRANSACTION_FROM + " = ? OR " + Schema.Transfer.TRANSACTION_TO +
-                " = ? OR " + Schema.Transfer.TRANSACTION_TAX + " = ? AND " + Schema.Transfer.DELETED + " = 0";
+                " = ? OR " + Schema.Transfer.TRANSACTION_TAX + " = ?";
         String[] whereArgs = new String[]{String.valueOf(transactionId), String.valueOf(transactionId), String.valueOf(transactionId)};
         Cursor cursor = getReadableDatabase().query(Schema.Transfer.TABLE, projection, where, whereArgs, null, null, null);
         if (cursor != null) {
@@ -1730,8 +1787,6 @@ import java.util.function.Supplier;
                 cursor.close();
             }
         }
-        // if this line is reached it means that the transaction can be deleted
-        return deleteTransactionItem(transactionId);
     }
 
     /**
@@ -1745,8 +1800,7 @@ import java.util.function.Supplier;
         // the attachments have to go before the rows that link them to this transaction, since
         // that link is how they are found
         deleteAttachmentsOf(Schema.TransactionAttachment.TABLE, Schema.TransactionAttachment.ATTACHMENT,
-                Schema.TransactionAttachment.TRANSACTION + " = ? AND "
-                        + Schema.TransactionAttachment.DELETED + " = 0",
+                Schema.TransactionAttachment.TRANSACTION + " = ?",
                 new String[] {String.valueOf(transactionId)});
         // remove all TransactionPeople
         String where = Schema.TransactionPeople.TRANSACTION + " = ?";
@@ -1782,6 +1836,179 @@ import java.util.function.Supplier;
             rows += deleteTransaction(transactionId);
         }
         return rows;
+    }
+
+    /*package-local*/ int flagTransactionDeleted(long transactionId, long deletedAt) {
+        checkTransactionNotInTransfer(transactionId);
+        return flagTransactionItemDeleted(transactionId, deletedAt);
+    }
+
+    private int flagTransactionItemDeleted(long transactionId, long deletedAt) {
+        String[] whereArgs = new String[]{String.valueOf(transactionId)};
+        int rows = updateDeleted(Schema.Transaction.TABLE, Schema.Transaction.DELETED, Schema.Transaction.ID +
+                " = ? AND " + Schema.Transaction.DELETED + " = 0", whereArgs, deletedAt);
+        if (rows > 0) {
+            flagAttachmentsDeleted(Schema.TransactionAttachment.TABLE, Schema.TransactionAttachment.ATTACHMENT,
+                    Schema.TransactionAttachment.TRANSACTION + " = ? AND " + Schema.TransactionAttachment.DELETED +
+                            " = 0", transactionId, deletedAt);
+            updateDeleted(Schema.TransactionPeople.TABLE, Schema.TransactionPeople.DELETED,
+                    Schema.TransactionPeople.TRANSACTION + " = ? AND " + Schema.TransactionPeople.DELETED + " = 0",
+                    whereArgs, deletedAt);
+            updateDeleted(Schema.TransactionSplit.TABLE, Schema.TransactionSplit.DELETED,
+                    Schema.TransactionSplit.TRANSACTION + " = ? AND " + Schema.TransactionSplit.DELETED + " = 0",
+                    whereArgs, deletedAt);
+            updateDeleted(Schema.TransactionAttachment.TABLE, Schema.TransactionAttachment.DELETED,
+                    Schema.TransactionAttachment.TRANSACTION + " = ? AND " + Schema.TransactionAttachment.DELETED +
+                            " = 0", whereArgs, deletedAt);
+        }
+        return rows;
+    }
+
+    /*package-local*/ int restoreTransaction(long transactionId) {
+        long deletedAt = 0L;
+        Long walletId = null;
+        Long debtId = null;
+        Long savingId = null;
+        Long categoryId = null;
+        String date = null;
+        int type = Contract.TransactionType.STANDARD;
+        String[] projection = new String[] {
+                Schema.Transaction.DELETED,
+                Schema.Transaction.WALLET,
+                Schema.Transaction.DEBT,
+                Schema.Transaction.CATEGORY,
+                Schema.Transaction.DATE,
+                Schema.Transaction.SAVING,
+                Schema.Transaction.TYPE
+        };
+        String where = Schema.Transaction.ID + " = ?";
+        String[] whereArgs = new String[]{String.valueOf(transactionId)};
+        Cursor cursor = getReadableDatabase().query(Schema.Transaction.TABLE, projection, where, whereArgs, null, null, null);
+        try {
+            if (cursor.moveToFirst()) {
+                deletedAt = cursor.getLong(0);
+                walletId = cursor.getLong(1);
+                debtId = cursor.isNull(2) ? null : cursor.getLong(2);
+                categoryId = cursor.getLong(3);
+                date = cursor.getString(4);
+                savingId = cursor.isNull(5) ? null : cursor.getLong(5);
+                type = cursor.getInt(6);
+            }
+        } finally {
+            cursor.close();
+        }
+        if (deletedAt == 0L) {
+            return 0;
+        }
+        where = Schema.Transfer.TRANSACTION_FROM + " = ? OR " + Schema.Transfer.TRANSACTION_TO + " = ? OR " +
+                Schema.Transfer.TRANSACTION_TAX + " = ?";
+        cursor = getReadableDatabase().query(Schema.Transfer.TABLE, new String[] {Schema.Transfer.ID}, where,
+                new String[] {whereArgs[0], whereArgs[0], whereArgs[0]}, null, null, null);
+        try {
+            if (cursor.moveToFirst()) {
+                throw new SQLiteDataException(Contract.ErrorCode.TRANSACTION_USED_IN_TRANSFER,
+                        String.format(Locale.ENGLISH, "The transaction (id: %d) cannot be restored because it is part of a transfer (id: %d)", transactionId, cursor.getLong(0)));
+            }
+        } finally {
+            cursor.close();
+        }
+        if (type == Contract.TransactionType.TRANSFER) {
+            throw new SQLiteDataException(Contract.ErrorCode.TRANSACTION_USED_IN_TRANSFER,
+                    String.format(Locale.ENGLISH, "The transaction (id: %d) cannot be restored because it is half of a transfer that no longer exists", transactionId));
+        }
+        checkDebtPaymentWalletCurrency(debtId, categoryId, walletId);
+        checkSavingTransactionWalletCurrency(savingId, walletId);
+        List<ContentValues> parts = new ArrayList<>();
+        cursor = getReadableDatabase().query(Schema.TransactionSplit.TABLE, new String[] {
+                Schema.TransactionSplit.CATEGORY, Schema.TransactionSplit.MONEY},
+                Schema.TransactionSplit.TRANSACTION + " = ? AND " + Schema.TransactionSplit.DELETED + " = ?",
+                new String[] {whereArgs[0], String.valueOf(deletedAt)}, null, null, null);
+        try {
+            while (cursor.moveToNext()) {
+                ContentValues cv = new ContentValues();
+                cv.put(Schema.TransactionSplit.CATEGORY, cursor.getLong(0));
+                cv.put(Schema.TransactionSplit.MONEY, cursor.getLong(1));
+                parts.add(cv);
+            }
+        } finally {
+            cursor.close();
+        }
+        if (!parts.isEmpty()) {
+            checkSplitPartCategories(transactionId, parts);
+        }
+        ContentValues masterValues = masterTransactionValuesOfDebt(masterTransactionDebtId(transactionId), date);
+        int rows = restoreTransactionItem(transactionId, deletedAt);
+        if (masterValues != null) {
+            updateTransactionRow(transactionId, masterValues);
+        }
+        return rows;
+    }
+
+    private int restoreTransactionItem(long transactionId, long deletedAt) {
+        String[] whereArgs = new String[]{String.valueOf(transactionId), String.valueOf(deletedAt)};
+        restoreAttachments(Schema.TransactionAttachment.TABLE, Schema.TransactionAttachment.ATTACHMENT,
+                Schema.TransactionAttachment.TRANSACTION + " = ? AND " + Schema.TransactionAttachment.DELETED +
+                        " = ?", whereArgs);
+        updateDeleted(Schema.TransactionPeople.TABLE, Schema.TransactionPeople.DELETED,
+                Schema.TransactionPeople.TRANSACTION + " = ? AND " + Schema.TransactionPeople.DELETED + " = ?",
+                whereArgs, 0L);
+        updateDeleted(Schema.TransactionSplit.TABLE, Schema.TransactionSplit.DELETED,
+                Schema.TransactionSplit.TRANSACTION + " = ? AND " + Schema.TransactionSplit.DELETED + " = ?",
+                whereArgs, 0L);
+        updateDeleted(Schema.TransactionAttachment.TABLE, Schema.TransactionAttachment.DELETED,
+                Schema.TransactionAttachment.TRANSACTION + " = ? AND " + Schema.TransactionAttachment.DELETED +
+                        " = ?", whereArgs, 0L);
+        return updateDeleted(Schema.Transaction.TABLE, Schema.Transaction.DELETED, Schema.Transaction.ID +
+                " = ? AND " + Schema.Transaction.DELETED + " = ?", whereArgs, 0L);
+    }
+
+    /*package-local*/ int deleteFlaggedItems(long deletedAt) {
+        return deleteFlaggedItems("tr." + Schema.Transfer.DELETED + " <= ?",
+                "t." + Schema.Transaction.DELETED + " <= ?", new String[] {String.valueOf(deletedAt)});
+    }
+
+    private int deleteFlaggedItems(String condition, String[] conditionArgs) {
+        return deleteFlaggedItems("EXISTS (SELECT 1 FROM " + Schema.Transaction.TABLE + " AS t WHERE t." +
+                Schema.Transaction.ID + " IN (tr." + Schema.Transfer.TRANSACTION_FROM + ", tr." +
+                Schema.Transfer.TRANSACTION_TO + ", tr." + Schema.Transfer.TRANSACTION_TAX + ") AND " +
+                condition + ")", condition, conditionArgs);
+    }
+
+    private int deleteFlaggedItems(String transferCondition, String transactionCondition, String[] conditionArgs) {
+        List<Long> transferIds = queryIds("SELECT tr." + Schema.Transfer.ID + " FROM " + Schema.Transfer.TABLE +
+                " AS tr WHERE tr." + Schema.Transfer.DELETED + " != 0 AND " + transferCondition, conditionArgs);
+        List<Long> transactionIds = queryIds("SELECT t." + Schema.Transaction.ID + " FROM " +
+                Schema.Transaction.TABLE + " AS t WHERE t." + Schema.Transaction.DELETED + " != 0 AND " +
+                transactionCondition + " AND NOT EXISTS (SELECT 1 FROM " + Schema.Transfer.TABLE + " AS tr WHERE t." +
+                Schema.Transaction.ID + " IN (tr." + Schema.Transfer.TRANSACTION_FROM + ", tr." +
+                Schema.Transfer.TRANSACTION_TO + ", tr." + Schema.Transfer.TRANSACTION_TAX + "))", conditionArgs);
+        for (Long transferId : transferIds) {
+            deleteTransfer(transferId);
+        }
+        int rows = transferIds.size();
+        for (Long transactionId : transactionIds) {
+            rows += deleteTransaction(transactionId);
+        }
+        return rows;
+    }
+
+    private List<Long> queryIds(String query, String[] selectionArgs) {
+        List<Long> ids = new ArrayList<>();
+        Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs);
+        try {
+            while (cursor.moveToNext()) {
+                ids.add(cursor.getLong(0));
+            }
+        } finally {
+            cursor.close();
+        }
+        return ids;
+    }
+
+    private int updateDeleted(String table, String deletedColumn, String where, String[] whereArgs, long deleted) {
+        ContentValues cv = new ContentValues();
+        cv.put(deletedColumn, deleted);
+        return getWritableDatabase().update(table, cv, where, whereArgs);
     }
 
     /**
@@ -1897,7 +2124,7 @@ import java.util.function.Supplier;
         };
         String selection = Schema.Transfer.ID + " = ?";
         String[] selectionArgs = new String[] {String.valueOf(transferId)};
-        Cursor cursor = getTransfers(projection, selection, selectionArgs, null);
+        Cursor cursor = getReadableDatabase().query(Schema.Transfer.TABLE, projection, selection, selectionArgs, null, null, null);
         if (cursor != null) {
             if (cursor.moveToFirst()) {
                 transactionIds[0] = cursor.getLong(cursor.getColumnIndex(Schema.Transfer.TRANSACTION_FROM));
@@ -2117,6 +2344,9 @@ import java.util.function.Supplier;
      * @return the the number of row affected by the update.
      */
     /*package-local*/ int updateTransfer(long transferId, ContentValues contentValues) {
+        if (isDeleted(Schema.Transfer.TABLE, Schema.Transfer.ID, Schema.Transfer.DELETED, transferId)) {
+            return 0;
+        }
         Long transferCategoryId = getSystemCategoryId(Schema.CategoryTag.TRANSFER);
         Long transferTaxCategoryId = getSystemCategoryId(Schema.CategoryTag.TRANSFER_TAX);
         // first of all we need to retrieve the transfer and the id of every transaction
@@ -2319,8 +2549,7 @@ import java.util.function.Supplier;
         // transfer_attachment rows with it in turn, leaving the block further down nothing to
         // read the attachments from
         deleteAttachmentsOf(Schema.TransferAttachment.TABLE, Schema.TransferAttachment.ATTACHMENT,
-                Schema.TransferAttachment.TRANSFER + " = ? AND "
-                        + Schema.TransferAttachment.DELETED + " = 0",
+                Schema.TransferAttachment.TRANSFER + " = ?",
                 new String[] {String.valueOf(transferId)});
         // obtain the transaction ids related to the transfer
         for (Long transactionId : getTransferTransactionIds(transferId)) {
@@ -2340,6 +2569,62 @@ import java.util.function.Supplier;
         where = Schema.Transfer.ID + " = ?";
         whereArgs = new String[]{String.valueOf(transferId)};
         return getWritableDatabase().delete(Schema.Transfer.TABLE, where, whereArgs);
+    }
+
+    /*package-local*/ int flagTransferDeleted(long transferId, long deletedAt) {
+        String[] whereArgs = new String[]{String.valueOf(transferId)};
+        int rows = updateDeleted(Schema.Transfer.TABLE, Schema.Transfer.DELETED, Schema.Transfer.ID +
+                " = ? AND " + Schema.Transfer.DELETED + " = 0", whereArgs, deletedAt);
+        if (rows > 0) {
+            flagAttachmentsDeleted(Schema.TransferAttachment.TABLE, Schema.TransferAttachment.ATTACHMENT,
+                    Schema.TransferAttachment.TRANSFER + " = ? AND " + Schema.TransferAttachment.DELETED +
+                            " = 0", transferId, deletedAt);
+            updateDeleted(Schema.TransferPeople.TABLE, Schema.TransferPeople.DELETED,
+                    Schema.TransferPeople.TRANSFER + " = ? AND " + Schema.TransferPeople.DELETED + " = 0",
+                    whereArgs, deletedAt);
+            updateDeleted(Schema.TransferAttachment.TABLE, Schema.TransferAttachment.DELETED,
+                    Schema.TransferAttachment.TRANSFER + " = ? AND " + Schema.TransferAttachment.DELETED +
+                            " = 0", whereArgs, deletedAt);
+            for (Long transactionId : getTransferTransactionIds(transferId)) {
+                if (transactionId != null) {
+                    flagTransactionItemDeleted(transactionId, deletedAt);
+                }
+            }
+        }
+        return rows;
+    }
+
+    /*package-local*/ int restoreTransfer(long transferId) {
+        long deletedAt = 0L;
+        Cursor cursor = getReadableDatabase().query(Schema.Transfer.TABLE, new String[] {Schema.Transfer.DELETED},
+                Schema.Transfer.ID + " = ?", new String[] {String.valueOf(transferId)}, null, null, null);
+        try {
+            if (cursor.moveToFirst()) {
+                deletedAt = cursor.getLong(0);
+            }
+        } finally {
+            cursor.close();
+        }
+        if (deletedAt == 0L) {
+            return 0;
+        }
+        String[] whereArgs = new String[]{String.valueOf(transferId), String.valueOf(deletedAt)};
+        restoreAttachments(Schema.TransferAttachment.TABLE, Schema.TransferAttachment.ATTACHMENT,
+                Schema.TransferAttachment.TRANSFER + " = ? AND " + Schema.TransferAttachment.DELETED + " = ?",
+                whereArgs);
+        updateDeleted(Schema.TransferPeople.TABLE, Schema.TransferPeople.DELETED,
+                Schema.TransferPeople.TRANSFER + " = ? AND " + Schema.TransferPeople.DELETED + " = ?",
+                whereArgs, 0L);
+        updateDeleted(Schema.TransferAttachment.TABLE, Schema.TransferAttachment.DELETED,
+                Schema.TransferAttachment.TRANSFER + " = ? AND " + Schema.TransferAttachment.DELETED + " = ?",
+                whereArgs, 0L);
+        for (Long transactionId : getTransferTransactionIds(transferId)) {
+            if (transactionId != null) {
+                restoreTransactionItem(transactionId, deletedAt);
+            }
+        }
+        return updateDeleted(Schema.Transfer.TABLE, Schema.Transfer.DELETED, Schema.Transfer.ID +
+                " = ? AND " + Schema.Transfer.DELETED + " = ?", whereArgs, 0L);
     }
 
     /**
@@ -2791,6 +3076,10 @@ import java.util.function.Supplier;
                 cursor.close();
             }
         }
+        deleteFlaggedItems("(t." + Schema.Transaction.CATEGORY + " = ? OR t." + Schema.Transaction.ID +
+                " IN (SELECT " + Schema.TransactionSplit.TRANSACTION + " FROM " + Schema.TransactionSplit.TABLE +
+                " WHERE " + Schema.TransactionSplit.CATEGORY + " = ?))",
+                new String[] {String.valueOf(categoryId), String.valueOf(categoryId)});
         // if this line has been reached, the category can be removed
         where = Schema.Category.ID + " = ?";
         whereArgs = new String[]{String.valueOf(categoryId)};
@@ -3548,45 +3837,101 @@ import java.util.function.Supplier;
                 if (cursor.moveToFirst()) {
                     long transactionId = cursor.getLong(cursor.getColumnIndex(Contract.Transaction.ID));
                     String transactionDate = cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE));
-                    cv = new ContentValues();
-                    if (contentValues.containsKey(Contract.Debt.MONEY)) {
-                        cv.put(Contract.Transaction.MONEY, contentValues.getAsLong(Contract.Debt.MONEY));
-                    }
-                    if (contentValues.containsKey(Contract.Debt.DESCRIPTION)) {
-                        cv.put(Contract.Transaction.DESCRIPTION, contentValues.getAsString(Contract.Debt.DESCRIPTION));
-                    }
-                    if (contentValues.containsKey(Contract.Debt.DATE)) {
-                        cv.put(Contract.Transaction.DATE, masterTransactionDateFor(
-                                contentValues.getAsString(Contract.Debt.DATE), transactionDate));
-                    }
-                    if (contentValues.containsKey(Contract.Debt.TYPE)) {
-                        Contract.DebtType type = Contract.DebtType.fromValue(contentValues.getAsInteger(Contract.Debt.TYPE));
-                        if (type == Contract.DebtType.CREDIT) {
-                            cv.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
-                            cv.put(Contract.Transaction.CATEGORY_ID, creditCategoryId);
-                        } else if (type == Contract.DebtType.DEBT) {
-                            cv.put(Contract.Transaction.DIRECTION, Contract.Direction.INCOME);
-                            cv.put(Contract.Transaction.CATEGORY_ID, debtCategoryId);
-                        }
-                    }
-                    if (contentValues.containsKey(Contract.Debt.WALLET_ID)) {
-                        cv.put(Contract.Transaction.WALLET_ID, contentValues.getAsLong(Contract.Debt.WALLET_ID));
-                    }
-                    if (contentValues.containsKey(Contract.Debt.PLACE_ID)) {
-                        cv.put(Contract.Transaction.PLACE_ID, contentValues.getAsLong(Contract.Debt.PLACE_ID));
-                    }
-                    if (contentValues.containsKey(Contract.Debt.NOTE)) {
-                        cv.put(Contract.Transaction.NOTE, contentValues.getAsString(Contract.Debt.NOTE));
-                    }
-                    if (contentValues.containsKey(Contract.Debt.PEOPLE_IDS)) {
-                        cv.put(Contract.Transaction.PEOPLE_IDS, contentValues.getAsString(Contract.Debt.PEOPLE_IDS));
-                    }
+                    cv = masterTransactionValues(contentValues, transactionDate, debtCategoryId, creditCategoryId);
                     updateTransactionRow(transactionId, cv);
                 }
                 cursor.close();
             }
+            projection = new String[] {
+                    Schema.Transaction.ID,
+                    Schema.Transaction.DATE
+            };
+            selection = Schema.Transaction.TYPE + " = ? AND " +
+                    Schema.Transaction.DEBT + " = ? AND (" +
+                    Schema.Transaction.CATEGORY + " = ? OR " +
+                    Schema.Transaction.CATEGORY + " = ?) AND " +
+                    Schema.Transaction.DELETED + " != 0";
+            cursor = getReadableDatabase().query(Schema.Transaction.TABLE, projection, selection, selectionArgs, null, null, null);
+            try {
+                while (cursor.moveToNext()) {
+                    cv = masterTransactionValues(contentValues, cursor.getString(1), debtCategoryId, creditCategoryId);
+                    getWritableDatabase().update(Schema.Transaction.TABLE, transactionRowValues(cv),
+                            Schema.Transaction.ID + " = ?", new String[] {String.valueOf(cursor.getLong(0))});
+                }
+            } finally {
+                cursor.close();
+            }
         }
         return rows;
+    }
+
+    private ContentValues masterTransactionValues(ContentValues contentValues, String transactionDate,
+                                                  Long debtCategoryId, Long creditCategoryId) {
+        ContentValues cv = new ContentValues();
+        if (contentValues.containsKey(Contract.Debt.MONEY)) {
+            cv.put(Contract.Transaction.MONEY, contentValues.getAsLong(Contract.Debt.MONEY));
+        }
+        if (contentValues.containsKey(Contract.Debt.DESCRIPTION)) {
+            cv.put(Contract.Transaction.DESCRIPTION, contentValues.getAsString(Contract.Debt.DESCRIPTION));
+        }
+        if (contentValues.containsKey(Contract.Debt.DATE)) {
+            cv.put(Contract.Transaction.DATE, masterTransactionDateFor(
+                    contentValues.getAsString(Contract.Debt.DATE), transactionDate));
+        }
+        if (contentValues.containsKey(Contract.Debt.TYPE)) {
+            Contract.DebtType type = Contract.DebtType.fromValue(contentValues.getAsInteger(Contract.Debt.TYPE));
+            if (type == Contract.DebtType.CREDIT) {
+                cv.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+                cv.put(Contract.Transaction.CATEGORY_ID, creditCategoryId);
+            } else if (type == Contract.DebtType.DEBT) {
+                cv.put(Contract.Transaction.DIRECTION, Contract.Direction.INCOME);
+                cv.put(Contract.Transaction.CATEGORY_ID, debtCategoryId);
+            }
+        }
+        if (contentValues.containsKey(Contract.Debt.WALLET_ID)) {
+            cv.put(Contract.Transaction.WALLET_ID, contentValues.getAsLong(Contract.Debt.WALLET_ID));
+        }
+        if (contentValues.containsKey(Contract.Debt.PLACE_ID)) {
+            cv.put(Contract.Transaction.PLACE_ID, contentValues.getAsLong(Contract.Debt.PLACE_ID));
+        }
+        if (contentValues.containsKey(Contract.Debt.NOTE)) {
+            cv.put(Contract.Transaction.NOTE, contentValues.getAsString(Contract.Debt.NOTE));
+        }
+        if (contentValues.containsKey(Contract.Debt.PEOPLE_IDS)) {
+            cv.put(Contract.Transaction.PEOPLE_IDS, contentValues.getAsString(Contract.Debt.PEOPLE_IDS));
+        }
+        return cv;
+    }
+
+    private ContentValues masterTransactionValuesOfDebt(Long debtId, String transactionDate) {
+        if (debtId == null) {
+            return null;
+        }
+        String[] projection = new String[] {
+                Contract.Debt.TYPE,
+                Contract.Debt.DESCRIPTION,
+                Contract.Debt.DATE,
+                Contract.Debt.WALLET_ID,
+                Contract.Debt.NOTE,
+                Contract.Debt.PLACE_ID,
+                Contract.Debt.MONEY,
+                Contract.Debt.PEOPLE_IDS
+        };
+        ContentValues debt = null;
+        Cursor cursor = getDebt(debtId, projection);
+        try {
+            if (cursor.moveToFirst()) {
+                debt = new ContentValues();
+                DatabaseUtils.cursorRowToContentValues(cursor, debt);
+            }
+        } finally {
+            cursor.close();
+        }
+        if (debt == null) {
+            return null;
+        }
+        return masterTransactionValues(debt, transactionDate, getSystemCategoryId(Schema.CategoryTag.DEBT),
+                getSystemCategoryId(Schema.CategoryTag.CREDIT));
     }
 
     /**
@@ -3596,6 +3941,7 @@ import java.util.function.Supplier;
      * @return the number of rows affected by the deletion (must be 1 for success).
      */
     /*package-local*/ int deleteDebt(long debtId) {
+        deleteFlaggedItems("t." + Schema.Transaction.DEBT + " = ?", new String[] {String.valueOf(debtId)});
         // remove all the transactions of this debt
         deleteTransactionItems(getDebtTransactions(debtId, new String[] {Contract.Transaction.ID}, null, null, null));
         // remove all DebtPeople
@@ -4373,6 +4719,16 @@ import java.util.function.Supplier;
         return walletId;
     }
 
+    private boolean isDeleted(String table, String idColumn, String deletedColumn, long id) {
+        Cursor cursor = getReadableDatabase().query(table, new String[] {deletedColumn}, idColumn + " = ?",
+                new String[] {String.valueOf(id)}, null, null, null);
+        try {
+            return !cursor.moveToFirst() || cursor.getLong(0) != 0L;
+        } finally {
+            cursor.close();
+        }
+    }
+
     /**
      * Everything filed against a saving stays where it is when the saving moves.
      *
@@ -4463,6 +4819,27 @@ import java.util.function.Supplier;
         String message = String.format(Locale.ENGLISH,
                 "Wallet (id: %d) is in %s and the debt (id: %d) it is filed against is in %s",
                 walletId, walletCurrency, debtId, debtCurrency);
+        throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
+    }
+
+    private void checkSavingTransactionWalletCurrency(Long savingId, Long walletId) {
+        if (savingId == null || walletId == null) {
+            return;
+        }
+        Long savingWalletId = storedWallet(Schema.Saving.TABLE, Schema.Saving.ID, Schema.Saving.WALLET,
+                savingId);
+        if (savingWalletId == null) {
+            return;
+        }
+        String walletCurrency = walletCurrency(walletId);
+        String savingCurrency = walletCurrency(savingWalletId);
+        if (walletCurrency == null || savingCurrency == null
+                || TextUtils.equals(walletCurrency, savingCurrency)) {
+            return;
+        }
+        String message = String.format(Locale.ENGLISH,
+                "Wallet (id: %d) is in %s and the saving (id: %d) it is filed against is in %s",
+                walletId, walletCurrency, savingId, savingCurrency);
         throw new SQLiteDataException(Contract.ErrorCode.WALLETS_NOT_CONSISTENT, message);
     }
 
@@ -4733,6 +5110,7 @@ import java.util.function.Supplier;
      * @return the number of rows affected by the deletion (must be 1 for success).
      */
     /*package-local*/ int deleteSaving(long savingId) {
+        deleteFlaggedItems("t." + Schema.Transaction.SAVING + " = ?", new String[] {String.valueOf(savingId)});
         // remove all the transactions of this saving
         deleteTransactionItems(getSavingTransactions(savingId, new String[] {Contract.Transaction.ID}, null, null, null));
         // delete the saving item
@@ -6071,9 +6449,7 @@ import java.util.function.Supplier;
      *
      * Deleting a transaction used to drop only the row linking it to its attachment. The
      * attachment row stayed live and its file stayed on disk, and no screen in the app reaches an
-     * attachment except through the item that owns it, so neither could be opened again. The
-     * backup writer takes every attachment not flagged as deleted, so every backup from then on
-     * carried the file.
+     * attachment except through the item that owns it, so neither could be opened again.
      *
      * The attachments are found through the link rows, so this has to run before those are gone.
      */
@@ -6081,7 +6457,7 @@ import java.util.function.Supplier;
                                      String[] selectionArgs) {
         String query = "SELECT " + Schema.Attachment.ID + ", " + Schema.Attachment.FILE +
                 " FROM " + Schema.Attachment.TABLE +
-                " WHERE " + Schema.Attachment.DELETED + " = 0 AND " + Schema.Attachment.ID +
+                " WHERE " + Schema.Attachment.ID +
                 " IN (SELECT " + attachmentColumn + " FROM " + linkTable + " WHERE " + linkSelection + ")";
         Map<Long, String> attachments = new LinkedHashMap<>();
         Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs);
@@ -6137,25 +6513,15 @@ import java.util.function.Supplier;
         }
     }
 
-    /**
-     * Whether a live link points at this attachment from outside the set this call is about to
-     * remove. Nothing in the app makes one: picking a file writes a new row and a new file name for
-     * the item being edited. A backup written somewhere else can, and once one has been restored
-     * every backup this app writes carries it on.
-     *
-     * Counting every live link instead would go wrong when two owners are inside the same delete,
-     * since each would see the other and neither would remove the attachment.
-     */
     private boolean isLinkedOutside(long attachmentId, String linkTable, String attachmentColumn,
                                     String linkSelection, String[] selectionArgs) {
         // the id is a long read out of the database, so it goes in the text. The only placeholders
         // are the caller's own, in the last subquery, so its arguments still bind in order
         String query = "SELECT (SELECT COUNT(*) FROM " + Schema.TransactionAttachment.TABLE +
-                " WHERE " + Schema.TransactionAttachment.ATTACHMENT + " = " + attachmentId + " AND " +
-                Schema.TransactionAttachment.DELETED + " = 0) + (SELECT COUNT(*) FROM " +
+                " WHERE " + Schema.TransactionAttachment.ATTACHMENT + " = " + attachmentId +
+                ") + (SELECT COUNT(*) FROM " +
                 Schema.TransferAttachment.TABLE + " WHERE " + Schema.TransferAttachment.ATTACHMENT +
-                " = " + attachmentId + " AND " + Schema.TransferAttachment.DELETED +
-                " = 0) - (SELECT COUNT(*) FROM " + linkTable + " WHERE " + attachmentColumn +
+                " = " + attachmentId + ") - (SELECT COUNT(*) FROM " + linkTable + " WHERE " + attachmentColumn +
                 " = " + attachmentId + " AND (" + linkSelection + "))";
         Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs);
         if (cursor != null) {
@@ -6168,6 +6534,26 @@ import java.util.function.Supplier;
             }
         }
         return false;
+    }
+
+    private void flagAttachmentsDeleted(String linkTable, String attachmentColumn, String linkSelection,
+                                        long ownerId, long deletedAt) {
+        String attachmentId = Schema.Attachment.TABLE + "." + Schema.Attachment.ID;
+        String where = Schema.Attachment.DELETED + " = 0 AND " + Schema.Attachment.ID + " IN (SELECT " +
+                attachmentColumn + " FROM " + linkTable + " WHERE " + linkSelection + ") AND (SELECT COUNT(*) FROM " +
+                Schema.TransactionAttachment.TABLE + " WHERE " + Schema.TransactionAttachment.ATTACHMENT + " = " +
+                attachmentId + " AND " + Schema.TransactionAttachment.DELETED + " = 0) + (SELECT COUNT(*) FROM " +
+                Schema.TransferAttachment.TABLE + " WHERE " + Schema.TransferAttachment.ATTACHMENT + " = " +
+                attachmentId + " AND " + Schema.TransferAttachment.DELETED + " = 0) = (SELECT COUNT(*) FROM " +
+                linkTable + " WHERE " + attachmentColumn + " = " + attachmentId + " AND (" + linkSelection + "))";
+        String[] whereArgs = new String[] {String.valueOf(ownerId), String.valueOf(ownerId)};
+        updateDeleted(Schema.Attachment.TABLE, Schema.Attachment.DELETED, where, whereArgs, deletedAt);
+    }
+
+    private void restoreAttachments(String linkTable, String attachmentColumn, String linkSelection,
+                                    String[] selectionArgs) {
+        updateDeleted(Schema.Attachment.TABLE, Schema.Attachment.DELETED, Schema.Attachment.ID + " IN (SELECT " +
+                attachmentColumn + " FROM " + linkTable + " WHERE " + linkSelection + ")", selectionArgs, 0L);
     }
 
     private File getAttachmentFolder() {
