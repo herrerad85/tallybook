@@ -17,30 +17,31 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.text;
+package com.oriondev.moneywallet.ui.view.text
 
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import androidx.annotation.DrawableRes;
-import androidx.core.content.ContextCompat;
-import android.util.TypedValue;
-import android.view.View;
+import android.content.Context
+import android.content.res.Resources
+import android.graphics.drawable.Drawable
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
+import android.util.TypedValue
+import android.view.View
 
 /**
  * Created by andrea on 30/01/18.
  */
-/*package-local*/ class Utils {
+object Utils {
 
-    /*package-local*/ static float getPixels(int dp, Resources resources) {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, resources.getDisplayMetrics());
+    internal fun getPixels(dp: Int, resources: Resources): Float {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics)
     }
 
-    /*package-local*/ static boolean isRtl(Resources resources) {
-        return resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+    @JvmStatic
+    fun isRtl(resources: Resources): Boolean {
+        return resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
     }
 
-    /*package-local*/ static Drawable getDrawableCompat(Context context, @DrawableRes int drawable) {
-        return ContextCompat.getDrawable(context, drawable);
+    internal fun getDrawableCompat(context: Context, @DrawableRes drawable: Int): Drawable? {
+        return ContextCompat.getDrawable(context, drawable)
     }
 }
