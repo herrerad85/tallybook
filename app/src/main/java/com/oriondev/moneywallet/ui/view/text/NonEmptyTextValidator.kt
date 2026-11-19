@@ -17,52 +17,43 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.text;
+package com.oriondev.moneywallet.ui.view.text
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import androidx.annotation.StringRes;
+import android.content.Context
+import androidx.annotation.StringRes
 
 /**
  * Created by andrea on 30/01/18.
  */
 
-public class NonEmptyTextValidator implements Validator {
+class NonEmptyTextValidator : Validator {
 
-    private final String mMessage;
-    private final boolean mAuto;
+    private val mMessage: String
+    private val mAuto: Boolean
 
-    public NonEmptyTextValidator(String message) {
-        this(message, false);
+    constructor(message: String) : this(message, false)
+
+    constructor(message: String, auto: Boolean) {
+        mMessage = message
+        mAuto = auto
     }
 
-    public NonEmptyTextValidator(String message, boolean auto) {
-        mMessage = message;
-        mAuto = auto;
+    constructor(context: Context, @StringRes resId: Int) : this(context, resId, false)
+
+    constructor(context: Context, @StringRes resId: Int, auto: Boolean) {
+        mMessage = context.getString(resId)
+        mAuto = auto
     }
 
-    public NonEmptyTextValidator(Context context, @StringRes int resId) {
-        this(context, resId, false);
+    override fun getErrorMessage(): String {
+        return mMessage
     }
 
-    public NonEmptyTextValidator(Context context, @StringRes int resId, boolean auto) {
-        mMessage = context.getString(resId);
-        mAuto = auto;
+    override fun isValid(charSequence: CharSequence): Boolean {
+        return !charSequence.toString().trim { it <= ' ' }.isEmpty()
     }
 
-    @NonNull
-    @Override
-    public String getErrorMessage() {
-        return mMessage;
-    }
-
-    @Override
-    public boolean isValid(@NonNull CharSequence charSequence) {
-        return !charSequence.toString().trim().isEmpty();
-    }
-
-    @Override
-    public boolean autoValidate() {
-        return mAuto;
+    override fun autoValidate(): Boolean {
+        return mAuto
     }
 }
