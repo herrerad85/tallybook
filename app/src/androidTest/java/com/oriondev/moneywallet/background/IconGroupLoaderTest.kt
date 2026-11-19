@@ -17,30 +17,25 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.background;
+package com.oriondev.moneywallet.background
 
-import android.content.Context;
+import android.content.Context
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry
 
-import com.oriondev.moneywallet.model.Icon;
-import com.oriondev.moneywallet.model.IconGroup;
+import org.json.JSONArray
+import org.json.JSONObject
+import org.junit.Test
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.Test;
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.util.HashSet
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 
 /**
  * IconGroupLoader builds the picker's list from assets/resources/icons.json, and nothing in the
@@ -67,53 +62,58 @@ import static org.junit.Assert.assertTrue;
  * on Windows, so a name differing only in case passes any check made against the file system and
  * still fails here.
  */
-public class IconGroupLoaderTest {
+class IconGroupLoaderTest {
 
-    private static final String CATALOG = "resources/icons.json";
+    companion object {
 
-    @Test
-    public void everyIconInTheCatalogResolves() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        List<IconGroup> groups = new IconGroupLoader(context).loadInBackground();
-
-        JSONArray categories = new JSONObject(readCatalog(context)).getJSONArray("categories");
-        int declared = 0;
-        for (int i = 0; i < categories.length(); i++) {
-            declared += categories.getJSONObject(i).getJSONArray("icons").length();
-        }
-        assertTrue("icons.json declares no icons at all", declared > 0);
-
-        assertNotNull("the loader returned null", groups);
-        assertEquals("the loader did not return every group icons.json declares",
-                categories.length(), groups.size());
-
-        int loaded = 0;
-        for (IconGroup group : groups) {
-            String name = group.getGroupName();
-            assertFalse("the group " + name + " has no icons", group.getGroupIcons().isEmpty());
-            Set<String> seen = new HashSet<>();
-            for (Icon icon : group.getGroupIcons()) {
-                assertNotNull("an icon in " + name + " has no drawable behind it, " + icon,
-                        icon.getDrawable(context));
-                assertTrue(icon + " is listed twice in " + name, seen.add(icon.toString()));
-                loaded++;
-            }
-        }
-        assertEquals("the loader did not return every icon icons.json declares", declared, loaded);
+        private const val CATALOG = "resources/icons.json"
     }
 
-    private String readCatalog(Context context) throws IOException {
-        StringBuilder builder = new StringBuilder();
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(context.getAssets().open(CATALOG)));
+    @Test
+    @Throws(Exception::class)
+    fun everyIconInTheCatalogResolves() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val groups = IconGroupLoader(context).loadInBackground()
+
+        val categories: JSONArray = JSONObject(readCatalog(context)).getJSONArray("categories")
+        var declared = 0
+        for (i in 0 until categories.length()) {
+            declared += categories.getJSONObject(i).getJSONArray("icons").length()
+        }
+        assertTrue("icons.json declares no icons at all", declared > 0)
+
+        assertNotNull("the loader returned null", groups)
+        assertEquals("the loader did not return every group icons.json declares",
+                categories.length(), groups!!.size)
+
+        var loaded = 0
+        for (group in groups) {
+            val name = group.getGroupName()
+            assertFalse("the group " + name + " has no icons", group.getGroupIcons().isEmpty())
+            val seen: MutableSet<String> = HashSet()
+            for (icon in group.getGroupIcons()) {
+                assertNotNull("an icon in " + name + " has no drawable behind it, " + icon,
+                        icon.getDrawable(context))
+                assertTrue(icon.toString() + " is listed twice in " + name, seen.add(icon.toString()))
+                loaded++
+            }
+        }
+        assertEquals("the loader did not return every icon icons.json declares", declared, loaded)
+    }
+
+    @Throws(IOException::class)
+    private fun readCatalog(context: Context): String {
+        val builder = StringBuilder()
+        val reader = BufferedReader(
+                InputStreamReader(context.assets.open(CATALOG)))
         try {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                builder.append(line)
             }
         } finally {
-            reader.close();
+            reader.close()
         }
-        return builder.toString();
+        return builder.toString()
     }
 }

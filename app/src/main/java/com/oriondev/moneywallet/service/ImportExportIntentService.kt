@@ -63,7 +63,7 @@ class ImportExportIntentService : IntentService {
          */
         @JvmStatic
         @Throws(IOException::class)
-        fun exportTransactions(context: Context, dataFormat: DataFormat,
+        internal fun exportTransactions(context: Context, dataFormat: DataFormat,
                                folder: File, startDate: Date?,
                                endDate: Date?, wallets: Array<Wallet?>?,
                                uniqueWallet: Boolean, optionalColumns: Array<String>?): AbstractDataExporter {

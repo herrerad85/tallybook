@@ -236,7 +236,7 @@ class WebDAVClient {
          * type it both ways.
          */
         @JvmStatic
-        fun normalizeBaseUrl(url: String?): String {
+        internal fun normalizeBaseUrl(url: String?): String {
             var trimmed = if (url == null) "" else url.trim { it <= ' ' }
             while (trimmed.endsWith("/")) {
                 trimmed = trimmed.substring(0, trimmed.length - 1)
@@ -250,7 +250,7 @@ class WebDAVClient {
          * servers, so this is not a corner case.
          */
         @JvmStatic
-        fun encodePath(path: String?): String {
+        internal fun encodePath(path: String?): String {
             if (path == null || path.isEmpty()) {
                 return ""
             }
@@ -299,7 +299,7 @@ class WebDAVClient {
          * base URL's own prefix, so both shapes are handled.
          */
         @JvmStatic
-        fun hrefToRelativePath(href: String, basePath: String?): String {
+        internal fun hrefToRelativePath(href: String, basePath: String?): String {
             var path = href
             val schemeEnd = path.indexOf("://")
             if (schemeEnd >= 0) {
@@ -314,7 +314,7 @@ class WebDAVClient {
         }
 
         @JvmStatic
-        fun nameOf(path: String): String {
+        internal fun nameOf(path: String): String {
             val slash = path.lastIndexOf('/')
             return if (slash >= 0) path.substring(slash + 1) else path
         }
@@ -329,7 +329,7 @@ class WebDAVClient {
          */
         @JvmStatic
         @Throws(IOException::class, SAXException::class, ParserConfigurationException::class)
-        fun parsePropfind(`in`: InputStream?, basePath: String?, requestedPath: String?): List<WebDAVFile> {
+        internal fun parsePropfind(`in`: InputStream?, basePath: String?, requestedPath: String?): List<WebDAVFile> {
             val factory = DocumentBuilderFactory.newInstance()
             factory.isNamespaceAware = true
             // The response is data, not a document that gets to reference the local filesystem.
@@ -396,7 +396,7 @@ class WebDAVClient {
         }
 
         @JvmStatic
-        fun trimSlashes(path: String?): String {
+        internal fun trimSlashes(path: String?): String {
             var result = if (path == null) "" else path
             while (result.startsWith("/")) {
                 result = result.substring(1)

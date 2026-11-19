@@ -17,22 +17,22 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.api;
+package com.oriondev.moneywallet.api
 
-import org.junit.Test;
+import org.junit.Test
 
-import static org.junit.Assert.assertNull;
+import org.junit.Assert.assertNull
 
-public class BackendServiceFactoryTest {
+class BackendServiceFactoryTest {
 
     @Test
-    public void noFolderChosenStaysNullForABackendWithoutADefault() {
-        assertNull(BackendServiceFactory.getFile(BackendServiceFactory.SERVICE_ID_WEBDAV, null));
+    fun noFolderChosenStaysNullForABackendWithoutADefault() {
+        assertNull(BackendServiceFactory.getFile(BackendServiceFactory.SERVICE_ID_WEBDAV, null))
     }
 
     @Test
-    public void unknownBackendStaysNull() {
-        assertNull(BackendServiceFactory.getFile("no_such_backend", null));
-        assertNull(BackendServiceFactory.getFile("no_such_backend", "/storage/emulated/0"));
+    fun unknownBackendStaysNull() {
+        assertNull(BackendServiceFactory.getFile("no_such_backend", null))
+        assertNull(BackendServiceFactory.getFile("no_such_backend", "/storage/emulated/0"))
     }
 }

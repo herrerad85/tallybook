@@ -30,7 +30,7 @@ import android.content.SharedPreferences
  * copy of the widget and are deleted with it. Mixing them into the settings the user edits would
  * leave the ids of removed widgets sitting in a file nothing else ever cleans.
  */
-object WalletWidgetPreferences {
+internal object WalletWidgetPreferences {
 
     const val NO_WALLET = -1L
 
