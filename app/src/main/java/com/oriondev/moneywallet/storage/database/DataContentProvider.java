@@ -162,6 +162,8 @@ public class DataContentProvider extends ContentProvider {
     private static final int DELETED_LIST = 60;
     private static final int TRANSACTION_DELETED_LIST = 61;
     private static final int CATEGORY_LINE_DELETED_LIST = 62;
+    private static final int TRANSACTION_DELETED_ITEM = 63;
+    private static final int TRANSFER_DELETED_ITEM = 64;
 
     private static final UriMatcher mUriMatcher = createUriMatcher();
 
@@ -231,6 +233,8 @@ public class DataContentProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, "deleted", DELETED_LIST);
         matcher.addURI(AUTHORITY, "transactions/deleted", TRANSACTION_DELETED_LIST);
         matcher.addURI(AUTHORITY, "category_lines/deleted", CATEGORY_LINE_DELETED_LIST);
+        matcher.addURI(AUTHORITY, "transactions/deleted/#", TRANSACTION_DELETED_ITEM);
+        matcher.addURI(AUTHORITY, "transfers/deleted/#", TRANSFER_DELETED_ITEM);
         return matcher;
     }
 
@@ -445,6 +449,9 @@ public class DataContentProvider extends ContentProvider {
                 break;
             case CATEGORY_LINE_DELETED_LIST:
                 cursor = new MultiUriCursorWrapper(db().getDeletedCategoryLines(projection, selection, selectionArgs, sortOrder));
+                break;
+            case DELETED_LIST:
+                cursor = new MultiUriCursorWrapper(db().getDeletedItems(projection, selection, selectionArgs, sortOrder));
                 break;
         }
         if (cursor != null) {
@@ -785,6 +792,26 @@ public class DataContentProvider extends ContentProvider {
                     notifyUri[0] = DataContentProvider.CONTENT_TRANSACTIONS;
                 }
                 break;
+            case TRANSACTION_DELETED_ITEM:
+                deletedAt = expectedDeletedAt(selectionArgs);
+                if (deletedAt >= 0L) {
+                    result = database.deleteFlaggedTransaction(ContentUris.parseId(uri), deletedAt,
+                            expectedUuid(selectionArgs));
+                }
+                if (result > 0) {
+                    notifyUri[0] = DataContentProvider.CONTENT_TRANSACTIONS;
+                }
+                break;
+            case TRANSFER_DELETED_ITEM:
+                deletedAt = expectedDeletedAt(selectionArgs);
+                if (deletedAt >= 0L) {
+                    result = database.deleteFlaggedTransfer(ContentUris.parseId(uri), deletedAt,
+                            expectedUuid(selectionArgs));
+                }
+                if (result > 0) {
+                    notifyUri[0] = DataContentProvider.CONTENT_TRANSFERS;
+                }
+                break;
         }
         return result;
     }
@@ -800,10 +827,25 @@ public class DataContentProvider extends ContentProvider {
         }
     }
 
+    private static long expectedDeletedAt(String[] selectionArgs) {
+        if (selectionArgs == null || selectionArgs.length == 0) {
+            return 0L;
+        }
+        if (selectionArgs.length > 1 && (selectionArgs[1] == null || selectionArgs[1].isEmpty())) {
+            return -1L;
+        }
+        long deletedAt = deletedAt(selectionArgs, 0L);
+        return deletedAt > 0L ? deletedAt : -1L;
+    }
+
+    private static String expectedUuid(String[] selectionArgs) {
+        return selectionArgs != null && selectionArgs.length > 1 ? selectionArgs[1] : null;
+    }
+
     @Override
     public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         int result = SQLDatabase.inSharedTransaction(getContext(),
-                database -> updateInTransaction(database, uri, values));
+                database -> updateInTransaction(database, uri, values, selectionArgs));
         if (result > 0) {
             switch (mUriMatcher.match(uri)) {
                 case TRANSACTION_RESTORE:
@@ -820,8 +862,9 @@ public class DataContentProvider extends ContentProvider {
         return result;
     }
 
-    private int updateInTransaction(SQLDatabase database, Uri uri, ContentValues values) {
+    private int updateInTransaction(SQLDatabase database, Uri uri, ContentValues values, String[] selectionArgs) {
         int result = 0;
+        long deletedAt;
         switch (mUriMatcher.match(uri)) {
             case CURRENCY_ITEM:
                 result = database.updateCurrency(uri.getLastPathSegment(), values);
@@ -872,10 +915,18 @@ public class DataContentProvider extends ContentProvider {
                 result = database.updatePerson(ContentUris.parseId(uri), values);
                 break;
             case TRANSACTION_RESTORE:
-                result = database.restoreTransaction(parseIdAtIndex(uri, 1));
+                deletedAt = expectedDeletedAt(selectionArgs);
+                if (deletedAt >= 0L) {
+                    result = database.restoreTransaction(parseIdAtIndex(uri, 1), deletedAt,
+                            expectedUuid(selectionArgs));
+                }
                 break;
             case TRANSFER_RESTORE:
-                result = database.restoreTransfer(parseIdAtIndex(uri, 1));
+                deletedAt = expectedDeletedAt(selectionArgs);
+                if (deletedAt >= 0L) {
+                    result = database.restoreTransfer(parseIdAtIndex(uri, 1), deletedAt,
+                            expectedUuid(selectionArgs));
+                }
                 break;
         }
         return result;

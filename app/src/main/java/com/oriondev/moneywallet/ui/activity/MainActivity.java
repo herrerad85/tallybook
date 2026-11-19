@@ -130,6 +130,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
     /*package-local*/ static final int ID_SECTION_PEOPLE = 10;
     /*package-local*/ static final int ID_SECTION_CALCULATOR = 11;
     /*package-local*/ static final int ID_SECTION_CONVERTER = 12;
+    /*package-local*/ static final int ID_SECTION_RECENTLY_DELETED = 13;
     /*package-local*/ static final int ID_SECTION_SETTING = 15;
     /*package-local*/ static final int ID_SECTION_ABOUT = 17;
 
@@ -139,13 +140,13 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
             ID_SECTION_CATEGORIES, ID_SECTION_OVERVIEW, ID_SECTION_DEBTS, ID_SECTION_BUDGETS,
             ID_SECTION_SAVINGS, ID_SECTION_EVENTS, ID_SECTION_RECURRENCES, ID_SECTION_MODELS,
             ID_SECTION_PLACES, ID_SECTION_PEOPLE, ID_SECTION_CALCULATOR, ID_SECTION_CONVERTER,
-            ID_SECTION_ABOUT
+            ID_SECTION_RECENTLY_DELETED, ID_SECTION_ABOUT
     };
     public static final int[] HIDEABLE_ENTRY_NAMES = {
             R.string.menu_category, R.string.menu_overview, R.string.menu_debt, R.string.menu_budget,
             R.string.menu_saving, R.string.menu_event, R.string.menu_recurrences, R.string.menu_models,
             R.string.menu_place, R.string.menu_people, R.string.menu_calculator, R.string.menu_converter,
-            R.string.menu_about
+            R.string.menu_recently_deleted, R.string.menu_about
     };
 
     /*package-local*/ static final int ID_ACTION_NEW_WALLET = 18;
@@ -290,6 +291,7 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         addEntryUnlessHidden(menu, hidden, GROUP_TOOLS, ID_SECTION_CALCULATOR, R.drawable.ic_calculator_24dp, R.string.menu_calculator);
         addEntryUnlessHidden(menu, hidden, GROUP_TOOLS, ID_SECTION_CONVERTER, R.drawable.ic_converter_24dp, R.string.menu_converter);
         addEntry(menu, GROUP_SETTINGS, ID_SECTION_SETTING, R.drawable.ic_settings_24dp, R.string.menu_setting).setCheckable(true);
+        addEntryUnlessHidden(menu, hidden, GROUP_SETTINGS, ID_SECTION_RECENTLY_DELETED, R.drawable.ic_delete_black_24dp, R.string.menu_recently_deleted);
         addEntryUnlessHidden(menu, hidden, GROUP_SETTINGS, ID_SECTION_ABOUT, R.drawable.ic_info_outline_24dp, R.string.menu_about);
         mHeaderView = mNavigationView.getHeaderView(0);
         // Top only, to match the menu below it. The navigation view pads its own list from the
@@ -475,6 +477,9 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
                 break;
             case ID_SECTION_CONVERTER:
                 startActivity(new Intent(this, CurrencyConverterActivity.class));
+                break;
+            case ID_SECTION_RECENTLY_DELETED:
+                startActivity(new Intent(this, RecentlyDeletedActivity.class));
                 break;
             case ID_SECTION_ABOUT:
                 startActivity(new Intent(this, AboutActivity.class));

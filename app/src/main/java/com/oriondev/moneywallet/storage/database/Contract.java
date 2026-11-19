@@ -743,6 +743,13 @@ public class Contract {
         public static final String TAG = Schema.Attachment.TAG;
     }
 
+    public static final class DeletedItem {
+        public static final String TYPE = "deleted_item_type";
+        public static final String ID = "deleted_item_id";
+        public static final String DELETED_AT = "deleted_item_deleted_at";
+        public static final String UUID = "deleted_item_uuid";
+    }
+
     public enum CategoryType {
 
         INCOME(Schema.CategoryType.INCOME),
@@ -853,6 +860,11 @@ public class Contract {
         public static final int DEBT = 2;
         public static final int SAVING = 3;
         public static final int MODEL = 4;
+    }
+
+    public static class DeletedItemType {
+        public static final int TRANSACTION = 0;
+        public static final int TRANSFER = 1;
     }
 
     public static class ErrorCode {

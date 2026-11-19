@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:orientation="vertical">
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
+        android:id="@+id/deleted_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/material_component_lists_two_line_primary_text_start_margin"
+        android:layout_marginEnd="@dimen/material_component_lists_two_line_primary_text_end_margin"
+        android:textSize="@dimen/material_component_lists_two_line_with_avatar_secondary_text_size"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:theme_textColor="textColorSecondary" />
+
+</LinearLayout>

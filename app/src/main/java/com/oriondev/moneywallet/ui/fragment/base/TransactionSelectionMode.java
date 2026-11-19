@@ -48,6 +48,7 @@ import com.oriondev.moneywallet.picker.CategoryPicker;
 import com.oriondev.moneywallet.picker.WalletPicker;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
+import com.oriondev.moneywallet.storage.database.DeletedItems;
 import com.oriondev.moneywallet.storage.database.SQLiteDataException;
 import com.oriondev.moneywallet.storage.database.SyncContentProvider;
 import com.oriondev.moneywallet.ui.activity.ToolbarController;
@@ -306,7 +307,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
         for (long id : ids) {
             Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSACTIONS, id);
             try {
-                if (resolver.delete(DeletedItemSnackbar.deletedUri(uri), null, selectionArgs) > 0) {
+                if (resolver.delete(DeletedItems.deletedUri(uri), null, selectionArgs) > 0) {
                     deleted.add(id);
                 }
             } catch (SQLiteDataException e) {

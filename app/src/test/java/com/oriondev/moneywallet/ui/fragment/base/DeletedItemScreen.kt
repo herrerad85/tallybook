@@ -67,8 +67,8 @@ object DeletedItemScreen {
                 .commitNow()
     }
 
-    fun executorOf(owner: Class<*>): Executor =
-            owner.getDeclaredField("sDeleteExecutor").apply { isAccessible = true }.get(null) as Executor
+    fun executorOf(owner: Class<*>, field: String = "sDeleteExecutor"): Executor =
+            owner.getDeclaredField(field).apply { isAccessible = true }.get(null) as Executor
 
     fun parkWorker(executor: Executor): CountDownLatch {
         val release = CountDownLatch(1)

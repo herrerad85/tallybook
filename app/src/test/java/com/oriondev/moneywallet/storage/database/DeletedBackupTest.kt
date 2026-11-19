@@ -1,5 +1,7 @@
 package com.oriondev.moneywallet.storage.database
 
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 
@@ -15,6 +17,7 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -150,11 +153,51 @@ class DeletedBackupTest {
         }
     }
 
+    @Test
+    fun anIdARestoreGaveToAnotherItemDeletesAndRestoresNothingWithTheArgsItHadBefore() {
+        val wallet = ledger.insertWallet("Card", "EUR")
+        val category = ledger.insertCategory("Books", Contract.CategoryType.EXPENSE)
+        val first = ledger.insertTransaction(ledger.transaction(wallet, category, 100L))
+        val picked = ledger.insertTransaction(ledger.transaction(wallet, category, 200L))
+        val other = ledger.insertTransaction(ledger.transaction(wallet, category, 300L))
+        ledger.flagTransactionDeleted(first)
+        assertEquals(1, ledger.resolver.delete(deletedTransactionUri(first), null, null))
+        assertEquals(0L, ledger.count("transactions", "transaction_id = $first"))
+        ledger.flagTransactionDeleted(picked, DELETED_AT)
+        ledger.flagTransactionDeleted(other, DELETED_AT)
+        val pickedUuid = uuidOf("transactions", "transaction_id = $picked")
+        val otherUuid = uuidOf("transactions", "transaction_id = $other")
+
+        restore(exportBackup())
+
+        val row = ledger.rows("transactions", "transaction_id = $picked").single()
+        assertEquals(otherUuid, row["uuid"])
+        assertEquals(DELETED_AT, row["deleted"])
+        val restoredPicked = idOf("transactions", "transaction_id", pickedUuid)
+        assertNotEquals(picked, restoredPicked)
+        assertEquals(setOf<Any?>(DELETED_AT), ledger.deletedOf(ledger.rows("transactions",
+                "transaction_id = $restoredPicked")))
+
+        val selectionArgs = arrayOf(DELETED_AT.toString(), pickedUuid)
+        val snapshot = TABLES.associateWith { ledger.rows(it, "1") }
+        assertEquals(0, ledger.resolver.delete(deletedTransactionUri(picked), null, selectionArgs))
+        assertEquals(0, ledger.resolver.update(Uri.withAppendedPath(ledger.transactionUri(picked), "restore"),
+                ContentValues(), null, selectionArgs))
+        assertEquals(snapshot, TABLES.associateWith { ledger.rows(it, "1") })
+
+        assertEquals(1, ledger.resolver.delete(deletedTransactionUri(restoredPicked), null, selectionArgs))
+        assertEquals(0L, ledger.count("transactions", "uuid = '$pickedUuid'"))
+        assertEquals(setOf<Any?>(DELETED_AT), ledger.deletedOf(ledger.rows("transactions", "uuid = '$otherUuid'")))
+    }
+
     private fun stored(rows: List<Map<String, Any?>>): Set<Pair<Any?, Any?>> = rows.map { it["uuid"] to it["deleted"] }.toSet()
 
     private fun uuidOf(table: String, where: String): String = ledger.rows(table, where).single()["uuid"] as String
 
     private fun idOf(table: String, column: String, uuid: String): Long = ledger.rows(table, "uuid = '$uuid'").single()[column] as Long
+
+    private fun deletedTransactionUri(transaction: Long): Uri =
+            ContentUris.withAppendedId(Uri.withAppendedPath(DataContentProvider.CONTENT_TRANSACTIONS, "deleted"), transaction)
 
     private fun exportBackup(): File {
         val folder = File(context.cacheDir, "deleted_export")

@@ -35,6 +35,7 @@
     <string name="menu_calculator">"Calculator"</string>
     <string name="menu_setting">"Settings"</string>
     <string name="menu_about">"About"</string>
+    <string name="menu_recently_deleted">"Recently deleted"</string>
 
     <!-- Transactions -->
     <string name="menu_transaction_tab_transactions">"Transactions"</string>
@@ -84,6 +85,9 @@
     <string name="action_remove">"Remove"</string>
     <string name="action_open">"Open"</string>
     <string name="action_undo">"Undo"</string>
+    <string name="action_restore">"Restore"</string>
+    <string name="action_delete_forever">"Delete forever"</string>
+    <string name="action_empty">"Empty"</string>
     <string name="action_skip">"Skip"</string>
     <string name="action_back">"Back"</string>
     <string name="action_discard">"Discard"</string>
@@ -257,6 +261,7 @@
     <string name="title_activity_icon_list">"Icons"</string>
     <string name="title_activity_backup_services">"Backup services"</string>
     <string name="title_activity_about">"About"</string>
+    <string name="title_activity_recently_deleted">"Recently deleted"</string>
     <string name="title_activity_calculator">"Calculator"</string>
     <string name="title_activity_currency_converter">"Currency converter"</string>
     <string name="title_activity_search_transaction">"Search"</string>
@@ -293,6 +298,7 @@
     <string name="menu_action_edit_item">"Edit"</string>
     <string name="menu_action_duplicate_item">"Duplicate"</string>
     <string name="menu_action_delete_item">"Delete"</string>
+    <string name="menu_action_empty_all">"Empty all"</string>
     <string name="menu_action_archive_item">"Archive"</string>
     <string name="menu_action_unarchive_item">"Unarchive"</string>
     <string name="menu_action_search_item">"Search"</string>
@@ -389,6 +395,7 @@
     <string name="relative_string_expired_on">"Expired on: %s"</string>
     <string name="relative_string_will_expire_on">"Will expire on: %s"</string>
     <string name="relative_string_version_name">"Version %s"</string>
+    <string name="relative_string_deleted_on">"Deleted %s"</string>
 
     <string name="adapter_current_money">"Current:"</string>
     <string name="adapter_needed_money">"Needed:"</string>
@@ -428,6 +435,7 @@
     <string name="message_no_person_found">"No person found"</string>
     <string name="message_no_icon_found">"No icon found"</string>
     <string name="message_no_file_found">"No file found"</string>
+    <string name="message_no_deleted_item_found">"Nothing here. Deleted transactions and transfers stay here for 90 days."</string>
     <string name="message_error_backend_recoverable">"Connection problem. Please retry."</string>
 
     <string name="cover_message_backup_storage_access_framework_title">"Create and restore backups in a folder you choose on this device. Because it is an ordinary folder, you can keep it in sync with a tool such as Syncthing or your own setup, with no account required. Document providers like Nextcloud also work."</string>
@@ -588,6 +596,8 @@
         <item quantity="one">"%d transaction could not be restored because the category of one of its parts was deleted or changed between income and expense"</item>
         <item quantity="other">"%d transactions could not be restored because the category of one of their parts was deleted or changed between income and expense"</item>
     </plurals>
+    <string name="message_delete_forever">"Delete forever? This cannot be undone."</string>
+    <string name="message_empty_recently_deleted">"Empty Recently deleted? Every item in it is deleted forever."</string>
 
     <string name="spinner_item_group_type_daily">"Group daily"</string>
     <string name="spinner_item_group_type_weekly">"Group weekly"</string>

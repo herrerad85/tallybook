@@ -1044,6 +1044,26 @@ import java.util.function.Supplier;
         return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
     }
 
+    /*package-local*/ Cursor getDeletedItems(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String transactions = transactionRows(true, "t." + Schema.Transaction.MONEY, "t." + Schema.Transaction.CATEGORY,
+                Schema.Transaction.TABLE + " AS t", "t." + Schema.Transaction.ID);
+        String items = "SELECT " + Contract.DeletedItemType.TRANSACTION + " AS _type, t." + Schema.Transaction.ID +
+                " AS _id, t." + Schema.Transaction.DELETED + " AS _deleted, t." + Schema.Transaction.UUID +
+                " AS _uuid FROM " + Schema.Transaction.TABLE + " AS t WHERE t." + Schema.Transaction.DELETED +
+                " != 0 AND " + NOT_TRANSFER_LEG + " UNION ALL SELECT " + Contract.DeletedItemType.TRANSFER + ", tr." +
+                Schema.Transfer.ID + ", tr." + Schema.Transfer.DELETED + ", tr." + Schema.Transfer.UUID + " FROM " +
+                Schema.Transfer.TABLE + " AS tr WHERE tr." + Schema.Transfer.DELETED + " != 0";
+        String subQuery = "SELECT d._type AS " + Contract.DeletedItem.TYPE + ", d._id AS " + Contract.DeletedItem.ID +
+                ", d._deleted AS " + Contract.DeletedItem.DELETED_AT + ", d._uuid AS " + Contract.DeletedItem.UUID +
+                ", tx.*, tf.* FROM (" + items + ") AS d LEFT JOIN (" +
+                transactions + ") AS tx ON d._type = " + Contract.DeletedItemType.TRANSACTION + " AND tx." +
+                Contract.Transaction.ID + " = d._id LEFT JOIN (" + transferRows(true) + ") AS tf ON d._type = " +
+                Contract.DeletedItemType.TRANSFER + " AND tf." + Contract.Transfer.ID + " = d._id WHERE tx." +
+                Contract.Transaction.ID + " IS NOT NULL OR tf." + Contract.Transfer.ID + " IS NOT NULL";
+        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder != null ? sortOrder :
+                Contract.DeletedItem.DELETED_AT + " DESC, " + Contract.DeletedItem.ID + " DESC");
+    }
+
     /**
      * The transactions whose live parts are valid, each with the sum of those parts. Parts are
      * ignored, and the transaction reads as unsplit under its main category, when they add up to
@@ -1864,8 +1884,9 @@ import java.util.function.Supplier;
         return rows;
     }
 
-    /*package-local*/ int restoreTransaction(long transactionId) {
+    /*package-local*/ int restoreTransaction(long transactionId, long expectedDeletedAt, String expectedUuid) {
         long deletedAt = 0L;
+        String uuid = null;
         Long walletId = null;
         Long debtId = null;
         Long savingId = null;
@@ -1879,7 +1900,8 @@ import java.util.function.Supplier;
                 Schema.Transaction.CATEGORY,
                 Schema.Transaction.DATE,
                 Schema.Transaction.SAVING,
-                Schema.Transaction.TYPE
+                Schema.Transaction.TYPE,
+                Schema.Transaction.UUID
         };
         String where = Schema.Transaction.ID + " = ?";
         String[] whereArgs = new String[]{String.valueOf(transactionId)};
@@ -1893,11 +1915,15 @@ import java.util.function.Supplier;
                 date = cursor.getString(4);
                 savingId = cursor.isNull(5) ? null : cursor.getLong(5);
                 type = cursor.getInt(6);
+                uuid = cursor.getString(7);
             }
         } finally {
             cursor.close();
         }
-        if (deletedAt == 0L) {
+        if (deletedAt == 0L || (expectedDeletedAt != 0L && deletedAt != expectedDeletedAt)) {
+            return 0;
+        }
+        if (expectedUuid != null && !expectedUuid.equals(uuid)) {
             return 0;
         }
         where = Schema.Transfer.TRANSACTION_FROM + " = ? OR " + Schema.Transfer.TRANSACTION_TO + " = ? OR " +
@@ -1962,6 +1988,10 @@ import java.util.function.Supplier;
                 " = ? AND " + Schema.Transaction.DELETED + " = ?", whereArgs, 0L);
     }
 
+    private static final String NOT_TRANSFER_LEG = "NOT EXISTS (SELECT 1 FROM " + Schema.Transfer.TABLE +
+            " AS tr WHERE t." + Schema.Transaction.ID + " IN (tr." + Schema.Transfer.TRANSACTION_FROM + ", tr." +
+            Schema.Transfer.TRANSACTION_TO + ", tr." + Schema.Transfer.TRANSACTION_TAX + "))";
+
     /*package-local*/ int deleteFlaggedItems(long deletedAt) {
         return deleteFlaggedItems("tr." + Schema.Transfer.DELETED + " <= ?",
                 "t." + Schema.Transaction.DELETED + " <= ?", new String[] {String.valueOf(deletedAt)});
@@ -1974,14 +2004,44 @@ import java.util.function.Supplier;
                 condition + ")", condition, conditionArgs);
     }
 
+    /*package-local*/ int deleteFlaggedTransaction(long transactionId, long deletedAt, String uuid) {
+        String condition = "t." + Schema.Transaction.ID + " = ?";
+        List<String> conditionArgs = new ArrayList<>();
+        conditionArgs.add(String.valueOf(transactionId));
+        if (deletedAt != 0L) {
+            condition += " AND t." + Schema.Transaction.DELETED + " = ?";
+            conditionArgs.add(String.valueOf(deletedAt));
+        }
+        if (uuid != null) {
+            condition += " AND t." + Schema.Transaction.UUID + " = ?";
+            conditionArgs.add(uuid);
+        }
+        return deleteFlaggedItems(null, condition, conditionArgs.toArray(new String[0]));
+    }
+
+    /*package-local*/ int deleteFlaggedTransfer(long transferId, long deletedAt, String uuid) {
+        String condition = "tr." + Schema.Transfer.ID + " = ?";
+        List<String> conditionArgs = new ArrayList<>();
+        conditionArgs.add(String.valueOf(transferId));
+        if (deletedAt != 0L) {
+            condition += " AND tr." + Schema.Transfer.DELETED + " = ?";
+            conditionArgs.add(String.valueOf(deletedAt));
+        }
+        if (uuid != null) {
+            condition += " AND tr." + Schema.Transfer.UUID + " = ?";
+            conditionArgs.add(uuid);
+        }
+        return deleteFlaggedItems(condition, null, conditionArgs.toArray(new String[0]));
+    }
+
     private int deleteFlaggedItems(String transferCondition, String transactionCondition, String[] conditionArgs) {
-        List<Long> transferIds = queryIds("SELECT tr." + Schema.Transfer.ID + " FROM " + Schema.Transfer.TABLE +
-                " AS tr WHERE tr." + Schema.Transfer.DELETED + " != 0 AND " + transferCondition, conditionArgs);
-        List<Long> transactionIds = queryIds("SELECT t." + Schema.Transaction.ID + " FROM " +
-                Schema.Transaction.TABLE + " AS t WHERE t." + Schema.Transaction.DELETED + " != 0 AND " +
-                transactionCondition + " AND NOT EXISTS (SELECT 1 FROM " + Schema.Transfer.TABLE + " AS tr WHERE t." +
-                Schema.Transaction.ID + " IN (tr." + Schema.Transfer.TRANSACTION_FROM + ", tr." +
-                Schema.Transfer.TRANSACTION_TO + ", tr." + Schema.Transfer.TRANSACTION_TAX + "))", conditionArgs);
+        List<Long> transferIds = transferCondition == null ? new ArrayList<>() : queryIds("SELECT tr." +
+                Schema.Transfer.ID + " FROM " + Schema.Transfer.TABLE + " AS tr WHERE tr." + Schema.Transfer.DELETED +
+                " != 0 AND " + transferCondition, conditionArgs);
+        List<Long> transactionIds = transactionCondition == null ? new ArrayList<>() : queryIds("SELECT t." +
+                Schema.Transaction.ID + " FROM " + Schema.Transaction.TABLE + " AS t WHERE t." +
+                Schema.Transaction.DELETED + " != 0 AND " + transactionCondition + " AND " + NOT_TRANSFER_LEG,
+                conditionArgs);
         for (Long transferId : transferIds) {
             deleteTransfer(transferId);
         }
@@ -2036,7 +2096,12 @@ import java.util.function.Supplier;
      * @return a cursor with zero or more rows.
      */
     /*package-local*/ Cursor getTransfers(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        String subQuery = "SELECT " +
+        return queryFrom(transferRows(false), projection, selection, selectionArgs, sortOrder);
+    }
+
+    private static String transferRows(boolean deleted) {
+        String legDeleted = deleted ? "t.deleted" : "0";
+        return "SELECT " +
                 "t." + Schema.Transfer.ID + " AS " + Contract.Transfer.ID + ", " +
                 "t." + Schema.Transfer.DESCRIPTION + " AS " + Contract.Transfer.DESCRIPTION + ", " +
                 "t." + Schema.Transfer.DATE + " AS " + Contract.Transfer.DATE + ", " +
@@ -2090,19 +2155,18 @@ import java.util.function.Supplier;
                 "t." + Schema.Transfer.TAG + " AS " + Contract.Transfer.TAG + ", " +
                 "GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>') AS " + Contract.Transfer.PEOPLE_IDS + " " +
                 "FROM transfers AS t \n" +
-                "JOIN transactions AS t1 ON transfer_transaction_from = t1.transaction_id AND t1.deleted = 0 \n" +
+                "JOIN transactions AS t1 ON transfer_transaction_from = t1.transaction_id AND t1.deleted = " + legDeleted + " \n" +
                 "JOIN wallets AS w1 ON t1.transaction_wallet = w1.wallet_id AND w1.deleted = 0\n" +
-                "JOIN transactions AS t2 ON transfer_transaction_to = t2.transaction_id AND t2.deleted = 0\n" +
+                "JOIN transactions AS t2 ON transfer_transaction_to = t2.transaction_id AND t2.deleted = " + legDeleted + "\n" +
                 "JOIN wallets AS w2 ON t2.transaction_wallet = w2.wallet_id AND w2.deleted = 0\n" +
-                "LEFT JOIN transactions AS t3 ON transfer_transaction_tax = t3.transaction_id AND t3.deleted = 0\n" +
+                "LEFT JOIN transactions AS t3 ON transfer_transaction_tax = t3.transaction_id AND t3.deleted = " + legDeleted + "\n" +
                 "LEFT JOIN wallets AS w3 ON t3.transaction_wallet = w3.wallet_id AND w3.deleted = 0\n" +
-                "LEFT JOIN transfer_people AS tp ON t.transfer_id = tp._transfer AND tp.deleted = 0\n" +
+                "LEFT JOIN transfer_people AS tp ON t.transfer_id = tp._transfer AND tp.deleted = " + legDeleted + "\n" +
                 "LEFT JOIN people AS pe ON tp._person = pe.person_id AND pe.deleted = 0\n" +
                 "LEFT JOIN places AS p ON transfer_place = place_id AND p.deleted = 0 \n" +
                 "LEFT JOIN events AS e ON transfer_event = event_id AND e.deleted = 0 \n" +
-                "WHERE t.deleted = 0\n" +
+                "WHERE t.deleted " + (deleted ? "!= 0" : "= 0") + "\n" +
                 "GROUP BY t.transfer_id";
-        return queryFrom(subQuery, projection, selection, selectionArgs, sortOrder);
     }
 
     /**
@@ -2594,18 +2658,24 @@ import java.util.function.Supplier;
         return rows;
     }
 
-    /*package-local*/ int restoreTransfer(long transferId) {
+    /*package-local*/ int restoreTransfer(long transferId, long expectedDeletedAt, String expectedUuid) {
         long deletedAt = 0L;
-        Cursor cursor = getReadableDatabase().query(Schema.Transfer.TABLE, new String[] {Schema.Transfer.DELETED},
-                Schema.Transfer.ID + " = ?", new String[] {String.valueOf(transferId)}, null, null, null);
+        String uuid = null;
+        Cursor cursor = getReadableDatabase().query(Schema.Transfer.TABLE, new String[] {Schema.Transfer.DELETED,
+                Schema.Transfer.UUID}, Schema.Transfer.ID + " = ?", new String[] {String.valueOf(transferId)}, null,
+                null, null);
         try {
             if (cursor.moveToFirst()) {
                 deletedAt = cursor.getLong(0);
+                uuid = cursor.getString(1);
             }
         } finally {
             cursor.close();
         }
-        if (deletedAt == 0L) {
+        if (deletedAt == 0L || (expectedDeletedAt != 0L && deletedAt != expectedDeletedAt)) {
+            return 0;
+        }
+        if (expectedUuid != null && !expectedUuid.equals(uuid)) {
             return 0;
         }
         String[] whereArgs = new String[]{String.valueOf(transferId), String.valueOf(deletedAt)};

@@ -98,6 +98,7 @@
             android:windowSoftInputMode="stateAlwaysHidden" />
         <activity android:name=".ui.activity.CurrencyConverterActivity" />
         <activity android:name=".ui.activity.AboutActivity" />
+        <activity android:name=".ui.activity.RecentlyDeletedActivity" />
         <activity
             android:name=".ui.activity.SearchActivity"
             android:windowSoftInputMode="adjustResize" />

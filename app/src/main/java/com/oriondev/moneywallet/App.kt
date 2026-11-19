@@ -22,10 +22,13 @@ package com.oriondev.moneywallet
 import android.app.Application
 import android.content.res.Configuration
 import android.os.LocaleList
+import android.util.Log
 
 import com.oriondev.moneywallet.broadcast.AutoBackupBroadcastReceiver
 import com.oriondev.moneywallet.broadcast.DailyBroadcastReceiver
 import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver
+import com.oriondev.moneywallet.storage.database.DataContentProvider
+import com.oriondev.moneywallet.storage.database.DeletedItems
 import com.oriondev.moneywallet.storage.database.SystemCategoryLocalizer
 import com.oriondev.moneywallet.storage.preference.BackendManager
 import com.oriondev.moneywallet.storage.preference.PreferenceManager
@@ -34,10 +37,23 @@ import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
 import com.oriondev.moneywallet.ui.widget.WalletWidgetObserver
 import com.oriondev.moneywallet.utils.CurrencyManager
 
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
 /**
  * Created by andrea on 17/01/18.
  */
 class App : Application() {
+
+    companion object {
+
+        private const val TAG = "App"
+
+        private const val RECENTLY_DELETED_DAYS = 90L
+
+        private val sDeleteExecutor: Executor = Executors.newSingleThreadExecutor { Thread(it, "AppDelete") }
+    }
 
     private var mLocales: LocaleList? = null
 
@@ -53,6 +69,7 @@ class App : Application() {
         // this existed needs one repair whether or not its language ever changes again, and a
         // system language changed while the process was dead delivers no configuration callback
         SystemCategoryLocalizer.relocalize(this)
+        deleteFlaggedItems()
         // Registered here because a balance is moved by writes from all over the app, and this
         // is the one place every one of them has already started. It gets its own thread and
         // folds a burst of writes into one redraw, so an import does not pay for this per row.
@@ -71,6 +88,19 @@ class App : Application() {
         NotificationContract.initializeNotificationChannels(this)
         SystemCategoryLocalizer.relocalize(this)
         mLocales = locales
+    }
+
+    private fun deleteFlaggedItems() {
+        val resolver = contentResolver
+        val deletedAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(RECENTLY_DELETED_DAYS)
+        sDeleteExecutor.execute {
+            try {
+                resolver.delete(DeletedItems.deletedUri(DataContentProvider.CONTENT_ALL), null,
+                        arrayOf(deletedAt.toString()))
+            } catch (t: Throwable) {
+                Log.e(TAG, "unable to delete the items deleted more than $RECENTLY_DELETED_DAYS days ago", t)
+            }
+        }
     }
 
     private fun initializeScheduledTimers() {

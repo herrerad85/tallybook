@@ -39,6 +39,7 @@ import android.view.ViewGroup;
 
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.ui.activity.base.ThemedActivity;
+import com.oriondev.moneywallet.storage.database.DeletedItems;
 import com.oriondev.moneywallet.storage.database.SQLiteDataException;
 import com.oriondev.moneywallet.utils.Utils;
 
@@ -153,7 +154,7 @@ public abstract class SecondaryPanelFragment extends Fragment implements Toolbar
     }
 
     protected void deleteItemWithUndoInBackground(Uri itemUri, @StringRes int message, @Nullable Consumer<SQLiteDataException> onError) {
-        deleteItemInBackground(DeletedItemSnackbar.deletedUri(itemUri), onError, null,
+        deleteItemInBackground(DeletedItems.deletedUri(itemUri), onError, null,
                 () -> showDeletedSnackbar(message, itemUri));
     }
 

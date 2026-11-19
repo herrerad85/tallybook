@@ -3,7 +3,13 @@ package com.oriondev.moneywallet.storage.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.oriondev.moneywallet.App;
 import com.oriondev.moneywallet.utils.CurrencyManager;
+
+import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Gives a JVM test a database of its own, seeded the way a first launch seeds it. The shared
@@ -23,6 +29,7 @@ public final class TestDatabases {
     }
 
     public static void useFreshDatabase(Context context) {
+        awaitStartupDelete();
         SQLDatabase.resetShared(context);
         CurrencyManager.invalidateCache(context);
     }
@@ -51,6 +58,23 @@ public final class TestDatabases {
 
     public static void release(Context context) {
         SQLDatabase.getShared(context).getWritableDatabase().endTransaction();
+    }
+
+    private static void awaitStartupDelete() {
+        CountDownLatch reached = new CountDownLatch(1);
+        try {
+            Field field = App.class.getDeclaredField("sDeleteExecutor");
+            field.setAccessible(true);
+            ((Executor) field.get(null)).execute(reached::countDown);
+            if (!reached.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("the startup delete did not finish within 5 seconds");
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(e);
+        }
     }
 
 }
