@@ -17,84 +17,82 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.chart;
+package com.oriondev.moneywallet.ui.view.chart
 
-import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Drawable
 
 /**
  * Created by andrea on 13/08/18.
  */
-public class PieSlice {
+class PieSlice {
 
-    private String mName;
-    private long mValue;
-    private Drawable mIcon;
-    private boolean mIsExtra = false;
+    private val mName: String?
+    private var mValue: Long
+    private val mIcon: Drawable?
+    private var mIsExtra = false
 
-    private float mStartAngle = 0;
-    private float mSweepAngle = 0;
-    private float mIconAngle = 0;
+    private var mStartAngle = 0f
+    private var mSweepAngle = 0f
+    private var mIconAngle = 0f
 
-    public PieSlice(String name, long value, Drawable icon) {
-        this(name, value, icon, false);
+    constructor(name: String?, value: Long, icon: Drawable?) : this(name, value, icon, false)
+
+    constructor(name: String?, value: Long, icon: Drawable?, isExtra: Boolean) {
+        mName = name
+        mValue = value
+        mIcon = icon
+        mIsExtra = isExtra
     }
 
-    public PieSlice(String name, long value, Drawable icon, boolean isExtra) {
-        mName = name;
-        mValue = value;
-        mIcon = icon;
-        mIsExtra = isExtra;
+    fun setIconAngle(angle: Float) {
+        mIconAngle = angle
     }
 
-    public void setIconAngle(float angle) {
-        mIconAngle = angle;
+    fun increaseIconAngle(degrees: Float) {
+        mIconAngle += degrees
     }
 
-    public void increaseIconAngle(float degrees) {
-        mIconAngle += degrees;
+    fun decreaseIconAngle(degrees: Float) {
+        mIconAngle -= degrees
     }
 
-    public void decreaseIconAngle(float degrees) {
-        mIconAngle -= degrees;
+    fun setValue(value: Long) {
+        mValue = value
     }
 
-    public void setValue(long value) {
-        mValue = value;
+    fun getValue(): Long {
+        return mValue
     }
 
-    public long getValue() {
-        return mValue;
+    fun getName(): String? {
+        return mName
     }
 
-    public String getName() {
-        return mName;
+    fun getIcon(): Drawable? {
+        return mIcon
     }
 
-    public Drawable getIcon() {
-        return mIcon;
+    fun getIconAngle(): Float {
+        return mIconAngle
     }
 
-    public float getIconAngle() {
-        return mIconAngle;
+    fun isExtra(): Boolean {
+        return mIsExtra
     }
 
-    public boolean isExtra() {
-        return mIsExtra;
+    fun getStartAngle(): Float {
+        return mStartAngle
     }
 
-    public float getStartAngle() {
-        return mStartAngle;
+    fun setStartAngle(startAngle: Float) {
+        mStartAngle = startAngle
     }
 
-    public void setStartAngle(float startAngle) {
-        mStartAngle = startAngle;
+    fun getSweepAngle(): Float {
+        return mSweepAngle
     }
 
-    public float getSweepAngle() {
-        return mSweepAngle;
-    }
-
-    public void setSweepAngle(float sweepAngle) {
-        mSweepAngle = sweepAngle;
+    fun setSweepAngle(sweepAngle: Float) {
+        mSweepAngle = sweepAngle
     }
 }
