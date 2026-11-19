@@ -17,32 +17,34 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.text;
+package com.oriondev.moneywallet.ui.view.text
 
 /**
  * Created by andrea on 01/05/18.
  */
-public enum Mode {
+enum class Mode {
 
     STANDARD(0), FLOATING_LABEL(1);
 
-    /*package-local*/ int mMode;
+    internal val mMode: Int
 
-    Mode(int mode) {
-        mMode = mode;
+    constructor(mode: Int) {
+        mMode = mode
     }
 
-    public Mode getMode() {
-        return getMode(mMode);
+    fun getMode(): Mode? {
+        return getMode(mMode)
     }
 
-    public static Mode getMode(int value) {
-        switch (value) {
-            case 0:
-                return STANDARD;
-            case 1:
-                return FLOATING_LABEL;
+    companion object {
+
+        @JvmStatic
+        fun getMode(value: Int): Mode? {
+            when (value) {
+                0 -> return STANDARD
+                1 -> return FLOATING_LABEL
+            }
+            return null
         }
-        return null;
     }
 }
