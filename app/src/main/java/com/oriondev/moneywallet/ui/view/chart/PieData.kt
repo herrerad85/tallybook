@@ -17,43 +17,42 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.chart;
+package com.oriondev.moneywallet.ui.view.chart
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayList
 
 /**
  * Created by andrea on 14/08/18.
  */
-public class PieData {
+class PieData {
 
-    private final List<PieSlice> mPieSlices;
+    private val mPieSlices: MutableList<PieSlice>
 
-    public PieData() {
-        mPieSlices = new ArrayList<>();
+    constructor() {
+        mPieSlices = ArrayList()
     }
 
-    public PieData(List<PieSlice> sliceList) {
-        mPieSlices = new ArrayList<>(sliceList);
+    constructor(sliceList: List<PieSlice>?) {
+        mPieSlices = ArrayList(sliceList!!)
     }
 
-    public PieSlice get(int index) {
-        return mPieSlices.get(index);
+    fun get(index: Int): PieSlice {
+        return mPieSlices[index]
     }
 
-    public boolean add(PieSlice slice) {
-        return mPieSlices.add(slice);
+    fun add(slice: PieSlice): Boolean {
+        return mPieSlices.add(slice)
     }
 
-    public PieSlice remove(int index) {
-        return mPieSlices.remove(index);
+    fun remove(index: Int): PieSlice {
+        return mPieSlices.removeAt(index)
     }
 
-    public List<PieSlice> getAllSlices() {
-        return mPieSlices;
+    fun getAllSlices(): MutableList<PieSlice> {
+        return mPieSlices
     }
 
-    public int size() {
-        return mPieSlices.size();
+    fun size(): Int {
+        return mPieSlices.size
     }
 }
