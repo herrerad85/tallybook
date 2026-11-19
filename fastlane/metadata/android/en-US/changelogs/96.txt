@@ -1,0 +1,14 @@
+New:
+* Undo after deleting a transaction or transfer
+* Recently deleted screen to restore deleted items
+* Follow system theme
+* Budgets show how far over they are and what is left per day
+* Amber bar near a budget's limit
+* Bars for a repeating budget's last three periods
+* Suggested limit from past spending
+
+Fixes:
+* Back in an editor asks before throwing away changes
+* Screenshots blocked while the app lock is on
+* Places map shows every place
+* A failed restore keeps your attachments

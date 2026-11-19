@@ -20,6 +20,23 @@
 
 <changelog>
 
+    <version versionName="1.18.0" versionDate="Nov 19, 2026">
+        <change>[b]New![/b] Deleting a transaction, a transfer or a selection no longer asks to confirm. A snackbar offers Undo, which brings it back with its people, splits and attachments.</change>
+        <change>[b]New![/b] Recently deleted in the drawer lists deleted transactions and transfers, newest first. Tap one to Restore it or Delete forever, or use Empty all. Items deleted more than 90 days ago are removed for good when the app starts.</change>
+        <change>[b]New![/b] Follow system in the theme setting shows the app in Dark when the phone is in dark mode and in Light when it is not.</change>
+        <change>[b]New![/b] An expense budget past its limit says "Over by" with the amount and its bar takes the expense color. A running expense budget that is not over shows "Left per day", and its detail screen shows "Spent per day".</change>
+        <change>[b]New![/b] An expense budget's bar turns amber once 80% of its limit is used. The Running tab lists overspent expense budgets first, then every other budget by how much of its limit is used, highest first.</change>
+        <change>[b]New![/b] A repeating budget's card shows bars for its three previous periods. A long press on a bar shows its start date and what was spent, or earned on an income budget.</change>
+        <change>[b]New![/b] The budget editor shows the average spent over a repeating budget's three previous periods, and a tap puts it in the limit.</change>
+        <change>An Expenses budget's Category budgets row lists each category budget it counts, and a "Not in a category budget" line shows the spending none of them covers.</change>
+        <change>An Expenses budget that uses its category budgets as the limit keeps the limit typed in the editor, so unticking the box gives it back.</change>
+        <change>Back in an editor asks "Discard changes?" when something changed, where it used to throw the edit away.</change>
+        <change>Screenshots and the app's card in recents come out black while the app lock is on.</change>
+        <change>The Places map fits every place with a location in view, where places far apart left it over open ocean.</change>
+        <change>A restore that fails while unpacking the attachments leaves the attachments you had in place.</change>
+        <change>The message on an empty list is centered and clear of the screen edges.</change>
+    </version>
+
     <version versionName="1.17.0" versionDate="Nov 11, 2026">
         <change>[b]New![/b] An Expenses budget can take its limit from the category budgets inside it. Its detail screen shows a Category budgets row with their total, and tapping the row uses that total as the limit. Ticking "Use the category budgets inside it as the limit" in the editor keeps the limit on the total.</change>
         <change>A transfer between two currencies with no exchange rate is no longer saved with nothing received. Saving stops and asks for an exchange rate above zero, in the transfer, recurring transfer and transfer model editors.</change>
