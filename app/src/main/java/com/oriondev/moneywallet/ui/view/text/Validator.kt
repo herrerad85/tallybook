@@ -17,19 +17,16 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.text;
-
-import androidx.annotation.NonNull;
+package com.oriondev.moneywallet.ui.view.text
 
 /**
  * Created by andrea on 30/01/18.
  */
-public interface Validator {
+interface Validator {
 
-    @NonNull
-    String getErrorMessage();
+    fun getErrorMessage(): String
 
-    boolean isValid(@NonNull CharSequence charSequence);
+    fun isValid(charSequence: CharSequence): Boolean
 
-    boolean autoValidate();
+    fun autoValidate(): Boolean
 }
