@@ -25,6 +25,8 @@
 
     <dimen name="view_header_text_margin">16dp</dimen>
 
+    <dimen name="view_advanced_recycler_empty_text_side_padding">16dp</dimen>
+
     <dimen name="material_activity_header_icon_width">44dp</dimen>
     <dimen name="material_activity_header_icon_height">44dp</dimen>
     <dimen name="material_activity_header_icon_start_margin">16dp</dimen>
