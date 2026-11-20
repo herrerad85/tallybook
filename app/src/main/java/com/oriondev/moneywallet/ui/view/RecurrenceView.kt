@@ -17,79 +17,73 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import androidx.annotation.Nullable;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.LinearLayout;
+import android.content.Context
+import android.util.AttributeSet
+import android.view.View
+import android.widget.LinearLayout
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
-import com.oriondev.moneywallet.ui.view.theme.ThemedSpinner;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.text.MaterialEditText
+import com.oriondev.moneywallet.ui.view.theme.ThemedSpinner
 
-import org.dmfs.rfc5545.recur.Freq;
-import org.dmfs.rfc5545.recur.RecurrenceRule;
+import org.dmfs.rfc5545.recur.Freq
+import org.dmfs.rfc5545.recur.RecurrenceRule
 
 /**
  * Created by andrea on 07/11/18.
  */
-public class RecurrenceView extends LinearLayout {
+class RecurrenceView : LinearLayout {
 
-    private ThemedSpinner mTypeSpinner;
-    private MaterialEditText mStartDateSpinner;
+    private var mTypeSpinner: ThemedSpinner? = null
+    private var mStartDateSpinner: MaterialEditText? = null
 
-    public RecurrenceView(Context context) {
-        super(context);
-        initialize(context);
+    constructor(context: Context) : super(context) {
+        initialize(context)
     }
 
-    public RecurrenceView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context)
     }
 
-    public RecurrenceView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context)
     }
 
-    public RecurrenceView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initialize(context);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initialize(context)
     }
 
-    private void initialize(Context context) {
-        View view = inflate(context, R.layout.dialog_recurrence_setting_picker, this);
-        mTypeSpinner = view.findViewById(R.id.type_spinner);
-        mStartDateSpinner = view.findViewById(R.id.start_date_spinner);
+    private fun initialize(context: Context) {
+        val view = inflate(context, R.layout.dialog_recurrence_setting_picker, this)
+        mTypeSpinner = view.findViewById(R.id.type_spinner)
+        mStartDateSpinner = view.findViewById(R.id.start_date_spinner)
 
 
 
-        mTypeSpinner.setAdapter(new ThemedSpinner.Adapter(context,
+        mTypeSpinner!!.adapter = ThemedSpinner.Adapter(context,
                 "Repeat daily",
                 "Repeat weekly",
                 "Repeat monthly",
                 "Repeat yearly"
-        ));
-        mStartDateSpinner.setTextViewMode(true);
-        mStartDateSpinner.setOnClickListener(new OnClickListener() {
+        )
+        mStartDateSpinner!!.setTextViewMode(true)
+        mStartDateSpinner!!.setOnClickListener(object : OnClickListener {
 
-            @Override
-            public void onClick(View v) {
+            override fun onClick(v: View?) {
                 // TODO: open picker
             }
 
-        });
-        mStartDateSpinner.setText(
+        })
+        mStartDateSpinner!!.setText(
                 "From: Today"
-        );
+        )
     }
 
-    public RecurrenceRule getRecurrenceRule() {
-        RecurrenceRule recurrenceRule = new RecurrenceRule(Freq.MONTHLY);
+    fun getRecurrenceRule(): RecurrenceRule {
+        val recurrenceRule = RecurrenceRule(Freq.MONTHLY)
         // TODO: build the recurrence rule using user settings
-        return recurrenceRule;
+        return recurrenceRule
     }
 }
