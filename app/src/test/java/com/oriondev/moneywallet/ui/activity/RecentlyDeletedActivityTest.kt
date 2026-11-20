@@ -540,9 +540,9 @@ class RecentlyDeletedActivityTest {
         ledger.insertTransaction(ledger.transaction(cash, groceries, 100L))
         launch { activity ->
             val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view)
-            await { list.textView.visibility == View.VISIBLE }
-            assertEquals(context.getString(R.string.message_no_deleted_item_found), list.textView.text.toString())
-            assertEquals(View.GONE, list.recyclerView.visibility)
+            await { list.getTextView()!!.visibility == View.VISIBLE }
+            assertEquals(context.getString(R.string.message_no_deleted_item_found), list.getTextView()!!.text.toString())
+            assertEquals(View.GONE, list.getRecyclerView()!!.visibility)
             assertFalse(emptyAll(activity).isVisible)
         }
     }
@@ -568,7 +568,7 @@ class RecentlyDeletedActivityTest {
         val transaction = ledger.insertTransaction(ledger.transaction(cash, groceries, 100L))
         launch { activity ->
             val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view)
-            await { list.textView.visibility == View.VISIBLE }
+            await { list.getTextView()!!.visibility == View.VISIBLE }
             ledger.database().execSQL("UPDATE transactions SET deleted = 1765000000000 WHERE transaction_id = $transaction")
             LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(LocalAction.ACTION_BACKUP_SERVICE_FINISHED)
                     .putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE))
@@ -581,7 +581,7 @@ class RecentlyDeletedActivityTest {
         val transaction = ledger.insertTransaction(ledger.transaction(cash, groceries, 100L))
         launch { activity ->
             val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view)
-            await { list.textView.visibility == View.VISIBLE }
+            await { list.getTextView()!!.visibility == View.VISIBLE }
             ledger.database().execSQL("UPDATE transactions SET deleted = $DELETED_AT WHERE transaction_id = $transaction")
             LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(LocalAction.ACTION_BACKUP_SERVICE_FAILED)
                     .putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE))
@@ -594,7 +594,7 @@ class RecentlyDeletedActivityTest {
         val transaction = ledger.insertTransaction(ledger.transaction(cash, groceries, 100L))
         launch { activity ->
             val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view)
-            await { list.textView.visibility == View.VISIBLE }
+            await { list.getTextView()!!.visibility == View.VISIBLE }
             ledger.database().execSQL("UPDATE transactions SET deleted = $DELETED_AT WHERE transaction_id = $transaction")
             for (action in listOf(LocalAction.ACTION_BACKUP_SERVICE_FINISHED, LocalAction.ACTION_BACKUP_SERVICE_FAILED)) {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(action)
@@ -604,8 +604,8 @@ class RecentlyDeletedActivityTest {
                 shadowOf(Looper.getMainLooper()).idle()
                 Thread.sleep(25)
             }
-            assertEquals(0, list.recyclerView.adapter!!.itemCount)
-            assertEquals(View.VISIBLE, list.textView.visibility)
+            assertEquals(0, list.getRecyclerView()!!.adapter!!.itemCount)
+            assertEquals(View.VISIBLE, list.getTextView()!!.visibility)
         }
     }
 
@@ -636,7 +636,7 @@ class RecentlyDeletedActivityTest {
     }
 
     private fun rowIds(activity: RecentlyDeletedActivity, count: Int): List<Long> {
-        val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view).recyclerView
+        val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view).getRecyclerView()!!
         return awaitRows(activity, count).map { list.adapter!!.getItemId(list.getChildAdapterPosition(it)) }
     }
 
@@ -672,7 +672,7 @@ class RecentlyDeletedActivityTest {
     private fun text(row: View, id: Int): String = row.findViewById<TextView>(id).text.toString()
 
     private fun awaitRows(activity: RecentlyDeletedActivity, count: Int): List<ViewGroup> {
-        val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view).recyclerView
+        val list = activity.findViewById<AdvancedRecyclerView>(R.id.advanced_recycler_view).getRecyclerView()!!
         await {
             list.adapter!!.itemCount == count && (count == 0 || list.visibility == View.VISIBLE)
         }

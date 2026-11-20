@@ -17,43 +17,38 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.recyclerview.widget.RecyclerView;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.TextView;
+import android.content.Context
+import androidx.annotation.StringRes
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.recyclerview.widget.RecyclerView
+import android.util.AttributeSet
+import android.view.View
+import android.widget.TextView
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.utils.SystemBars;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.utils.SystemBars
 
 /**
  * Created by andrea on 26/01/18.
  */
-public class AdvancedRecyclerView extends SwipeRefreshLayout {
+class AdvancedRecyclerView : SwipeRefreshLayout {
 
-    private RecyclerView mRecyclerView;
-    private View mProgressWheel;
-    private TextView mEmptyTextView;
+    private var mRecyclerView: RecyclerView? = null
+    private var mProgressWheel: View? = null
+    private var mEmptyTextView: TextView? = null
 
-    private int mEmptyTextRes;
-    private int mErrorTextRes;
-    private State mCurrentState;
+    private var mEmptyTextRes: Int = 0
+    private var mErrorTextRes: Int = 0
+    private var mCurrentState: State? = null
 
-    public AdvancedRecyclerView(Context context) {
-        super(context);
-        initialize(context, null);
+    constructor(context: Context) : super(context) {
+        initialize(context, null)
     }
 
-    public AdvancedRecyclerView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
     /**
@@ -62,95 +57,97 @@ public class AdvancedRecyclerView extends SwipeRefreshLayout {
      * for all of them at once, and some of these lists are inside a secondary panel or a pager
      * page where it does not belong.
      */
-    private void initialize(@NonNull Context context, @Nullable AttributeSet attrs) {
-        inflate(context, R.layout.view_advanced_recycler, this);
-        mRecyclerView = findViewById(R.id.recycler_view);
-        mProgressWheel = findViewById(R.id.progress_wheel);
-        mEmptyTextView = findViewById(R.id.empty_text_view);
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.AdvancedRecyclerView, 0, 0);
-        boolean insetSides;
-        boolean insetBottom;
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        inflate(context, R.layout.view_advanced_recycler, this)
+        mRecyclerView = findViewById(R.id.recycler_view)
+        mProgressWheel = findViewById(R.id.progress_wheel)
+        mEmptyTextView = findViewById(R.id.empty_text_view)
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.AdvancedRecyclerView, 0, 0)
+        val insetSides: Boolean
+        val insetBottom: Boolean
         try {
-            insetSides = typedArray.getBoolean(R.styleable.AdvancedRecyclerView_systemBarInsetSides, true);
-            insetBottom = typedArray.getBoolean(R.styleable.AdvancedRecyclerView_systemBarInsetBottom, false);
+            insetSides = typedArray.getBoolean(R.styleable.AdvancedRecyclerView_systemBarInsetSides, true)
+            insetBottom = typedArray.getBoolean(R.styleable.AdvancedRecyclerView_systemBarInsetBottom, false)
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
         if (insetBottom) {
-            SystemBars.pad(mRecyclerView, false, insetSides, true);
+            SystemBars.pad(mRecyclerView, false, insetSides, true)
         }
     }
 
-    public RecyclerView getRecyclerView() {
-        return mRecyclerView;
+    fun getRecyclerView(): RecyclerView? {
+        return mRecyclerView
     }
 
-    public TextView getTextView() {
-        return mEmptyTextView;
+    fun getTextView(): TextView? {
+        return mEmptyTextView
     }
 
-    public void setLayoutManager(RecyclerView.LayoutManager layoutManager) {
-        mRecyclerView.setLayoutManager(layoutManager);
+    fun setLayoutManager(layoutManager: RecyclerView.LayoutManager?) {
+        mRecyclerView!!.layoutManager = layoutManager
     }
 
-    public void setAdapter(RecyclerView.Adapter adapter) {
-        mRecyclerView.setAdapter(adapter);
+    fun setAdapter(adapter: RecyclerView.Adapter<*>?) {
+        mRecyclerView!!.adapter = adapter
     }
 
     /**
-     * The text is also written by {@link #setState(State)}. Setting it on the view here as well
+     * The text is also written by [setState]. Setting it on the view here as well
      * is what lets a caller refine the message after the empty view is already on screen, with
      * no further state change to carry it there.
      */
-    public void setEmptyText(@StringRes int resId) {
-        mEmptyTextRes = resId;
-        mEmptyTextView.setText(resId);
+    fun setEmptyText(@StringRes resId: Int) {
+        mEmptyTextRes = resId
+        mEmptyTextView!!.setText(resId)
     }
 
-    public void setErrorText(@StringRes int resId) {
-        mErrorTextRes = resId;
+    fun setErrorText(@StringRes resId: Int) {
+        mErrorTextRes = resId
     }
 
-    public void setState(State state) {
+    fun setState(state: State?) {
         if (mCurrentState != state) {
-            switch (state) {
-                case EMPTY:
-                    mRecyclerView.setVisibility(View.GONE);
-                    mProgressWheel.setVisibility(View.GONE);
-                    mEmptyTextView.setText(mEmptyTextRes);
-                    mEmptyTextView.setVisibility(View.VISIBLE);
-                    setRefreshing(false);
-                    break;
-                case LOADING:
-                    mRecyclerView.setVisibility(View.GONE);
-                    mProgressWheel.setVisibility(View.VISIBLE);
-                    mEmptyTextView.setVisibility(View.GONE);
-                    setRefreshing(false);
-                    break;
-                case REFRESHING:
-                    mRecyclerView.setVisibility(View.GONE);
-                    mProgressWheel.setVisibility(View.GONE);
-                    mEmptyTextView.setVisibility(View.GONE);
-                    setRefreshing(true);
-                    break;
-                case READY:
-                    mRecyclerView.setVisibility(View.VISIBLE);
-                    mProgressWheel.setVisibility(View.GONE);
-                    mEmptyTextView.setVisibility(View.GONE);
-                    setRefreshing(false);
-                    break;
-                case ERROR:
-                    mRecyclerView.setVisibility(View.GONE);
-                    mProgressWheel.setVisibility(View.GONE);
-                    mEmptyTextView.setText(mErrorTextRes);
-                    mEmptyTextView.setVisibility(View.VISIBLE);
-                    setRefreshing(false);
-                    break;
+            when (state) {
+                State.EMPTY -> {
+                    mRecyclerView!!.visibility = View.GONE
+                    mProgressWheel!!.visibility = View.GONE
+                    mEmptyTextView!!.setText(mEmptyTextRes)
+                    mEmptyTextView!!.visibility = View.VISIBLE
+                    setRefreshing(false)
+                }
+                State.LOADING -> {
+                    mRecyclerView!!.visibility = View.GONE
+                    mProgressWheel!!.visibility = View.VISIBLE
+                    mEmptyTextView!!.visibility = View.GONE
+                    setRefreshing(false)
+                }
+                State.REFRESHING -> {
+                    mRecyclerView!!.visibility = View.GONE
+                    mProgressWheel!!.visibility = View.GONE
+                    mEmptyTextView!!.visibility = View.GONE
+                    setRefreshing(true)
+                }
+                State.READY -> {
+                    mRecyclerView!!.visibility = View.VISIBLE
+                    mProgressWheel!!.visibility = View.GONE
+                    mEmptyTextView!!.visibility = View.GONE
+                    setRefreshing(false)
+                }
+                State.ERROR -> {
+                    mRecyclerView!!.visibility = View.GONE
+                    mProgressWheel!!.visibility = View.GONE
+                    mEmptyTextView!!.setText(mErrorTextRes)
+                    mEmptyTextView!!.visibility = View.VISIBLE
+                    setRefreshing(false)
+                }
+                null -> {
+                }
             }
         }
     }
 
-    public enum State {
+    enum class State {
         EMPTY,
         LOADING,
         REFRESHING,
