@@ -17,12 +17,12 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.calendar;
+package com.oriondev.moneywallet.ui.view.calendar
 
 /**
  * Created by andrea on 13/04/18.
  */
-public interface OnDateSelectedListener {
+interface OnDateSelectedListener {
 
-    void onDateSelected(int year, int month, int day, int index);
+    fun onDateSelected(year: Int, month: Int, day: Int, index: Int)
 }
