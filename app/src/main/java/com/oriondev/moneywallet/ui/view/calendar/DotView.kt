@@ -20,78 +20,70 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.calendar;
+package com.oriondev.moneywallet.ui.view.calendar
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import androidx.annotation.ColorInt;
-import androidx.annotation.ColorRes;
-import androidx.core.content.ContextCompat;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
+import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.View
 
 /** Simple view to draw a colored and sized dot */
-public class DotView extends View {
+class DotView : View {
 
-    private Paint paint;
-    private int size = -1;
+    private var paint: Paint? = null
+    private var size = -1
 
-    public DotView(Context context) {
-        this(context, null);
+    constructor(context: Context) : this(context, null)
+
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        init()
     }
 
-    public DotView(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        init()
     }
 
-    public DotView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
+    private fun init() {
+        paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint!!.style = Paint.Style.FILL
+        paint!!.color = Color.WHITE
     }
 
-    public DotView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        init();
-    }
-
-    private void init() {
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.WHITE);
-    }
-
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
         if (size == -1) {
             // Default size if full view
-            size = w;
+            size = w
         }
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        canvas.drawCircle(getMeasuredWidth() / 2, getMeasuredHeight() / 2, size / 2, paint);
+    override fun onDraw(canvas: Canvas) {
+        canvas.drawCircle((measuredWidth / 2).toFloat(), (measuredHeight / 2).toFloat(), (size / 2).toFloat(), paint!!)
     }
 
-    public void setColor(@ColorInt int color) {
-        paint.setColor(color);
-        invalidate();
+    fun setColor(@ColorInt color: Int) {
+        paint!!.color = color
+        invalidate()
     }
 
-    public void setColorRes(@ColorRes int colorRes) {
-        setColor(ContextCompat.getColor(getContext(), colorRes));
+    fun setColorRes(@ColorRes colorRes: Int) {
+        setColor(ContextCompat.getColor(context, colorRes))
     }
 
-    public void setCircleSize(int size) {
-        this.size = size;
-        invalidate();
+    fun setCircleSize(size: Int) {
+        this.size = size
+        invalidate()
     }
 
-    public void setCircleSizeDp(int sizeInDp) {
-        setCircleSize((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, sizeInDp, getResources().getDisplayMetrics()));
+    fun setCircleSizeDp(sizeInDp: Int) {
+        setCircleSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, sizeInDp.toFloat(), resources.displayMetrics).toInt())
     }
 }
