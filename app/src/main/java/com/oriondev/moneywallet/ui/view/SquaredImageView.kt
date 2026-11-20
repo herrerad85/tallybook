@@ -17,33 +17,25 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatImageView;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.appcompat.widget.AppCompatImageView
+import android.util.AttributeSet
 
 /**
  * Created by andrea on 13/08/18.
  */
-public class SquaredImageView extends AppCompatImageView {
+open class SquaredImageView : AppCompatImageView {
 
-    public SquaredImageView(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public SquaredImageView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public SquaredImageView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(getMeasuredWidth(), getMeasuredWidth());
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        setMeasuredDimension(measuredWidth, measuredWidth)
     }
 }
