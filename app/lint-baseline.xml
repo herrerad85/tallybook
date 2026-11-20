@@ -13462,22 +13462,22 @@
     <issue
         id="NotifyDataSetChanged"
         message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
-        errorLine1="            adapter.notifyDataSetChanged();"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="            adapter!!.notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/view/calendar/MonthView.java"
-            line="326"
+            file="src/main/java/com/oriondev/moneywallet/ui/view/calendar/MonthView.kt"
+            line="339"
             column="13"/>
     </issue>
 
     <issue
         id="NotifyDataSetChanged"
         message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
-        errorLine1="            adapter.notifyDataSetChanged();"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="            adapter!!.notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/view/calendar/MonthView.java"
-            line="337"
+            file="src/main/java/com/oriondev/moneywallet/ui/view/calendar/MonthView.kt"
+            line="350"
             column="13"/>
     </issue>
 
