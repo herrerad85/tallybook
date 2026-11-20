@@ -17,101 +17,96 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.util.AttributeSet
+import android.view.View
 
 /**
  * Created by andrea on 08/03/18.
  */
-public class MaterialProgressBar extends View {
+open class MaterialProgressBar : View {
 
-    private Paint mPaint;
-    private int mReachedBarColor;
-    private int mUnreachedBarColor;
+    private var mPaint: Paint? = null
+    private var mReachedBarColor: Int = 0
+    private var mUnreachedBarColor: Int = 0
 
-    private long mMaxValue;
-    private long mProgressValue;
+    private var mMaxValue: Long = 0
+    private var mProgressValue: Long = 0
 
-    public MaterialProgressBar(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    public MaterialProgressBar(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public MaterialProgressBar(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    public MaterialProgressBar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initialize()
     }
 
-    private void initialize() {
-        mPaint = new Paint();
-        mPaint.setAntiAlias(true);
-        mMaxValue = 0;
-        mProgressValue = 0;
+    private fun initialize() {
+        mPaint = Paint()
+        mPaint!!.isAntiAlias = true
+        mMaxValue = 0
+        mProgressValue = 0
 
-        mUnreachedBarColor = Color.GRAY;
-        mReachedBarColor = Color.RED;
+        mUnreachedBarColor = Color.GRAY
+        mReachedBarColor = Color.RED
     }
 
-    public void setReachedBarColor(int color) {
-        mReachedBarColor = color;
-        invalidate();
+    fun setReachedBarColor(color: Int) {
+        mReachedBarColor = color
+        invalidate()
     }
 
-    public void setUnreachedBarColor(int color) {
-        mUnreachedBarColor = color;
-        invalidate();
+    fun setUnreachedBarColor(color: Int) {
+        mUnreachedBarColor = color
+        invalidate()
     }
 
-    public void setMaxValue(long maxValue) {
-        mMaxValue = maxValue;
-        invalidate();
+    fun setMaxValue(maxValue: Long) {
+        mMaxValue = maxValue
+        invalidate()
     }
 
-    public void setProgressValue(long progressValue) {
-        mProgressValue = progressValue;
-        invalidate();
+    fun setProgressValue(progressValue: Long) {
+        mProgressValue = progressValue
+        invalidate()
     }
 
-    protected double getProgress() {
+    protected fun getProgress(): Double {
         if (mMaxValue > 0 && mProgressValue > 0) {
-            double progress = (double) mProgressValue / mMaxValue;
-            return progress > 1 ? 1 : progress;
+            val progress = mProgressValue.toDouble() / mMaxValue
+            return if (progress > 1) 1.0 else progress
         }
-        return 0d;
+        return 0.0
     }
 
-    @Override
-    protected void onDraw(Canvas c) {
-        super.onDraw(c);
+    override fun onDraw(c: Canvas) {
+        super.onDraw(c)
         // measure view
-        int measuredWidth = getMeasuredWidth();
-        int measuredHeight = getMeasuredHeight();
+        val measuredWidth = getMeasuredWidth()
+        val measuredHeight = getMeasuredHeight()
         if (Math.min(measuredWidth, measuredHeight) == 0) {
             // skip drawing
-            return;
+            return
         }
         // draw unreached bar
-        mPaint.setColor(mUnreachedBarColor);
-        c.drawRect(0, 0, measuredWidth, measuredHeight, mPaint);
+        mPaint!!.color = mUnreachedBarColor
+        c.drawRect(0f, 0f, measuredWidth.toFloat(), measuredHeight.toFloat(), mPaint!!)
         // calculate progress and draw on top
-        mPaint.setColor(mReachedBarColor);
-        int reachedBarWidth = (int) (getProgress() * measuredWidth);
-        c.drawRect(0, 0, reachedBarWidth, measuredHeight, mPaint);
+        mPaint!!.color = mReachedBarColor
+        val reachedBarWidth = (getProgress() * measuredWidth).toInt()
+        c.drawRect(0f, 0f, reachedBarWidth.toFloat(), measuredHeight.toFloat(), mPaint!!)
     }
 }
