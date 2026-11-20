@@ -17,73 +17,66 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.cardview.widget.CardView
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 24/08/18.
  */
-public class ForegroundCardView extends CardView {
+open class ForegroundCardView : CardView {
 
-    private int mMaxWidth = -1;
-    private int mMaxHeight = -1;
+    private var mMaxWidth = -1
+    private var mMaxHeight = -1
 
-    public ForegroundCardView(@NonNull Context context) {
-        super(context);
-        initialize(context, null, 0);
+    constructor(context: Context) : super(context) {
+        initialize(context, null, 0)
     }
 
-    public ForegroundCardView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs, 0);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs, 0)
     }
 
-    public ForegroundCardView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs, defStyleAttr);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs, defStyleAttr)
     }
 
-    private void initialize(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ForegroundCardView, defStyleAttr, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?, defStyleAttr: Int) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ForegroundCardView, defStyleAttr, 0)
         try {
-            mMaxWidth = typedArray.getDimensionPixelSize(R.styleable.ForegroundCardView_fcv_max_width, -1);
-            mMaxHeight = typedArray.getDimensionPixelSize(R.styleable.ForegroundCardView_fcv_max_height, -1);
-        } catch (Exception e) {
-            e.printStackTrace();
+            mMaxWidth = typedArray.getDimensionPixelSize(R.styleable.ForegroundCardView_fcv_max_width, -1)
+            mMaxHeight = typedArray.getDimensionPixelSize(R.styleable.ForegroundCardView_fcv_max_height, -1)
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // initialize the reference to the final values to pass to super class
-        int finalWidthMeasureSpec = widthMeasureSpec;
-        int finalHeightMeasureSpec = heightMeasureSpec;
+        var finalWidthMeasureSpec = widthMeasureSpec
+        var finalHeightMeasureSpec = heightMeasureSpec
         // first of all we need to get the current measured dimensions
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        val widthMode = MeasureSpec.getMode(widthMeasureSpec)
+        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
+        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
         // check if width is larger than the maximum value
         if (mMaxWidth > -1) {
-            int width = Math.min(widthSize, mMaxWidth);
-            finalWidthMeasureSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
+            val width = Math.min(widthSize, mMaxWidth)
+            finalWidthMeasureSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
         }
         // check if height is larger than the maximum value
         if (mMaxHeight > -1) {
-            int height = Math.min(heightSize, mMaxHeight);
-            finalHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+            val height = Math.min(heightSize, mMaxHeight)
+            finalHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
         }
         // apply the measured dimensions
-        super.onMeasure(finalWidthMeasureSpec, finalHeightMeasureSpec);
+        super.onMeasure(finalWidthMeasureSpec, finalHeightMeasureSpec)
     }
 }
