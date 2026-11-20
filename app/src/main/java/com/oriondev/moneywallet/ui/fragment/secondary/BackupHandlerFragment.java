@@ -533,10 +533,16 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
                     if (mBackupAdapter.getItemCount() > 0) {
                         mAdvancedRecyclerView.setState(AdvancedRecyclerView.State.READY);
                     }
+                } else if (operation == BackupHandlerIntentService.ACTION_RESTORE) {
+                    loadCurrentFolder();
                 }
             } else if (TextUtils.equals(action, LocalAction.ACTION_BACKUP_SERVICE_FAILED)) {
                 int operation = intent.getIntExtra(BackupHandlerIntentService.ACTION, 0);
-                if (operation == BackupHandlerIntentService.ACTION_LIST) {
+                if (operation == BackupHandlerIntentService.ACTION_RESTORE) {
+                    if (intent.hasExtra(BackupHandlerIntentService.BEFORE_RESTORE_COPY)) {
+                        loadCurrentFolder();
+                    }
+                } else if (operation == BackupHandlerIntentService.ACTION_LIST) {
                     Exception exception = (Exception) intent.getSerializableExtra(BackupHandlerIntentService.EXCEPTION);
                     if (exception instanceof BackendException && ((BackendException) exception).isRecoverable()) {
                         mBackupAdapter.setFileList(null, false);

@@ -487,6 +487,9 @@
     <string name="message_backup_restoring_success">"Backup restored correctly."</string>
     <string name="message_backup_creation_failed">"Failure during the creation of the backup. Message: %s"</string>
     <string name="message_backup_restoring_failed">"Failure during the restoring of the backup. Message: %s"</string>
+    <string name="message_backup_restoring_copy_saved">"A copy of your data from before the restore is saved in %s"</string>
+    <string name="message_backup_restoring_copy_password">"It uses the same password as the file you restored."</string>
+    <string name="message_backup_restoring_copy_failed">"Could not save a copy of your current data, so nothing was restored."</string>
     <string name="message_backup_service_storage_access_framework_disconnect">"Are you sure you want to disconnect the current folder? No files will be deleted."</string>
     <string name="message_backup_service_webdav_disconnect">"Are you sure you want to disconnect this server? The saved address and password will be removed from this device. No files will be deleted from the server."</string>
     <string name="message_webdav_app_password">"If your server supports app passwords, such as Nextcloud, create one for Tallybook instead of using your account password."</string>

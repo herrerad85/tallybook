@@ -35,6 +35,7 @@ import android.view.View;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.broadcast.LocalAction;
 import com.oriondev.moneywallet.service.BackupHandlerIntentService;
+import com.oriondev.moneywallet.storage.database.backup.BackupManager;
 import com.oriondev.moneywallet.ui.activity.base.BaseActivity;
 import com.oriondev.moneywallet.ui.fragment.base.NavigableFragment;
 import com.oriondev.moneywallet.ui.fragment.dialog.GenericProgressDialog;
@@ -112,6 +113,16 @@ public class BackupListActivity extends BaseActivity implements ToolbarControlle
         });
     }
 
+    private String addBeforeRestoreCopy(String message, String copy) {
+        if (copy != null) {
+            message += "\n\n" + getString(R.string.message_backup_restoring_copy_saved, copy);
+            if (copy.endsWith(BackupManager.BACKUP_EXTENSION_PROTECTED)) {
+                message += "\n\n" + getString(R.string.message_backup_restoring_copy_password);
+            }
+        }
+        return message;
+    }
+
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
@@ -170,20 +181,23 @@ public class BackupListActivity extends BaseActivity implements ToolbarControlle
                         }
                         int titleRes = R.string.title_success;
                         int messageRes;
+                        String copy = null;
                         switch (intent.getIntExtra(BackupHandlerIntentService.ACTION, 0)) {
                             case BackupHandlerIntentService.ACTION_BACKUP:
                                 messageRes = R.string.message_backup_creation_success;
                                 break;
                             case BackupHandlerIntentService.ACTION_RESTORE:
                                 messageRes = R.string.message_backup_restoring_success;
+                                copy = intent.getStringExtra(BackupHandlerIntentService.BEFORE_RESTORE_COPY);
                                 break;
                             default:
                                 // ACTION_LIST
                                 return;
                         }
+                        String successMessage = addBeforeRestoreCopy(getString(messageRes), copy);
                         ThemedDialog.buildMaterialDialog(BackupListActivity.this)
                                 .setTitle(titleRes)
-                                .setMessage(messageRes)
+                                .setMessage(successMessage)
                                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                                     @Override
@@ -217,7 +231,8 @@ public class BackupListActivity extends BaseActivity implements ToolbarControlle
                                 messageString = getString(R.string.message_backup_creation_failed, message);
                                 break;
                             case BackupHandlerIntentService.ACTION_RESTORE:
-                                messageString = getString(R.string.message_backup_restoring_failed, message);
+                                messageString = addBeforeRestoreCopy(getString(R.string.message_backup_restoring_failed, message),
+                                        intent.getStringExtra(BackupHandlerIntentService.BEFORE_RESTORE_COPY));
                                 break;
                             default:
                                 return;
