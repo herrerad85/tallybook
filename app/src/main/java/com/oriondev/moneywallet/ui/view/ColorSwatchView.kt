@@ -17,140 +17,135 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.RippleDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.StateListDrawable;
-import android.graphics.drawable.shapes.OvalShape;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.FrameLayout;
+import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.drawable.RippleDrawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.StateListDrawable
+import android.graphics.drawable.shapes.OvalShape
+import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.FrameLayout
 
-import androidx.annotation.ColorInt;
+import androidx.annotation.ColorInt
 
-import com.oriondev.moneywallet.utils.Utils;
+import com.oriondev.moneywallet.utils.Utils
 
 /**
  * One color of the color chooser's grid, and the preview beside its hex field. Ported from the
  * CircleView of material-dialogs 0.9.6.0, under the MIT license, minus the parts it drew nothing
  * with.
  */
-public class ColorSwatchView extends FrameLayout {
+class ColorSwatchView : FrameLayout {
 
-    private static final float RING_WIDTH_DP = 5f;
-    private static final float WHITE_RING_WIDTH_DP = 3f;
-    private static final float PRESSED_ALPHA = 0.7f;
+    companion object {
 
-    private final int mRingWidth;
-    private final int mWhiteRingWidth;
+        private const val RING_WIDTH_DP = 5f
+        private const val WHITE_RING_WIDTH_DP = 3f
+        private const val PRESSED_ALPHA = 0.7f
 
-    private final Paint mRingPaint;
-    private final Paint mWhitePaint;
-    private final Paint mFillPaint;
+        @ColorInt
+        private fun shiftColor(@ColorInt color: Int, by: Float): Int {
+            val hsv = FloatArray(3)
+            Color.colorToHSV(color, hsv)
+            hsv[2] *= by
+            return Color.HSVToColor(hsv)
+        }
 
-    private boolean mSwatchSelected;
-
-    public ColorSwatchView(Context context) {
-        this(context, null, 0);
+        @ColorInt
+        private fun translucent(@ColorInt color: Int): Int {
+            return Color.argb(Math.round(Color.alpha(color) * PRESSED_ALPHA),
+                    Color.red(color), Color.green(color), Color.blue(color))
+        }
     }
 
-    public ColorSwatchView(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    private val mRingWidth: Int
+    private val mWhiteRingWidth: Int
+
+    private val mRingPaint: Paint
+    private val mWhitePaint: Paint
+    private val mFillPaint: Paint
+
+    private var mSwatchSelected: Boolean = false
+
+    constructor(context: Context) : this(context, null, 0)
+
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        mRingWidth = dp(RING_WIDTH_DP)
+        mWhiteRingWidth = dp(WHITE_RING_WIDTH_DP)
+        mWhitePaint = Paint()
+        mWhitePaint.isAntiAlias = true
+        mWhitePaint.color = Color.WHITE
+        mFillPaint = Paint()
+        mFillPaint.isAntiAlias = true
+        mRingPaint = Paint()
+        mRingPaint.isAntiAlias = true
+        setColor(Color.DKGRAY)
+        setWillNotDraw(false)
     }
 
-    public ColorSwatchView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        mRingWidth = dp(RING_WIDTH_DP);
-        mWhiteRingWidth = dp(WHITE_RING_WIDTH_DP);
-        mWhitePaint = new Paint();
-        mWhitePaint.setAntiAlias(true);
-        mWhitePaint.setColor(Color.WHITE);
-        mFillPaint = new Paint();
-        mFillPaint.setAntiAlias(true);
-        mRingPaint = new Paint();
-        mRingPaint.setAntiAlias(true);
-        setColor(Color.DKGRAY);
-        setWillNotDraw(false);
+    private fun dp(value: Float): Int {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
+                resources.displayMetrics).toInt()
     }
 
-    private int dp(float value) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
-                getResources().getDisplayMetrics());
-    }
-
-    @ColorInt
-    private static int shiftColor(@ColorInt int color, float by) {
-        float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
-        hsv[2] *= by;
-        return Color.HSVToColor(hsv);
-    }
-
-    @ColorInt
-    private static int translucent(@ColorInt int color) {
-        return Color.argb(Math.round(Color.alpha(color) * PRESSED_ALPHA),
-                Color.red(color), Color.green(color), Color.blue(color));
-    }
-
-    public void setColor(@ColorInt int color) {
-        mFillPaint.setColor(color);
-        mRingPaint.setColor(shiftColor(color, 0.9f));
-        ShapeDrawable pressedCircle = new ShapeDrawable(new OvalShape());
-        pressedCircle.getPaint().setColor(translucent(shiftColor(color, 1.1f)));
-        StateListDrawable pressed = new StateListDrawable();
-        pressed.addState(new int[] {android.R.attr.state_pressed}, pressedCircle);
-        ColorStateList ripple = new ColorStateList(
-                new int[][] {new int[] {android.R.attr.state_pressed}},
-                new int[] {shiftColor(color, 1.1f)}
-        );
-        setForeground(new RippleDrawable(ripple, pressed, null));
-        setContentDescription(Utils.getHexColor(color));
-        invalidate();
+    fun setColor(@ColorInt color: Int) {
+        mFillPaint.color = color
+        mRingPaint.color = shiftColor(color, 0.9f)
+        val pressedCircle = ShapeDrawable(OvalShape())
+        pressedCircle.paint.color = translucent(shiftColor(color, 1.1f))
+        val pressed = StateListDrawable()
+        pressed.addState(intArrayOf(android.R.attr.state_pressed), pressedCircle)
+        val ripple = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_pressed)),
+                intArrayOf(shiftColor(color, 1.1f))
+        )
+        foreground = RippleDrawable(ripple, pressed, null)
+        contentDescription = Utils.getHexColor(color)
+        invalidate()
     }
 
     // The ring is the chooser's own flag, not the framework's selected flag, which GridView also
     // writes for its own reasons.
-    public void setSwatchSelected(boolean selected) {
-        mSwatchSelected = selected;
-        invalidate();
+    fun setSwatchSelected(selected: Boolean) {
+        mSwatchSelected = selected
+        invalidate()
     }
 
-    public boolean isSwatchSelected() {
-        return mSwatchSelected;
+    fun isSwatchSelected(): Boolean {
+        return mSwatchSelected
     }
 
-    @Override
-    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
-        super.onInitializeAccessibilityNodeInfo(info);
-        info.setSelected(mSwatchSelected);
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo?) {
+        super.onInitializeAccessibilityNodeInfo(info)
+        info!!.isSelected = mSwatchSelected
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, widthMeasureSpec);
-        setMeasuredDimension(getMeasuredWidth(), getMeasuredWidth());
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, widthMeasureSpec)
+        setMeasuredDimension(measuredWidth, measuredWidth)
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        int centerX = getMeasuredWidth() / 2;
-        int centerY = getMeasuredHeight() / 2;
-        int outerRadius = getMeasuredWidth() / 2;
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val centerX = measuredWidth / 2
+        val centerY = measuredHeight / 2
+        val outerRadius = measuredWidth / 2
         if (mSwatchSelected) {
-            int whiteRadius = outerRadius - mRingWidth;
-            canvas.drawCircle(centerX, centerY, outerRadius, mRingPaint);
-            canvas.drawCircle(centerX, centerY, whiteRadius, mWhitePaint);
-            canvas.drawCircle(centerX, centerY, whiteRadius - mWhiteRingWidth, mFillPaint);
+            val whiteRadius = outerRadius - mRingWidth
+            canvas.drawCircle(centerX.toFloat(), centerY.toFloat(), outerRadius.toFloat(), mRingPaint)
+            canvas.drawCircle(centerX.toFloat(), centerY.toFloat(), whiteRadius.toFloat(), mWhitePaint)
+            canvas.drawCircle(centerX.toFloat(), centerY.toFloat(), (whiteRadius - mWhiteRingWidth).toFloat(), mFillPaint)
         } else {
-            canvas.drawCircle(centerX, centerY, outerRadius, mFillPaint);
+            canvas.drawCircle(centerX.toFloat(), centerY.toFloat(), outerRadius.toFloat(), mFillPaint)
         }
     }
 }
