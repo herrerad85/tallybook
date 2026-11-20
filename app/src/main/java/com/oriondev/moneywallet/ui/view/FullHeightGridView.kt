@@ -17,34 +17,27 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.GridView;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.GridView
 
 /**
  * A grid that measures every one of its rows, so the ScrollView above it is what scrolls and the
  * views below it keep their own height, ported from the FillGridView of material-dialogs 0.9.6.0
  * under the MIT license.
  */
-public class FullHeightGridView extends GridView {
+class FullHeightGridView : GridView {
 
-    public FullHeightGridView(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public FullHeightGridView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public FullHeightGridView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int expandSpec = MeasureSpec.makeMeasureSpec(Integer.MAX_VALUE >> 2, MeasureSpec.AT_MOST);
-        super.onMeasure(widthMeasureSpec, expandSpec);
+    public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val expandSpec = MeasureSpec.makeMeasureSpec(Integer.MAX_VALUE shr 2, MeasureSpec.AT_MOST)
+        super.onMeasure(widthMeasureSpec, expandSpec)
     }
 }
