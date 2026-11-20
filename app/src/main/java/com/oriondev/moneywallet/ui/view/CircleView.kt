@@ -17,58 +17,54 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.util.AttributeSet
+import android.view.View
 
-public class CircleView extends View {
+class CircleView : View {
 
-    private Paint mPaint;
-    private float mRadius;
+    private var mPaint: Paint? = null
+    private var mRadius: Float = 0f
 
-    public CircleView(Context context) {
-        super(context);
-        init();
+    constructor(context: Context) : super(context) {
+        init()
     }
 
-    public CircleView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        init()
     }
 
-    public CircleView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        init()
     }
 
-    private void init() {
-        mPaint = new Paint();
-        mPaint.setColor(Color.BLACK);
-        mPaint.setAntiAlias(true);
-        mRadius = 0.9f;
+    private fun init() {
+        mPaint = Paint()
+        mPaint!!.color = Color.BLACK
+        mPaint!!.isAntiAlias = true
+        mRadius = 0.9f
     }
 
-    public void setColor(int color) {
-        mPaint.setColor(color);
-        invalidate();
+    fun setColor(color: Int) {
+        mPaint!!.color = color
+        invalidate()
     }
 
-    public void setRadius(float radius) {
-        mRadius = radius;
-        invalidate();
+    fun setRadius(radius: Float) {
+        mRadius = radius
+        invalidate()
     }
 
-    @Override
-    protected void onDraw(Canvas c) {
-        int width = getMeasuredWidth();
-        int height = getMeasuredHeight();
-        if (width == 0 || height == 0) return;
-        int radius = Math.min(width, height) / 2;
-        c.drawCircle(width/2, height/2, radius * mRadius, mPaint);
+    override fun onDraw(c: Canvas) {
+        val width = measuredWidth
+        val height = measuredHeight
+        if (width == 0 || height == 0) return
+        val radius = Math.min(width, height) / 2
+        c.drawCircle((width / 2).toFloat(), (height / 2).toFloat(), radius * mRadius, mPaint!!)
     }
 }
