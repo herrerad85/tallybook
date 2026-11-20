@@ -64,7 +64,7 @@ internal class BackupOperation {
 
         private const val ATTACHMENT_FOLDER = "attachments"
         private const val BACKUP_CACHE_FOLDER = "backups"
-        private const val FILE_DATETIME_PATTERN = "yyyy-MM-dd_HH-mm-ss"
+        internal const val FILE_DATETIME_PATTERN = "yyyy-MM-dd_HH-mm-ss"
         private const val OUTPUT_FILE = "backup_%s%s"
 
         /**
@@ -134,10 +134,15 @@ internal class BackupOperation {
         private fun prepareLocalBackupFile(context: Context, folder: File,
                                            password: String?): File {
             val backupFile = createBackupFile(folder, BackupManager.getExtension(!TextUtils.isEmpty(password)))
+            exportLocalBackupFile(context, backupFile, password)
+            return backupFile
+        }
+
+        @Throws(ExportException::class, IOException::class)
+        internal fun exportLocalBackupFile(context: Context, backupFile: File, password: String?) {
             val exporter: AbstractBackupExporter = DefaultBackupExporter(context.contentResolver, backupFile, password)
             exporter.exportDatabase(context.filesDir)
             exporter.exportAttachments(getAttachmentFolder(context))
-            return backupFile
         }
 
         private fun createBackupFile(folder: File, extension: String): File {

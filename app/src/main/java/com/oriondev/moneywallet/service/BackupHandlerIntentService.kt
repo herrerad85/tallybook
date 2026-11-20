@@ -39,6 +39,7 @@ import com.oriondev.moneywallet.broadcast.LocalAction
 import com.oriondev.moneywallet.broadcast.NotificationBroadcastReceiver
 import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver
 import com.oriondev.moneywallet.model.IFile
+import com.oriondev.moneywallet.service.beforerestore.BeforeRestoreCopy
 import com.oriondev.moneywallet.storage.database.DataContentProvider
 import com.oriondev.moneywallet.storage.database.ExportException
 import com.oriondev.moneywallet.storage.database.ImportException
@@ -80,6 +81,7 @@ class BackupHandlerIntentService : IntentService {
         const val PROGRESS_STATUS = "BackupHandlerIntentService::Argument::ProgressStatus"
         const val PROGRESS_VALUE = "BackupHandlerIntentService::Argument::ProgressValue"
         const val CALLER_ID = "BackupHandlerIntentService::Argument::CallerId"
+        const val BEFORE_RESTORE_COPY = "BackupHandlerIntentService::Argument::BeforeRestoreCopy"
 
         private const val BACKUP_CACHE_FOLDER = "backups"
         private const val TEMP_FOLDER = "temp"
@@ -112,6 +114,7 @@ class BackupHandlerIntentService : IntentService {
     private var mBackendServiceAPI: IBackendServiceAPI? = null
 
     private var mCallerId: String? = null
+    private var mBeforeRestoreCopy: File? = null
     private var mReporter: TaskReporter? = null
     private var mNotificationBuilder: NotificationCompat.Builder? = null
 
@@ -124,6 +127,7 @@ class BackupHandlerIntentService : IntentService {
             val backendId: String? = intent.getStringExtra(BACKEND_ID)
             val runForeground = intent.getBooleanExtra(RUN_FOREGROUND, DEFAULT_RUN_FOREGROUND)
             mCallerId = intent.getStringExtra(CALLER_ID)
+            mBeforeRestoreCopy = null
             // execute the action in a safe code-block: if an exception is thrown, it
             // is handled by both the local broadcast manager as an error and reported
             // in the notification if it is required
@@ -194,7 +198,7 @@ class BackupHandlerIntentService : IntentService {
         notifyUploadTaskFinished(uploaded)
     }
 
-    @Throws(ImportException::class, BackendException::class, IOException::class)
+    @Throws(ExportException::class, ImportException::class, BackendException::class, IOException::class)
     private fun onActionRestore(intent: Intent) {
         val remoteFile: IFile? = intent.getParcelableExtra(BACKUP_FILE)
         if (remoteFile != null) {
@@ -212,19 +216,32 @@ class BackupHandlerIntentService : IntentService {
                     }
 
                 })
-                notifyTaskProgress(ACTION_RESTORE, STATUS_BACKUP_RESTORING, 75)
+                notifyTaskProgress(ACTION_RESTORE, STATUS_BACKUP_CREATION, 72)
                 val password: String? = intent.getStringExtra(PASSWORD)
                 // The auto backup no longer runs on this service's serial queue, so a sweep
                 // can now be reading the database and the attachment folder that the import
                 // is about to replace and empty.
+                val copy: File
                 synchronized(BackupOperation.LOCK) {
-                    restoreLocalBackupFile(backup, password)
+                    copy = BeforeRestoreCopy.create(this, password)
+                    notifyTaskProgress(ACTION_RESTORE, STATUS_BACKUP_RESTORING, 75)
+                    var replaced = false
+                    try {
+                        restoreLocalBackupFile(backup, password) { replaced = true }
+                    } finally {
+                        if (replaced) {
+                            mBeforeRestoreCopy = copy
+                            BeforeRestoreCopy.deleteOlderCopies(copy, backup.name)
+                        } else {
+                            FileUtils.deleteQuietly(copy)
+                        }
+                    }
                 }
                 notifyTaskProgress(ACTION_RESTORE, STATUS_BACKUP_RESTORING, 100)
                 PreferenceManager.setLastTimeDataIsChanged(0L)
                 RecurrenceBroadcastReceiver.scheduleRecurrenceTask(this)
                 AutoBackupBroadcastReceiver.scheduleAutoBackupTask(this)
-                notifyTaskFinished(ACTION_RESTORE)
+                notifyTaskFinished(ACTION_RESTORE, copy)
             } finally {
                 FileUtils.deleteQuietly(revision)
             }
@@ -234,7 +251,7 @@ class BackupHandlerIntentService : IntentService {
     }
 
     @Throws(ImportException::class, IOException::class)
-    private fun restoreLocalBackupFile(backup: File, password: String?) {
+    private fun restoreLocalBackupFile(backup: File, password: String?, onDatabaseReplaced: () -> Unit) {
         val importer: AbstractBackupImporter
         val fileName = backup.name
         if (fileName.endsWith(BackupManager.BACKUP_EXTENSION_LEGACY)) {
@@ -247,6 +264,7 @@ class BackupHandlerIntentService : IntentService {
         try {
             val databaseFile = getDatabasePath(SQLDatabaseImporter.DATABASE_NAME)
             importer.importDatabase(temporaryFolder, databaseFile.parentFile)
+            onDatabaseReplaced()
             // the count on a recurrence notification still showing belongs to the ledger just replaced
             NotificationManagerCompat.from(this).cancel(NotificationContract.NOTIFICATION_ID_RECURRENCE)
             // Announced here, between the two, and nowhere else. The ledger is live from the
@@ -325,11 +343,12 @@ class BackupHandlerIntentService : IntentService {
         }
     }
 
-    private fun notifyTaskFinished(action: Int) {
+    private fun notifyTaskFinished(action: Int, copy: File) {
         // notify only the local broadcast manager: it is not required to update
         // the notification because it is removed when everything is gone right
         val extras = Bundle()
         extras.putInt(ACTION, action)
+        extras.putString(BEFORE_RESTORE_COPY, copy.absolutePath)
         extras.putString(CALLER_ID, mCallerId)
         mReporter!!.broadcast(LocalAction.ACTION_BACKUP_SERVICE_FINISHED, extras)
     }
@@ -360,6 +379,7 @@ class BackupHandlerIntentService : IntentService {
         val extras = Bundle()
         extras.putInt(ACTION, action)
         extras.putSerializable(EXCEPTION, exception)
+        mBeforeRestoreCopy?.let { extras.putString(BEFORE_RESTORE_COPY, it.absolutePath) }
         extras.putString(CALLER_ID, mCallerId)
         mReporter!!.broadcast(LocalAction.ACTION_BACKUP_SERVICE_FAILED, extras)
         // update the notification if required
