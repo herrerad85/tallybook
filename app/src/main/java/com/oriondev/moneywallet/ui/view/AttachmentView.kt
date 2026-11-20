@@ -17,84 +17,80 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.os.Bundle;
-import android.os.Parcelable;
-import android.util.AttributeSet;
-import android.util.SparseArray;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.content.Context
+import android.os.Bundle
+import android.os.Parcelable
+import android.util.AttributeSet
+import android.util.SparseArray
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 
-import androidx.annotation.Nullable;
-import androidx.core.os.BundleCompat;
+import androidx.core.os.BundleCompat
 
-import com.bumptech.glide.Glide;
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.model.Attachment;
-import com.oriondev.moneywallet.utils.Utils;
-
-import java.util.List;
+import com.bumptech.glide.Glide
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.model.Attachment
+import com.oriondev.moneywallet.utils.Utils
 
 /**
  * Created by andrea on 30/03/18.
  */
-public class AttachmentView extends LinearLayout {
+class AttachmentView : LinearLayout {
 
-    private static final float INDICATOR_ROTATION_EXPANDED = 180f;
-    private static final float INDICATOR_ROTATION_COLLAPSED = 0f;
+    companion object {
 
-    private static final String SS_SUPER = "AttachmentView::SavedState::Super";
-    private static final String SS_EXPANDED = "AttachmentView::SavedState::Expanded";
+        private const val INDICATOR_ROTATION_EXPANDED = 180f
+        private const val INDICATOR_ROTATION_COLLAPSED = 0f
 
-    private LinearLayout mContainer;
-    private ImageView mIndicator;
-    private List<Attachment> mAttachments;
-
-    private Controller mController;
-
-    private boolean mAllowRemove = true;
-
-    private boolean mExpanded = true;
-
-    public AttachmentView(Context context) {
-        super(context);
-        initialize(context);
+        private const val SS_SUPER = "AttachmentView::SavedState::Super"
+        private const val SS_EXPANDED = "AttachmentView::SavedState::Expanded"
     }
 
-    public AttachmentView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context);
+    private var mContainer: LinearLayout? = null
+    private var mIndicator: ImageView? = null
+    private var mAttachments: List<Attachment>? = null
+
+    private var mController: Controller? = null
+
+    private var mAllowRemove = true
+
+    private var mExpanded = true
+
+    constructor(context: Context) : super(context) {
+        initialize(context)
     }
 
-    public AttachmentView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context)
     }
 
-    private void initialize(Context context) {
-        setOrientation(VERTICAL);
-        View view = inflate(context, R.layout.layout_attachment_view, this);
-        mContainer = view.findViewById(R.id.attachment_container);
-        mIndicator = view.findViewById(R.id.expansion_indicator_image_view);
-        applyExpanded(false);
-        view.findViewById(R.id.attachment_header).setOnClickListener(new OnClickListener() {
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context)
+    }
 
-            @Override
-            public void onClick(View v) {
-                setExpanded(mContainer.getVisibility() != VISIBLE);
+    private fun initialize(context: Context) {
+        setOrientation(VERTICAL)
+        val view = inflate(context, R.layout.layout_attachment_view, this)
+        mContainer = view.findViewById(R.id.attachment_container)
+        mIndicator = view.findViewById(R.id.expansion_indicator_image_view)
+        applyExpanded(false)
+        view.findViewById<View>(R.id.attachment_header).setOnClickListener(object : OnClickListener {
+
+            override fun onClick(v: View?) {
+                setExpanded(mContainer!!.visibility != VISIBLE)
             }
 
-        });
+        })
     }
 
-    private void setExpanded(boolean expanded) {
-        mExpanded = expanded;
-        applyExpanded(true);
+    private fun setExpanded(expanded: Boolean) {
+        mExpanded = expanded
+        applyExpanded(true)
     }
 
     /**
@@ -102,33 +98,31 @@ public class AttachmentView extends LinearLayout {
      * android:animateLayoutChanges. Only the indicator has to be turned by hand, and on a
      * restore it is set outright so a rotation does not replay as an animation.
      */
-    private void applyExpanded(boolean animate) {
-        mContainer.setVisibility(mExpanded ? VISIBLE : GONE);
-        float rotation = mExpanded ? INDICATOR_ROTATION_EXPANDED : INDICATOR_ROTATION_COLLAPSED;
+    private fun applyExpanded(animate: Boolean) {
+        mContainer!!.visibility = if (mExpanded) VISIBLE else GONE
+        val rotation = if (mExpanded) INDICATOR_ROTATION_EXPANDED else INDICATOR_ROTATION_COLLAPSED
         if (animate) {
-            mIndicator.animate().rotation(rotation);
+            mIndicator!!.animate().rotation(rotation)
         } else {
-            mIndicator.setRotation(rotation);
+            mIndicator!!.rotation = rotation
         }
     }
 
-    @Override
-    protected Parcelable onSaveInstanceState() {
-        Bundle state = new Bundle();
-        state.putParcelable(SS_SUPER, super.onSaveInstanceState());
-        state.putBoolean(SS_EXPANDED, mExpanded);
-        return state;
+    override fun onSaveInstanceState(): Parcelable? {
+        val state = Bundle()
+        state.putParcelable(SS_SUPER, super.onSaveInstanceState())
+        state.putBoolean(SS_EXPANDED, mExpanded)
+        return state
     }
 
-    @Override
-    protected void onRestoreInstanceState(Parcelable state) {
-        if (state instanceof Bundle) {
-            Bundle bundle = (Bundle) state;
-            super.onRestoreInstanceState(BundleCompat.getParcelable(bundle, SS_SUPER, Parcelable.class));
-            mExpanded = bundle.getBoolean(SS_EXPANDED, true);
-            applyExpanded(false);
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state is Bundle) {
+            val bundle: Bundle = state
+            super.onRestoreInstanceState(BundleCompat.getParcelable(bundle, SS_SUPER, Parcelable::class.java))
+            mExpanded = bundle.getBoolean(SS_EXPANDED, true)
+            applyExpanded(false)
         } else {
-            super.onRestoreInstanceState(state);
+            super.onRestoreInstanceState(state)
         }
     }
 
@@ -137,93 +131,89 @@ public class AttachmentView extends LinearLayout {
      * the first repeats the ids of the row before it. Freezing and thawing self only keeps the
      * saved state of this view to the one flag above and out of reach of those repeats.
      */
-    @Override
-    protected void dispatchSaveInstanceState(SparseArray<Parcelable> container) {
-        dispatchFreezeSelfOnly(container);
+    override fun dispatchSaveInstanceState(container: SparseArray<Parcelable>?) {
+        dispatchFreezeSelfOnly(container)
     }
 
-    @Override
-    protected void dispatchRestoreInstanceState(SparseArray<Parcelable> container) {
-        dispatchThawSelfOnly(container);
+    override fun dispatchRestoreInstanceState(container: SparseArray<Parcelable>?) {
+        dispatchThawSelfOnly(container)
     }
 
-    public void setController(Controller controller) {
-        mController = controller;
+    fun setController(controller: Controller?) {
+        mController = controller
     }
 
-    public void setAllowRemove(boolean allowRemove) {
-        mAllowRemove = allowRemove;
+    fun setAllowRemove(allowRemove: Boolean) {
+        mAllowRemove = allowRemove
     }
 
-    public void setAttachments(List<Attachment> attachments) {
-        mAttachments = attachments;
-        mContainer.removeAllViewsInLayout();
+    fun setAttachments(attachments: List<Attachment>?) {
+        mAttachments = attachments
+        mContainer!!.removeAllViewsInLayout()
         if (mAttachments != null) {
-            for (int i = 0; i < mAttachments.size(); i++) {
-                addAttachment(i, mAttachments.get(i));
+            for (i in 0 until mAttachments!!.size) {
+                addAttachment(i, mAttachments!![i])
             }
         }
     }
 
-    private void addAttachment(final int position, Attachment attachment) {
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.layout_attachment_item, mContainer, false);
-        ImageView avatarImageView = view.findViewById(R.id.avatar_image_view);
-        TextView primaryTextView = view.findViewById(R.id.primary_text_view);
-        TextView secondaryTextView = view.findViewById(R.id.secondary_text_view);
-        ImageView removeImageView = view.findViewById(R.id.remove_image_view);
+    private fun addAttachment(position: Int, attachment: Attachment) {
+        val view = LayoutInflater.from(context).inflate(R.layout.layout_attachment_item, mContainer, false)
+        val avatarImageView = view.findViewById<ImageView>(R.id.avatar_image_view)
+        val primaryTextView = view.findViewById<TextView>(R.id.primary_text_view)
+        val secondaryTextView = view.findViewById<TextView>(R.id.secondary_text_view)
+        val removeImageView = view.findViewById<ImageView>(R.id.remove_image_view)
         Glide.with(this)
                 .load(Attachment.getIconResByType(attachment.getType()))
-                .into(avatarImageView);
-        primaryTextView.setText(attachment.getName());
+                .into(avatarImageView)
+        primaryTextView.text = attachment.getName()
         if (attachment.getStatus() == Attachment.Status.READY) {
-            view.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
+            view.setOnClickListener(object : OnClickListener {
+                override fun onClick(v: View?) {
                     if (mController != null) {
-                        if (position >= 0 && position < mAttachments.size()) {
-                            Attachment attachment = mAttachments.get(position);
-                            mController.onAttachmentClick(attachment);
+                        if (position >= 0 && position < mAttachments!!.size) {
+                            val attachment = mAttachments!![position]
+                            mController!!.onAttachmentClick(attachment)
                         }
                     }
                 }
-            });
-            removeImageView.setOnClickListener(new OnClickListener() {
+            })
+            removeImageView.setOnClickListener(object : OnClickListener {
 
-                @Override
-                public void onClick(View v) {
+                override fun onClick(v: View?) {
                     if (mController != null) {
-                        if (position >= 0 && position < mAttachments.size()) {
-                            Attachment attachment = mAttachments.get(position);
-                            mController.onAttachmentDelete(attachment);
+                        if (position >= 0 && position < mAttachments!!.size) {
+                            val attachment = mAttachments!![position]
+                            mController!!.onAttachmentDelete(attachment)
                         }
                     }
                 }
 
-            });
-            secondaryTextView.setText(Utils.readableFileSize(attachment.getSize()));
+            })
+            secondaryTextView.text = Utils.readableFileSize(attachment.getSize())
         } else {
-            secondaryTextView.setText(R.string.hint_operation_in_progress);
-            removeImageView.setVisibility(INVISIBLE);
+            secondaryTextView.setText(R.string.hint_operation_in_progress)
+            removeImageView.visibility = INVISIBLE
         }
         if (!mAllowRemove) {
-            removeImageView.setVisibility(GONE);
+            removeImageView.visibility = GONE
         }
-        mContainer.addView(view);
+        mContainer!!.addView(view)
     }
 
-    private void onAttachmentDelete(View v) {
+    private fun onAttachmentDelete(v: View) {
         if (mController != null && mAllowRemove) {
-            int position = (int) v.getTag();
-            if (position >= 0 && position < mAttachments.size()) {
-                mController.onAttachmentDelete(mAttachments.get(position));
+            val position = v.tag as Int
+            if (position >= 0 && position < mAttachments!!.size) {
+                mController!!.onAttachmentDelete(mAttachments!![position])
             }
         }
     }
 
-    public interface Controller {
+    interface Controller {
 
-        void onAttachmentClick(Attachment attachment);
+        fun onAttachmentClick(attachment: Attachment?)
 
-        void onAttachmentDelete(Attachment attachment);
+        fun onAttachmentDelete(attachment: Attachment?)
     }
 }
