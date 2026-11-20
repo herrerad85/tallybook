@@ -17,64 +17,59 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view;
+package com.oriondev.moneywallet.ui.view
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.util.AttributeSet
+import android.view.View
 
 /**
  * Created by andrea on 02/03/18.
  */
-public class CategoryChildIndicator extends View {
+open class CategoryChildIndicator : View {
 
-    private Paint mPaint;
-    private boolean mIsLast;
+    private var mPaint: Paint? = null
+    private var mIsLast: Boolean = false
 
-    public CategoryChildIndicator(Context context) {
-        super(context);
-        initialize();
+    constructor(context: Context) : super(context) {
+        initialize()
     }
 
-    public CategoryChildIndicator(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize()
     }
 
-    public CategoryChildIndicator(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize()
     }
 
-    public CategoryChildIndicator(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initialize();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initialize()
     }
 
-    private void initialize() {
-        mPaint = new Paint();
-        mPaint.setAntiAlias(true);
-        mIsLast = true;
+    private fun initialize() {
+        mPaint = Paint()
+        mPaint!!.isAntiAlias = true
+        mIsLast = true
     }
 
-    public void setLast(boolean last) {
-        mIsLast = last;
+    fun setLast(last: Boolean) {
+        mIsLast = last
     }
 
-    public void setLineColor(int color) {
-        mPaint.setColor(color);
-        invalidate();
+    fun setLineColor(color: Int) {
+        mPaint!!.color = color
+        invalidate()
     }
 
-    @Override
-    public void onDraw(Canvas c) {
-        int width = getMeasuredWidth();
-        int height = getMeasuredHeight();
-        int lineSize = 8;
+    public override fun onDraw(c: Canvas) {
+        val width = measuredWidth
+        val height = measuredHeight
+        val lineSize = 8
         if (width == 0 || height == 0) {
-            return;
+            return
         }
         // The row around this view is mirrored in a right to left layout and this canvas is not,
         // so the child's icon ends up on the left while the arm below still runs to the right
@@ -86,19 +81,19 @@ public class CategoryChildIndicator extends View {
         //
         // Saved and restored because onDrawForeground runs after this on the same canvas, so a
         // foreground or a ripple added to this view later would otherwise be mirrored too.
-        int savedCanvas = c.save();
-        if (getLayoutDirection() == LAYOUT_DIRECTION_RTL) {
-            c.scale(-1f, 1f, width / 2, 0f);
+        val savedCanvas = c.save()
+        if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+            c.scale(-1f, 1f, (width / 2).toFloat(), 0f)
         }
-        int startX = (width / 2) - (lineSize / 2);
-        int endX = startX + lineSize;
-        int startY = 0;
-        int endY = mIsLast ? ((height / 2) + (lineSize / 2)) : height;
-        c.drawRect(startX, startY, endX, endY, mPaint);
-        endX = width;
-        startY = (height / 2) + (lineSize / 2);
-        endY = startY + lineSize;
-        c.drawRect(startX, startY, endX, endY, mPaint);
-        c.restoreToCount(savedCanvas);
+        val startX = (width / 2) - (lineSize / 2)
+        var endX = startX + lineSize
+        var startY = 0
+        var endY = if (mIsLast) ((height / 2) + (lineSize / 2)) else height
+        c.drawRect(startX.toFloat(), startY.toFloat(), endX.toFloat(), endY.toFloat(), mPaint!!)
+        endX = width
+        startY = (height / 2) + (lineSize / 2)
+        endY = startY + lineSize
+        c.drawRect(startX.toFloat(), startY.toFloat(), endX.toFloat(), endY.toFloat(), mPaint!!)
+        c.restoreToCount(savedCanvas)
     }
 }
