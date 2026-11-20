@@ -17315,11 +17315,11 @@
         id="SetTextI18n"
         message="String literal in `setText` can not be translated. Use Android resources instead."
         errorLine1="                &quot;From: Today&quot;"
-        errorLine2="                ~~~~~~~~~~~~~">
+        errorLine2="                 ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/oriondev/moneywallet/ui/view/RecurrenceView.java"
-            line="87"
-            column="17"/>
+            file="src/main/java/com/oriondev/moneywallet/ui/view/RecurrenceView.kt"
+            line="80"
+            column="18"/>
     </issue>
 
     <issue
