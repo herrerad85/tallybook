@@ -17,19 +17,34 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.text;
-
-import androidx.annotation.NonNull;
+package com.oriondev.moneywallet.ui.view.text
 
 /**
- * Created by andrea on 30/01/18.
+ * Created by andrea on 01/05/18.
  */
-public interface Validator {
+enum class Mode {
 
-    @NonNull
-    String getErrorMessage();
+    STANDARD(0), FLOATING_LABEL(1);
 
-    boolean isValid(@NonNull CharSequence charSequence);
+    internal val mMode: Int
 
-    boolean autoValidate();
+    constructor(mode: Int) {
+        mMode = mode
+    }
+
+    fun getMode(): Mode? {
+        return getMode(mMode)
+    }
+
+    companion object {
+
+        @JvmStatic
+        fun getMode(value: Int): Mode? {
+            when (value) {
+                0 -> return STANDARD
+                1 -> return FLOATING_LABEL
+            }
+            return null
+        }
+    }
 }

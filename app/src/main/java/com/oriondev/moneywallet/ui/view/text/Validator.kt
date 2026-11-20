@@ -17,32 +17,16 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.text;
+package com.oriondev.moneywallet.ui.view.text
 
 /**
- * Created by andrea on 01/05/18.
+ * Created by andrea on 30/01/18.
  */
-public enum Mode {
+interface Validator {
 
-    STANDARD(0), FLOATING_LABEL(1);
+    fun getErrorMessage(): String
 
-    /*package-local*/ int mMode;
+    fun isValid(charSequence: CharSequence): Boolean
 
-    Mode(int mode) {
-        mMode = mode;
-    }
-
-    public Mode getMode() {
-        return getMode(mMode);
-    }
-
-    public static Mode getMode(int value) {
-        switch (value) {
-            case 0:
-                return STANDARD;
-            case 1:
-                return FLOATING_LABEL;
-        }
-        return null;
-    }
+    fun autoValidate(): Boolean
 }
