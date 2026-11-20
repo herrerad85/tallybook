@@ -17,10 +17,10 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.calendar;
+package com.oriondev.moneywallet.ui.view.calendar
 
-import android.text.Layout;
-import android.text.TextPaint;
+import android.text.Layout
+import android.text.TextPaint
 
 /**
  * One text size for a whole strip of fixed width cells, small enough that every label in it
@@ -32,10 +32,7 @@ import android.text.TextPaint;
  * the strip rather than per cell, because a size per cell would let neighbouring labels render
  * at different sizes.
  */
-final class LabelFit {
-
-    private LabelFit() {
-    }
+internal object LabelFit {
 
     /**
      * @param paint     the label's paint, carrying the text size to start from
@@ -44,30 +41,30 @@ final class LabelFit {
      * @return the starting size unchanged when the labels already fit at it, and also when
      *         {@code available} is not positive, which is the case before the cell has a width
      */
-    static float sizeToFit(TextPaint paint, String[] labels, int available) {
-        float size = paint.getTextSize();
+    fun sizeToFit(paint: TextPaint, labels: Array<String?>, available: Int): Float {
+        var size = paint.textSize
         if (available <= 0) {
-            return size;
+            return size
         }
         // Step down and measure again rather than deriving a ratio from the overflow and trusting
         // it. Every label is measured rather than only the one that came out widest at the
         // starting size, which costs nothing at these counts and removes the question of whether
         // that ranking holds at every size.
-        TextPaint measured = new TextPaint(paint);
+        val measured = TextPaint(paint)
         while (size > 1f && !fits(measured, labels, available)) {
-            size -= 0.5f;
-            measured.setTextSize(size);
+            size -= 0.5f
+            measured.textSize = size
         }
-        return size;
+        return size
     }
 
-    private static boolean fits(TextPaint paint, String[] labels, int available) {
-        for (String label : labels) {
+    private fun fits(paint: TextPaint, labels: Array<String?>, available: Int): Boolean {
+        for (label in labels) {
             // Rounded up, which is what a TextView does with the width it asks for.
-            if (Math.ceil(Layout.getDesiredWidth(label, paint)) > available) {
-                return false;
+            if (Math.ceil(Layout.getDesiredWidth(label, paint).toDouble()) > available) {
+                return false
             }
         }
-        return true;
+        return true
     }
 }
