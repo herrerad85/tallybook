@@ -17,70 +17,70 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
 /**
  * This interface implements all the colors of a theme.
  */
-public interface ITheme {
+interface ITheme {
 
-    int getColorPrimary();
+    val colorPrimary: Int
 
-    int getColorPrimaryDark();
+    val colorPrimaryDark: Int
 
     /**
      * What an area with the primary color as its background is painted, black in deep dark.
      * Text, icons and accents drawn in the primary color keep getColorPrimary.
      */
-    int getColorPrimaryBackground();
+    val colorPrimaryBackground: Int
 
-    int getColorAccent();
+    val colorAccent: Int
 
-    ThemeEngine.Mode getMode();
+    val mode: ThemeEngine.Mode
 
-    boolean isDark();
+    val isDark: Boolean
 
-    int getTextColorPrimary();
+    val textColorPrimary: Int
 
-    int getTextColorSecondary();
+    val textColorSecondary: Int
 
-    int getTextColorPrimaryInverse();
+    val textColorPrimaryInverse: Int
 
-    int getTextColorSecondaryInverse();
+    val textColorSecondaryInverse: Int
 
-    int getColorCardBackground();
+    val colorCardBackground: Int
 
-    int getColorWindowForeground();
+    val colorWindowForeground: Int
 
-    int getColorWindowBackground();
+    val colorWindowBackground: Int
 
-    int getColorRipple();
+    val colorRipple: Int
 
-    int getIconColor();
+    val iconColor: Int
 
-    int getHintTextColor();
+    val hintTextColor: Int
 
-    int getErrorColor();
+    val errorColor: Int
 
-    int getDrawerBackgroundColor();
+    val drawerBackgroundColor: Int
 
-    int getDrawerIconColor();
+    val drawerIconColor: Int
 
-    int getDrawerSelectedIconColor();
+    val drawerSelectedIconColor: Int
 
-    int getDrawerTextColor();
+    val drawerTextColor: Int
 
-    int getDrawerSelectedTextColor();
+    val drawerSelectedTextColor: Int
 
-    int getDrawerSelectedItemColor();
+    val drawerSelectedItemColor: Int
 
-    int getBestColor(int background);
+    fun getBestColor(background: Int): Int
 
-    int getBestTextColor(int background);
+    fun getBestTextColor(background: Int): Int
 
-    int getBestHintColor(int background);
+    fun getBestHintColor(background: Int): Int
 
-    int getBestIconColor(int background);
+    fun getBestIconColor(background: Int): Int
 
-    int getVisibleColor(int color, int fallback);
+    fun getVisibleColor(color: Int, fallback: Int): Int
 }
