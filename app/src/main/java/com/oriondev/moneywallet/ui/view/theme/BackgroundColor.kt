@@ -17,12 +17,12 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
 /**
  * Created by andrea on 13/04/18.
  */
-/*package-local*/ enum BackgroundColor {
+internal enum class BackgroundColor {
 
     COLOR_PRIMARY(0),
     COLOR_PRIMARY_DARK(1),
@@ -30,45 +30,50 @@ package com.oriondev.moneywallet.ui.view.theme;
     COLOR_WINDOW_BACKGROUND(3),
     COLOR_WINDOW_FOREGROUND(4);
 
-    private int mValue;
+    private var mValue: Int
 
-    /*package-local*/ BackgroundColor(int value) {
-        mValue = value;
+    constructor(value: Int) {
+        mValue = value
     }
 
-    /*package-local*/ static int getValue(BackgroundColor backgroundColor) {
-        return backgroundColor.mValue;
-    }
-
-    /*package-local*/ int getColor(ITheme theme) {
-        switch (mValue) {
-            case 0:
-                return theme.getColorPrimaryBackground();
-            case 1:
-                return theme.getColorPrimaryDark();
-            case 2:
-                return theme.getColorAccent();
-            case 4:
-                return theme.getColorWindowForeground();
-            default:
-                return theme.getColorWindowBackground();
+    fun getColor(theme: ITheme): Int {
+        when (mValue) {
+            0 ->
+                return theme.colorPrimaryBackground
+            1 ->
+                return theme.colorPrimaryDark
+            2 ->
+                return theme.colorAccent
+            4 ->
+                return theme.colorWindowForeground
+            else ->
+                return theme.colorWindowBackground
         }
     }
 
-    /*package-local*/ static BackgroundColor fromValue(int value) {
-        switch (value) {
-            case 0:
-                return COLOR_PRIMARY;
-            case 1:
-                return COLOR_PRIMARY_DARK;
-            case 2:
-                return COLOR_ACCENT;
-            case 3:
-                return COLOR_WINDOW_BACKGROUND;
-            case 4:
-                return COLOR_WINDOW_FOREGROUND;
-            default:
-                return null;
+    companion object {
+
+        @JvmStatic
+        fun getValue(backgroundColor: BackgroundColor): Int {
+            return backgroundColor.mValue
+        }
+
+        @JvmStatic
+        fun fromValue(value: Int): BackgroundColor? {
+            when (value) {
+                0 ->
+                    return COLOR_PRIMARY
+                1 ->
+                    return COLOR_PRIMARY_DARK
+                2 ->
+                    return COLOR_ACCENT
+                3 ->
+                    return COLOR_WINDOW_BACKGROUND
+                4 ->
+                    return COLOR_WINDOW_FOREGROUND
+                else ->
+                    return null
+            }
         }
     }
 }
