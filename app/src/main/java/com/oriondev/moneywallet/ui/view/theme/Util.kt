@@ -17,88 +17,98 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.graphics.Color;
-import androidx.annotation.ColorInt;
-import androidx.annotation.FloatRange;
-import androidx.core.graphics.ColorUtils;
+import android.graphics.Color
+import androidx.annotation.ColorInt
+import androidx.annotation.FloatRange
+import androidx.core.graphics.ColorUtils
 
 /**
  * Created by andrea on 10/04/18.
  */
-/*package-local*/ class Util {
+internal object Util {
 
+    @JvmStatic
     @ColorInt
-    /*package-local*/ static int adjustAlpha(@ColorInt int color, @SuppressWarnings("SameParameterValue") float factor) {
-        int alpha = Math.round(Color.alpha(color) * factor);
-        int red = Color.red(color);
-        int green = Color.green(color);
-        int blue = Color.blue(color);
-        return Color.argb(alpha, red, green, blue);
+    fun adjustAlpha(@ColorInt color: Int, @Suppress("SameParameterValue") factor: Float): Int {
+        val alpha = Math.round(Color.alpha(color) * factor)
+        val red = Color.red(color)
+        val green = Color.green(color)
+        val blue = Color.blue(color)
+        return Color.argb(alpha, red, green, blue)
     }
 
+    @JvmStatic
     @ColorInt
-    /*package-local*/ static int shiftColor(@ColorInt int color, @FloatRange(from = 0.0f, to = 2.0f) float by) {
-        if (by == 1f) return color;
-        float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
-        hsv[2] *= by; // value component
-        return Color.HSVToColor(hsv);
+    fun shiftColor(@ColorInt color: Int, @FloatRange(from = 0.0, to = 2.0) by: Float): Int {
+        if (by == 1f) return color
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        hsv[2] *= by // value component
+        return Color.HSVToColor(hsv)
     }
 
+    @JvmStatic
     @ColorInt
-    /*package-local*/ static int darkenColor(@ColorInt int color) {
-        return shiftColor(color, 0.9f);
+    fun darkenColor(@ColorInt color: Int): Int {
+        return shiftColor(color, 0.9f)
     }
 
-    /*package-local*/ static boolean isColorLight(@ColorInt int color) {
+    @JvmStatic
+    fun isColorLight(@ColorInt color: Int): Boolean {
         if (color == Color.BLACK) {
-            return false;
+            return false
         } else if (color == Color.WHITE || color == Color.TRANSPARENT) {
-            return true;
+            return true
         }
-        return (1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255) < 0.4;
+        return (1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255) < 0.4
     }
 
-    /*package-local*/ static boolean isColorLight(@ColorInt int color, @ColorInt int bgColor) {
+    @JvmStatic
+    fun isColorLight(@ColorInt color: Int, @ColorInt bgColor: Int): Boolean {
         if (Color.alpha(color) < 128) {
-            return isColorLight(bgColor);
+            return isColorLight(bgColor)
         }
-        return isColorLight(color);
+        return isColorLight(color)
     }
 
     // A floor for seeing anything at all, under both numbers the accessibility guidelines give,
     // 3:1 for a control and 4.5:1 for text. It has to be: several pairs the default theme itself
     // draws sit between 2 and 3, so a higher floor would repaint the stock app.
-    private static final double MIN_CONTRAST = 2d;
+    private const val MIN_CONTRAST = 2.0
 
-    private static boolean isColorVisible(@ColorInt int color, @ColorInt int bgColor) {
-        return ColorUtils.calculateContrast(color, bgColor) >= MIN_CONTRAST;
+    private fun isColorVisible(@ColorInt color: Int, @ColorInt bgColor: Int): Boolean {
+        return ColorUtils.calculateContrast(color, bgColor) >= MIN_CONTRAST
     }
 
-    /*package-local*/ static int visibleOr(@ColorInt int color, @ColorInt int background, @ColorInt int fallback) {
-        return isColorVisible(color, background) ? color : fallback;
+    @JvmStatic
+    fun visibleOr(@ColorInt color: Int, @ColorInt background: Int, @ColorInt fallback: Int): Int {
+        return if (isColorVisible(color, background)) color else fallback
     }
 
-    /*package-local*/ static int accentAsIcon(ITheme theme) {
-        return holdsUpAnywhere(theme, theme.getColorAccent()) ? theme.getColorAccent()
-                : theme.getBestColor(theme.getColorWindowForeground());
+    @JvmStatic
+    fun accentAsIcon(theme: ITheme): Int {
+        return if (holdsUpAnywhere(theme, theme.colorAccent)) theme.colorAccent
+                else theme.getBestColor(theme.colorWindowForeground)
     }
 
-    /*package-local*/ static int accentAsText(ITheme theme) {
-        return holdsUpAnywhere(theme, theme.getColorAccent()) ? theme.getColorAccent()
-                : theme.getBestTextColor(theme.getColorWindowForeground());
+    @JvmStatic
+    fun accentAsText(theme: ITheme): Int {
+        return if (holdsUpAnywhere(theme, theme.colorAccent)) theme.colorAccent
+                else theme.getBestTextColor(theme.colorWindowForeground)
     }
 
     // The surfaces a chosen color has to survive when nothing says which one it lands on. A
     // dialog is a card, so this covers a tinted control in a dialog as well as an amount on a row.
-    /*package-local*/ static boolean holdsUpAnywhere(ITheme theme, @ColorInt int color) {
-        return isColorVisible(color, theme.getColorWindowForeground())
-                && isColorVisible(color, theme.getColorCardBackground());
+    @JvmStatic
+    fun holdsUpAnywhere(theme: ITheme, @ColorInt color: Int): Boolean {
+        return isColorVisible(color, theme.colorWindowForeground)
+                && isColorVisible(color, theme.colorCardBackground)
     }
 
-    /*package-local*/ static int stripAlpha(@ColorInt int color) {
-        return Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+    @JvmStatic
+    fun stripAlpha(@ColorInt color: Int): Int {
+        return Color.rgb(Color.red(color), Color.green(color), Color.blue(color))
     }
 }
