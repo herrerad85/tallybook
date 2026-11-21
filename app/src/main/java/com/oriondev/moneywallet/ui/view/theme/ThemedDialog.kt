@@ -17,59 +17,57 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.res.ColorStateList;
-import android.content.res.Resources;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.InsetDrawable;
-import android.os.Build;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.ContextThemeWrapper;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
+import android.app.Dialog
+import android.content.Context
+import android.content.DialogInterface
+import android.content.res.ColorStateList
+import android.content.res.Resources
+import android.graphics.Color
+import android.graphics.drawable.InsetDrawable
+import android.os.Build
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.ContextThemeWrapper
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.WindowManager
+import android.widget.EditText
 
-import androidx.annotation.DrawableRes;
-import androidx.annotation.LayoutRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.StringRes;
-import androidx.annotation.StyleRes;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.widget.NestedScrollView;
+import androidx.annotation.DrawableRes
+import androidx.annotation.LayoutRes
+import androidx.annotation.StringRes
+import androidx.annotation.StyleRes
+import androidx.appcompat.app.AlertDialog
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.color.MaterialColors;
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.shape.MaterialShapeDrawable;
-import com.google.android.material.timepicker.MaterialTimePicker;
-import com.google.android.material.timepicker.TimeFormat;
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.utils.SecureWindow;
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.shape.MaterialShapeDrawable
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.utils.SecureWindow
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedDialog {
+object ThemedDialog {
 
     // What material-dialogs faded a disabled action to.
-    private static final float DISABLED_BUTTON_ALPHA = 0.4f;
+    private const val DISABLED_BUTTON_ALPHA = 0.4f
 
-    public static MaterialAlertDialogBuilder buildMaterialDialog(Context context) {
-        return new ThemedAlertDialogBuilder(context);
+    @JvmStatic
+    fun buildMaterialDialog(context: Context?): MaterialAlertDialogBuilder {
+        return ThemedAlertDialogBuilder(context)
     }
 
     /**
@@ -77,10 +75,11 @@ public class ThemedDialog {
      * back to readable text when the user picks an accent that disappears there. Public because a
      * dialog outside this package tints a widget of its own with it.
      */
-    public static int getAccentColor() {
-        ITheme theme = ThemeEngine.getTheme();
-        int background = theme.getColorCardBackground();
-        return Util.visibleOr(theme.getColorAccent(), background, theme.getBestTextColor(background));
+    @JvmStatic
+    fun getAccentColor(): Int {
+        val theme = ThemeEngine.getTheme()
+        val background = theme.colorCardBackground
+        return Util.visibleOr(theme.colorAccent, background, theme.getBestTextColor(background))
     }
 
     /**
@@ -88,9 +87,10 @@ public class ThemedDialog {
      * the theme engine hands a hint on that surface. It is read off the dialog surface and not off
      * the accent, so it stays visible whatever accent the user picks.
      */
-    public static int getIdleColor() {
-        ITheme theme = ThemeEngine.getTheme();
-        return theme.getBestHintColor(theme.getColorCardBackground());
+    @JvmStatic
+    fun getIdleColor(): Int {
+        val theme = ThemeEngine.getTheme()
+        return theme.getBestHintColor(theme.colorCardBackground)
     }
 
     /**
@@ -98,9 +98,9 @@ public class ThemedDialog {
      * scrollable custom view both read it here so the two cannot drift apart.
      */
     @StyleRes
-    private static int getDialogTheme() {
-        return ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletAlertDialogDeepDark
-                : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletAlertDialogDark : R.style.MoneyWalletAlertDialogLight;
+    private fun getDialogTheme(): Int {
+        return if (ThemeEngine.getTheme().mode == ThemeEngine.Mode.DEEP_DARK) R.style.MoneyWalletAlertDialogDeepDark
+                else if (ThemeEngine.getTheme().isDark) R.style.MoneyWalletAlertDialogDark else R.style.MoneyWalletAlertDialogLight
     }
 
     /**
@@ -109,18 +109,19 @@ public class ThemedDialog {
      * window with a MaterialShapeDrawable, which the alert dialog and the date picker wrap in an
      * InsetDrawable, and none of them reads a stroke from a style. Call it once the window background is set.
      */
-    public static void outlineDeepDark(Dialog dialog) {
-        if (ThemeEngine.getTheme().getMode() != ThemeEngine.Mode.DEEP_DARK || dialog.getWindow() == null) {
-            return;
+    @JvmStatic
+    fun outlineDeepDark(dialog: Dialog?) {
+        if (ThemeEngine.getTheme().mode != ThemeEngine.Mode.DEEP_DARK || dialog!!.window == null) {
+            return
         }
-        Drawable background = dialog.getWindow().getDecorView().getBackground();
-        if (background instanceof InsetDrawable) {
-            background = ((InsetDrawable) background).getDrawable();
+        var background = dialog.window!!.decorView.background
+        if (background is InsetDrawable) {
+            background = background.drawable
         }
-        if (background instanceof MaterialShapeDrawable) {
-            Context context = dialog.getContext();
-            ((MaterialShapeDrawable) background).setStroke(context.getResources().getDisplayMetrics().density,
-                    MaterialColors.getColor(context, com.google.android.material.R.attr.colorOutline, Color.GRAY));
+        if (background is MaterialShapeDrawable) {
+            val context = dialog.context
+            background.setStroke(context.resources.displayMetrics.density,
+                    MaterialColors.getColor(context, com.google.android.material.R.attr.colorOutline, Color.GRAY))
         }
     }
 
@@ -128,28 +129,29 @@ public class ThemedDialog {
      * AlertDialog.setView does not scroll what it is given, so the layouts that used to ask
      * material-dialogs to wrap them in a scroller carry their own.
      */
-    public static View inflateScrollableView(Context context, @LayoutRes int layoutRes) {
-        Context themedContext = new ContextThemeWrapper(context, getDialogTheme());
-        NestedScrollView scrollView = new NestedScrollView(themedContext);
+    @JvmStatic
+    fun inflateScrollableView(context: Context, @LayoutRes layoutRes: Int): View {
+        val themedContext: Context = ContextThemeWrapper(context, getDialogTheme())
+        val scrollView = NestedScrollView(themedContext)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // The framework paints selectableItemBackground over the scroller's whole bounds while
             // the scroller holds focus itself, which it takes outside touch mode once an arrow key
             // scrolls the focused child off screen.
-            scrollView.setDefaultFocusHighlightEnabled(false);
+            scrollView.defaultFocusHighlightEnabled = false
         }
-        View content = LayoutInflater.from(themedContext).inflate(layoutRes, scrollView, false);
-        Resources resources = context.getResources();
-        int sidePadding = resources.getDimensionPixelSize(R.dimen.material_dialog_custom_view_start_end_padding);
-        int verticalPadding = resources.getDimensionPixelSize(R.dimen.material_dialog_custom_view_top_bottom_padding);
+        val content = LayoutInflater.from(themedContext).inflate(layoutRes, scrollView, false)
+        val resources: Resources = context.resources
+        val sidePadding = resources.getDimensionPixelSize(R.dimen.material_dialog_custom_view_start_end_padding)
+        val verticalPadding = resources.getDimensionPixelSize(R.dimen.material_dialog_custom_view_top_bottom_padding)
         // The side padding replaces what the layout declared instead of adding to it, which is
         // what material-dialogs did with a wrapped custom view, so a layout that already carries
         // its own 24dp keeps 24dp. The scroller does not clip it so the content can scroll
         // through the vertical padding.
-        content.setPaddingRelative(sidePadding, 0, sidePadding, 0);
-        scrollView.setPadding(0, verticalPadding, 0, verticalPadding);
-        scrollView.setClipToPadding(false);
-        scrollView.addView(content);
-        return scrollView;
+        content.setPaddingRelative(sidePadding, 0, sidePadding, 0)
+        scrollView.setPadding(0, verticalPadding, 0, verticalPadding)
+        scrollView.clipToPadding = false
+        scrollView.addView(content)
+        return scrollView
     }
 
     /**
@@ -157,32 +159,30 @@ public class ThemedDialog {
      * field is empty, which is what material-dialogs did for an input declared without allowing an
      * empty value. The button only exists once the dialog has been shown, so this runs after show.
      */
-    public static void showWithInput(AlertDialog dialog, final EditText editText, final boolean allowEmpty) {
-        tintInput(editText);
+    @JvmStatic
+    fun showWithInput(dialog: AlertDialog, editText: EditText, allowEmpty: Boolean) {
+        tintInput(editText)
         // A caller that prefills the field would otherwise leave the caret in front of that text
         // and have the first keystroke land at the front of the stored value.
-        editText.setSelection(editText.length());
-        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE
-                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-        dialog.show();
+        editText.setSelection(editText.length())
+        dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE or
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+        dialog.show()
         if (allowEmpty) {
-            return;
+            return
         }
-        final Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        positiveButton.setEnabled(editText.length() > 0);
-        editText.addTextChangedListener(new TextWatcher() {
+        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveButton.isEnabled = editText.length() > 0
+        editText.addTextChangedListener(object : TextWatcher {
 
-            @Override
-            public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+            override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) {}
 
-            @Override
-            public void onTextChanged(CharSequence text, int start, int before, int count) {
-                positiveButton.setEnabled(text.length() > 0);
+            override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
+                positiveButton.isEnabled = text!!.length > 0
             }
 
-            @Override
-            public void afterTextChanged(Editable text) {}
-        });
+            override fun afterTextChanged(text: Editable?) {}
+        })
     }
 
     /**
@@ -190,63 +190,61 @@ public class ThemedDialog {
      * field is disabled or idle, and paints the typed text and the hint. All of it comes from the
      * theme engine, not from colorControlNormal or textColorPrimary on the inflating context.
      */
-    public static void tintInput(EditText editText) {
-        int accent = getAccentColor();
-        int idle = getIdleColor();
-        ColorStateList colors = new ColorStateList(
-                new int[][] {
-                        new int[] {-android.R.attr.state_enabled},
-                        new int[] {-android.R.attr.state_pressed, -android.R.attr.state_focused},
-                        new int[] {}
-                },
-                new int[] {idle, idle, accent}
-        );
-        ViewCompat.setBackgroundTintList(editText, colors);
-        TintHelper.setCursorTint(editText, accent);
-        ITheme theme = ThemeEngine.getTheme();
-        editText.setTextColor(theme.getBestTextColor(theme.getColorCardBackground()));
-        editText.setHintTextColor(idle);
+    @JvmStatic
+    fun tintInput(editText: EditText) {
+        val accent = getAccentColor()
+        val idle = getIdleColor()
+        val colors = ColorStateList(
+                arrayOf(
+                        intArrayOf(-android.R.attr.state_enabled),
+                        intArrayOf(-android.R.attr.state_pressed, -android.R.attr.state_focused),
+                        intArrayOf()
+                ),
+                intArrayOf(idle, idle, accent)
+        )
+        ViewCompat.setBackgroundTintList(editText, colors)
+        TintHelper.setCursorTint(editText, accent)
+        val theme = ThemeEngine.getTheme()
+        editText.setTextColor(theme.getBestTextColor(theme.colorCardBackground))
+        editText.setHintTextColor(idle)
     }
 
     /**
      * The single alert dialog factory for the app. It picks the light or dark dialog theme and
      * puts the accent on the buttons, which only exist once the dialog is shown.
      */
-    private static class ThemedAlertDialogBuilder extends MaterialAlertDialogBuilder {
+    private class ThemedAlertDialogBuilder : MaterialAlertDialogBuilder {
 
-        private final ColorStateList mButtonColors;
+        private val mButtonColors: ColorStateList
 
-        private ThemedAlertDialogBuilder(Context context) {
-            super(context, getDialogTheme());
-            int accent = getAccentColor();
-            mButtonColors = new ColorStateList(
-                    new int[][] {new int[] {-android.R.attr.state_enabled}, new int[] {}},
-                    new int[] {Util.adjustAlpha(accent, DISABLED_BUTTON_ALPHA), accent}
-            );
+        constructor(context: Context?) : super(context!!, getDialogTheme()) {
+            val accent = getAccentColor()
+            mButtonColors = ColorStateList(
+                    arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
+                    intArrayOf(Util.adjustAlpha(accent, DISABLED_BUTTON_ALPHA), accent)
+            )
         }
 
-        @Override
-        public AlertDialog create() {
-            final AlertDialog dialog = super.create();
-            SecureWindow.update(dialog.getWindow());
-            outlineDeepDark(dialog);
-            dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+        override fun create(): AlertDialog {
+            val dialog = super.create()
+            SecureWindow.update(dialog.window!!)
+            outlineDeepDark(dialog)
+            dialog.setOnShowListener(object : DialogInterface.OnShowListener {
 
-                @Override
-                public void onShow(DialogInterface unused) {
-                    tintButton(dialog, AlertDialog.BUTTON_POSITIVE);
-                    tintButton(dialog, AlertDialog.BUTTON_NEGATIVE);
-                    tintButton(dialog, AlertDialog.BUTTON_NEUTRAL);
+                override fun onShow(unused: DialogInterface?) {
+                    tintButton(dialog, AlertDialog.BUTTON_POSITIVE)
+                    tintButton(dialog, AlertDialog.BUTTON_NEGATIVE)
+                    tintButton(dialog, AlertDialog.BUTTON_NEUTRAL)
                 }
-            });
-            return dialog;
+            })
+            return dialog
         }
 
-        private void tintButton(AlertDialog dialog, int which) {
-            Button button = dialog.getButton(which);
+        private fun tintButton(dialog: AlertDialog, which: Int) {
+            val button = dialog.getButton(which)
             if (button != null) {
                 // A state list, not a single color, so a disabled button still reads as disabled.
-                button.setTextColor(mButtonColors);
+                button.setTextColor(mButtonColors)
             }
         }
     }
@@ -259,31 +257,34 @@ public class ThemedDialog {
      * ThemeOverlay.Material3.MaterialCalendar sets. So the app theme needs no calendar
      * attribute of its own.
      */
-    public static MaterialDatePicker<Long> buildDatePickerDialog(long selectionUtcMillis) {
+    @JvmStatic
+    fun buildDatePickerDialog(selectionUtcMillis: Long): MaterialDatePicker<Long> {
         return MaterialDatePicker.Builder.datePicker()
-                .setTheme(ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletDatePickerDeepDark
-                        : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletDatePickerDark : R.style.MoneyWalletDatePickerLight)
+                .setTheme(if (ThemeEngine.getTheme().mode == ThemeEngine.Mode.DEEP_DARK) R.style.MoneyWalletDatePickerDeepDark
+                        else if (ThemeEngine.getTheme().isDark) R.style.MoneyWalletDatePickerDark else R.style.MoneyWalletDatePickerLight)
                 .setSelection(selectionUtcMillis)
-                .build();
+                .build()
     }
 
     /**
      * The time picker, opened on its keyboard input mode, which is the closest thing the library
      * this replaces had to a number pad.
      */
-    public static MaterialTimePicker buildTimePickerDialog(boolean is24HourMode, int hourOfDay, int minute) {
-        return new MaterialTimePicker.Builder()
-                .setTheme(ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletTimePickerDeepDark
-                        : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletTimePickerDark : R.style.MoneyWalletTimePickerLight)
+    @JvmStatic
+    fun buildTimePickerDialog(is24HourMode: Boolean, hourOfDay: Int, minute: Int): MaterialTimePicker {
+        return MaterialTimePicker.Builder()
+                .setTheme(if (ThemeEngine.getTheme().mode == ThemeEngine.Mode.DEEP_DARK) R.style.MoneyWalletTimePickerDeepDark
+                        else if (ThemeEngine.getTheme().isDark) R.style.MoneyWalletTimePickerDark else R.style.MoneyWalletTimePickerLight)
                 .setInputMode(MaterialTimePicker.INPUT_MODE_KEYBOARD)
-                .setTimeFormat(is24HourMode ? TimeFormat.CLOCK_24H : TimeFormat.CLOCK_12H)
+                .setTimeFormat(if (is24HourMode) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
                 .setHour(hourOfDay)
                 .setMinute(minute)
-                .build();
+                .build()
     }
 
-    public static BottomSheetMenuBuilder buildBottomSheet(Context context) {
-        return new BottomSheetMenuBuilder(context);
+    @JvmStatic
+    fun buildBottomSheet(context: Context): BottomSheetMenuBuilder {
+        return BottomSheetMenuBuilder(context)
     }
 
     /**
@@ -291,9 +292,9 @@ public class ThemedDialog {
      * getDialogTheme picks the alert dialog style.
      */
     @StyleRes
-    private static int getBottomSheetTheme() {
-        return ThemeEngine.getTheme().getMode() == ThemeEngine.Mode.DEEP_DARK ? R.style.MoneyWalletBottomSheetDeepDark
-                : ThemeEngine.getTheme().isDark() ? R.style.MoneyWalletBottomSheetDark : R.style.MoneyWalletBottomSheetLight;
+    private fun getBottomSheetTheme(): Int {
+        return if (ThemeEngine.getTheme().mode == ThemeEngine.Mode.DEEP_DARK) R.style.MoneyWalletBottomSheetDeepDark
+                else if (ThemeEngine.getTheme().isDark) R.style.MoneyWalletBottomSheetDark else R.style.MoneyWalletBottomSheetLight
     }
 
     /**
@@ -301,19 +302,19 @@ public class ThemedDialog {
      * the navigation drawer uses. It keeps the call shape of the builder it replaces: a title,
      * then items, then a click listener, then createDialog.
      */
-    public static class BottomSheetMenuBuilder {
+    class BottomSheetMenuBuilder {
 
-        private final BottomSheetDialog mDialog;
-        private final NavigationView mNavigationView;
+        private val mDialog: BottomSheetDialog
+        private val mNavigationView: NavigationView
 
-        private Menu mMenu;
+        private var mMenu: Menu
 
-        private BottomSheetMenuBuilder(Context context) {
-            mDialog = new BottomSheetDialog(context, getBottomSheetTheme());
-            mNavigationView = new NavigationView(mDialog.getContext());
+        internal constructor(context: Context) {
+            mDialog = BottomSheetDialog(context, getBottomSheetTheme())
+            mNavigationView = NavigationView(mDialog.context)
             // The sheet behind the menu already carries the surface color, from the style above,
             // and rounds its own top corners, which an opaque menu background would square off.
-            mNavigationView.setBackgroundColor(Color.TRANSPARENT);
+            mNavigationView.setBackgroundColor(Color.TRANSPARENT)
             // NavigationView extends ScrimInsetsFrameLayout, whose constructor installs an inset
             // listener that hands the bottom system window inset to NavigationMenuPresenter, and
             // that pads the menu list by it. BottomSheetBehavior has already padded the sheet
@@ -321,45 +322,44 @@ public class ThemedDialog {
             // unconsumed, so the menu list would carry a second copy and the last row would sit a
             // navigation bar height above the sheet floor. Replacing the listener leaves the list
             // on its own design_navigation_padding_bottom.
-            ViewCompat.setOnApplyWindowInsetsListener(mNavigationView, (v, insets) -> WindowInsetsCompat.CONSUMED);
-            ITheme theme = ThemeEngine.getTheme();
-            mNavigationView.setItemTextColor(ColorStateList.valueOf(theme.getTextColorPrimary()));
-            mNavigationView.setItemIconTintList(ColorStateList.valueOf(theme.getIconColor()));
-            mMenu = mNavigationView.getMenu();
+            ViewCompat.setOnApplyWindowInsetsListener(mNavigationView) { v, insets -> WindowInsetsCompat.CONSUMED }
+            val theme = ThemeEngine.getTheme()
+            mNavigationView.itemTextColor = ColorStateList.valueOf(theme.textColorPrimary)
+            mNavigationView.itemIconTintList = ColorStateList.valueOf(theme.iconColor)
+            mMenu = mNavigationView.menu
         }
 
         /**
          * The header above the rows. NavigationView draws the title of a submenu as a group
          * header, so every item added after this call goes into that submenu.
          */
-        public BottomSheetMenuBuilder addTitleItem(@StringRes int titleRes) {
-            mMenu = mMenu.addSubMenu(titleRes);
-            return this;
+        fun addTitleItem(@StringRes titleRes: Int): BottomSheetMenuBuilder {
+            mMenu = mMenu.addSubMenu(titleRes)
+            return this
         }
 
-        public BottomSheetMenuBuilder addItem(int id, @StringRes int titleRes, @DrawableRes int iconRes) {
-            mMenu.add(Menu.NONE, id, Menu.NONE, titleRes).setIcon(iconRes);
-            return this;
+        fun addItem(id: Int, @StringRes titleRes: Int, @DrawableRes iconRes: Int): BottomSheetMenuBuilder {
+            mMenu.add(Menu.NONE, id, Menu.NONE, titleRes).setIcon(iconRes)
+            return this
         }
 
-        public BottomSheetMenuBuilder setItemClickListener(final NavigationView.OnNavigationItemSelectedListener listener) {
-            mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+        fun setItemClickListener(listener: NavigationView.OnNavigationItemSelectedListener?): BottomSheetMenuBuilder {
+            mNavigationView.setNavigationItemSelectedListener(object : NavigationView.OnNavigationItemSelectedListener {
 
-                @Override
-                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                override fun onNavigationItemSelected(item: MenuItem): Boolean {
                     // The builder this replaces dismissed the sheet on a tap, and every caller
                     // opens something else from here.
-                    mDialog.dismiss();
-                    return listener.onNavigationItemSelected(item);
+                    mDialog.dismiss()
+                    return listener!!.onNavigationItemSelected(item)
                 }
 
-            });
-            return this;
+            })
+            return this
         }
 
-        public BottomSheetDialog createDialog() {
-            mDialog.setContentView(mNavigationView);
-            return mDialog;
+        fun createDialog(): BottomSheetDialog {
+            mDialog.setContentView(mNavigationView)
+            return mDialog
         }
     }
 }
