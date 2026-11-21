@@ -479,6 +479,16 @@
     <string name="message_backup_restore_standard">"Are you sure you want to restore this backup? All current data will be lost and the operation cannot be stopped. Proceed?"</string>
     <string name="message_backup_restore_protected">"Are you sure you want to restore this backup? All current data will be lost and the operation cannot be stopped. The backup is protected by a password, please enter it and proceed."</string>
     <string name="message_backup_restore_legacy">"Are you sure you want to restore this backup? All current data will be lost and the operation cannot be stopped. WARNING!: this is a legacy backup and the application may fail to import it. Proceed?"</string>
+    <string name="message_backup_restore_counts">"This file has %1$s and %2$s. Tallybook has %3$s and %4$s now."</string>
+    <string name="message_backup_restore_no_transactions">"This file has no transactions, so restoring it removes all of yours."</string>
+    <plurals name="message_backup_restore_transactions">
+        <item quantity="one">"%d transaction"</item>
+        <item quantity="other">"%d transactions"</item>
+    </plurals>
+    <plurals name="message_backup_restore_wallets">
+        <item quantity="one">"%d wallet"</item>
+        <item quantity="other">"%d wallets"</item>
+    </plurals>
     <string name="message_backup_status_creation">"Creation of backup file in progress…"</string>
     <string name="message_backup_status_uploading">"Uploading of backup file in progress…"</string>
     <string name="message_backup_status_downloading">"Downloading of backup file in progress…"</string>

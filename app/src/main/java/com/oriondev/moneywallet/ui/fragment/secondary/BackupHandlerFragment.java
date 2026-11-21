@@ -96,6 +96,8 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
 
     private LocalBroadcastManager mLocalBroadcastManager;
 
+    private boolean mCountPending;
+
     public static BackupHandlerFragment newInstance(String backendId, boolean allowBackup, boolean allowRestore) {
         BackupHandlerFragment fragment = new BackupHandlerFragment();
         Bundle arguments = new Bundle();
@@ -384,26 +386,9 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
             loadFolder(file);
         } else {
             Activity activity = getActivity();
-            if (mAllowRestore && activity != null) {
+            if (mAllowRestore && activity != null && !mCountPending) {
                 if (file.getName().endsWith(BackupManager.BACKUP_EXTENSION_STANDARD)) {
-                    ThemedDialog.buildMaterialDialog(activity)
-                            .setTitle(R.string.title_backup_restore)
-                            .setMessage(R.string.message_backup_restore_standard)
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Intent intent = new Intent(getActivity(), BackupHandlerIntentService.class);
-                                    intent.putExtra(BackupHandlerIntentService.BACKEND_ID, mBackendService.getId());
-                                    intent.putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE);
-                                    intent.putExtra(BackupHandlerIntentService.BACKUP_FILE, file);
-                                    intent.putExtra(BackupHandlerIntentService.CALLER_ID, BACKUP_SERVICE_CALLER_ID);
-                                    getActivity().startService(intent);
-                                }
-
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .show();
+                    startCount(activity, file, null);
                 } else if (file.getName().endsWith(BackupManager.BACKUP_EXTENSION_PROTECTED)) {
                     View inputView = LayoutInflater.from(activity).inflate(R.layout.dialog_input, null);
                     final EditText inputEditText = inputView.findViewById(R.id.dialog_input_edit_text);
@@ -417,13 +402,9 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Intent intent = new Intent(getActivity(), BackupHandlerIntentService.class);
-                                    intent.putExtra(BackupHandlerIntentService.BACKEND_ID, mBackendService.getId());
-                                    intent.putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE);
-                                    intent.putExtra(BackupHandlerIntentService.BACKUP_FILE, file);
-                                    intent.putExtra(BackupHandlerIntentService.PASSWORD, inputEditText.getText().toString());
-                                    intent.putExtra(BackupHandlerIntentService.CALLER_ID, BACKUP_SERVICE_CALLER_ID);
-                                    getActivity().startService(intent);
+                                    if (!mCountPending) {
+                                        startCount(getActivity(), file, inputEditText.getText().toString());
+                                    }
                                 }
 
                             })
@@ -437,12 +418,14 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Intent intent = new Intent(getActivity(), BackupHandlerIntentService.class);
-                                    intent.putExtra(BackupHandlerIntentService.BACKEND_ID, mBackendService.getId());
-                                    intent.putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE);
-                                    intent.putExtra(BackupHandlerIntentService.BACKUP_FILE, file);
-                                    intent.putExtra(BackupHandlerIntentService.CALLER_ID, BACKUP_SERVICE_CALLER_ID);
-                                    getActivity().startService(intent);
+                                    if (!mCountPending) {
+                                        Intent intent = new Intent(getActivity(), BackupHandlerIntentService.class);
+                                        intent.putExtra(BackupHandlerIntentService.BACKEND_ID, mBackendService.getId());
+                                        intent.putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE);
+                                        intent.putExtra(BackupHandlerIntentService.BACKUP_FILE, file);
+                                        intent.putExtra(BackupHandlerIntentService.CALLER_ID, BACKUP_SERVICE_CALLER_ID);
+                                        getActivity().startService(intent);
+                                    }
                                 }
 
                             })
@@ -497,6 +480,62 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
         }
     }
 
+    private void startCount(Activity activity, IFile file, String password) {
+        Intent intent = new Intent(activity, BackupHandlerIntentService.class);
+        intent.putExtra(BackupHandlerIntentService.BACKEND_ID, mBackendService.getId());
+        intent.putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_COUNT);
+        intent.putExtra(BackupHandlerIntentService.BACKUP_FILE, file);
+        if (password != null) {
+            intent.putExtra(BackupHandlerIntentService.PASSWORD, password);
+        }
+        intent.putExtra(BackupHandlerIntentService.CALLER_ID, BACKUP_SERVICE_CALLER_ID);
+        activity.startService(intent);
+        mCountPending = true;
+    }
+
+    private void showRestoreDialog(Intent intent) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        final IFile file = intent.getParcelableExtra(BackupHandlerIntentService.BACKUP_FILE);
+        final String password = intent.getStringExtra(BackupHandlerIntentService.PASSWORD);
+        int backupTransactions = intent.getIntExtra(BackupHandlerIntentService.BACKUP_TRANSACTIONS, 0);
+        int backupWallets = intent.getIntExtra(BackupHandlerIntentService.BACKUP_WALLETS, 0);
+        int currentTransactions = intent.getIntExtra(BackupHandlerIntentService.CURRENT_TRANSACTIONS, 0);
+        int currentWallets = intent.getIntExtra(BackupHandlerIntentService.CURRENT_WALLETS, 0);
+        String message = file.getName() + "\n\n" + getString(R.string.message_backup_restore_counts,
+                getResources().getQuantityString(R.plurals.message_backup_restore_transactions, backupTransactions, backupTransactions),
+                getResources().getQuantityString(R.plurals.message_backup_restore_wallets, backupWallets, backupWallets),
+                getResources().getQuantityString(R.plurals.message_backup_restore_transactions, currentTransactions, currentTransactions),
+                getResources().getQuantityString(R.plurals.message_backup_restore_wallets, currentWallets, currentWallets));
+        if (backupTransactions == 0 && currentTransactions > 0) {
+            message += "\n\n" + getString(R.string.message_backup_restore_no_transactions);
+        }
+        message += "\n\n" + getString(R.string.message_backup_restore_standard);
+        ThemedDialog.buildMaterialDialog(activity)
+                .setTitle(R.string.title_backup_restore)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(getActivity(), BackupHandlerIntentService.class);
+                        intent.putExtra(BackupHandlerIntentService.BACKEND_ID, mBackendService.getId());
+                        intent.putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_RESTORE);
+                        intent.putExtra(BackupHandlerIntentService.BACKUP_FILE, file);
+                        if (password != null) {
+                            intent.putExtra(BackupHandlerIntentService.PASSWORD, password);
+                        }
+                        intent.putExtra(BackupHandlerIntentService.CALLER_ID, BACKUP_SERVICE_CALLER_ID);
+                        getActivity().startService(intent);
+                    }
+
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private BroadcastReceiver mLocalBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
@@ -535,12 +574,21 @@ public class BackupHandlerFragment extends Fragment implements BackupFileAdapter
                     }
                 } else if (operation == BackupHandlerIntentService.ACTION_RESTORE) {
                     loadCurrentFolder();
+                } else if (operation == BackupHandlerIntentService.ACTION_COUNT) {
+                    if (mBackendService != null && TextUtils.equals(mBackendService.getId(), intent.getStringExtra(BackupHandlerIntentService.BACKEND_ID))) {
+                        mCountPending = false;
+                        showRestoreDialog(intent);
+                    }
                 }
             } else if (TextUtils.equals(action, LocalAction.ACTION_BACKUP_SERVICE_FAILED)) {
                 int operation = intent.getIntExtra(BackupHandlerIntentService.ACTION, 0);
                 if (operation == BackupHandlerIntentService.ACTION_RESTORE) {
                     if (intent.hasExtra(BackupHandlerIntentService.BEFORE_RESTORE_COPY)) {
                         loadCurrentFolder();
+                    }
+                } else if (operation == BackupHandlerIntentService.ACTION_COUNT) {
+                    if (mBackendService != null && TextUtils.equals(mBackendService.getId(), intent.getStringExtra(BackupHandlerIntentService.BACKEND_ID))) {
+                        mCountPending = false;
                     }
                 } else if (operation == BackupHandlerIntentService.ACTION_LIST) {
                     Exception exception = (Exception) intent.getSerializableExtra(BackupHandlerIntentService.EXCEPTION);

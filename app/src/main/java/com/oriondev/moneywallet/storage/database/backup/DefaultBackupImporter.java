@@ -53,21 +53,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
         boolean completed = false;
         try {
             ZipFile zipFile = new ZipFile(getBackupFile());
-            if (!zipFile.isValidZipFile()) {
-                throw new ImportException("Invalid backup file: not a zip file");
-            }
-            String path = BackupManager.FileStructure.FOLDER_DATABASES + BackupManager.FileStructure.FILE_DATABASE;
-            FileHeader header = zipFile.getFileHeader(path);
-            if (header == null) {
-                throw new ImportException("Invalid backup file: database file not found");
-            }
-            if (header.isEncrypted()) {
-                if (mPassword != null) {
-                    header.setPassword(mPassword.toCharArray());
-                } else {
-                    throw new ImportException("Decryption filed: missing user password");
-                }
-            }
+            FileHeader header = getDatabaseHeader(zipFile, mPassword);
             beginStagedImport();
             ZipInputStream inputStream = zipFile.getInputStream(header);
             importer = new JSONDatabaseImporter(inputStream);
@@ -113,6 +99,25 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
                 }
             }
         }
+    }
+
+    public static FileHeader getDatabaseHeader(ZipFile zipFile, String password) throws ImportException, ZipException {
+        if (!zipFile.isValidZipFile()) {
+            throw new ImportException("Invalid backup file: not a zip file");
+        }
+        String path = BackupManager.FileStructure.FOLDER_DATABASES + BackupManager.FileStructure.FILE_DATABASE;
+        FileHeader header = zipFile.getFileHeader(path);
+        if (header == null) {
+            throw new ImportException("Invalid backup file: database file not found");
+        }
+        if (header.isEncrypted()) {
+            if (password != null) {
+                header.setPassword(password.toCharArray());
+            } else {
+                throw new ImportException("Decryption filed: missing user password");
+            }
+        }
+        return header;
     }
 
     @Override
