@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Environment
 import android.os.Looper
 import android.util.Log
@@ -12,9 +13,11 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.test.core.app.ApplicationProvider
 
 import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.api.BackendException
 import com.oriondev.moneywallet.api.BackendServiceFactory
 import com.oriondev.moneywallet.broadcast.LocalAction
 import com.oriondev.moneywallet.model.LocalFile
+import com.oriondev.moneywallet.model.SAFFile
 import com.oriondev.moneywallet.storage.database.Contract
 import com.oriondev.moneywallet.storage.database.DataContentProvider
 import com.oriondev.moneywallet.storage.database.DeletedLedger
@@ -48,6 +51,7 @@ import org.robolectric.shadows.ShadowLog
 import org.robolectric.shadows.ShadowLooper
 
 import java.io.File
+import java.io.FileInputStream
 import java.nio.charset.StandardCharsets
 import java.util.Date
 
@@ -778,6 +782,234 @@ class BackupHandlerIntentServiceTest {
         assertEquals(older.name, FileUtils.readFileToString(older, StandardCharsets.UTF_8))
     }
 
+    @Test
+    fun aCountSendsTheCountsOfTheFileAndOfTheAppAndChangesNothing() {
+        val backup = backupOf(RESTORED, "other.mwbx", null)
+        ledger.insertWallet("Bank", "EUR")
+        ledgerWith(BEFORE)
+        ledger.insertTransaction(ledger.transaction(wallet, category, RESTORED))
+        val downloads = downloadFolder()
+
+        count(backup, null)
+
+        val finished = finished()
+        assertEquals(BackupHandlerIntentService.ACTION_COUNT, finished.getIntExtra(BackupHandlerIntentService.ACTION, 0))
+        assertEquals(listOf(1, 1, 2, 2), countsIn(finished))
+        assertEquals(backup, finished.getParcelableExtra<LocalFile>(BackupHandlerIntentService.BACKUP_FILE)!!.getFile())
+        assertNull(finished.getStringExtra(BackupHandlerIntentService.PASSWORD))
+        assertEquals("restore", finished.getStringExtra(BackupHandlerIntentService.CALLER_ID))
+        assertTrue(downloads.list().isNullOrEmpty())
+        assertEquals(listOf(BEFORE, RESTORED), liveMoney())
+        assertTrue(copies(documents).isEmpty())
+        assertTrue(backup.isFile)
+        val progress = broadcasts.filter { it.action == LocalAction.ACTION_BACKUP_SERVICE_RUNNING }.map {
+            it.getIntExtra(BackupHandlerIntentService.PROGRESS_STATUS, 0) to it.getIntExtra(BackupHandlerIntentService.PROGRESS_VALUE, 0)
+        }
+        assertEquals(listOf(BackupHandlerIntentService.STATUS_BACKUP_DOWNLOADING to 0), progress)
+    }
+
+    @Test
+    fun anEncryptedCountWithItsPasswordSendsTheCountsAndThePassword() {
+        val backup = backupOf(RESTORED, "other.mwbs", PASSWORD)
+        ledgerWith(BEFORE)
+        ledger.insertTransaction(ledger.transaction(wallet, category, RESTORED))
+        val downloads = downloadFolder()
+
+        count(backup, PASSWORD)
+
+        val finished = finished()
+        assertEquals(listOf(1, 1, 2, 1), countsIn(finished))
+        assertEquals(backup, finished.getParcelableExtra<LocalFile>(BackupHandlerIntentService.BACKUP_FILE)!!.getFile())
+        assertEquals(PASSWORD, finished.getStringExtra(BackupHandlerIntentService.PASSWORD))
+        assertTrue(downloads.list().isNullOrEmpty())
+        assertEquals(listOf(BEFORE, RESTORED), liveMoney())
+    }
+
+    @Test
+    fun aCountWithAWrongPasswordFailsAndLeavesNoDownload() {
+        val backup = backupOf(RESTORED, "other.mwbs", PASSWORD)
+        ledgerWith(BEFORE)
+        val downloads = downloadFolder()
+
+        count(backup, "wrong")
+
+        val exception = failure()
+        assertTrue(exception is ImportException)
+        assertTrue(exception.message, exception.message!!.startsWith("Wrong Password"))
+        assertEquals(BackupHandlerIntentService.ACTION_COUNT, failed().getIntExtra(BackupHandlerIntentService.ACTION, 0))
+        assertTrue(downloads.list().isNullOrEmpty())
+        assertEquals(listOf(BEFORE), liveMoney())
+    }
+
+    @Test
+    fun aFinishedCountSendsTheBackendOfItsFile() {
+        val backup = backupOf(RESTORED, "other.mwbx", null)
+
+        count(backup, null)
+
+        assertEquals(BackendServiceFactory.SERVICE_ID_EXTERNAL_MEMORY, finished().getStringExtra(BackupHandlerIntentService.BACKEND_ID))
+    }
+
+    @Test
+    fun aFailedCountSendsTheBackendOfItsFile() {
+        val backup = backupOf(RESTORED, "other.mwbs", PASSWORD)
+
+        count(backup, "wrong")
+
+        assertEquals(BackendServiceFactory.SERVICE_ID_EXTERNAL_MEMORY, failed().getStringExtra(BackupHandlerIntentService.BACKEND_ID))
+    }
+
+    @Test
+    fun aCountWithoutAWebDAVServerFailsAndSendsTheWebDAVBackend() {
+        val backup = backupOf(RESTORED, "other.mwbx", null)
+
+        handle(restoreIntent(backup, null)
+                .putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_COUNT)
+                .putExtra(BackupHandlerIntentService.BACKEND_ID, BackendServiceFactory.SERVICE_ID_WEBDAV))
+
+        assertTrue(failure() is BackendException)
+        assertEquals(BackupHandlerIntentService.ACTION_COUNT, failed().getIntExtra(BackupHandlerIntentService.ACTION, 0))
+        assertEquals(BackendServiceFactory.SERVICE_ID_WEBDAV, failed().getStringExtra(BackupHandlerIntentService.BACKEND_ID))
+    }
+
+    @Test
+    fun aFinishedCountOfAFileInTheLocalFolderSendsTheLocalFolderBackend() {
+        val backup = backupOf(RESTORED, "other.mwbx", null)
+        val tree = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ABackups")
+        val document = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ABackups/document/primary%3ABackups%2Fother.mwbx")
+        val readWrite = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        val preferences = context.getSharedPreferences("storage_access_framework", Context.MODE_PRIVATE)
+        preferences.edit().putString("uri", tree.toString()).commit()
+        context.contentResolver.takePersistableUriPermission(tree, readWrite)
+        try {
+            shadowOf(context.contentResolver).registerInputStream(document, FileInputStream(backup))
+            val file = SAFFile("{\"uri\":\"$document\",\"name\":\"other.mwbx\",\"size\":${backup.length()},\"isDir\":false}")
+
+            handle(restoreIntent(backup, null)
+                    .putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_COUNT)
+                    .putExtra(BackupHandlerIntentService.BACKEND_ID, BackendServiceFactory.SERVICE_ID_SAF)
+                    .putExtra(BackupHandlerIntentService.BACKUP_FILE, file))
+
+            val finished = finished()
+            assertEquals(BackendServiceFactory.SERVICE_ID_SAF, finished.getStringExtra(BackupHandlerIntentService.BACKEND_ID))
+            assertEquals(listOf(1, 1, 1, 1), countsIn(finished))
+            assertEquals(document, finished.getParcelableExtra<SAFFile>(BackupHandlerIntentService.BACKUP_FILE)!!.getUri())
+        } finally {
+            context.contentResolver.releasePersistableUriPermission(tree, readWrite)
+            preferences.edit().remove("uri").commit()
+        }
+    }
+
+    @Test
+    fun aCountOfAFileThatIsNotAZipFails() {
+        val backup = File(context.cacheDir, "broken.mwbx")
+        created.add(backup)
+        FileUtils.writeStringToFile(backup, "not a zip", StandardCharsets.UTF_8)
+        val downloads = downloadFolder()
+
+        count(backup, null)
+
+        assertEquals("Invalid backup file: not a zip file", failure().message)
+        assertTrue(downloads.list().isNullOrEmpty())
+    }
+
+    @Test
+    fun aCountOfABackupFromANewerVersionFails() {
+        val exported = backupOf(RESTORED, "other.mwbx", null)
+        val json = JSONObject(ZipFile(exported).let { zip ->
+            zip.getInputStream(zip.getFileHeader(DATABASE_ENTRY)).use { String(it.readBytes(), StandardCharsets.UTF_8) }
+        })
+        json.getJSONObject("header").put("version_code", Int.MAX_VALUE)
+        val folder = File(context.cacheDir, "newer_export")
+        created.add(folder)
+        val database = File(folder, "database.json")
+        FileUtils.writeStringToFile(database, json.toString(), StandardCharsets.UTF_8)
+        val backup = File(context.cacheDir, "newer.mwbx")
+        created.add(backup)
+        val parameters = ZipParameters()
+        parameters.setRootFolderInZip("databases/")
+        ZipFile(backup).addFile(database, parameters)
+
+        count(backup, null)
+
+        val exception = failure()
+        assertTrue(exception is ImportException)
+        assertTrue(exception.message, exception.message!!.startsWith("This backup belongs to a newer version"))
+    }
+
+    @Test
+    fun aCountSendsFourUnequalCountsEachInItsOwnExtra() {
+        ledger.insertWallet("Bank", "EUR")
+        val backup = backupOf(RESTORED, "other.mwbx", null)
+        ledger.insertWallet("Savings", "EUR")
+        ledger.insertWallet("Travel", "EUR")
+        ledger.insertTransaction(ledger.transaction(wallet, category, BEFORE))
+        ledger.insertTransaction(ledger.transaction(wallet, category, BEFORE))
+
+        count(backup, null)
+
+        assertEquals(listOf(1, 2, 3, 4), countsIn(finished()))
+    }
+
+    @Test
+    fun aCountOfAZipWithoutTheDatabaseEntryFails() {
+        val other = File(context.cacheDir, "other.json")
+        created.add(other)
+        FileUtils.writeStringToFile(other, "{}", StandardCharsets.UTF_8)
+        val backup = File(context.cacheDir, "empty.mwbx")
+        created.add(backup)
+        val parameters = ZipParameters()
+        parameters.setRootFolderInZip("databases/")
+        ZipFile(backup).addFile(other, parameters)
+        val downloads = downloadFolder()
+
+        count(backup, null)
+
+        val exception = failure()
+        assertTrue(exception is ImportException)
+        assertEquals("Invalid backup file: database file not found", exception.message)
+        assertTrue(downloads.list().isNullOrEmpty())
+    }
+
+    @Test
+    fun aCountOfABrokenDatabaseFileFails() {
+        val folder = File(context.cacheDir, "broken_export")
+        created.add(folder)
+        val database = File(folder, "database.json")
+        FileUtils.writeStringToFile(database, "{\"header\":{\"version_code\":6},\"currencies\" []}", StandardCharsets.UTF_8)
+        val backup = File(context.cacheDir, "broken.mwbx")
+        created.add(backup)
+        val parameters = ZipParameters()
+        parameters.setRootFolderInZip("databases/")
+        ZipFile(backup).addFile(database, parameters)
+        val downloads = downloadFolder()
+
+        count(backup, null)
+
+        assertTrue(failure() is ImportException)
+        assertTrue(downloads.list().isNullOrEmpty())
+    }
+
+    @Test
+    fun aRestoredBackupLeavesTheAppWithTheCountsTheFileHad() {
+        ledger.insertWallet("Bank", "EUR")
+        val backup = backupOf(RESTORED, "other.mwbx", null)
+        ledger.insertWallet("Savings", "EUR")
+        ledger.insertTransaction(ledger.transaction(wallet, category, BEFORE))
+        ledger.insertTransaction(ledger.transaction(wallet, category, BEFORE))
+        count(backup, null)
+        val counts = countsIn(finished())
+        assertEquals(listOf(1, 2, 3, 3), counts)
+        broadcasts.clear()
+
+        restore(backup, null)
+        finished()
+        broadcasts.clear()
+        count(backup, null)
+
+        assertEquals(counts.subList(0, 2), countsIn(finished()).subList(2, 4))
+    }
+
     private fun ledgerWith(money: Long) {
         ledger.database().execSQL("DELETE FROM transactions")
         ledger.insertTransaction(ledger.transaction(wallet, category, money))
@@ -838,6 +1070,20 @@ class BackupHandlerIntentServiceTest {
             intent.putExtra(BackupHandlerIntentService.PASSWORD, password)
         }
         return intent
+    }
+
+    private fun count(backup: File, password: String?) {
+        handle(restoreIntent(backup, password).putExtra(BackupHandlerIntentService.ACTION, BackupHandlerIntentService.ACTION_COUNT))
+    }
+
+    private fun countsIn(finished: Intent): List<Int> = listOf(BackupHandlerIntentService.BACKUP_TRANSACTIONS,
+            BackupHandlerIntentService.BACKUP_WALLETS, BackupHandlerIntentService.CURRENT_TRANSACTIONS,
+            BackupHandlerIntentService.CURRENT_WALLETS).map { finished.getIntExtra(it, -1) }
+
+    private fun downloadFolder(): File {
+        val folder = File(context.getExternalFilesDir(null), "backups")
+        snapshots.add(folder to folder.list()?.toSet())
+        return folder
     }
 
     private fun handle(vararg intents: Intent) {
