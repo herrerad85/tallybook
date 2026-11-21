@@ -17,47 +17,47 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.os.Build;
-import android.widget.EdgeEffect;
-import android.widget.HorizontalScrollView;
-import android.widget.ScrollView;
+import android.os.Build
+import android.widget.EdgeEffect
+import android.widget.HorizontalScrollView
+import android.widget.ScrollView
 
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.annotation.ColorInt
+import androidx.recyclerview.widget.RecyclerView
 
 /**
  * Colors the over scroll glow through public API only. Android 12 and later stretch the content
  * instead of drawing a glow, so none of this is visible there.
  */
-final class EdgeGlowUtil {
+internal object EdgeGlowUtil {
 
-    /*package-local*/ static void setEdgeGlowColor(@NonNull RecyclerView recyclerView, @ColorInt final int color) {
+    @JvmStatic
+    fun setEdgeGlowColor(recyclerView: RecyclerView, @ColorInt color: Int) {
         // Setting a factory drops the effects the view already holds, so a theme applied later
         // colors the ones it creates next.
-        recyclerView.setEdgeEffectFactory(new RecyclerView.EdgeEffectFactory() {
+        recyclerView.edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
 
-            @NonNull
-            @Override
-            protected EdgeEffect createEdgeEffect(@NonNull RecyclerView view, int direction) {
-                EdgeEffect edgeEffect = super.createEdgeEffect(view, direction);
-                edgeEffect.setColor(color);
-                return edgeEffect;
+            override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
+                val edgeEffect = super.createEdgeEffect(view, direction)
+                edgeEffect.color = color
+                return edgeEffect
             }
-        });
-    }
-
-    /*package-local*/ static void setEdgeGlowColor(@NonNull ScrollView scrollView, @ColorInt int color) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            scrollView.setEdgeEffectColor(color);
         }
     }
 
-    /*package-local*/ static void setEdgeGlowColor(@NonNull HorizontalScrollView scrollView, @ColorInt int color) {
+    @JvmStatic
+    fun setEdgeGlowColor(scrollView: ScrollView, @ColorInt color: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            scrollView.setEdgeEffectColor(color);
+            scrollView.setEdgeEffectColor(color)
+        }
+    }
+
+    @JvmStatic
+    fun setEdgeGlowColor(scrollView: HorizontalScrollView, @ColorInt color: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            scrollView.setEdgeEffectColor(color)
         }
     }
 }
