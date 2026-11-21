@@ -40,14 +40,17 @@ import com.oriondev.moneywallet.broadcast.NotificationBroadcastReceiver
 import com.oriondev.moneywallet.broadcast.RecurrenceBroadcastReceiver
 import com.oriondev.moneywallet.model.IFile
 import com.oriondev.moneywallet.service.beforerestore.BeforeRestoreCopy
+import com.oriondev.moneywallet.storage.database.BackupCount
 import com.oriondev.moneywallet.storage.database.DataContentProvider
 import com.oriondev.moneywallet.storage.database.ExportException
 import com.oriondev.moneywallet.storage.database.ImportException
+import com.oriondev.moneywallet.storage.database.SQLDatabaseCount
 import com.oriondev.moneywallet.storage.database.SQLDatabaseImporter
 import com.oriondev.moneywallet.storage.database.backup.AbstractBackupImporter
 import com.oriondev.moneywallet.storage.database.backup.BackupManager
 import com.oriondev.moneywallet.storage.database.backup.DefaultBackupImporter
 import com.oriondev.moneywallet.storage.database.backup.LegacyBackupImporter
+import com.oriondev.moneywallet.storage.database.json.JSONDatabaseCount
 import com.oriondev.moneywallet.storage.preference.BackendManager
 import com.oriondev.moneywallet.storage.preference.PreferenceManager
 import com.oriondev.moneywallet.ui.notification.NotificationContract
@@ -82,6 +85,10 @@ class BackupHandlerIntentService : IntentService {
         const val PROGRESS_VALUE = "BackupHandlerIntentService::Argument::ProgressValue"
         const val CALLER_ID = "BackupHandlerIntentService::Argument::CallerId"
         const val BEFORE_RESTORE_COPY = "BackupHandlerIntentService::Argument::BeforeRestoreCopy"
+        const val BACKUP_TRANSACTIONS = "BackupHandlerIntentService::Argument::BackupTransactions"
+        const val BACKUP_WALLETS = "BackupHandlerIntentService::Argument::BackupWallets"
+        const val CURRENT_TRANSACTIONS = "BackupHandlerIntentService::Argument::CurrentTransactions"
+        const val CURRENT_WALLETS = "BackupHandlerIntentService::Argument::CurrentWallets"
 
         private const val BACKUP_CACHE_FOLDER = "backups"
         private const val TEMP_FOLDER = "temp"
@@ -90,6 +97,7 @@ class BackupHandlerIntentService : IntentService {
         const val ACTION_LIST = 1
         const val ACTION_BACKUP = 2
         const val ACTION_RESTORE = 3
+        const val ACTION_COUNT = 4
 
         const val STATUS_BACKUP_CREATION = 1
         const val STATUS_BACKUP_UPLOADING = 2
@@ -154,6 +162,9 @@ class BackupHandlerIntentService : IntentService {
                     }
                     ACTION_RESTORE -> {
                         onActionRestore(intent)
+                    }
+                    ACTION_COUNT -> {
+                        onActionCount(intent)
                     }
                 }
             } catch (e: Exception) {
@@ -245,6 +256,37 @@ class BackupHandlerIntentService : IntentService {
             } finally {
                 FileUtils.deleteQuietly(revision)
             }
+        } else {
+            throw RuntimeException("Backup file to restore not specified")
+        }
+    }
+
+    @Throws(ImportException::class, BackendException::class, IOException::class)
+    private fun onActionCount(intent: Intent) {
+        val remoteFile: IFile? = intent.getParcelableExtra(BACKUP_FILE)
+        if (remoteFile != null) {
+            val folder: File? = getExternalFilesDir(null)
+            val cache = File(folder, BACKUP_CACHE_FOLDER)
+            val revision = File(cache, UUID.randomUUID().toString())
+            val password: String? = intent.getStringExtra(PASSWORD)
+            val backupCount: BackupCount
+            val currentCount: BackupCount
+            try {
+                FileUtils.forceMkdir(revision)
+                notifyTaskProgress(ACTION_COUNT, STATUS_BACKUP_DOWNLOADING, 0)
+                val backup = mBackendServiceAPI!!.downloadFile(revision, remoteFile, object : ProgressOutputStream.DownloadProgressListener {
+
+                    override fun onDownloadProgressUpdate(percentage: Int) {
+                        notifyTaskProgress(ACTION_COUNT, STATUS_BACKUP_DOWNLOADING, percentage)
+                    }
+
+                })
+                backupCount = JSONDatabaseCount.count(backup, password)
+                currentCount = SQLDatabaseCount.count(contentResolver)
+            } finally {
+                FileUtils.deleteQuietly(revision)
+            }
+            notifyCountTaskFinished(intent.getStringExtra(BACKEND_ID), remoteFile, password, backupCount, currentCount)
         } else {
             throw RuntimeException("Backup file to restore not specified")
         }
@@ -373,6 +415,20 @@ class BackupHandlerIntentService : IntentService {
         mReporter!!.broadcast(LocalAction.ACTION_BACKUP_SERVICE_FINISHED, extras)
     }
 
+    private fun notifyCountTaskFinished(backendId: String?, file: IFile, password: String?, backupCount: BackupCount, currentCount: BackupCount) {
+        val extras = Bundle()
+        extras.putInt(ACTION, ACTION_COUNT)
+        extras.putString(BACKEND_ID, backendId)
+        extras.putParcelable(BACKUP_FILE, file)
+        extras.putString(PASSWORD, password)
+        extras.putInt(BACKUP_TRANSACTIONS, backupCount.transactions)
+        extras.putInt(BACKUP_WALLETS, backupCount.wallets)
+        extras.putInt(CURRENT_TRANSACTIONS, currentCount.transactions)
+        extras.putInt(CURRENT_WALLETS, currentCount.wallets)
+        extras.putString(CALLER_ID, mCallerId)
+        mReporter!!.broadcast(LocalAction.ACTION_BACKUP_SERVICE_FINISHED, extras)
+    }
+
     private fun notifyTaskFailure(baseIntent: Intent, exception: Exception) {
         // notify the local broadcast manager
         val action = baseIntent.getIntExtra(ACTION, ACTION_NONE)
@@ -380,6 +436,7 @@ class BackupHandlerIntentService : IntentService {
         extras.putInt(ACTION, action)
         extras.putSerializable(EXCEPTION, exception)
         mBeforeRestoreCopy?.let { extras.putString(BEFORE_RESTORE_COPY, it.absolutePath) }
+        extras.putString(BACKEND_ID, baseIntent.getStringExtra(BACKEND_ID))
         extras.putString(CALLER_ID, mCallerId)
         mReporter!!.broadcast(LocalAction.ACTION_BACKUP_SERVICE_FAILED, extras)
         // update the notification if required

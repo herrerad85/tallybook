@@ -146,6 +146,9 @@ public class BackupListActivity extends BaseActivity implements ToolbarControlle
                                 case BackupHandlerIntentService.ACTION_RESTORE:
                                     mProgressDialog = GenericProgressDialog.newInstance(R.string.title_backup_restoring, R.string.message_async_init, false);
                                     break;
+                                case BackupHandlerIntentService.ACTION_COUNT:
+                                    mProgressDialog = GenericProgressDialog.newInstance(R.string.title_backup_restore, R.string.message_async_init, false);
+                                    break;
                                 default:
                                     return;
                             }
@@ -190,6 +193,8 @@ public class BackupListActivity extends BaseActivity implements ToolbarControlle
                                 messageRes = R.string.message_backup_restoring_success;
                                 copy = intent.getStringExtra(BackupHandlerIntentService.BEFORE_RESTORE_COPY);
                                 break;
+                            case BackupHandlerIntentService.ACTION_COUNT:
+                                return;
                             default:
                                 // ACTION_LIST
                                 return;
@@ -233,6 +238,9 @@ public class BackupListActivity extends BaseActivity implements ToolbarControlle
                             case BackupHandlerIntentService.ACTION_RESTORE:
                                 messageString = addBeforeRestoreCopy(getString(R.string.message_backup_restoring_failed, message),
                                         intent.getStringExtra(BackupHandlerIntentService.BEFORE_RESTORE_COPY));
+                                break;
+                            case BackupHandlerIntentService.ACTION_COUNT:
+                                messageString = getString(R.string.message_backup_restoring_failed, message);
                                 break;
                             default:
                                 return;
