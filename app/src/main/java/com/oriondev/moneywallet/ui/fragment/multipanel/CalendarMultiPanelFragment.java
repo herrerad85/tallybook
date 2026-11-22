@@ -50,6 +50,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelAppBarItemFragment;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
 import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSwipeCallback;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.ui.view.calendar.MonthView;
@@ -124,6 +125,7 @@ public class CalendarMultiPanelFragment extends MultiPanelAppBarItemFragment imp
         mTimelineView.setLastDate(2100, Calendar.DECEMBER, 31);
         TransactionCursorAdapter adapter = new TransactionCursorAdapter(this);
         mSelectionMode = new TransactionSelectionMode(this, this, adapter);
+        TransactionSwipeCallback.attach(mAdvancedRecyclerView.getRecyclerView(), adapter, mSelectionMode);
         mAbstractCursorAdapter = adapter;
         mAdvancedRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mAdvancedRecyclerView.setEmptyText(R.string.message_no_transaction_found);

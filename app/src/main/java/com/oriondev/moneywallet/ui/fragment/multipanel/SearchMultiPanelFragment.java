@@ -74,6 +74,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelCursorListItemFragment;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
 import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSwipeCallback;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.ui.view.theme.ITheme;
@@ -718,6 +719,7 @@ public class SearchMultiPanelFragment extends MultiPanelCursorListItemFragment i
     protected AbstractCursorAdapter onCreateAdapter() {
         TransactionCursorAdapter adapter = new TransactionCursorAdapter(this);
         mSelectionMode = new TransactionSelectionMode(this, this, adapter);
+        TransactionSwipeCallback.attach(mRecyclerView, adapter, mSelectionMode);
         return adapter;
     }
 
