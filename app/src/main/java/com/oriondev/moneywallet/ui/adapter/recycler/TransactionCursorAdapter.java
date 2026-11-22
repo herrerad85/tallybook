@@ -189,6 +189,15 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         return cursor.getInt(mIndexTransactionType) != Contract.TransactionType.TRANSFER;
     }
 
+    public boolean isSwipeable(int position) {
+        int cursorPosition = cursorPosition(position);
+        if (!isDataValid() || !mSelectedIds.isEmpty() || !isItemAt(cursorPosition)) {
+            return false;
+        }
+        Cursor cursor = getSafeCursor(cursorPosition);
+        return cursor != null && isSelectable(cursor);
+    }
+
     public long[] getSelectedIds() {
         long[] ids = new long[mSelectedIds.size()];
         int index = 0;

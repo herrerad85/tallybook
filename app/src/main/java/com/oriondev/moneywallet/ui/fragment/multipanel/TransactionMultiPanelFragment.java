@@ -51,6 +51,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelCursorListItemFragment;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
 import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSwipeCallback;
 import com.oriondev.moneywallet.ui.fragment.secondary.TransactionItemFragment;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.utils.DateUtils;
@@ -100,6 +101,7 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
 
     private BroadcastReceiver mBroadcastReceiver;
     private TransactionSelectionMode mSelectionMode;
+    private AdvancedRecyclerView mAdvancedRecyclerView;
 
     @Override
     public void onAttach(Context context) {
@@ -127,12 +129,14 @@ public class TransactionMultiPanelFragment extends MultiPanelCursorListItemFragm
     protected void onPrepareRecyclerView(AdvancedRecyclerView recyclerView) {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setEmptyText(R.string.message_no_transaction_found);
+        mAdvancedRecyclerView = recyclerView;
     }
 
     @Override
     protected AbstractCursorAdapter onCreateAdapter() {
         TransactionCursorAdapter adapter = new TransactionCursorAdapter(this);
         mSelectionMode = new TransactionSelectionMode(this, this, adapter);
+        TransactionSwipeCallback.attach(mAdvancedRecyclerView.getRecyclerView(), adapter, mSelectionMode);
         return adapter;
     }
 

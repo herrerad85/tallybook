@@ -52,6 +52,7 @@ import com.oriondev.moneywallet.ui.adapter.recycler.TransactionCursorAdapter;
 import com.oriondev.moneywallet.ui.fragment.base.CursorListFragment;
 import com.oriondev.moneywallet.ui.fragment.base.MultiPanelFragment;
 import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
+import com.oriondev.moneywallet.ui.fragment.base.TransactionSwipeCallback;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
 import com.oriondev.moneywallet.utils.DateUtils;
 
@@ -68,11 +69,13 @@ public class TransactionListFragment extends CursorListFragment implements Trans
 
     private TransactionCursorAdapter mAdapter;
     private TransactionSelectionMode mSelectionMode;
+    private AdvancedRecyclerView mAdvancedRecyclerView;
 
     @Override
     protected void onPrepareRecyclerView(AdvancedRecyclerView recyclerView) {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setEmptyText(R.string.message_no_transaction_found);
+        mAdvancedRecyclerView = recyclerView;
     }
 
     @Override
@@ -81,6 +84,7 @@ public class TransactionListFragment extends CursorListFragment implements Trans
         mAdapter = new TransactionCursorAdapter(this, true);
         // a page of the transactions pager, whose toolbar belongs to the pager fragment
         mSelectionMode = new TransactionSelectionMode(this, (MultiPanelFragment) getParentFragment(), mAdapter);
+        TransactionSwipeCallback.attach(mAdvancedRecyclerView.getRecyclerView(), mAdapter, mSelectionMode);
         return mAdapter;
     }
 

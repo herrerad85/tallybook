@@ -160,7 +160,7 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
     public boolean onMenuItemClick(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_delete_selected_items) {
-            delete(mListFragment.requireActivity(), mAdapter.getSelectedIds());
+            delete(mListFragment.requireActivity(), mAdapter.getSelectedIds(), null);
             return true;
         } else if (itemId == R.id.action_move_selected_items) {
             FragmentManager fragmentManager = mListFragment.getChildFragmentManager();
@@ -259,7 +259,11 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
         }
     }
 
-    private void delete(Context context, long[] ids) {
+    public void delete(long id, Runnable onNotDeleted) {
+        delete(mListFragment.requireActivity(), new long[] {id}, onNotDeleted);
+    }
+
+    private void delete(Context context, long[] ids, @Nullable Runnable onNotDeleted) {
         ContentResolver resolver = context.getApplicationContext().getContentResolver();
         long deletedAt = System.currentTimeMillis();
         finish();
@@ -268,6 +272,9 @@ public class TransactionSelectionMode implements Toolbar.OnMenuItemClickListener
             sMainHandler.post(() -> {
                 if (mListFragment.getView() == null) {
                     return;
+                }
+                if (onNotDeleted != null && deleted.mDeleted.isEmpty()) {
+                    onNotDeleted.run();
                 }
                 closePanelShowingAnyOf(ids, deleted.mRefused);
                 if (deleted.mRefused.isEmpty()) {
