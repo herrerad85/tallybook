@@ -632,7 +632,9 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             StateListDrawable selected = new StateListDrawable();
             selected.addState(new int[] {android.R.attr.state_activated},
                     new ColorDrawable(ThemeEngine.getTheme().getColorRipple()));
-            itemView.setBackground(new LayerDrawable(new Drawable[] {selected, itemView.getBackground()}));
+            Drawable ripple = itemView.getBackground();
+            itemView.setBackground(null);
+            itemView.setBackground(new LayerDrawable(new Drawable[] {selected, ripple}));
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
         }
