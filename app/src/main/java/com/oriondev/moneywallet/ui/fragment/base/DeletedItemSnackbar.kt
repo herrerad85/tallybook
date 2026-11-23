@@ -25,17 +25,22 @@ object DeletedItemSnackbar {
     @JvmStatic
     fun show(host: Fragment, anchor: View, message: CharSequence, itemUris: List<Uri>, executor: Executor) {
         val resolver = host.requireContext().applicationContext.contentResolver
-        Snackbar.make(anchor, message, Snackbar.LENGTH_LONG)
-                .setAction(R.string.action_undo) {
-                    executor.execute {
-                        val refused = DeletedItems.restore(resolver, itemUris)
-                        mainHandler.post {
-                            if (host.view != null && refused.isNotEmpty()) {
-                                showRestoreError(host.requireActivity(), refused)
-                            }
-                        }
+        show(anchor, message) {
+            executor.execute {
+                val refused = DeletedItems.restore(resolver, itemUris)
+                mainHandler.post {
+                    if (host.view != null && refused.isNotEmpty()) {
+                        showRestoreError(host.requireActivity(), refused)
                     }
                 }
+            }
+        }
+    }
+
+    @JvmStatic
+    fun show(anchor: View, message: CharSequence, undo: Runnable) {
+        Snackbar.make(anchor, message, Snackbar.LENGTH_LONG)
+                .setAction(R.string.action_undo) { undo.run() }
                 .show()
     }
 

@@ -85,6 +85,7 @@
     <string name="action_remove">"Remove"</string>
     <string name="action_open">"Open"</string>
     <string name="action_undo">"Undo"</string>
+    <string name="action_move">"Move"</string>
     <string name="action_restore">"Restore"</string>
     <string name="action_delete_forever">"Delete forever"</string>
     <string name="action_empty">"Empty"</string>
@@ -518,6 +519,12 @@
         <item quantity="other">"%d more split transactions use it too."</item>
     </plurals>
     <string name="message_error_delete_system_category">"This category cannot be deleted because it is a system category."</string>
+    <string name="message_error_restore_category">"The category could not be put back"</string>
+    <plurals name="message_move_category_transactions">
+        <item quantity="one">"%d transaction uses this category. Move it to another category and delete this category? Budgets, recurring items and models that use it move too."</item>
+        <item quantity="other">"%d transactions use this category. Move them to another category and delete it? Budgets, recurring items and models that use it move too."</item>
+    </plurals>
+    <string name="message_move_category_items">"Budgets, recurring items or models use this category. Move them to another category and delete it?"</string>
     <string name="menu_action_move_to_wallet">"Move to wallet"</string>
     <string name="menu_action_change_category">"Change category"</string>
     <plurals name="message_move_selected_transactions">
@@ -580,6 +587,7 @@
     <string name="snackbar_message_model_transfer_removed">"Transfer removed"</string>
     <string name="snackbar_message_transaction_deleted">"Transaction deleted"</string>
     <string name="snackbar_message_transfer_deleted">"Transfer deleted"</string>
+    <string name="snackbar_message_category_deleted">"Category deleted"</string>
     <plurals name="snackbar_message_transactions_deleted">
         <item quantity="one">"%d transaction deleted"</item>
         <item quantity="other">"%d transactions deleted"</item>

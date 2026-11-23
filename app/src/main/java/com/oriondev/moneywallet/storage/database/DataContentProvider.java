@@ -28,7 +28,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.net.Uri;
+import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -94,6 +96,16 @@ public class DataContentProvider extends ContentProvider {
      * It is what a cursor this provider hands out is registered on, and what the widget watches.
      */
     public static final Uri CONTENT_ALL = Uri.parse("content://" + AUTHORITY);
+
+    public static final String CALL_CATEGORY_IN_USE = "category_in_use";
+    public static final String CALL_MOVE_CATEGORY = "move_category";
+    public static final String CALL_RESTORE_CATEGORY = "restore_category";
+
+    public static final String KEY_CATEGORY_ID = "category_id";
+    public static final String KEY_TARGET_ID = "target_id";
+    public static final String KEY_TRANSACTIONS = "transactions";
+    public static final String KEY_IN_USE = "in_use";
+    public static final String KEY_RESTORED = "restored";
 
     private static final int CURRENCY_LIST = 1;
     private static final int WALLET_LIST = 2;
@@ -814,6 +826,50 @@ public class DataContentProvider extends ContentProvider {
                 break;
         }
         return result;
+    }
+
+    @Nullable
+    @Override
+    public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
+        if (extras == null) {
+            return super.call(method, arg, extras);
+        }
+        switch (method) {
+            case CALL_CATEGORY_IN_USE:
+                long[] uses = db().getCategoryUses(extras.getLong(KEY_CATEGORY_ID));
+                Bundle result = new Bundle();
+                result.putLong(KEY_TRANSACTIONS, uses != null ? uses[0] : 0L);
+                result.putBoolean(KEY_IN_USE, uses != null && uses[0] + uses[1] > 0L);
+                return result;
+            case CALL_MOVE_CATEGORY:
+                Bundle record = SQLDatabase.inSharedTransaction(getContext(), database -> database.moveCategory(
+                        extras.getLong(KEY_CATEGORY_ID), extras.getLong(KEY_TARGET_ID)));
+                if (record != null) {
+                    notifyCategoryMoved();
+                }
+                return record;
+            case CALL_RESTORE_CATEGORY:
+                int rows;
+                try {
+                    rows = SQLDatabase.inSharedTransaction(getContext(), database -> database.restoreCategory(extras));
+                } catch (SQLException e) {
+                    rows = 0;
+                }
+                if (rows > 0) {
+                    notifyCategoryMoved();
+                }
+                Bundle restored = new Bundle();
+                restored.putBoolean(KEY_RESTORED, rows > 0);
+                return restored;
+        }
+        return super.call(method, arg, extras);
+    }
+
+    private void notifyCategoryMoved() {
+        for (Uri uri : new Uri[] {CONTENT_CATEGORIES, CONTENT_TRANSACTIONS, CONTENT_BUDGETS,
+                CONTENT_TRANSACTION_MODELS, CONTENT_RECURRENT_TRANSACTIONS, CONTENT_CATEGORY_RULES}) {
+            notifyObservers(uri, uri);
+        }
     }
 
     private static long deletedAt(String[] selectionArgs, long defaultDeletedAt) {
