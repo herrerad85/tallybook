@@ -1,5 +1,6 @@
 package com.oriondev.moneywallet.ui.activity;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -62,6 +63,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
@@ -926,6 +929,57 @@ public class NewEditTransactionActivityTest {
                 assertTrue(attachmentPicker(activity).getCurrentAttachments().isEmpty());
             });
         }
+    }
+
+    @Test
+    public void aSavedCopyHandsBackTheIdOfTheNewRow() {
+        long categoryId = insertCategory();
+        ContentValues original = new ContentValues();
+        original.put(Contract.Transaction.MONEY, 1234L);
+        original.put(Contract.Transaction.DATE, DateUtils.getSQLDateTimeString(daysFromNow(-3)));
+        original.put(Contract.Transaction.DESCRIPTION, "Lunch");
+        original.put(Contract.Transaction.CATEGORY_ID, categoryId);
+        original.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);
+        original.put(Contract.Transaction.TYPE, NewEditTransactionActivity.TYPE_STANDARD);
+        original.put(Contract.Transaction.WALLET_ID, mDollarWallet);
+        original.put(Contract.Transaction.CONFIRMED, true);
+        original.put(Contract.Transaction.COUNT_IN_TOTAL, true);
+        long originalId = ContentUris.parseId(
+                mResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, original));
+        Intent intent = newItemIntent();
+        intent.putExtra(NewEditTransactionActivity.DUPLICATE_ID, originalId);
+        long[] copyId = new long[1];
+        try (ActivityScenario<NewEditTransactionActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                save(activity);
+                assertTrue(activity.isFinishing());
+                assertEquals(Activity.RESULT_OK, shadowOf(activity).getResultCode());
+                Intent result = shadowOf(activity).getResultIntent();
+                assertNotNull("the save handed back no data", result);
+                copyId[0] = result.getLongExtra(NewEditItemActivity.ID, 0L);
+            });
+        }
+        assertNotEquals(originalId, copyId[0]);
+        assertEquals(newestId(), copyId[0]);
+        assertEquals(1234L, moneyOf(copyId[0]));
+    }
+
+    @Test
+    public void aSavedEditHandsBackNoId() {
+        SplitLedger.build(ApplicationProvider.getApplicationContext());
+        try (ActivityScenario<NewEditTransactionActivity> scenario =
+                     ActivityScenario.launch(editIntent(SplitLedger.PLAIN_CASH))) {
+            scenario.onActivity(activity -> {
+                ((EditText) activity.findViewById(R.id.description_edit_text)).setText("Corrected");
+                save(activity);
+                assertTrue(activity.isFinishing());
+                assertEquals(Activity.RESULT_OK, shadowOf(activity).getResultCode());
+                Intent result = shadowOf(activity).getResultIntent();
+                assertFalse("the edit handed back an id",
+                        result != null && result.hasExtra(NewEditItemActivity.ID));
+            });
+        }
+        assertEquals(1100L, moneyOf(SplitLedger.PLAIN_CASH));
     }
 
     @Test
