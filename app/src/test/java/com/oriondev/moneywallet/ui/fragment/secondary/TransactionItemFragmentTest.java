@@ -1,5 +1,6 @@
 package com.oriondev.moneywallet.ui.fragment.secondary;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -25,6 +27,7 @@ import com.oriondev.moneywallet.storage.database.SplitLedger;
 import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.database.TransferContentValuesBuilder;
 import com.oriondev.moneywallet.ui.activity.BackupListActivity;
+import com.oriondev.moneywallet.ui.activity.NewEditItemActivity;
 import com.oriondev.moneywallet.ui.activity.NewEditTransactionActivity;
 import com.oriondev.moneywallet.ui.fragment.base.SecondaryPanelFragment;
 import com.oriondev.moneywallet.utils.CurrencyManager;
@@ -35,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowDialog;
 
 import java.lang.reflect.Field;
@@ -45,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -85,6 +90,7 @@ public class TransactionItemFragmentTest {
 
     private ContentResolver mResolver;
     private long mWalletId;
+    private long mCategoryId;
     private long mTransactionId;
     private long mSecondTransactionId;
 
@@ -94,9 +100,9 @@ public class TransactionItemFragmentTest {
         TestDatabases.useFreshDatabase(context);
         mResolver = context.getContentResolver();
         mWalletId = insertWallet("Cash");
-        long categoryId = insertCategory();
-        mTransactionId = insertTransaction(mWalletId, categoryId, "Bread");
-        mSecondTransactionId = insertTransaction(mWalletId, categoryId, "Milk");
+        mCategoryId = insertCategory();
+        mTransactionId = insertTransaction(mWalletId, mCategoryId, "Bread");
+        mSecondTransactionId = insertTransaction(mWalletId, mCategoryId, "Milk");
     }
 
     @Test
@@ -402,6 +408,73 @@ public class TransactionItemFragmentTest {
         }
     }
 
+    @Test
+    public void aSavedCopyIsShownInThePanel() {
+        long copyId = insertTransaction(mWalletId, mCategoryId, "Bread", 4300L, daysAgo(3));
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TransactionItemFragment fragment = showTransaction(activity, mTransactionId);
+                assertEquals(money(1250L), awaitMoneyText(fragment));
+                String originalDate = dateTimeText(fragment);
+                ShadowActivity.IntentForResult started = clickDuplicate(activity, fragment);
+                shadowOf(activity).receiveResult(started.intent, Activity.RESULT_OK, copyResult(copyId));
+                idleMainLooper();
+                assertEquals(copyId, fragment.getItemId());
+                assertEquals(money(4300L), awaitMoneyText(fragment));
+                assertNotEquals(originalDate, dateTimeText(fragment));
+            });
+        }
+    }
+
+    @Test
+    public void aCanceledCopyLeavesTheOriginalInThePanel() {
+        long copyId = insertTransaction(mWalletId, mCategoryId, "Bread", 4300L, daysAgo(3));
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TransactionItemFragment fragment = showTransaction(activity, mTransactionId);
+                assertEquals(money(1250L), awaitMoneyText(fragment));
+                String originalDate = dateTimeText(fragment);
+                ShadowActivity.IntentForResult started = clickDuplicate(activity, fragment);
+                shadowOf(activity).receiveResult(started.intent, Activity.RESULT_CANCELED, null);
+                idleMainLooper();
+                assertEquals(mTransactionId, fragment.getItemId());
+                assertEquals(money(1250L), awaitMoneyText(fragment));
+                assertEquals(originalDate, dateTimeText(fragment));
+                assertTrue("the second row went away", rowExists(copyId));
+            });
+        }
+    }
+
+    @Test
+    public void aCopySavedWhileTheScreenIsRecreatedIsShownInThePanel() {
+        long copyId = insertTransaction(mWalletId, mCategoryId, "Bread", 4300L, daysAgo(3));
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            int[] requestCode = new int[1];
+            scenario.onActivity(activity -> {
+                TransactionItemFragment fragment = showTransaction(activity, mTransactionId);
+                assertEquals(money(1250L), awaitMoneyText(fragment));
+                requestCode[0] = clickDuplicate(activity, fragment).requestCode;
+            });
+            scenario.moveToState(Lifecycle.State.CREATED);
+            scenario.recreate();
+            scenario.moveToState(Lifecycle.State.STARTED);
+            scenario.onActivity(activity -> {
+                assertEquals(Lifecycle.State.STARTED, activity.getLifecycle().getCurrentState());
+                assertTrue("the result did not reach the recreated screen", activity.getActivityResultRegistry()
+                        .dispatchResult(requestCode[0], Activity.RESULT_OK, copyResult(copyId)));
+            });
+            scenario.moveToState(Lifecycle.State.RESUMED);
+            scenario.onActivity(activity -> {
+                idleMainLooper();
+                TransactionItemFragment fragment = (TransactionItemFragment)
+                        activity.getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT);
+                assertNotNull(fragment);
+                assertEquals(copyId, fragment.getItemId());
+                assertEquals(money(4300L), awaitMoneyText(fragment));
+            });
+        }
+    }
+
     /** The parts and the row come back through two loaders, so this waits for the line to fill. */
     private String awaitSplitText(TransactionItemFragment fragment) {
         TextView split = fragment.requireView().findViewById(R.id.split_text_view);
@@ -472,6 +545,58 @@ public class TransactionItemFragmentTest {
         } catch (ReflectiveOperationException e) {
             fail("the delete executor could not be reached, " + e);
         }
+    }
+
+    private String awaitMoneyText(TransactionItemFragment fragment) {
+        TextView money = fragment.requireView().findViewById(R.id.money_text_view);
+        for (int i = 0; i < 200 && TextUtils.isEmpty(money.getText()); i++) {
+            idleMainLooper();
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+        assertFalse("the row never showed", TextUtils.isEmpty(money.getText()));
+        return money.getText().toString();
+    }
+
+    private String dateTimeText(TransactionItemFragment fragment) {
+        TextView dateTime = fragment.requireView().findViewById(R.id.date_time_text_view);
+        return dateTime.getText().toString();
+    }
+
+    private ShadowActivity.IntentForResult clickDuplicate(FragmentActivity activity, TransactionItemFragment fragment) {
+        Toolbar toolbar = fragment.requireView().findViewById(R.id.secondary_toolbar);
+        assertNotNull(toolbar);
+        MenuItem duplicate = toolbar.getMenu().findItem(R.id.action_duplicate_item);
+        assertNotNull(duplicate);
+        assertTrue("the copy was not offered", duplicate.isVisible());
+        fragment.onMenuItemClick(duplicate);
+        idleMainLooper();
+        ShadowActivity.IntentForResult started = shadowOf(activity).getNextStartedActivityForResult();
+        assertNotNull("the editor was not started", started);
+        assertTrue("the editor was not started for a result", started.requestCode >= 0);
+        assertNotNull(started.intent.getComponent());
+        assertEquals(NewEditTransactionActivity.class.getName(), started.intent.getComponent().getClassName());
+        assertEquals(NewEditItemActivity.Mode.NEW_ITEM, started.intent.getSerializableExtra(NewEditItemActivity.MODE));
+        assertEquals(mTransactionId, started.intent.getLongExtra(NewEditTransactionActivity.DUPLICATE_ID, 0L));
+        return started;
+    }
+
+    private static Intent copyResult(long copyId) {
+        Intent data = new Intent();
+        data.putExtra(NewEditItemActivity.ID, copyId);
+        return data;
+    }
+
+    private static String money(long money) {
+        return MoneyFormatter.getInstance().getNotTintedString(CurrencyManager.getCurrency("EUR"), money,
+                MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN);
+    }
+
+    private static Date daysAgo(int days) {
+        return new Date(System.currentTimeMillis() - days * 24L * 60L * 60L * 1000L);
     }
 
     private void idleMainLooper() {
@@ -548,9 +673,13 @@ public class TransactionItemFragmentTest {
     }
 
     private long insertTransaction(long walletId, long categoryId, String description) {
+        return insertTransaction(walletId, categoryId, description, 1250L, new Date());
+    }
+
+    private long insertTransaction(long walletId, long categoryId, String description, long money, Date date) {
         ContentValues values = new ContentValues();
-        values.put(Contract.Transaction.MONEY, 1250L);
-        values.put(Contract.Transaction.DATE, DateUtils.getSQLDateTimeString(new Date()));
+        values.put(Contract.Transaction.MONEY, money);
+        values.put(Contract.Transaction.DATE, DateUtils.getSQLDateTimeString(date));
         values.put(Contract.Transaction.DESCRIPTION, description);
         values.put(Contract.Transaction.CATEGORY_ID, categoryId);
         values.put(Contract.Transaction.DIRECTION, Contract.Direction.EXPENSE);

@@ -25,6 +25,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.loader.app.LoaderManager;
@@ -93,6 +97,28 @@ public class TransactionItemFragment extends SecondaryPanelFragment implements L
     private CurrencyUnit mCurrency;
     private boolean mSplitCounted;
 
+    private ActivityResultLauncher<Intent> mDuplicateLauncher;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mDuplicateLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        Intent data = result.getData();
+                        if (result.getResultCode() == Activity.RESULT_OK && data != null) {
+                            long id = data.getLongExtra(NewEditItemActivity.ID, 0L);
+                            if (id > 0L) {
+                                showItemId(id);
+                            }
+                        }
+                    }
+
+                });
+    }
+
     @Override
     protected void onCreateHeaderView(LayoutInflater inflater, @NonNull ViewGroup parent, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.layout_header_show_money_item, parent, true);
@@ -143,7 +169,7 @@ public class TransactionItemFragment extends SecondaryPanelFragment implements L
             Intent intent = new Intent(getActivity(), NewEditTransactionActivity.class);
             intent.putExtra(NewEditItemActivity.MODE, NewEditItemActivity.Mode.NEW_ITEM);
             intent.putExtra(NewEditTransactionActivity.DUPLICATE_ID, getItemId());
-            startActivity(intent);
+            mDuplicateLauncher.launch(intent);
         } else if (itemId == R.id.action_delete_item) {
             deleteTransaction();
         }

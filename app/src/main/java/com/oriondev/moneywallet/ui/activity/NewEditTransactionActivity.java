@@ -1441,10 +1441,15 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                 contentValues.put(Contract.Transaction.SPLIT_PARTS, mSplitPartsEditor.encodeParts());
             }
             ContentResolver contentResolver = getContentResolver();
+            Intent data = null;
             try {
                 switch (mode) {
                     case NEW_ITEM:
-                        contentResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, contentValues);
+                        Uri itemUri = contentResolver.insert(DataContentProvider.CONTENT_TRANSACTIONS, contentValues);
+                        if (itemUri != null) {
+                            data = new Intent();
+                            data.putExtra(ID, ContentUris.parseId(itemUri));
+                        }
                         if (mRules.getSavingId() != null && mRules.isSavingCompleted()) {
                             setSavingCompleted(contentResolver, mRules.getSavingId());
                         }
@@ -1472,7 +1477,7 @@ public class NewEditTransactionActivity extends NewEditItemActivity implements M
                 return;
             }
             mAttachmentPicker.cleanUp(false);
-            setResult(RESULT_OK);
+            setResult(RESULT_OK, data);
             finishSaveDatedAt(mDateTimePicker.getCurrentDateTime());
         }
     }
