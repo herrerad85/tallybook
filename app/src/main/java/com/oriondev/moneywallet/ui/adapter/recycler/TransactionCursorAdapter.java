@@ -20,6 +20,7 @@
 package com.oriondev.moneywallet.ui.adapter.recycler;
 
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
@@ -27,6 +28,7 @@ import android.graphics.drawable.StateListDrawable;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.helper.widget.Flow;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -64,6 +66,9 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
 
     // after the two values the cursors carry in their item type column
     private static final int TYPE_CURRENCY_HEADER = 2;
+
+    private static final int HEADER_ALPHA_LIGHT = 0x29;
+    private static final int HEADER_ALPHA_DARK = 0x1F;
 
     private final ActionListener mActionListener;
     private final boolean mHeaderOpensReport;
@@ -285,6 +290,16 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
      */
     private static String periodKey(int groupType, String startDate) {
         return groupType + ":" + startDate;
+    }
+
+    private static int headerColor() {
+        switch (ThemeEngine.getTheme().getMode()) {
+            case DARK:
+            case DEEP_DARK:
+                return ColorUtils.setAlphaComponent(Color.WHITE, HEADER_ALPHA_DARK);
+            default:
+                return ColorUtils.setAlphaComponent(ThemeEngine.getTheme().getColorPrimary(), HEADER_ALPHA_LIGHT);
+        }
     }
 
     /**
@@ -578,11 +593,15 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             });
             itemView.findViewById(R.id.report_image_view)
                     .setVisibility(mHeaderOpensReport ? View.VISIBLE : View.GONE);
+            ColorDrawable background = new ColorDrawable(headerColor());
             if (mHeaderOpensReport) {
+                Drawable ripple = itemView.getBackground();
+                itemView.setBackground(null);
+                itemView.setBackground(new LayerDrawable(new Drawable[] {background, ripple}));
                 itemView.setOnClickListener(this);
             } else {
                 // no destination, so the row keeps its ripple to itself
-                itemView.setBackground(null);
+                itemView.setBackground(background);
             }
         }
 
