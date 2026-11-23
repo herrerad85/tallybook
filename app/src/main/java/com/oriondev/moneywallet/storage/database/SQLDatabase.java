@@ -28,6 +28,7 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseLongArray;
@@ -3154,6 +3155,204 @@ import java.util.function.Supplier;
         where = Schema.Category.ID + " = ?";
         whereArgs = new String[]{String.valueOf(categoryId)};
         return getWritableDatabase().delete(Schema.Category.TABLE, where, whereArgs);
+    }
+
+    private static final String KEY_MOVED_ROWS = "moved_rows";
+    private static final String KEY_DELETED_ROWS = "deleted_rows";
+    private static final String KEY_LAST_EDIT = "last_edit";
+
+    private static final String[][] CATEGORY_REFERENCES = new String[][] {
+            {Schema.Category.TABLE, Schema.Category.PARENT, Schema.Category.UUID, Schema.Category.LAST_EDIT},
+            {Schema.CategoryRule.TABLE, Schema.CategoryRule.CATEGORY, Schema.CategoryRule.UUID, Schema.CategoryRule.LAST_EDIT},
+            {Schema.Budget.TABLE, Schema.Budget.CATEGORY, Schema.Budget.UUID, Schema.Budget.LAST_EDIT},
+            {Schema.BudgetCategory.TABLE, Schema.BudgetCategory.CATEGORY, Schema.BudgetCategory.UUID, Schema.BudgetCategory.LAST_EDIT},
+            {Schema.Transaction.TABLE, Schema.Transaction.CATEGORY, Schema.Transaction.UUID, Schema.Transaction.LAST_EDIT},
+            {Schema.TransactionSplit.TABLE, Schema.TransactionSplit.CATEGORY, Schema.TransactionSplit.UUID, Schema.TransactionSplit.LAST_EDIT},
+            {Schema.TransactionModel.TABLE, Schema.TransactionModel.CATEGORY, Schema.TransactionModel.UUID, Schema.TransactionModel.LAST_EDIT},
+            {Schema.RecurrentTransaction.TABLE, Schema.RecurrentTransaction.CATEGORY, Schema.RecurrentTransaction.UUID, Schema.RecurrentTransaction.LAST_EDIT}
+    };
+
+    long[] getCategoryUses(long categoryId) {
+        String id = String.valueOf(categoryId);
+        long refused = DatabaseUtils.longForQuery(getReadableDatabase(), "SELECT COUNT(*) FROM " +
+                Schema.Category.TABLE + " WHERE (" + Schema.Category.PARENT + " = ? AND " +
+                Schema.Category.DELETED + " = 0) OR (" + Schema.Category.ID + " = ? AND " +
+                Schema.Category.TYPE + " = " + Schema.CategoryType.SYSTEM + ")", new String[] {id, id});
+        if (refused > 0L) {
+            return null;
+        }
+        long transactions = DatabaseUtils.longForQuery(getReadableDatabase(), "SELECT COUNT(*) FROM " +
+                Schema.Transaction.TABLE + " WHERE " + Schema.Transaction.DELETED + " = 0 AND (" +
+                Schema.Transaction.CATEGORY + " = ? OR " + Schema.Transaction.ID + " IN (SELECT " +
+                Schema.TransactionSplit.TRANSACTION + " FROM " + Schema.TransactionSplit.TABLE + " WHERE " +
+                Schema.TransactionSplit.CATEGORY + " = ? AND " + Schema.TransactionSplit.DELETED + " = 0))",
+                new String[] {id, id});
+        long others = DatabaseUtils.longForQuery(getReadableDatabase(), "SELECT (SELECT COUNT(*) FROM " +
+                Schema.TransactionModel.TABLE + " WHERE " + Schema.TransactionModel.CATEGORY + " = ? AND " +
+                Schema.TransactionModel.DELETED + " = 0) + (SELECT COUNT(*) FROM " +
+                Schema.RecurrentTransaction.TABLE + " WHERE " + Schema.RecurrentTransaction.CATEGORY +
+                " = ? AND " + Schema.RecurrentTransaction.DELETED + " = 0) + (SELECT COUNT(*) FROM " +
+                Schema.Budget.TABLE + " WHERE " + Schema.Budget.CATEGORY + " = ? AND " +
+                Schema.Budget.DELETED + " = 0) + (SELECT COUNT(*) FROM " + Schema.BudgetCategory.TABLE +
+                " AS bc JOIN " + Schema.Budget.TABLE + " AS b ON bc." + Schema.BudgetCategory.BUDGET +
+                " = b." + Schema.Budget.ID + " WHERE bc." + Schema.BudgetCategory.CATEGORY + " = ? AND bc." +
+                Schema.BudgetCategory.DELETED + " = 0 AND b." + Schema.Budget.DELETED + " = 0)",
+                new String[] {id, id, id, id});
+        return new long[] {transactions, others};
+    }
+
+    Bundle moveCategory(long categoryId, long targetId) {
+        if (categoryId == targetId) {
+            return null;
+        }
+        String[] whereArgs = new String[] {String.valueOf(categoryId)};
+        if (DatabaseUtils.longForQuery(getReadableDatabase(), "SELECT COUNT(*) FROM " + Schema.Category.TABLE +
+                " WHERE " + Schema.Category.PARENT + " = ? AND " + Schema.Category.DELETED + " = 0", whereArgs) > 0L) {
+            throw new SQLiteDataException(Contract.ErrorCode.CATEGORY_HAS_CHILDREN,
+                    String.format(Locale.ENGLISH, "The category (id: %d) cannot be moved because it is parent of other categories", categoryId));
+        }
+        ArrayList<ContentValues> categories = getRows(Schema.Category.TABLE, Schema.Category.ID + " = ?", whereArgs);
+        if (categories.isEmpty()) {
+            return null;
+        }
+        int type = categories.get(0).getAsInteger(Schema.Category.TYPE);
+        if (type == Schema.CategoryType.SYSTEM) {
+            throw new SQLiteDataException(Contract.ErrorCode.SYSTEM_CATEGORY_NOT_MODIFIABLE,
+                    String.format(Locale.ENGLISH, "The category (id: %d) cannot be moved because it is a system category", categoryId));
+        }
+        if (DatabaseUtils.longForQuery(getReadableDatabase(), "SELECT COUNT(*) FROM " + Schema.Category.TABLE +
+                " WHERE " + Schema.Category.ID + " = ? AND " + Schema.Category.TYPE + " = ? AND " +
+                Schema.Category.DELETED + " = 0", new String[] {String.valueOf(targetId), String.valueOf(type)}) == 0L) {
+            throw new SQLiteDataException(Contract.ErrorCode.CATEGORY_NOT_CONSISTENT,
+                    String.format(Locale.ENGLISH, "The category (id: %d) cannot be moved to a category (id: %d) of another type", categoryId, targetId));
+        }
+        long now = System.currentTimeMillis();
+        ArrayList<ContentValues> budgetCategories = getRows(Schema.BudgetCategory.TABLE, Schema.BudgetCategory.CATEGORY +
+                " = ? AND " + Schema.BudgetCategory.BUDGET + " IN (SELECT " + Schema.BudgetCategory.BUDGET + " FROM " +
+                Schema.BudgetCategory.TABLE + " WHERE " + Schema.BudgetCategory.CATEGORY + " = ?)",
+                new String[] {String.valueOf(categoryId), String.valueOf(targetId)});
+        ArrayList<ContentValues> keptBudgetCategories = new ArrayList<>();
+        for (ContentValues budgetCategory : budgetCategories) {
+            if (budgetCategory.getAsInteger(Schema.BudgetCategory.DELETED) == 0) {
+                String[] keptArgs = new String[] {budgetCategory.getAsString(Schema.BudgetCategory.BUDGET), String.valueOf(targetId)};
+                String keptWhere = Schema.BudgetCategory.BUDGET + " = ? AND " + Schema.BudgetCategory.CATEGORY + " = ? AND " +
+                        Schema.BudgetCategory.DELETED + " != 0";
+                Cursor cursor = getReadableDatabase().query(Schema.BudgetCategory.TABLE, new String[] {Schema.BudgetCategory.UUID,
+                        Schema.BudgetCategory.DELETED, Schema.BudgetCategory.LAST_EDIT}, keptWhere, keptArgs, null, null, null);
+                try {
+                    while (cursor.moveToNext()) {
+                        ContentValues kept = new ContentValues();
+                        DatabaseUtils.cursorRowToContentValues(cursor, kept);
+                        keptBudgetCategories.add(kept);
+                    }
+                } finally {
+                    cursor.close();
+                }
+                ContentValues cv = new ContentValues();
+                cv.put(Schema.BudgetCategory.DELETED, false);
+                cv.put(Schema.BudgetCategory.LAST_EDIT, now);
+                getWritableDatabase().update(Schema.BudgetCategory.TABLE, cv, keptWhere, keptArgs);
+            }
+            getWritableDatabase().delete(Schema.BudgetCategory.TABLE, Schema.BudgetCategory.UUID + " = ?",
+                    new String[] {budgetCategory.getAsString(Schema.BudgetCategory.UUID)});
+        }
+        Bundle movedRows = new Bundle();
+        for (String[] reference : CATEGORY_REFERENCES) {
+            ArrayList<ContentValues> moved = new ArrayList<>();
+            if (reference[0].equals(Schema.BudgetCategory.TABLE)) {
+                moved.addAll(keptBudgetCategories);
+            }
+            String where = reference[1] + " = ?";
+            Cursor cursor = getReadableDatabase().query(reference[0], new String[] {reference[2], reference[1], reference[3]},
+                    where, whereArgs, null, null, null);
+            try {
+                while (cursor.moveToNext()) {
+                    ContentValues prior = new ContentValues();
+                    DatabaseUtils.cursorRowToContentValues(cursor, prior);
+                    moved.add(prior);
+                }
+            } finally {
+                cursor.close();
+            }
+            ContentValues cv = new ContentValues();
+            cv.put(reference[1], targetId);
+            cv.put(reference[3], now);
+            getWritableDatabase().update(reference[0], cv, where, whereArgs);
+            movedRows.putParcelableArrayList(reference[0], moved);
+        }
+        getWritableDatabase().delete(Schema.Category.TABLE, Schema.Category.ID + " = ?", whereArgs);
+        Bundle deletedRows = new Bundle();
+        deletedRows.putParcelableArrayList(Schema.Category.TABLE, categories);
+        deletedRows.putParcelableArrayList(Schema.BudgetCategory.TABLE, budgetCategories);
+        Bundle record = new Bundle();
+        record.putLong(DataContentProvider.KEY_CATEGORY_ID, categoryId);
+        record.putLong(DataContentProvider.KEY_TARGET_ID, targetId);
+        record.putBundle(KEY_MOVED_ROWS, movedRows);
+        record.putBundle(KEY_DELETED_ROWS, deletedRows);
+        record.putLong(KEY_LAST_EDIT, now);
+        return record;
+    }
+
+    int restoreCategory(Bundle record) {
+        Bundle movedRows = record.getBundle(KEY_MOVED_ROWS);
+        Bundle deletedRows = record.getBundle(KEY_DELETED_ROWS);
+        if (movedRows == null || deletedRows == null) {
+            return 0;
+        }
+        for (ContentValues category : deletedRows.<ContentValues>getParcelableArrayList(Schema.Category.TABLE)) {
+            if (DatabaseUtils.longForQuery(getReadableDatabase(), "SELECT COUNT(*) FROM " + Schema.Category.TABLE +
+                    " WHERE " + Schema.Category.ID + " = ? AND " + Schema.Category.TYPE + " != ?", new String[] {
+                    String.valueOf(record.getLong(DataContentProvider.KEY_TARGET_ID)),
+                    category.getAsString(Schema.Category.TYPE)}) > 0L) {
+                return 0;
+            }
+            if (category.getAsString(Schema.Category.PARENT) != null && DatabaseUtils.longForQuery(getReadableDatabase(),
+                    "SELECT COUNT(*) FROM " + Schema.Category.TABLE + " WHERE " + Schema.Category.ID + " = ? AND (" +
+                    Schema.Category.TYPE + " != ? OR " + Schema.Category.PARENT + " IS NOT NULL)", new String[] {
+                    category.getAsString(Schema.Category.PARENT), category.getAsString(Schema.Category.TYPE)}) > 0L) {
+                return 0;
+            }
+        }
+        int rows = 0;
+        for (ContentValues category : deletedRows.<ContentValues>getParcelableArrayList(Schema.Category.TABLE)) {
+            getWritableDatabase().insertOrThrow(Schema.Category.TABLE, null, category);
+            rows++;
+        }
+        for (ContentValues budgetCategory : deletedRows.<ContentValues>getParcelableArrayList(Schema.BudgetCategory.TABLE)) {
+            try {
+                getWritableDatabase().insertOrThrow(Schema.BudgetCategory.TABLE, null, budgetCategory);
+                rows++;
+            } catch (SQLiteConstraintException e) {
+                continue;
+            }
+        }
+        String[] whereArgs = new String[] {null, String.valueOf(record.getLong(DataContentProvider.KEY_TARGET_ID)),
+                String.valueOf(record.getLong(KEY_LAST_EDIT))};
+        for (String[] reference : CATEGORY_REFERENCES) {
+            String where = reference[2] + " = ? AND " + reference[1] + " = ? AND " + reference[3] + " = ?";
+            for (ContentValues prior : movedRows.<ContentValues>getParcelableArrayList(reference[0])) {
+                ContentValues cv = new ContentValues(prior);
+                cv.remove(reference[2]);
+                whereArgs[0] = prior.getAsString(reference[2]);
+                rows += getWritableDatabase().update(reference[0], cv, where, whereArgs);
+            }
+        }
+        return rows;
+    }
+
+    private ArrayList<ContentValues> getRows(String table, String where, String[] whereArgs) {
+        ArrayList<ContentValues> rows = new ArrayList<>();
+        Cursor cursor = getReadableDatabase().query(table, null, where, whereArgs, null, null, null);
+        try {
+            while (cursor.moveToNext()) {
+                ContentValues row = new ContentValues();
+                DatabaseUtils.cursorRowToContentValues(cursor, row);
+                rows.add(row);
+            }
+        } finally {
+            cursor.close();
+        }
+        return rows;
     }
 
     /**
