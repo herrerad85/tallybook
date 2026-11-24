@@ -423,7 +423,6 @@
     <string name="message_saved_dated_ahead">"Saved. Its date is ahead of now, so the balance does not count it."</string>
     <string name="message_no_transaction_found_other_wallets_and_future">"No transaction found in the selected wallet. There are transactions in other wallets, and transactions dated in the future."</string>
     <string name="message_no_transfer_found">"No transfer found"</string>
-    <string name="message_no_transfer_found_future">"No transfer found in the selected wallet. There are transfers dated in the future."</string>
     <string name="message_no_category_found">"No category found"</string>
     <string name="message_no_debt_found">"No debt found"</string>
     <string name="message_no_finished_debt_found">"No finished debt found"</string>
@@ -553,6 +552,7 @@
         <item quantity="one">"Split into %d category"</item>
         <item quantity="other">"Split into %d categories"</item>
     </plurals>
+    <string name="description_dated_ahead">"Dated ahead, not in the balance yet"</string>
     <string name="description_budget_period_spent">"Period starting %1$s, spent %2$s"</string>
     <string name="description_budget_period_earned">"Period starting %1$s, earned %2$s"</string>
     <string name="message_selection_changed_nothing_changed">"The selection changed, so nothing was changed."</string>

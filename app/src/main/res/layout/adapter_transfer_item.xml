@@ -57,10 +57,24 @@
         android:maxLines="1"
         android:ellipsize="end"
         app:layout_constraintBottom_toTopOf="@+id/text_guideline"
-        app:layout_constraintEnd_toStartOf="@+id/money_text_view"
+        app:layout_constraintEnd_toStartOf="@+id/future_image_view"
         app:layout_constraintStart_toStartOf="parent"
         app:theme_textColor="textColorPrimary"
         tools:text="This is the primary text" />
+
+    <com.oriondev.moneywallet.ui.view.theme.ThemedImageView
+        android:id="@+id/future_image_view"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="4dp"
+        android:src="@drawable/ic_event_24dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@+id/primary_text_view"
+        app:layout_constraintBottom_toBottomOf="@+id/primary_text_view"
+        app:layout_constraintEnd_toStartOf="@+id/money_text_view"
+        app:layout_constraintStart_toEndOf="@+id/primary_text_view"
+        app:theme_backgroundColor="colorWindowForeground"
+        tools:visibility="visible" />
 
     <com.oriondev.moneywallet.ui.view.theme.ThemedTextView
         android:id="@+id/money_text_view"

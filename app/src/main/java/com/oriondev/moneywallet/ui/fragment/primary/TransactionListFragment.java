@@ -27,7 +27,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -54,7 +53,6 @@ import com.oriondev.moneywallet.ui.fragment.base.MultiPanelFragment;
 import com.oriondev.moneywallet.ui.fragment.base.TransactionSelectionMode;
 import com.oriondev.moneywallet.ui.fragment.base.TransactionSwipeCallback;
 import com.oriondev.moneywallet.ui.view.AdvancedRecyclerView;
-import com.oriondev.moneywallet.utils.DateUtils;
 
 import java.util.Date;
 
@@ -62,10 +60,6 @@ import java.util.Date;
  * Created by andrea on 03/03/18.
  */
 public class TransactionListFragment extends CursorListFragment implements TransactionCursorAdapter.ActionListener, WalletPicker.SingleWalletController, CategoryPicker.Controller {
-
-    private static final int HIDDEN_TRANSACTIONS_LOADER_ID = 60004;
-
-    private static final String[] HIDDEN_PROJECTION = new String[] {Contract.Transaction.DATE};
 
     private TransactionCursorAdapter mAdapter;
     private TransactionSelectionMode mSelectionMode;
@@ -122,7 +116,8 @@ public class TransactionListFragment extends CursorListFragment implements Trans
             Uri uri = DataContentProvider.CONTENT_TRANSACTIONS;
             long currentWallet = PreferenceManager.getCurrentWallet();
             String selection = walletSelection(currentWallet)
-                    + " AND DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')";
+                    + " AND (DATETIME(" + Contract.Transaction.DATE + ") <= DATETIME('now', 'localtime')"
+                    + " OR DATETIME(" + Contract.Transaction.DATE + ", '+0 days') = " + Contract.Transaction.DATE + ")";
             String sortOrder = Contract.Transaction.DATE + " DESC";
             Group groupType = PreferenceManager.getCurrentGroupType();
             return new WrappedCursorLoader(activity, uri, null, selection, null,
@@ -131,86 +126,11 @@ public class TransactionListFragment extends CursorListFragment implements Trans
         return null;
     }
 
-    /**
-     * The wallet this list is about. The date test is not in here on purpose: it is the clause
-     * the other query asks about, so that query is this selection on its own, and one method
-     * decides the wallet rule for both. The wallet id is written into the text rather than bound,
-     * so there are no arguments to keep in step with it either.
-     *
-     * On the Total wallet this selection hides rows of its own, from a wallet the user left out
-     * of the total. Those are hidden from both queries alike, so nothing here reports them and
-     * nothing here gets them wrong.
-     */
     private static String walletSelection(long currentWallet) {
         if (currentWallet == PreferenceManager.TOTAL_WALLET_ID) {
             return Contract.Transaction.WALLET_COUNT_IN_TOTAL + " = 1";
         }
         return Contract.Transaction.WALLET_ID + " = " + currentWallet;
-    }
-
-    /**
-     * An empty list here reads the same whether this wallet has no transactions or has some that
-     * are all dated ahead of now, which the query hides without saying so. When it comes back
-     * empty, ask what it is hiding.
-     */
-    @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
-        boolean empty = cursor == null || cursor.getCount() == 0;
-        if (empty) {
-            // back to the plain message before the base makes it visible: a refined one from an
-            // earlier load would otherwise stand on screen while this load is being explained
-            setEmptyText(R.string.message_no_transaction_found);
-        }
-        super.onLoadFinished(loader, cursor);
-        if (empty) {
-            LoaderManager.getInstance(this).restartLoader(HIDDEN_TRANSACTIONS_LOADER_ID, null, mHiddenTransactionsCallbacks);
-        } else {
-            LoaderManager.getInstance(this).destroyLoader(HIDDEN_TRANSACTIONS_LOADER_ID);
-        }
-    }
-
-    private final LoaderManager.LoaderCallbacks<Cursor> mHiddenTransactionsCallbacks = new LoaderManager.LoaderCallbacks<Cursor>() {
-
-        @NonNull
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-            long currentWallet = PreferenceManager.getCurrentWallet();
-            // the same wallet, without the date test, newest first so the row most likely to be
-            // dated ahead is the one read
-            return new CursorLoader(getActivity(), DataContentProvider.CONTENT_TRANSACTIONS,
-                    HIDDEN_PROJECTION, walletSelection(currentWallet), null,
-                    Contract.Transaction.DATE + " DESC");
-        }
-
-        @Override
-        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-            setEmptyText(isDatedAhead(data) ? R.string.message_no_transaction_found_future
-                    : R.string.message_no_transaction_found);
-        }
-
-        @Override
-        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-            // the message is a resource id, and holds nothing of the cursor
-        }
-
-    };
-
-    /**
-     * Whether the newest row here is dated ahead of now. The message this decides is about the
-     * date, so the date is what it reads. A row is missing from the list whenever the query held
-     * it back, which is a wider question than the one being asked.
-     *
-     * Compared as text rather than parsed, because the column and this string are both
-     * yyyy-MM-dd HH:mm:ss in local time. That is the comparison the item screens make. A value
-     * the database cannot read is normalised by neither side, so it is compared as it was
-     * stored and can fall either side of now.
-     */
-    private static boolean isDatedAhead(@Nullable Cursor cursor) {
-        if (cursor == null || !cursor.moveToFirst()) {
-            return false;
-        }
-        String date = cursor.getString(cursor.getColumnIndex(Contract.Transaction.DATE));
-        return date != null && date.compareTo(DateUtils.getSQLDateTimeString(new Date())) > 0;
     }
 
     @Override

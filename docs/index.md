@@ -24,7 +24,7 @@ A wallet has a name, a currency, an **Initial amount** and an optional **Group**
 
 On **Transactions**, the round + button opens **New transaction** on the Transactions tab and **New transfer** on the Transfers tab. A transaction needs a category, a date and a wallet. A transfer moves money **From** one of your wallets **To** another, with an optional **Tax**. The category decides whether money comes in or goes out, which is why the keypad refuses a minus sign ([FAQ](FAQ.md)).
 
-- A transaction dated in the future is saved, but the transactions list and the balance leave it out until its date arrives. The app says so when you save.
+- A transaction or a transfer dated in the future shows at the top of its list with a calendar icon. The balance leaves it out until its date arrives, and the app says so when you save.
 - Long press the Tallybook icon on your home screen for **New transaction** and **New transfer** shortcuts.
 
 ## Splitting a transaction
@@ -50,6 +50,7 @@ One receipt can cover several categories. In **New transaction**, or when you ed
 
 - Long press a transaction to start a selection, then tap more. The toolbar offers **Delete**, **Move to wallet** and **Change category** for all of them. The two sides of a transfer cannot be selected.
 - **Calendar** in the toolbar opens a month row above a day strip. Days with transactions are marked, and tapping a day lists them.
+- A clock next to the category name means the transaction is not confirmed. It counts toward balances and budgets only after you open it, tick **Confirmed** and save. A calendar means its date is still ahead.
 
 ## Search
 

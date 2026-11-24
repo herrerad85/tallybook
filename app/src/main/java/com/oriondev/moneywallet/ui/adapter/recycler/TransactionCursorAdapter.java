@@ -401,6 +401,14 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             holder.mUnconfirmedImageView.setVisibility(View.GONE);
             holder.mUnconfirmedImageView.setContentDescription(null);
         }
+        if (DateUtils.isDatedAhead(cursor.getString(mIndexTransactionDate), DateUtils.getSQLDateTimeString(new Date()))) {
+            holder.mFutureImageView.setVisibility(View.VISIBLE);
+            holder.mFutureImageView.setContentDescription(
+                    holder.itemView.getResources().getString(R.string.description_dated_ahead));
+        } else {
+            holder.mFutureImageView.setVisibility(View.GONE);
+            holder.mFutureImageView.setContentDescription(null);
+        }
         CurrencyUnit currency = CurrencyManager.getCurrency(cursor.getString(mIndexCurrency));
         long money = cursor.getLong(mIndexTransactionMoney);
         if (cursor.getInt(mIndexTransactionDirection) == Contract.Direction.INCOME) {
@@ -635,6 +643,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         private TextView mPrimaryTextView;
         private ImageView mSplitImageView;
         private ImageView mUnconfirmedImageView;
+        private ImageView mFutureImageView;
         private TextView mMoneyTextView;
         private TextView mSecondaryTextView;
         private TextView mDateTextView;
@@ -645,6 +654,7 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
             mPrimaryTextView = itemView.findViewById(R.id.primary_text_view);
             mSplitImageView = itemView.findViewById(R.id.split_image_view);
             mUnconfirmedImageView = itemView.findViewById(R.id.unconfirmed_image_view);
+            mFutureImageView = itemView.findViewById(R.id.future_image_view);
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mSecondaryTextView = itemView.findViewById(R.id.secondary_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);
