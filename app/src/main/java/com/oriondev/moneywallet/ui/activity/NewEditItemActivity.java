@@ -199,7 +199,7 @@ public abstract class NewEditItemActivity extends SinglePanelScrollActivity {
 
     /**
      * Ends a save, saying first that the item is not counted yet when the date it was saved with
-     * is ahead of now. The transaction and transfer lists, the per item lists, the overview and
+     * is ahead of now. The per item lists, the overview and
      * every balance all filter on DATETIME(date) <= DATETIME('now', 'localtime'), so a row dated
      * ahead is written and then counts for nothing, and the save reads as though it did nothing.
      *

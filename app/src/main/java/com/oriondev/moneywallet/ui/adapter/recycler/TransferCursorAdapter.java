@@ -110,6 +110,14 @@ public class TransferCursorAdapter extends AbstractCursorAdapter<RecyclerView.Vi
         String walletTo = cursor.getString(mIndexWalletToName);
         holder.mPrimaryTextView.setText(String.format(Locale.ENGLISH, "%s -> %s", walletFrom, walletTo));
         holder.mSecondaryTextView.setText(cursor.getString(mIndexDescription));
+        if (DateUtils.isDatedAhead(cursor.getString(mIndexDate), DateUtils.getSQLDateTimeString(new Date()))) {
+            holder.mFutureImageView.setVisibility(View.VISIBLE);
+            holder.mFutureImageView.setContentDescription(
+                    holder.itemView.getResources().getString(R.string.description_dated_ahead));
+        } else {
+            holder.mFutureImageView.setVisibility(View.GONE);
+            holder.mFutureImageView.setContentDescription(null);
+        }
         CurrencyUnit currency = CurrencyManager.getCurrency(cursor.getString(mIndexWalletFromCurrency));
         long money = cursor.getLong(mIndexMoneyFrom);
         mMoneyFormatter.applyNotTinted(holder.mMoneyTextView, currency, money);
@@ -166,6 +174,7 @@ public class TransferCursorAdapter extends AbstractCursorAdapter<RecyclerView.Vi
 
         private ImageView mAvatarImageView;
         private TextView mPrimaryTextView;
+        private ImageView mFutureImageView;
         private TextView mMoneyTextView;
         private TextView mSecondaryTextView;
         private TextView mDateTextView;
@@ -174,6 +183,7 @@ public class TransferCursorAdapter extends AbstractCursorAdapter<RecyclerView.Vi
             super(itemView);
             mAvatarImageView = itemView.findViewById(R.id.avatar_image_view);
             mPrimaryTextView = itemView.findViewById(R.id.primary_text_view);
+            mFutureImageView = itemView.findViewById(R.id.future_image_view);
             mMoneyTextView = itemView.findViewById(R.id.money_text_view);
             mSecondaryTextView = itemView.findViewById(R.id.secondary_text_view);
             mDateTextView = itemView.findViewById(R.id.date_text_view);

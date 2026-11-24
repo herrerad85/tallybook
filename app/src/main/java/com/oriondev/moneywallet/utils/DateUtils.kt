@@ -180,6 +180,11 @@ object DateUtils {
     }
 
     @JvmStatic
+    fun isDatedAhead(dateTime: String, now: String): Boolean {
+        return dateTime.length == SQL_DATETIME.length && dateTime > now
+    }
+
+    @JvmStatic
     fun isAfter(date1: Date?, date2: Date?): Boolean {
         return date1!!.compareTo(date2) == 1
     }

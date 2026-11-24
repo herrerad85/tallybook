@@ -76,6 +76,7 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
         int indexTransactionCountInTotal = cursor.getColumnIndex(Contract.Transaction.COUNT_IN_TOTAL);
         int indexCategoryTag = cursor.getColumnIndex(Contract.Transaction.CATEGORY_TAG);
         if (cursor.moveToFirst()) {
+            String now = DateUtils.getSQLDateTimeString(new Date());
             Header header = null;
             do {
                 String dateTime = cursor.getString(indexTransactionDate);
@@ -90,7 +91,8 @@ public class TransactionHeaderCursor extends AbstractHeaderCursor<TransactionHea
                     }
                 }
                 addItem(cursor.getPosition());
-                if (cursor.getInt(indexTransactionConfirmed) == 1 && cursor.getInt(indexTransactionCountInTotal) == 1) {
+                if (cursor.getInt(indexTransactionConfirmed) == 1 && cursor.getInt(indexTransactionCountInTotal) == 1
+                        && !DateUtils.isDatedAhead(dateTime, now)) {
                     String currency = cursor.getString(indexCurrency);
                     long money = cursor.getLong(indexTransactionMoney);
                     int direction = cursor.getInt(indexTransactionDirection);
