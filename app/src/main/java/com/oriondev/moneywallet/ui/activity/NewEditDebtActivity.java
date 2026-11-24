@@ -435,7 +435,39 @@ public class NewEditDebtActivity extends NewEditItemActivity implements IconPick
     }
 
     private boolean validate() {
-        return mDescriptionEditText.validate() && mDescriptionEditText.validate() && mWalletEditText.validate();
+        return mDescriptionEditText.validate() && mWalletEditText.validate() && validateAmount();
+    }
+
+    private boolean validateAmount() {
+        if (!TransactionEditorRules.isAmountMissing(mMoneyPicker.getCurrentMoney(),
+                readStoredMoney(getContentResolver()))) {
+            return true;
+        }
+        ThemedDialog.buildMaterialDialog(this)
+                .setTitle(R.string.title_error)
+                .setMessage(R.string.error_input_missing_amount)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+        return false;
+    }
+
+    private Long readStoredMoney(ContentResolver contentResolver) {
+        if (getMode() != Mode.EDIT_ITEM) {
+            return null;
+        }
+        Uri uri = ContentUris.withAppendedId(DataContentProvider.CONTENT_DEBTS, getItemId());
+        String[] projection = new String[] {
+                Contract.Debt.MONEY
+        };
+        Cursor cursor = contentResolver.query(uri, projection, null, null, null);
+        Long storedMoney = null;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                storedMoney = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Debt.MONEY));
+            }
+            cursor.close();
+        }
+        return storedMoney;
     }
 
     @Override

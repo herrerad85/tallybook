@@ -54,9 +54,8 @@ public class DebtHeaderCursor extends AbstractHeaderCursor<DebtHeaderCursor.Head
      * in Java would be a second copy that could drift, and this class throws when the grouping
      * disagrees with the order, so the drift would surface as a crash rather than a mis-sort.
      * <p>
-     * A debt for no money is not finished, it is unfinished data entry. The amount is not required
-     * when saving, so one can be created by accident, and filing it away as finished is how it
-     * would be lost.
+     * A debt for no money is not finished, it is unfinished data entry. Filing it away as finished
+     * is how it would be lost.
      */
     public static final String SQL_IS_SETTLED = "(CASE WHEN " + Contract.Debt.ARCHIVED + " = 1 OR "
             + "(" + Contract.Debt.MONEY + " <> 0 AND "
