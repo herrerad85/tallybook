@@ -164,6 +164,7 @@ public class DebtCursorAdapter extends AbstractCursorAdapter {
         holder.mProgressBar.setMaxValue(target);
         holder.mProgressBar.setProgressValue(progress);
         boolean credit = debtType == Contract.DebtType.CREDIT;
+        holder.mProgressTextView.setVisibility(target == 0L ? View.GONE : View.VISIBLE);
         if (progress < target) {
             Context context = holder.mProgressTextView.getContext();
             long remaining = Math.abs(target - progress);
