@@ -17,153 +17,147 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
-import androidx.annotation.MenuRes;
-import androidx.annotation.Nullable;
-import androidx.appcompat.graphics.drawable.DrawerArrowDrawable;
-import androidx.appcompat.widget.Toolbar;
-import android.util.AttributeSet;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.content.Context
+import android.graphics.drawable.Drawable
+import androidx.annotation.MenuRes
+import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
+import androidx.appcompat.widget.Toolbar
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 10/04/18.
  */
-public class ThemedToolbar extends Toolbar implements ThemeEngine.ThemeConsumer {
+class ThemedToolbar : Toolbar, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    public ThemedToolbar(Context context) {
-        super(context);
-        initialize(context, null, 0);
+    constructor(context: Context) : super(context) {
+        initialize(context, null, 0)
     }
 
-    public ThemedToolbar(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs, 0);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs, 0)
     }
 
-    public ThemedToolbar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs, defStyleAttr);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs, defStyleAttr)
     }
 
-    private void initialize(Context context, AttributeSet attrs, int defStyleAttr) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedToolbar, defStyleAttr, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?, defStyleAttr: Int) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedToolbar, defStyleAttr, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedToolbar_theme_backgroundColor, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedToolbar_theme_backgroundColor, 0))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int background = getBackgroundColor(theme);
-            setBackgroundColor(background);
-            setTitleTextColor(theme);
-            setOverflowButtonColor(theme);
-            setNavigationIconColor(theme);
-            setMenuIconColor(theme);
+            val background = getBackgroundColor(theme)
+            setBackgroundColor(background)
+            setTitleTextColor(theme)
+            setOverflowButtonColor(theme)
+            setNavigationIconColor(theme)
+            setMenuIconColor(theme)
         }
     }
 
-    @Override
-    public void setNavigationIcon(@Nullable Drawable icon) {
-        super.setNavigationIcon(icon);
-        setNavigationIconColor(ThemeEngine.getTheme());
+    override fun setNavigationIcon(icon: Drawable?) {
+        super.setNavigationIcon(icon)
+        setNavigationIconColor(ThemeEngine.getTheme())
     }
 
-    @Override
-    public void inflateMenu(@MenuRes int resId) {
-        super.inflateMenu(resId);
-        setMenuIconColor(ThemeEngine.getTheme());
+    override fun inflateMenu(@MenuRes resId: Int) {
+        super.inflateMenu(resId)
+        setMenuIconColor(ThemeEngine.getTheme())
     }
 
-    private int getBackgroundColor(ITheme theme) {
+    private fun getBackgroundColor(theme: ITheme?): Int {
         if (mBackgroundColor != null) {
             if (mBackgroundColor == BackgroundColor.COLOR_PRIMARY) {
-                return theme.getColorPrimaryBackground();
+                return theme!!.colorPrimaryBackground
             } else {
-                return theme.getColorPrimaryDark();
+                return theme!!.colorPrimaryDark
             }
         } else {
-            return theme.getColorPrimaryBackground();
+            return theme!!.colorPrimaryBackground
         }
     }
 
-    private void setTitleTextColor(ITheme theme) {
-        int background = getBackgroundColor(theme);
-        int color = theme.getBestTextColor(background);
-        setTitleTextColor(color);
-        setSubtitleTextColor(color);
+    private fun setTitleTextColor(theme: ITheme?) {
+        val background = getBackgroundColor(theme)
+        val color = theme!!.getBestTextColor(background)
+        setTitleTextColor(color)
+        setSubtitleTextColor(color)
     }
 
-    private void setOverflowButtonColor(ITheme theme) {
-        Drawable drawable = getOverflowIcon();
+    private fun setOverflowButtonColor(theme: ITheme?) {
+        val drawable = overflowIcon
         if (drawable != null) {
-            int background = getBackgroundColor(theme);
-            int color = theme.getBestTextColor(background);
-            super.setOverflowIcon(TintHelper.createTintedDrawable(drawable, color));
+            val background = getBackgroundColor(theme)
+            val color = theme!!.getBestTextColor(background)
+            super.setOverflowIcon(TintHelper.createTintedDrawable(drawable, color))
         }
     }
 
-    private void setNavigationIconColor(ITheme theme) {
-        Drawable drawable = getNavigationIcon();
+    private fun setNavigationIconColor(theme: ITheme?) {
+        val drawable = navigationIcon
         if (drawable != null) {
-            int background = getBackgroundColor(theme);
-            int color = theme.getBestTextColor(background);
-            if (drawable instanceof DrawerArrowDrawable) {
-                ((DrawerArrowDrawable) drawable).setColor(color);
-                super.setNavigationIcon(drawable);
+            val background = getBackgroundColor(theme)
+            val color = theme!!.getBestTextColor(background)
+            if (drawable is DrawerArrowDrawable) {
+                drawable.setColor(color)
+                super.setNavigationIcon(drawable)
             } else {
-                super.setNavigationIcon(TintHelper.createTintedDrawable(drawable, color));
+                super.setNavigationIcon(TintHelper.createTintedDrawable(drawable, color))
             }
         }
     }
 
-    private void setMenuIconColor(ITheme theme) {
-        Menu menu = getMenu();
+    private fun setMenuIconColor(theme: ITheme?) {
+        val menu = getMenu()
         if (menu != null) {
-            int background = getBackgroundColor(theme);
-            int color = theme.getBestTextColor(background);
-            for (int i = 0; i < menu.size(); i++) {
-                MenuItem item = menu.getItem(i);
-                Drawable drawable = item.getIcon();
+            val background = getBackgroundColor(theme)
+            val color = theme!!.getBestTextColor(background)
+            for (i in 0 until menu.size()) {
+                val item = menu.getItem(i)
+                val drawable = item.icon
                 if (drawable != null) {
-                    item.setIcon(TintHelper.createTintedDrawable(drawable, color));
+                    item.setIcon(TintHelper.createTintedDrawable(drawable, color))
                 }
             }
         }
     }
 
-    public enum BackgroundColor {
+    enum class BackgroundColor {
         COLOR_PRIMARY(0),
         COLOR_PRIMARY_DARK(1);
 
-        private int mValue;
+        private var mValue: Int
 
-        BackgroundColor(int value) {
-            mValue = value;
+        constructor(value: Int) {
+            mValue = value
         }
 
-        static BackgroundColor fromValue(int value) {
-            switch (value) {
-                case 0:
-                    return COLOR_PRIMARY;
-                case 1:
-                    return COLOR_PRIMARY_DARK;
-                default:
-                    return null;
+        companion object {
+
+            @JvmStatic
+            internal fun fromValue(value: Int): BackgroundColor? {
+                when (value) {
+                    0 ->
+                        return COLOR_PRIMARY
+                    1 ->
+                        return COLOR_PRIMARY_DARK
+                    else ->
+                        return null
+                }
             }
         }
     }
