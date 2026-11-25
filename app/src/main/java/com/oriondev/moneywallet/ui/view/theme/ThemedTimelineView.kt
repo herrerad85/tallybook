@@ -17,37 +17,29 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.annotation.Nullable;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.calendar.TimelineView;
+import com.oriondev.moneywallet.ui.view.calendar.TimelineView
 
 /**
  * Created by andrea on 13/04/18.
  */
-public class ThemedTimelineView extends TimelineView implements ThemeEngine.ThemeConsumer {
+class ThemedTimelineView : TimelineView, ThemeEngine.ThemeConsumer {
 
-    public ThemedTimelineView(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedTimelineView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedTimelineView(Context context, @Nullable AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        int textColor = theme.getTextColorPrimary();
-        setDayLabelColor(textColor);
-        setDateLabelColor(textColor);
-        setDateLabelSelectedColor(theme.getColorAccent());
-        EdgeGlowUtil.setEdgeGlowColor(this, theme.getColorPrimary());
+    override fun onApplyTheme(theme: ITheme?) {
+        val textColor = theme!!.textColorPrimary
+        setDayLabelColor(textColor)
+        setDateLabelColor(textColor)
+        setDateLabelSelectedColor(theme.colorAccent)
+        EdgeGlowUtil.setEdgeGlowColor(this, theme.colorPrimary)
     }
 }
