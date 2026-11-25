@@ -17,48 +17,44 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.andrognito.pinlockview.PinLockView;
-import com.oriondev.moneywallet.R;
+import com.andrognito.pinlockview.PinLockView
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedPinLockView extends PinLockView implements ThemeEngine.ThemeConsumer {
+class ThemedPinLockView : PinLockView, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    public ThemedPinLockView(Context context) {
-        super(context);
-        initialize(context, null);
+    constructor(context: Context) : super(context) {
+        initialize(context, null)
     }
 
-    public ThemedPinLockView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
-    private void initialize(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedPinLockView, 0, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedPinLockView, 0, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedPinLockView_theme_backgroundColor, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedPinLockView_theme_backgroundColor, 0))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int backgroundColor = mBackgroundColor.getColor(theme);
-            setTextColor(theme.getBestTextColor(backgroundColor));
+            val backgroundColor = mBackgroundColor!!.getColor(theme!!)
+            setTextColor(theme.getBestTextColor(backgroundColor))
         }
     }
 }
