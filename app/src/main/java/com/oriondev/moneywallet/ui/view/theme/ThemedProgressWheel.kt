@@ -17,29 +17,24 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.progressindicator.CircularProgressIndicator
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedProgressWheel extends CircularProgressIndicator implements ThemeEngine.ThemeConsumer {
+class ThemedProgressWheel : CircularProgressIndicator, ThemeEngine.ThemeConsumer {
 
-    public ThemedProgressWheel(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedProgressWheel(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        int background = theme.getColorWindowForeground();
-        setIndicatorColor(Util.visibleOr(theme.getColorAccent(), background, theme.getBestIconColor(background)));
+    override fun onApplyTheme(theme: ITheme?) {
+        val background = theme!!.colorWindowForeground
+        setIndicatorColor(Util.visibleOr(theme.colorAccent, background, theme.getBestIconColor(background)))
     }
 }
