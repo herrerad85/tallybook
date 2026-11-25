@@ -17,60 +17,53 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
-import android.widget.ScrollView;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.ScrollView
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.utils.SystemBars;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.utils.SystemBars
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedScrollView extends ScrollView implements ThemeEngine.ThemeConsumer {
+class ThemedScrollView : ScrollView, ThemeEngine.ThemeConsumer {
 
-    public ThemedScrollView(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
-    public ThemedScrollView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs)
     }
 
-    public ThemedScrollView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initialize(context, attrs)
     }
 
-    public ThemedScrollView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initialize(context, attrs);
-    }
-
-    private void initialize(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedScrollView, 0, 0);
-        boolean insetTop;
-        boolean insetSides;
-        boolean insetBottom;
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedScrollView, 0, 0)
+        val insetTop: Boolean
+        val insetSides: Boolean
+        val insetBottom: Boolean
         try {
-            insetTop = typedArray.getBoolean(R.styleable.ThemedScrollView_systemBarInsetTop, false);
-            insetSides = typedArray.getBoolean(R.styleable.ThemedScrollView_systemBarInsetSides, true);
-            insetBottom = typedArray.getBoolean(R.styleable.ThemedScrollView_systemBarInsetBottom, false);
+            insetTop = typedArray.getBoolean(R.styleable.ThemedScrollView_systemBarInsetTop, false)
+            insetSides = typedArray.getBoolean(R.styleable.ThemedScrollView_systemBarInsetSides, true)
+            insetBottom = typedArray.getBoolean(R.styleable.ThemedScrollView_systemBarInsetBottom, false)
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
         if (insetTop || insetBottom) {
-            SystemBars.pad(this, insetTop, insetSides, insetBottom);
+            SystemBars.pad(this, insetTop, insetSides, insetBottom)
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        EdgeGlowUtil.setEdgeGlowColor(this, theme.getColorPrimary());
-        setBackgroundColor(theme.getColorWindowForeground());
+    override fun onApplyTheme(theme: ITheme?) {
+        EdgeGlowUtil.setEdgeGlowColor(this, theme!!.colorPrimary)
+        setBackgroundColor(theme.colorWindowForeground)
     }
 }
