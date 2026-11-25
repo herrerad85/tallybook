@@ -17,64 +17,59 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.ui.view.text.MaterialEditText
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedMaterialEditText extends MaterialEditText implements ThemeEngine.ThemeConsumer {
+class ThemedMaterialEditText : MaterialEditText, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    public ThemedMaterialEditText(Context context) {
-        super(context);
-        initialize(context, null, 0);
+    constructor(context: Context) : super(context) {
+        initialize(context, null, 0)
     }
 
-    public ThemedMaterialEditText(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs, 0);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs, 0)
     }
 
-    public ThemedMaterialEditText(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs, defStyleAttr);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs, defStyleAttr)
     }
 
-    private void initialize(Context context, AttributeSet attrs, int defStyleAttr) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedMaterialEditText, defStyleAttr, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?, defStyleAttr: Int) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedMaterialEditText, defStyleAttr, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedMaterialEditText_theme_backgroundColor, BackgroundColor.getValue(BackgroundColor.COLOR_WINDOW_FOREGROUND)));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedMaterialEditText_theme_backgroundColor, BackgroundColor.getValue(BackgroundColor.COLOR_WINDOW_FOREGROUND)))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int backgroundColor = mBackgroundColor.getColor(theme);
-            setTextColor(theme.getBestTextColor(backgroundColor));
-            setFloatingLabelColorNormal(theme.getBestHintColor(backgroundColor));
-            setHintTextColor(theme.getBestHintColor(backgroundColor));
-            int focused = Util.visibleOr(theme.getColorAccent(), backgroundColor,
-                    theme.getBestColor(backgroundColor));
-            setFloatingLabelColorFocused(focused);
-            setLeftIconColorNormal(theme.getBestIconColor(backgroundColor));
-            setLeftIconColorFocused(focused);
-            setBottomLineColorNormal(theme.getBestIconColor(backgroundColor));
-            setBottomLineColorFocused(focused);
-            setBottomLineColorError(theme.getErrorColor());
-            TintHelper.setCursorTint(this, focused);
+            val backgroundColor = mBackgroundColor!!.getColor(theme!!)
+            setTextColor(theme.getBestTextColor(backgroundColor))
+            setFloatingLabelColorNormal(theme.getBestHintColor(backgroundColor))
+            setHintTextColor(theme.getBestHintColor(backgroundColor))
+            val focused = Util.visibleOr(theme.colorAccent, backgroundColor,
+                    theme.getBestColor(backgroundColor))
+            setFloatingLabelColorFocused(focused)
+            setLeftIconColorNormal(theme.getBestIconColor(backgroundColor))
+            setLeftIconColorFocused(focused)
+            setBottomLineColorNormal(theme.getBestIconColor(backgroundColor))
+            setBottomLineColorFocused(focused)
+            setBottomLineColorError(theme.errorColor)
+            TintHelper.setCursorTint(this, focused)
         }
     }
 }
