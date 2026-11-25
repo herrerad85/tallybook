@@ -1,0 +1,13 @@
+New:
+* Swipe a transaction to delete it
+* Move what uses a category, then delete it
+* Future transactions show with a calendar icon
+* Transfer rows name the other wallet
+* Your data is saved before a restore
+* Restore confirmation shows both counts
+
+Fixes:
+* Duplicate and Save opens the copy
+* Month header has its own background
+* Press ripple back on transaction rows
+* A credit or debt needs an amount

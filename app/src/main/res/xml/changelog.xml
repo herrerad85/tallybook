@@ -20,6 +20,19 @@
 
 <changelog>
 
+    <version versionName="1.19.0" versionDate="Nov 25, 2026">
+        <change>[b]New![/b] Swiping a transaction to the right deletes it and offers Undo, on the main list, a filtered list, Search and Calendar.</change>
+        <change>[b]New![/b] Deleting a category that transactions, budgets, recurring items, models or rules still use offers to move them to another category of the same type, then deletes it. Undo puts the category back.</change>
+        <change>[b]New![/b] Transactions and transfers dated after today show at the top of their list with a small calendar icon, where they used to stay hidden until their date. The balance and the month totals leave them out until that date arrives.</change>
+        <change>[b]New![/b] A transfer row names the other wallet, "To Savings" or "From Checking", in the normal text color. When the two wallets use different currencies, the transfer detail shows the amount received and the rate.</change>
+        <change>[b]New![/b] Before a restore replaces anything, the current data is saved as a before_restore backup in a Tallybook folder under Documents. The newest three are kept.</change>
+        <change>[b]New![/b] The restore confirmation says how many transactions and wallets the backup holds and how many Tallybook has now, and warns when restoring would remove them all. Older .mwb backups keep the old dialog.</change>
+        <change>After Duplicate and Save, the detail panel opens the copy, where it used to go back to the original.</change>
+        <change>The month header in the transaction list sits on its own light band, so its totals no longer run into the first row.</change>
+        <change>Pressing a transaction shows the press ripple again, and moving down the list with a D pad no longer leaves every row it passed gray.</change>
+        <change>Saving a credit or debt at 0 shows "Enter an amount" and saves nothing, unless it was already saved at 0. A card at 0 no longer says it has been completed.</change>
+    </version>
+
     <version versionName="1.18.0" versionDate="Nov 19, 2026">
         <change>[b]New![/b] Deleting a transaction, a transfer or a selection no longer asks to confirm. A snackbar offers Undo, which brings it back with its people, splits and attachments.</change>
         <change>[b]New![/b] Recently deleted in the drawer lists deleted transactions and transfers, newest first. Tap one to Restore it or Delete forever, or use Empty all. Items deleted more than 90 days ago are removed for good when the app starts.</change>
