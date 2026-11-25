@@ -17,97 +17,94 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.content.res.TypedArray;
-import androidx.annotation.Nullable;
-import com.google.android.material.tabs.TabLayout;
-import android.util.AttributeSet;
+import android.content.Context
+import android.content.res.ColorStateList
+import com.google.android.material.tabs.TabLayout
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 10/04/18.
  */
-public class ThemedTabLayout extends TabLayout implements ThemeEngine.ThemeConsumer {
+class ThemedTabLayout : TabLayout, ThemeEngine.ThemeConsumer {
 
-    private static final float UNFOCUSED_ALPHA = 0.5f;
+    companion object {
 
-    private BackgroundColor mBackgroundColor;
-
-    public ThemedTabLayout(Context context) {
-        super(context);
-        initialize(context, null, 0);
+        private const val UNFOCUSED_ALPHA = 0.5f
     }
 
-    public ThemedTabLayout(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs, 0);
+    private var mBackgroundColor: BackgroundColor? = null
+
+    constructor(context: Context) : super(context) {
+        initialize(context, null, 0)
     }
 
-    public ThemedTabLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs, defStyleAttr);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs, 0)
     }
 
-    private void initialize(Context context, AttributeSet attrs, int defStyleAttr) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedTabLayout, defStyleAttr, 0);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs, defStyleAttr)
+    }
+
+    private fun initialize(context: Context, attrs: AttributeSet?, defStyleAttr: Int) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedTabLayout, defStyleAttr, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedTabLayout_theme_backgroundColor, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedTabLayout_theme_backgroundColor, 0))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int background = getBackgroundColor(theme);
-            setBackgroundColor(background);
-            setIconsColor(theme);
-            setTabTextColor(theme);
-            setSelectedTabIndicatorColor(theme);
+            val background = getBackgroundColor(theme)
+            setBackgroundColor(background)
+            setIconsColor(theme)
+            setTabTextColor(theme)
+            setSelectedTabIndicatorColor(theme)
         }
     }
 
-    private void setIconsColor(ITheme theme) {
-        int background = getBackgroundColor(theme);
-        int color = theme.getBestTextColor(background);
-        ColorStateList stateList = new ColorStateList(
-                new int[][] {
-                        new int[] {-android.R.attr.state_selected},
-                        new int[] {android.R.attr.state_selected}
-                },
-                new int[] {Util.adjustAlpha(color, UNFOCUSED_ALPHA), color}
-        );
-        for (int i = 0; i < getTabCount(); i++) {
-            TabLayout.Tab tab = getTabAt(i);
-            if (tab != null && tab.getIcon() != null) {
-                tab.setIcon(TintHelper.createTintedDrawable(tab.getIcon(), stateList));
+    private fun setIconsColor(theme: ITheme?) {
+        val background = getBackgroundColor(theme)
+        val color = theme!!.getBestTextColor(background)
+        val stateList = ColorStateList(
+                arrayOf(
+                        intArrayOf(-android.R.attr.state_selected),
+                        intArrayOf(android.R.attr.state_selected)
+                ),
+                intArrayOf(Util.adjustAlpha(color, UNFOCUSED_ALPHA), color)
+        )
+        for (i in 0 until tabCount) {
+            val tab: TabLayout.Tab? = getTabAt(i)
+            if (tab != null && tab.icon != null) {
+                tab.setIcon(TintHelper.createTintedDrawable(tab.icon, stateList))
             }
         }
     }
 
-    private void setTabTextColor(ITheme theme) {
-        int background = getBackgroundColor(theme);
-        int color = theme.getBestTextColor(background);
-        setTabTextColors(Util.adjustAlpha(color, UNFOCUSED_ALPHA), color);
+    private fun setTabTextColor(theme: ITheme?) {
+        val background = getBackgroundColor(theme)
+        val color = theme!!.getBestTextColor(background)
+        setTabTextColors(Util.adjustAlpha(color, UNFOCUSED_ALPHA), color)
     }
 
-    private void setSelectedTabIndicatorColor(ITheme theme) {
-        int background = getBackgroundColor(theme);
-        setSelectedTabIndicatorColor(Util.visibleOr(theme.getColorAccent(), background, theme.getBestTextColor(background)));
+    private fun setSelectedTabIndicatorColor(theme: ITheme?) {
+        val background = getBackgroundColor(theme)
+        setSelectedTabIndicatorColor(Util.visibleOr(theme!!.colorAccent, background, theme.getBestTextColor(background)))
     }
 
-    private int getBackgroundColor(ITheme theme) {
+    private fun getBackgroundColor(theme: ITheme?): Int {
         if (mBackgroundColor != null) {
-            return mBackgroundColor.getColor(theme);
+            return mBackgroundColor!!.getColor(theme!!)
         } else {
-            return theme.getColorPrimaryBackground();
+            return theme!!.colorPrimaryBackground
         }
     }
 }
