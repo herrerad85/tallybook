@@ -17,35 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.ForegroundCardView;
+import com.oriondev.moneywallet.ui.view.ForegroundCardView
 
 /**
  * Created by andrea on 24/08/18.
  */
-public class ThemedForegroundCardView extends ForegroundCardView implements ThemeEngine.ThemeConsumer {
+class ThemedForegroundCardView : ForegroundCardView, ThemeEngine.ThemeConsumer {
 
-    public ThemedForegroundCardView(@NonNull Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedForegroundCardView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedForegroundCardView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         // see ThemedCardView: setBackgroundColor would discard the rounded background
-        setCardBackgroundColor(theme.getColorWindowForeground());
+        setCardBackgroundColor(theme!!.colorWindowForeground)
     }
 }
