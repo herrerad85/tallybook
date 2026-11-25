@@ -17,33 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.appcompat.widget.AppCompatRadioButton;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.appcompat.widget.AppCompatRadioButton
+import android.util.AttributeSet
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedRadioButton extends AppCompatRadioButton implements ThemeEngine.ThemeConsumer {
+class ThemedRadioButton : AppCompatRadioButton, ThemeEngine.ThemeConsumer {
 
-    public ThemedRadioButton(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedRadioButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedRadioButton(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        TintHelper.applyTint(this, Util.accentAsIcon(theme), theme.isDark());
-        setTextColor(theme.getTextColorPrimary());
-        setHintTextColor(theme.getHintTextColor());
+    override fun onApplyTheme(theme: ITheme?) {
+        TintHelper.applyTint(this, Util.accentAsIcon(theme!!), theme.isDark)
+        setTextColor(theme.textColorPrimary)
+        setHintTextColor(theme.hintTextColor)
     }
 }
