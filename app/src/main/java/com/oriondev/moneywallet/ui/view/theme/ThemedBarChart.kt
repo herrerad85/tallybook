@@ -17,62 +17,51 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.Description;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.charts.BarChart
 
 /**
  * Created by andrea on 21/08/18.
  */
-public class ThemedBarChart extends BarChart implements ThemeEngine.ThemeConsumer {
+class ThemedBarChart : BarChart, ThemeEngine.ThemeConsumer {
 
-    public ThemedBarChart(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedBarChart(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedBarChart(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        int textColor = theme.getTextColorSecondary();
-        int iconColor = theme.getIconColor();
+    override fun onApplyTheme(theme: ITheme?) {
+        val textColor = theme!!.textColorSecondary
+        val iconColor = theme.iconColor
         // style xAxis
-        XAxis xAxis = getXAxis();
-        xAxis.setAxisLineColor(iconColor);
-        xAxis.setGridColor(iconColor);
-        xAxis.setTextColor(textColor);
+        val xAxis = getXAxis()
+        xAxis.axisLineColor = iconColor
+        xAxis.gridColor = iconColor
+        xAxis.textColor = textColor
         // style yAxis left
-        YAxis yLeftAxis = getAxisLeft();
-        yLeftAxis.setZeroLineColor(iconColor);
-        yLeftAxis.setAxisLineColor(iconColor);
-        yLeftAxis.setGridColor(iconColor);
-        yLeftAxis.setTextColor(textColor);
+        val yLeftAxis = getAxisLeft()
+        yLeftAxis.zeroLineColor = iconColor
+        yLeftAxis.axisLineColor = iconColor
+        yLeftAxis.gridColor = iconColor
+        yLeftAxis.textColor = textColor
         // style yAxis right
-        YAxis yRightAxis = getAxisRight();
-        yRightAxis.setZeroLineColor(iconColor);
-        yRightAxis.setAxisLineColor(iconColor);
-        yRightAxis.setGridColor(iconColor);
-        yRightAxis.setTextColor(textColor);
+        val yRightAxis = getAxisRight()
+        yRightAxis.zeroLineColor = iconColor
+        yRightAxis.axisLineColor = iconColor
+        yRightAxis.gridColor = iconColor
+        yRightAxis.textColor = textColor
         // style legend
-        Legend legend = getLegend();
-        legend.setTextColor(textColor);
+        val legend = getLegend()
+        legend.textColor = textColor
         // style description
-        Description description = getDescription();
-        description.setTextColor(textColor);
+        val description = getDescription()
+        description.textColor = textColor
         // style the chart itself
-        setNoDataTextColor(textColor);
+        setNoDataTextColor(textColor)
     }
 }
