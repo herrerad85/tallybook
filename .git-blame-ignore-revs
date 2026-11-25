@@ -271,42 +271,188 @@ d1b5eee8cd1dd33d244d5f20b9d34b6297378a2e
 # Convert OpenExchangeRatesCurrencyRateDownloadIntentService to Kotlin
 19967f94d0de5dce985a3b39f14b956a80328ba0
 # Convert BackendServiceFactoryTest to Kotlin
-3c5330b9401113245ac97d88f9847ad03a3ccaed
+2de7f3450b345783836a8bed8db08dce6d205a87
 # Convert DiskBackendServiceTest to Kotlin
-eb010b8448417921126e0353d4a5b0764e7e6d3e
+2ebc22e1b1b7a6c83005e7baaf69e1cece464749
 # Convert WebDAVClientTest to Kotlin
-77b5ef86db1642660916654e15d779893c1540a3
+3475bf2d63117875f48215f8ef2bd08f24f02994
 # Convert AbstractGenericLoaderTest to Kotlin
-36b2ca0e160f27dbcc1eb151326464e52a0630dc
+b44257d33c4747411b38ce43ea5650ebf860c143
 # Convert PeriodDetailSummaryLoaderTest to Kotlin
-84beafce93d4460d1c471e2fa03ffc3111fc871a
+93fcf8f8d2df694ffbc69b6d90551a33cbc87c53
 # Convert ReportLoaderSourceTest to Kotlin
-6616dcf98ee3caf1d6052403d93e93fb789eb1ab
+313d5ed00c6a59df6a69921098d010cd461414b2
 # Convert SearchCategoryLoaderTest to Kotlin
-15b8f6358e6830a0b94fa77241e8baab1626d30f
+8edd1aaaa9d3e7419bdd5b66d634bf9f7e02a5e5
 # Convert SearchCursorLoaderTest to Kotlin
-00e911a170b049a8468c0665ee49171efcdabdee
+ff8b61e3f150eb4f67371a7960d16cadb21dbf32
 # Convert SplitReportsTest to Kotlin
-aa3702a8888df49d8e2a477dde824087845d3d06
+b20fe500e48f24c78376c330846fa57e2ea9d092
 # Convert AttachmentHandlerIntentServiceTest to Kotlin
-cf4d54f847dac3067393ad303b070f776590fcda
+e760490d9807847a9a3bb3698d52ebc6b26f32a7
 # Convert ImportExportIntentServiceTest to Kotlin
-b86d36018154f8c36e996de85b86870c0c87a87f
+26146315500422f883c2d371ec556a36af0a6ff0
 # Convert RecurrenceHandlerIntentServiceTest to Kotlin
-d9a9eac4d0be9831b17f8275d61fbc5306ba8a17
+64ee608496a1d5c3ebcd9c0dd7593e1ef88c655e
 # Convert SplitExportTest to Kotlin
-c09c633e65f9b14110cb3bdf1af2d82ff9983229
+94498d8c42bad11d48185970dafeceec774ce8fa
 # Convert ScrollingFloatingActionButtonBehaviorTest to Kotlin
-5331f0a63790d874e9a97de6da6f72ce81dd10bc
+6941cfb878885cd74310ceeb21a386300205149f
 # Convert DotMatrixGridsTest to Kotlin
-d979509d18c616b84fbf9bbbb69088130bec1f36
+2a853a4f83d917f5c912536212b547bca73ff1a9
 # Convert DotMatrixLettersTest to Kotlin
-0cb6aa8076d84e43f20efe700e3c75031dca20e3
+d2c32956c403e7a894314d7fd852d089123f8414
 # Convert PreferenceTitleThemeTest to Kotlin
-41b2c96f3ddf915d785093d425a4a11868162b47
+341b3d615d83d35e8d77406127a309feea493378
 # Convert WalletWidgetObserverSourceTest to Kotlin
-9cf2aa76800744d891bff98cbd8228d2fd1a6e92
+e699f2745bfc9cebbe18a06bd464888b98cbc664
 # Convert IconGroupLoaderTest to Kotlin
-d0698c101e6044a1bd43474a1fd71e35dc485dcb
+fe107f909c4b830f10a1c0ff1c364a58597f235e
 # Convert WalletWidgetPreferencesTest to Kotlin
-046a68edcb2cb83fadb305af5e5db0a788a4921f
+32b9a204f5ea004849a572a56cd94edc916bf9ec
+# Convert Validator to Kotlin
+2cc64744db6738730792cfa1808643487b5acafc
+# Convert Mode to Kotlin
+46bcb2abb0aa152351016b80fb93f766cc854f05
+# Convert Utils to Kotlin
+9c70bf72c1852afc6c02a08213f29830ce080120
+# Convert NonEmptyTextValidator to Kotlin
+53d9bea9519f397670cdca2bfb8726b8a52b9027
+# Convert MaterialTextView to Kotlin
+781d27d32b60d441b3ad65443a11bf7cb37cce3c
+# Convert MaterialEditText to Kotlin
+889df00484d763b9630b56fac3337374ef5defcf
+# Convert PieSlice to Kotlin
+64715a090fd6b96f4fc052da15dcc9846d712682
+# Convert PieData to Kotlin
+57600787bc1a68827f90fc1c90f28244d2637375
+# Convert PieChart to Kotlin
+f9559588cc029f86afe0f8e5913030069240b182
+# Convert OnDateSelectedListener to Kotlin
+12e33ffc3d5de4868d4e2f25d1aa8c3c749e5a6f
+# Convert DotView to Kotlin
+bce156f2fa861ab389ca2e83c850f9a771fb3be6
+# Convert MonthView to Kotlin
+d8b351930ed843bf94db1a786752cfa4c6f3bbe1
+# Convert TimelineView to Kotlin
+be12c07ec3e999f2c7eb34639757e3c1086c479d
+# Convert LabelFit to Kotlin
+a7f6754e77c191b81d76c164f4a6c9c412d51228
+# Convert AdvancedRecyclerView to Kotlin
+01352a7e9b03d98db09d0fd5301ab287d5c9cf72
+# Convert AttachmentView to Kotlin
+1dfde09e26059432afb92a88ecdbe8c9ef293d3e
+# Convert CardButton to Kotlin
+41d4616abee6a916583294602d82631804cbfc4a
+# Convert CategoryChildIndicator to Kotlin
+ae44e100a713805644d0e8c363f58755db764e19
+# Convert CircleView to Kotlin
+aa292ea5faf680678dd22f88e6323c5c01059404
+# Convert ColorSwatchView to Kotlin
+4d7b06f5adc3c8f2bae0ced9f353384e9f0a0622
+# Convert ForegroundCardView to Kotlin
+eff00fa69db0b484e1841654a521a8c836c7d232
+# Convert FullHeightGridView to Kotlin
+7fa362292978709db46b36b6512885145f2fe512
+# Convert MaterialProgressBar to Kotlin
+f93a42e942e082123c0c9de60eb7947ec7eb8e5a
+# Convert RecurrenceView to Kotlin
+dc523efdcd8e3255af0b47ee4437507546492452
+# Convert SquaredImageView to Kotlin
+0d2ec2a3452d671cbf3779c1b627f89962a1279c
+# Convert BackgroundColor to Kotlin
+550c1db37de70c6933d5b2c21df580a828bb6209
+# Convert EdgeGlowUtil to Kotlin
+5b40d8b2b9848fa12c2f044a1d2681855b5aa503
+# Convert ITheme to Kotlin
+be3897308c42d615b3112c0c136cb28d14b17137
+# Convert ThemeEngine to Kotlin
+42c310c73bb95850fb2bf9e7df5d460e57d6fdce
+# Convert ThemedDialog to Kotlin
+fc127580be28dc3713da444c555f570cbd1113e1
+# Convert TintHelper to Kotlin
+52687cc3a9412d948bbc53d9e26668b166290255
+# Convert Util to Kotlin
+6777ac46f2e7b53dab698552cca8de15bdb5a2cd
+# Convert ThemedAppBarLayout to Kotlin
+186846e67becf10e8f12cb71bbaf091b3b61077f
+# Convert ThemedBarChart to Kotlin
+5f32024b31cd2451ef8638e1d4c9f50063b88d19
+# Convert ThemedButton to Kotlin
+7563e8e977c691248474e1f92db08be478fcb7ac
+# Convert ThemedCardButton to Kotlin
+4d3c280c95777b001741161734bf5bfe0b96f7a7
+# Convert ThemedCardView to Kotlin
+d96adf65909be6c6582cf59ecc61e4905dc17d44
+# Convert ThemedCategoryChildIndicator to Kotlin
+8ca0cc6101ce0bff3611e528532889fc225bc88e
+# Convert ThemedCheckBox to Kotlin
+d33f451396d6af3448242d8eac9f9fc83a6334e5
+# Convert ThemedConstraintLayout to Kotlin
+29acd7ffb318e284474b0faa7fbae69ca8d4f798
+# Convert ThemedCoordinatorLayout to Kotlin
+4e5ef697f3bad8796a267faf3601e6d1d8c537fa
+# Convert ThemedEditText to Kotlin
+f04f06c4c2025422f68d77c05bd3a4bab2a59e65
+# Convert ThemedFloatingActionButton to Kotlin
+4637f92dc2dc4a0cc9007e0e6033a8973717dd6c
+# Convert ThemedForegroundCardView to Kotlin
+c009230837468f73025d22285795061061dc3737
+# Convert ThemedFrameLayout to Kotlin
+fac673591c9ba18efe7419774307a1b650a28368
+# Convert ThemedHorizontalScrollView to Kotlin
+c31ed7ae763a8d659afe7d2dd48b375c476ffe09
+# Convert ThemedImageView to Kotlin
+88608bbc9f64bdf0ced8b887cdef943cb710d9b7
+# Convert ThemedKeypadButton to Kotlin
+abe102c23dbacc8e6f88719ffabac6569624a482
+# Convert ThemedKeypadImageButton to Kotlin
+7bc4d589de2c317ba8726b4dcee40adab7d1d0f4
+# Convert ThemedLineChart to Kotlin
+6b8284e692d7f9dc0c2db80867aff8c330f968d9
+# Convert ThemedLinearLayout to Kotlin
+254b8fb0a2e369ac477ccb834e159e46c44fdbbc
+# Convert ThemedMaterialEditText to Kotlin
+51393b7fe8e17100cacf54fb25009f616c4646f3
+# Convert ThemedMaterialProgressBar to Kotlin
+96641310b197fedf2f8259ab98e185091a6f677a
+# Convert ThemedMaterialTextView to Kotlin
+6ea5d92c0f7538f1f0d0308d9500b6451ebc96cc
+# Convert ThemedMonthView to Kotlin
+e3e2bbebc0a310625baa5348a6d75766981af096
+# Convert ThemedPatternLockView to Kotlin
+3e95c7195db4cecbd244ebfff4ed4bc555f0830e
+# Convert ThemedPieChart to Kotlin
+22854613a7dc7f9573a2e9b6e8d45f3dc77a7b6a
+# Convert ThemedPinLockView to Kotlin
+9cddf2fa38387ecc23804dc0eb2f13181f274bbe
+# Convert ThemedProgressWheel to Kotlin
+8ae0a1cd90ba1334fdf3487d4a7d140ed86457b8
+# Convert ThemedRadarChart to Kotlin
+0f870015718a5fcbcc81707d404e0c29411d52fb
+# Convert ThemedRadioButton to Kotlin
+92a4e27be5ddb56e4a71972289a96e5721620239
+# Convert ThemedRecyclerView to Kotlin
+c993e27a88e8ca79cabd54d01986011988f9db0e
+# Convert ThemedRelativeLayout to Kotlin
+a483b4f0b7078775137570d02b5424a47433dbc1
+# Convert ThemedScrollView to Kotlin
+1b0e2200cf80faf046f147ef1b325c4c2dacb475
+# Convert ThemedSeekBar to Kotlin
+8a78492ec07f4074f83c549799d571bc0463775a
+# Convert ThemedSpinner to Kotlin
+1f81ccf24510973e43043d6142c90d96cc8228bd
+# Convert ThemedSquaredImageView to Kotlin
+2301aa5ff151e7c34f66bbac409baf78d240568c
+# Convert ThemedSwitchCompat to Kotlin
+b216ae9088306c8447582da03c105c1041b72a09
+# Convert ThemedTabLayout to Kotlin
+680418e0e14bbf9746691918e2f2619eceb70126
+# Convert ThemedTextView to Kotlin
+1b50449e2f2658ec0dcbe5c4cb7e4439821f17de
+# Convert ThemedTimelineView to Kotlin
+6e34c0f426928e5463dce23a660d744032d11861
+# Convert ThemedToolbar to Kotlin
+6d7eb8824361660f7f1ac4d8c1e4b6eef759273a
+# Convert ThemedViewPagerIndicator to Kotlin
+68c795ec8e8548a99dae07f88a1e9acebd35b34f
