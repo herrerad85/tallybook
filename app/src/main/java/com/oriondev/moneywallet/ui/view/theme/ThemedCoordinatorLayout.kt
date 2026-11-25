@@ -17,53 +17,48 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 24/08/18.
  */
-public class ThemedCoordinatorLayout extends CoordinatorLayout implements ThemeEngine.ThemeConsumer {
+class ThemedCoordinatorLayout : CoordinatorLayout, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    public ThemedCoordinatorLayout(Context context) {
-        super(context);
-        initialize(context, null);
+    constructor(context: Context) : super(context) {
+        initialize(context, null)
     }
 
-    public ThemedCoordinatorLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
-    public ThemedCoordinatorLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs)
     }
 
-    private void initialize(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedCoordinatorLayout, 0, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedCoordinatorLayout, 0, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedCoordinatorLayout_theme_backgroundColor, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedCoordinatorLayout_theme_backgroundColor, 0))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int background = mBackgroundColor.getColor(theme);
-            setBackgroundColor(background);
+            val background = mBackgroundColor!!.getColor(theme!!)
+            setBackgroundColor(background)
         }
     }
 }
