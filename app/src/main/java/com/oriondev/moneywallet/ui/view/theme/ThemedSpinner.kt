@@ -17,47 +17,43 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.util.AttributeSet;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.util.AttributeSet
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.TextView
 
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.widget.AppCompatSpinner;
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.widget.AppCompatSpinner
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedSpinner extends AppCompatSpinner implements ThemeEngine.ThemeConsumer {
+class ThemedSpinner : AppCompatSpinner, ThemeEngine.ThemeConsumer {
 
-    private static final int COLOR_BACKGROUND_LIGHT = Color.WHITE;
-    private static final int COLOR_BACKGROUND_DARK = Color.parseColor("#424242");
+    companion object {
 
-    public ThemedSpinner(Context context) {
-        super(context);
+        private const val COLOR_BACKGROUND_LIGHT = Color.WHITE
+        private val COLOR_BACKGROUND_DARK = Color.parseColor("#424242")
     }
 
-    public ThemedSpinner(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedSpinner(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     @SuppressLint("RestrictedApi")
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         // Widget.AppCompat.Spinner.Underlined draws both the underline and the arrow from one
         // background, abc_spinner_textfield_background_material, whose two layers are the alpha
         // only nine patches abc_textfield_default_mtrl_alpha and abc_spinner_mtrl_am_alpha, so a
@@ -66,10 +62,10 @@ public class ThemedSpinner extends AppCompatSpinner implements ThemeEngine.Theme
         // background helper holding no color, so the color is handed to that helper directly.
         // appcompat 1.8.0 carries @RestrictTo(LIBRARY_GROUP_PREFIX) on that setter, which is what
         // the suppression above is for.
-        setSupportBackgroundTintList(ColorStateList.valueOf(theme.getIconColor()));
-        setPopupBackgroundDrawable(theme.getMode() == ThemeEngine.Mode.DEEP_DARK
-                ? AppCompatResources.getDrawable(getContext(), R.drawable.popup_background_deep_dark)
-                : new ColorDrawable(theme.isDark() ? COLOR_BACKGROUND_DARK : COLOR_BACKGROUND_LIGHT));
+        setSupportBackgroundTintList(ColorStateList.valueOf(theme!!.iconColor))
+        setPopupBackgroundDrawable(if (theme.mode == ThemeEngine.Mode.DEEP_DARK)
+                AppCompatResources.getDrawable(context, R.drawable.popup_background_deep_dark)
+                else ColorDrawable(if (theme.isDark) COLOR_BACKGROUND_DARK else COLOR_BACKGROUND_LIGHT))
     }
 
     /**
@@ -77,28 +73,25 @@ public class ThemedSpinner extends AppCompatSpinner implements ThemeEngine.Theme
      * its adapter, so the text color the theme picks has to be applied there rather than on the
      * spinner itself.
      */
-    public static class Adapter extends ArrayAdapter<CharSequence> {
+    class Adapter : ArrayAdapter<CharSequence> {
 
-        public Adapter(Context context, CharSequence... items) {
-            super(context, android.R.layout.simple_spinner_item, items);
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        constructor(context: Context?, vararg items: CharSequence) : super(context!!, android.R.layout.simple_spinner_item, items) {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return paint(super.getView(position, convertView, parent));
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            return paint(super.getView(position, convertView, parent))
         }
 
-        @Override
-        public View getDropDownView(int position, View convertView, ViewGroup parent) {
-            return paint(super.getDropDownView(position, convertView, parent));
+        override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+            return paint(super.getDropDownView(position, convertView, parent))
         }
 
-        private View paint(View view) {
+        private fun paint(view: View): View {
             // Read at bind time so the color is right whichever order the theme and the adapter
             // arrive in. Both layouts above resolve to a TextView.
-            ((TextView) view).setTextColor(ThemeEngine.getTheme().getTextColorPrimary());
-            return view;
+            (view as TextView).setTextColor(ThemeEngine.getTheme().textColorPrimary)
+            return view
         }
     }
 }
