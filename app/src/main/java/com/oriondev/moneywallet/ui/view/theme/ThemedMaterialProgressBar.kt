@@ -17,38 +17,29 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.MaterialProgressBar;
+import com.oriondev.moneywallet.ui.view.MaterialProgressBar
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedMaterialProgressBar extends MaterialProgressBar implements ThemeEngine.ThemeConsumer {
+class ThemedMaterialProgressBar : MaterialProgressBar, ThemeEngine.ThemeConsumer {
 
-    public ThemedMaterialProgressBar(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedMaterialProgressBar(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedMaterialProgressBar(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    public ThemedMaterialProgressBar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        int background = theme.getColorCardBackground();
-        setReachedBarColor(Util.visibleOr(theme.getColorAccent(), background, theme.getBestColor(background)));
-        setUnreachedBarColor(theme.getIconColor());
+    override fun onApplyTheme(theme: ITheme?) {
+        val background = theme!!.colorCardBackground
+        setReachedBarColor(Util.visibleOr(theme.colorAccent, background, theme.getBestColor(background)))
+        setUnreachedBarColor(theme.iconColor)
     }
 }
