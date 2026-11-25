@@ -17,38 +17,28 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.annotation.Nullable;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.chart.PieChart;
+import com.oriondev.moneywallet.ui.view.chart.PieChart
 
 /**
  * Created by andrea on 21/08/18.
  */
-public class ThemedPieChart extends PieChart implements ThemeEngine.ThemeConsumer {
+class ThemedPieChart : PieChart, ThemeEngine.ThemeConsumer {
 
-    public ThemedPieChart(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedPieChart(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedPieChart(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    public ThemedPieChart(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        setHoleColor(theme.getColorWindowForeground());
-        setLineColor(theme.getIconColor());
+    override fun onApplyTheme(theme: ITheme?) {
+        setHoleColor(theme!!.colorWindowForeground)
+        setLineColor(theme.iconColor)
     }
 }
