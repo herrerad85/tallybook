@@ -101,6 +101,8 @@ public class Contract {
         public static final String WALLET_COUNT_IN_TOTAL = "transaction_" + Schema.Wallet.COUNT_IN_TOTAL;
         public static final String WALLET_ARCHIVED = "transaction_" + Schema.Wallet.ARCHIVED;
         public static final String WALLET_TAG = "transaction_" + Schema.Wallet.TAG;
+        public static final String TRANSFER_WALLET_NAME = "transaction_transfer_" + Schema.Wallet.NAME;
+        public static final String TRANSFER_DIRECTION = "transaction_transfer_direction";
         public static final String PLACE_ID = Schema.Transaction.PLACE;
         public static final String PLACE_NAME = "transaction_" + Schema.Place.NAME;
         public static final String PLACE_ICON = "transaction_" + Schema.Place.ICON;

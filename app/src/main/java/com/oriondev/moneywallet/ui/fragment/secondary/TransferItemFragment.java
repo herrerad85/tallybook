@@ -41,6 +41,7 @@ import android.widget.TextView;
 import com.oriondev.moneywallet.R;
 import com.oriondev.moneywallet.model.Attachment;
 import com.oriondev.moneywallet.model.CurrencyUnit;
+import com.oriondev.moneywallet.model.MoneyScale;
 import com.oriondev.moneywallet.storage.database.Contract;
 import com.oriondev.moneywallet.storage.database.DataContentProvider;
 import com.oriondev.moneywallet.ui.activity.NewEditItemActivity;
@@ -52,6 +53,8 @@ import com.oriondev.moneywallet.utils.DateFormatter;
 import com.oriondev.moneywallet.utils.DateUtils;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -76,6 +79,8 @@ public class TransferItemFragment extends SecondaryPanelFragment implements Atta
     private TextView mWalletFromTextView;
     private TextView mWalletToTextView;
     private TextView mTaxTextView;
+    private TextView mReceivedTextView;
+    private TextView mExchangeRateTextView;
     private TextView mEventTextView;
     private TextView mPeopleTextView;
     private TextView mPlaceTextView;
@@ -103,6 +108,8 @@ public class TransferItemFragment extends SecondaryPanelFragment implements Atta
         mWalletFromTextView = view.findViewById(R.id.wallet_from_text_view);
         mWalletToTextView = view.findViewById(R.id.wallet_to_text_view);
         mTaxTextView = view.findViewById(R.id.tax_text_view);
+        mReceivedTextView = view.findViewById(R.id.received_text_view);
+        mExchangeRateTextView = view.findViewById(R.id.exchange_rate_text_view);
         mEventTextView = view.findViewById(R.id.event_text_view);
         mPeopleTextView = view.findViewById(R.id.people_text_view);
         mPlaceTextView = view.findViewById(R.id.place_text_view);
@@ -237,6 +244,29 @@ public class TransferItemFragment extends SecondaryPanelFragment implements Atta
                 } else {
                     mTaxTextView.setVisibility(View.GONE);
                 }
+                String toIso = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Transfer.TRANSACTION_TO_WALLET_CURRENCY));
+                if (!iso.equals(toIso)) {
+                    CurrencyUnit toCurrency = CurrencyManager.getCurrency(toIso);
+                    if (currency != null && toCurrency != null && TextUtils.equals(currency.getSymbolOrIso(), toCurrency.getSymbolOrIso())) {
+                        currency = new CurrencyUnit(iso, currency.getName(), iso, currency.getDecimals());
+                        toCurrency = new CurrencyUnit(toIso, toCurrency.getName(), toIso, toCurrency.getDecimals());
+                    }
+                    long toMoney = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Transfer.TRANSACTION_TO_MONEY));
+                    String received = mMoneyFormatter.getNotTintedString(toCurrency, toMoney, MoneyFormatter.CurrencyMode.ALWAYS_SHOWN);
+                    mReceivedTextView.setText(toCurrency != null ? received : "? " + received);
+                    mReceivedTextView.setVisibility(View.VISIBLE);
+                    if (currency != null && toCurrency != null && money != 0L && toMoney != 0L) {
+                        double rate = MoneyScale.deriveRate(money, toMoney, currency.getDecimals(), toCurrency.getDecimals());
+                        mExchangeRateTextView.setText(getString(R.string.hint_exchange_rate_value,
+                                currency.getSymbolOrIso(), getRateString(rate), toCurrency.getSymbolOrIso()));
+                        mExchangeRateTextView.setVisibility(View.VISIBLE);
+                    } else {
+                        mExchangeRateTextView.setVisibility(View.GONE);
+                    }
+                } else {
+                    mReceivedTextView.setVisibility(View.GONE);
+                    mExchangeRateTextView.setVisibility(View.GONE);
+                }
                 String event = cursor.getString(cursor.getColumnIndex(Contract.Transfer.EVENT_NAME));
                 if (!TextUtils.isEmpty(event)) {
                     mEventTextView.setText(event);
@@ -312,5 +342,13 @@ public class TransferItemFragment extends SecondaryPanelFragment implements Atta
     @Override
     public void onAttachmentDelete(Attachment attachment) {
         // attachment removal is not allowed here
+    }
+
+    static String getRateString(double rate) {
+        BigDecimal value = BigDecimal.valueOf(rate);
+        NumberFormat format = NumberFormat.getInstance();
+        format.setMinimumFractionDigits(2);
+        format.setMaximumFractionDigits(Math.max(2, 4 - value.precision() + value.scale()));
+        return format.format(rate);
     }
 }

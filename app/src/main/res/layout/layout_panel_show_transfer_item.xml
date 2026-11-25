@@ -98,6 +98,30 @@
             tools:text="Wallet to here" />
 
         <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
+            android:id="@+id/received_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/material_activity_body_edit_text_margin_top"
+            android:layout_marginBottom="@dimen/material_activity_body_edit_text_margin_bottom"
+            app:mtv_mode="floatingLabel"
+            app:mtv_floatingLabelText="@string/hint_received"
+            app:mtv_leftIcon="@drawable/ic_cash_multiple_24dp"
+            app:mtv_bottomLineEnabled="true"
+            tools:text="Received here" />
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
+            android:id="@+id/exchange_rate_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/material_activity_body_edit_text_margin_top"
+            android:layout_marginBottom="@dimen/material_activity_body_edit_text_margin_bottom"
+            app:mtv_mode="floatingLabel"
+            app:mtv_floatingLabelText="@string/hint_exchange_rate"
+            app:mtv_leftIcon="@drawable/ic_swap_vert_black_24dp"
+            app:mtv_bottomLineEnabled="true"
+            tools:text="Exchange rate here" />
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedMaterialTextView
             android:id="@+id/event_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -293,6 +293,13 @@ class MoneyFormatter {
         textView!!.text = text
     }
 
+    fun applyNeutral(textView: TextView?, currencyUnit: CurrencyUnit?, money: Long, tintMode: TintMode) {
+        val flowMode = if (mShowSymbolEnabled) getFlowModeFromTintMode(tintMode) else FlowMode.FORCE_POSITIVE
+        val text = SpannableString(getNotTintedString(currencyUnit, money, CurrencyMode.USER_PREFERENCE, flowMode))
+        text.setSpan(ForegroundColorSpan(ThemeEngine.getTheme().textColorPrimary), 0, text.length, 0)
+        textView!!.setText(text, TextView.BufferType.SPANNABLE)
+    }
+
     fun applyTinted(textView: TextView?, money: Money?) {
         val text = getTintedString(money)
         textView!!.setText(text, TextView.BufferType.SPANNABLE)

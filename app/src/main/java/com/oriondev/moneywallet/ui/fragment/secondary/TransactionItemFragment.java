@@ -31,6 +31,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.text.BidiFormatter;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
@@ -289,7 +290,15 @@ public class TransactionItemFragment extends SecondaryPanelFragment implements L
                     mDescriptionTextView.setVisibility(View.GONE);
                 }
                 String category = cursor.getString(cursor.getColumnIndex(Contract.Transaction.CATEGORY_NAME));
-                mCategoryTextView.setText(category);
+                String transferWallet = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Transaction.TRANSFER_WALLET_NAME));
+                if (transferWallet != null) {
+                    int direction = cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Transaction.TRANSFER_DIRECTION));
+                    mCategoryTextView.setText(getString(direction == Contract.Direction.EXPENSE
+                            ? R.string.title_transfer_to_wallet : R.string.title_transfer_from_wallet,
+                            BidiFormatter.getInstance().unicodeWrap(transferWallet)));
+                } else {
+                    mCategoryTextView.setText(category);
+                }
                 mCurrency = currency;
                 mMainLine = new Part(category, money, null);
                 mSplitCounted = cursor.getInt(cursor.getColumnIndexOrThrow(Contract.Transaction.SPLIT_CATEGORIES)) > 0;

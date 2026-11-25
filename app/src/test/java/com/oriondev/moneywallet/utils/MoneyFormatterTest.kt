@@ -1,6 +1,13 @@
 package com.oriondev.moneywallet.utils
 
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.widget.TextView
+
+import androidx.test.core.app.ApplicationProvider
+
 import com.oriondev.moneywallet.model.Money
+import com.oriondev.moneywallet.ui.view.theme.ThemeEngine
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -97,5 +104,25 @@ class MoneyFormatterTest {
         val text = MoneyFormatter.getInstance().getNotTintedString(money("XAF" to 1000L, "XOF" to 2500L))
         assertEquals(setOf("XAF 1,000", "XOF 2,500"), parts(text, DIVIDER))
         assertFalse(text.contains("null"))
+    }
+
+    @Test
+    fun theNeutralAmountIsSignedByDirectionAndInThePrimaryTextColor() {
+        val textView = TextView(ApplicationProvider.getApplicationContext())
+        val euro = CurrencyManager.getCurrency("EUR")
+        val formatter = MoneyFormatter.getInstance()
+        formatter.setCurrencyEnabled(false)
+        formatter.setShowSymbolEnabled(true)
+        formatter.applyNeutral(textView, euro, 5000L, MoneyFormatter.TintMode.EXPENSE)
+        assertEquals("-50.00", textView.text.toString())
+        val spans = (textView.text as Spanned).getSpans(0, textView.text.length, ForegroundColorSpan::class.java)
+        assertEquals(listOf(ThemeEngine.getTheme().textColorPrimary), spans.map { it.foregroundColor })
+        formatter.applyNeutral(textView, euro, 5000L, MoneyFormatter.TintMode.INCOME)
+        assertEquals("+50.00", textView.text.toString())
+        formatter.setShowSymbolEnabled(false)
+        formatter.applyNeutral(textView, euro, 5000L, MoneyFormatter.TintMode.EXPENSE)
+        assertEquals("50.00", textView.text.toString())
+        formatter.applyNeutral(textView, euro, 5000L, MoneyFormatter.TintMode.INCOME)
+        assertEquals("50.00", textView.text.toString())
     }
 }

@@ -155,6 +155,7 @@
     <string name="split_not_counted">"These parts are not counted until they are fixed in the editor."</string>
     <string name="hint_wallet_group">"Group"</string>
     <string name="hint_tax">"Tax"</string>
+    <string name="hint_received">"Received"</string>
     <string name="hint_type">"Type"</string>
     <string name="hint_incomes">"Incomes"</string>
     <string name="hint_expenses">"Expenses"</string>
@@ -172,6 +173,7 @@
     <string name="hint_operation_in_progress">"In progress…"</string>
     <string name="hint_search_something">"Search something"</string>
     <string name="hint_exchange_rate">"Exchange rate"</string>
+    <string name="hint_exchange_rate_value" translatable="false">"1 %1$s = %2$s %3$s"</string>
     <string name="hint_recurrence_finished">"Ended"</string>
     <string name="hint_new_folder">"New folder"</string>
     <string name="hint_import_format">"Import format"</string>
@@ -275,6 +277,8 @@
     <string name="title_fragment_item_wallet">"Wallet"</string>
     <string name="title_fragment_item_transaction">"Transaction"</string>
     <string name="title_fragment_item_transfer">"Transfer"</string>
+    <string name="title_transfer_to_wallet">"Transfer to %s"</string>
+    <string name="title_transfer_from_wallet">"Transfer from %s"</string>
     <string name="title_fragment_item_category">"Category"</string>
     <string name="title_fragment_item_debt">"Debt"</string>
     <string name="title_fragment_item_budget">"Budget"</string>
@@ -407,6 +411,8 @@
     <string name="adapter_spent_per_day_money">"Spent per day:"</string>
     <string name="adapter_tax_money">"Tax:"</string>
     <string name="adapter_previous_periods">"Last 3 periods"</string>
+    <string name="adapter_transfer_to_wallet">"To %s"</string>
+    <string name="adapter_transfer_from_wallet">"From %s"</string>
 
     <string name="header_debts_to_pay">"To pay:"</string>
     <string name="header_debts_to_receive">"To receive:"</string>
