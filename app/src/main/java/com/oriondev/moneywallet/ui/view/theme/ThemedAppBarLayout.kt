@@ -17,66 +17,62 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
-import android.view.WindowInsets;
+import android.content.Context
+import android.util.AttributeSet
+import android.view.WindowInsets
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsCompat
 
-import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.AppBarLayout
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 25/07/18.
  */
-public class ThemedAppBarLayout extends AppBarLayout implements ThemeEngine.ThemeConsumer {
+class ThemedAppBarLayout : AppBarLayout, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    private boolean mInsetSides;
+    private var mInsetSides: Boolean = false
 
-    private int mBasePaddingLeft;
+    private var mBasePaddingLeft: Int = 0
 
-    private int mBasePaddingRight;
+    private var mBasePaddingRight: Int = 0
 
-    public ThemedAppBarLayout(Context context) {
-        super(context);
-        initialize(context, null);
+    constructor(context: Context) : super(context) {
+        initialize(context, null)
     }
 
-    public ThemedAppBarLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
-    private void initialize(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedAppBarLayout, 0, 0);
-        boolean insetTop = true;
-        boolean insetSides = true;
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedAppBarLayout, 0, 0)
+        var insetTop = true
+        var insetSides = true
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedAppBarLayout_theme_backgroundColor, 0));
-            insetTop = typedArray.getBoolean(R.styleable.ThemedAppBarLayout_systemBarInsetTop, true);
-            insetSides = typedArray.getBoolean(R.styleable.ThemedAppBarLayout_systemBarInsetSides, true);
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedAppBarLayout_theme_backgroundColor, 0))
+            insetTop = typedArray.getBoolean(R.styleable.ThemedAppBarLayout_systemBarInsetTop, true)
+            insetSides = typedArray.getBoolean(R.styleable.ThemedAppBarLayout_systemBarInsetSides, true)
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
-        mInsetSides = insetSides;
-        mBasePaddingLeft = getPaddingLeft();
-        mBasePaddingRight = getPaddingRight();
+        mInsetSides = insetSides
+        mBasePaddingLeft = paddingLeft
+        mBasePaddingRight = paddingRight
         if (insetTop) {
             // AppBarLayout does the status bar itself when this is set, it grows by the inset,
             // offsets its children down by it, and subtracts it from the range it will scroll. That
             // last part is why this is not padding of ours. A bar with scroll flags carries its own
             // padding away as it collapses, which slid the toolbar under the status bar on the
             // tabbed screens; the inset the library keeps is pinned and cannot scroll off.
-            setFitsSystemWindows(true);
+            fitsSystemWindows = true
         }
     }
 
@@ -86,55 +82,57 @@ public class ThemedAppBarLayout extends AppBarLayout implements ThemeEngine.Them
      * a second one would replace it and take the status bar handling above with it. The background
      * is not shrunk by padding, so the bar still paints its color out to the edge of the display.
      */
-    @Override
-    public WindowInsets dispatchApplyWindowInsets(WindowInsets insets) {
+    override fun dispatchApplyWindowInsets(insets: WindowInsets?): WindowInsets? {
         if (mInsetSides) {
-            Insets bars = WindowInsetsCompat.toWindowInsetsCompat(insets).getInsets(
-                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-            setPadding(mBasePaddingLeft + bars.left, getPaddingTop(),
-                    mBasePaddingRight + bars.right, getPaddingBottom());
+            val bars = WindowInsetsCompat.toWindowInsetsCompat(insets!!).getInsets(
+                    WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            setPadding(mBasePaddingLeft + bars.left, paddingTop,
+                    mBasePaddingRight + bars.right, paddingBottom)
         }
-        return super.dispatchApplyWindowInsets(insets);
+        return super.dispatchApplyWindowInsets(insets)
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int background = getBackgroundColor(theme);
-            setBackgroundColor(background);
+            val background = getBackgroundColor(theme)
+            setBackgroundColor(background)
         }
     }
 
-    private int getBackgroundColor(ITheme theme) {
+    private fun getBackgroundColor(theme: ITheme?): Int {
         if (mBackgroundColor != null) {
             if (mBackgroundColor == BackgroundColor.COLOR_PRIMARY) {
-                return theme.getColorPrimaryBackground();
+                return theme!!.colorPrimaryBackground
             } else {
-                return theme.getColorPrimaryDark();
+                return theme!!.colorPrimaryDark
             }
         } else {
-            return theme.getColorPrimaryBackground();
+            return theme!!.colorPrimaryBackground
         }
     }
 
-    public enum BackgroundColor {
+    enum class BackgroundColor {
         COLOR_PRIMARY(0),
         COLOR_PRIMARY_DARK(1);
 
-        private int mValue;
+        private var mValue: Int
 
-        BackgroundColor(int value) {
-            mValue = value;
+        constructor(value: Int) {
+            mValue = value
         }
 
-        static BackgroundColor fromValue(int value) {
-            switch (value) {
-                case 0:
-                    return COLOR_PRIMARY;
-                case 1:
-                    return COLOR_PRIMARY_DARK;
-                default:
-                    return null;
+        companion object {
+
+            @JvmStatic
+            internal fun fromValue(value: Int): BackgroundColor? {
+                when (value) {
+                    0 ->
+                        return COLOR_PRIMARY
+                    1 ->
+                        return COLOR_PRIMARY_DARK
+                    else ->
+                        return null
+                }
             }
         }
     }
