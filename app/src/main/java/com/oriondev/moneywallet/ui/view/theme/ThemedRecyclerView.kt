@@ -17,57 +17,54 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.recyclerview.widget.RecyclerView
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.utils.SystemBars;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.utils.SystemBars
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedRecyclerView extends RecyclerView implements ThemeEngine.ThemeConsumer {
+class ThemedRecyclerView : RecyclerView, ThemeEngine.ThemeConsumer {
 
-    public ThemedRecyclerView(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
-    public ThemedRecyclerView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle) {
+        initialize(context, attrs)
     }
 
-    public ThemedRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        initialize(context, attrs);
-    }
-
-    private void initialize(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedRecyclerView, 0, 0);
-        boolean insetSides;
-        boolean insetBottom;
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedRecyclerView, 0, 0)
+        val insetSides: Boolean
+        val insetBottom: Boolean
         try {
-            insetSides = typedArray.getBoolean(R.styleable.ThemedRecyclerView_systemBarInsetSides, true);
-            insetBottom = typedArray.getBoolean(R.styleable.ThemedRecyclerView_systemBarInsetBottom, false);
+            insetSides = typedArray.getBoolean(R.styleable.ThemedRecyclerView_systemBarInsetSides, true)
+            insetBottom = typedArray.getBoolean(R.styleable.ThemedRecyclerView_systemBarInsetBottom, false)
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
         if (insetBottom) {
-            SystemBars.pad(this, false, insetSides, true);
+            SystemBars.pad(this, false, insetSides, true)
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        EdgeGlowUtil.setEdgeGlowColor(this, theme.getColorPrimary());
+    override fun onApplyTheme(theme: ITheme?) {
+        EdgeGlowUtil.setEdgeGlowColor(this, theme!!.colorPrimary)
     }
 
-    public static void applyTheme(RecyclerView recyclerView, ITheme theme) {
-        EdgeGlowUtil.setEdgeGlowColor(recyclerView, theme.getColorPrimary());
+    companion object {
+
+        @JvmStatic
+        fun applyTheme(recyclerView: RecyclerView, theme: ITheme) {
+            EdgeGlowUtil.setEdgeGlowColor(recyclerView, theme.colorPrimary)
+        }
     }
 }
