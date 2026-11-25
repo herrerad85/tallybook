@@ -17,61 +17,57 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.andrognito.patternlockview.PatternLockView;
-import com.oriondev.moneywallet.R;
+import com.andrognito.patternlockview.PatternLockView
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedPatternLockView extends PatternLockView implements ThemeEngine.ThemeConsumer {
+class ThemedPatternLockView : PatternLockView, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    public ThemedPatternLockView(Context context) {
-        super(context);
-        initialize(context, null);
+    constructor(context: Context) : super(context) {
+        initialize(context, null)
     }
 
-    public ThemedPatternLockView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs)
     }
 
-    private void initialize(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedPatternLockView, 0, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedPatternLockView, 0, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedPatternLockView_theme_backgroundColor, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedPatternLockView_theme_backgroundColor, 0))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        int backgroundColor = getBackgroundColor(theme);
-        setCorrectStateColor(Util.visibleOr(theme.getColorAccent(), backgroundColor, theme.getBestColor(backgroundColor)));
-        setNormalStateColor(theme.getBestColor(backgroundColor));
+    override fun onApplyTheme(theme: ITheme?) {
+        val backgroundColor = getBackgroundColor(theme)
+        setCorrectStateColor(Util.visibleOr(theme!!.colorAccent, backgroundColor, theme.getBestColor(backgroundColor)))
+        setNormalStateColor(theme.getBestColor(backgroundColor))
         /* TODO: ensure this is visible over background color */
-        setWrongStateColor(theme.getErrorColor());
+        setWrongStateColor(theme.errorColor)
     }
 
-    private int getBackgroundColor(ITheme theme) {
+    private fun getBackgroundColor(theme: ITheme?): Int {
         if (mBackgroundColor != null) {
             if (mBackgroundColor == BackgroundColor.COLOR_PRIMARY) {
-                return theme.getColorPrimaryBackground();
+                return theme!!.colorPrimaryBackground
             } else {
-                return theme.getColorPrimaryDark();
+                return theme!!.colorPrimaryDark
             }
         } else {
-            return theme.getColorWindowBackground();
+            return theme!!.colorWindowBackground
         }
     }
 }
