@@ -17,48 +17,42 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
-import androidx.annotation.Nullable;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import android.util.AttributeSet;
+import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.drawable.Drawable
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.R;
-import com.oriondev.moneywallet.utils.SystemBars;
+import com.oriondev.moneywallet.R
+import com.oriondev.moneywallet.utils.SystemBars
 
 /**
  * Created by andrea on 11/04/18.
  */
-public class ThemedFloatingActionButton extends FloatingActionButton implements ThemeEngine.ThemeConsumer {
+class ThemedFloatingActionButton : FloatingActionButton, ThemeEngine.ThemeConsumer {
 
-    private boolean mInsetBottom = true;
+    private var mInsetBottom: Boolean = true
 
-    private boolean mInsetApplied;
+    private var mInsetApplied: Boolean = false
 
-    public ThemedFloatingActionButton(Context context) {
-        super(context);
+    constructor(context: Context) : super(context)
+
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        readInsetAttribute(context, attrs)
     }
 
-    public ThemedFloatingActionButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        readInsetAttribute(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        readInsetAttribute(context, attrs)
     }
 
-    public ThemedFloatingActionButton(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        readInsetAttribute(context, attrs);
-    }
-
-    private void readInsetAttribute(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedFloatingActionButton, 0, 0);
+    private fun readInsetAttribute(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedFloatingActionButton, 0, 0)
         try {
-            mInsetBottom = typedArray.getBoolean(R.styleable.ThemedFloatingActionButton_systemBarInsetBottom, true);
+            mInsetBottom = typedArray.getBoolean(R.styleable.ThemedFloatingActionButton_systemBarInsetBottom, true)
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
@@ -67,45 +61,42 @@ public class ThemedFloatingActionButton extends FloatingActionButton implements 
      * built, so there is no margin to read yet at that point. Once only, because a second pass
      * would read a margin that already carries the inset and treat it as the baseline.
      */
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         if (mInsetBottom && !mInsetApplied) {
-            mInsetApplied = true;
-            SystemBars.marginBottomAndSides(this);
+            mInsetApplied = true
+            SystemBars.marginBottomAndSides(this)
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        boolean isDark = theme.isDark();
-        int colorAccent = theme.getColorAccent();
-        int colorPressed = Util.shiftColor(colorAccent, isDark ? 0.9f : 1.1f);
-        int colorActivated = Util.shiftColor(colorAccent, isDark ? 1.1f : 0.9f);
-        int colorRipple = theme.getColorRipple();
-        ColorStateList stateList = new ColorStateList(
-                new int[][] {
-                        new int[] {-android.R.attr.state_pressed},
-                        new int[] {android.R.attr.state_pressed}
-                },
-                new int[] {colorAccent, colorPressed}
-        );
-        setRippleColor(colorRipple);
-        setBackgroundTintList(stateList);
-        setIconColor(theme);
+    override fun onApplyTheme(theme: ITheme?) {
+        val isDark = theme!!.isDark
+        val colorAccent = theme.colorAccent
+        val colorPressed = Util.shiftColor(colorAccent, if (isDark) 0.9f else 1.1f)
+        val colorActivated = Util.shiftColor(colorAccent, if (isDark) 1.1f else 0.9f)
+        val colorRipple = theme.colorRipple
+        val stateList = ColorStateList(
+                arrayOf(
+                        intArrayOf(-android.R.attr.state_pressed),
+                        intArrayOf(android.R.attr.state_pressed)
+                ),
+                intArrayOf(colorAccent, colorPressed)
+        )
+        setRippleColor(colorRipple)
+        setBackgroundTintList(stateList)
+        setIconColor(theme)
     }
 
-    @Override
-    public void setImageDrawable(@Nullable Drawable drawable) {
-        super.setImageDrawable(drawable);
-        setIconColor(ThemeEngine.getTheme());
+    override fun setImageDrawable(drawable: Drawable?) {
+        super.setImageDrawable(drawable)
+        setIconColor(ThemeEngine.getTheme())
     }
 
-    private void setIconColor(ITheme theme) {
-        Drawable drawable = getDrawable();
+    private fun setIconColor(theme: ITheme) {
+        val drawable = getDrawable()
         if (drawable != null) {
-            int color = theme.getBestColor(theme.getColorAccent());
-            super.setImageDrawable(TintHelper.createTintedDrawable(drawable, color));
+            val color = theme.getBestColor(theme.colorAccent)
+            super.setImageDrawable(TintHelper.createTintedDrawable(drawable, color))
         }
     }
 }
