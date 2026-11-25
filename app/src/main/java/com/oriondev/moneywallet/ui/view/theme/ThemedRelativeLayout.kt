@@ -17,53 +17,48 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.util.AttributeSet;
-import android.widget.RelativeLayout;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.RelativeLayout
 
-import com.oriondev.moneywallet.R;
+import com.oriondev.moneywallet.R
 
 /**
  * Created by andrea on 25/07/18.
  */
-public class ThemedRelativeLayout extends RelativeLayout implements ThemeEngine.ThemeConsumer {
+class ThemedRelativeLayout : RelativeLayout, ThemeEngine.ThemeConsumer {
 
-    private BackgroundColor mBackgroundColor;
+    private var mBackgroundColor: BackgroundColor? = null
 
-    public ThemedRelativeLayout(Context context) {
-        super(context);
-        initialize(context, null, 0);
+    constructor(context: Context) : super(context) {
+        initialize(context, null, 0)
     }
 
-    public ThemedRelativeLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize(context, attrs, 0);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(context, attrs, 0)
     }
 
-    public ThemedRelativeLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(context, attrs, defStyleAttr);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initialize(context, attrs, defStyleAttr)
     }
 
-    private void initialize(Context context, AttributeSet attrs, int defStyleAttr) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedRelativeLayout, defStyleAttr, 0);
+    private fun initialize(context: Context, attrs: AttributeSet?, defStyleAttr: Int) {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ThemedRelativeLayout, defStyleAttr, 0)
         try {
-            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedRelativeLayout_theme_backgroundColor, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
+            mBackgroundColor = BackgroundColor.fromValue(typedArray.getInt(R.styleable.ThemedRelativeLayout_theme_backgroundColor, 0))
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         if (mBackgroundColor != null) {
-            int background = mBackgroundColor.getColor(theme);
-            setBackgroundColor(background);
+            val background = mBackgroundColor!!.getColor(theme!!)
+            setBackgroundColor(background)
         }
     }
 }
