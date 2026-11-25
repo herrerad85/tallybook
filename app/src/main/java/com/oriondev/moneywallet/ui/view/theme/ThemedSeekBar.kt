@@ -17,31 +17,24 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.appcompat.widget.AppCompatSeekBar;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.appcompat.widget.AppCompatSeekBar
+import android.util.AttributeSet
 
 /**
  * Created by andrea on 27/11/18.
  */
-public class ThemedSeekBar extends AppCompatSeekBar implements ThemeEngine.ThemeConsumer {
+class ThemedSeekBar : AppCompatSeekBar, ThemeEngine.ThemeConsumer {
 
-    public ThemedSeekBar(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedSeekBar(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        TintHelper.applyTint(this, Util.accentAsIcon(theme), theme.isDark());
+    override fun onApplyTheme(theme: ITheme?) {
+        TintHelper.applyTint(this, Util.accentAsIcon(theme!!), theme.isDark)
     }
 }
