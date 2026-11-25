@@ -17,36 +17,27 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.CategoryChildIndicator;
+import com.oriondev.moneywallet.ui.view.CategoryChildIndicator
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedCategoryChildIndicator extends CategoryChildIndicator implements ThemeEngine.ThemeConsumer {
+class ThemedCategoryChildIndicator : CategoryChildIndicator, ThemeEngine.ThemeConsumer {
 
-    public ThemedCategoryChildIndicator(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedCategoryChildIndicator(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedCategoryChildIndicator(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    public ThemedCategoryChildIndicator(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        setLineColor(theme.getIconColor());
+    override fun onApplyTheme(theme: ITheme?) {
+        setLineColor(theme!!.iconColor)
     }
 }
