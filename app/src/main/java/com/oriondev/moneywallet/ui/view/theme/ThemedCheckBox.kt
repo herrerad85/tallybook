@@ -17,33 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.appcompat.widget.AppCompatCheckBox;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.appcompat.widget.AppCompatCheckBox
+import android.util.AttributeSet
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedCheckBox extends AppCompatCheckBox implements ThemeEngine.ThemeConsumer {
+class ThemedCheckBox : AppCompatCheckBox, ThemeEngine.ThemeConsumer {
 
-    public ThemedCheckBox(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedCheckBox(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedCheckBox(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        TintHelper.applyTint(this, Util.accentAsIcon(theme), theme.isDark());
-        setTextColor(theme.getTextColorPrimary());
-        setHintTextColor(theme.getTextColorPrimary());
+    override fun onApplyTheme(theme: ITheme?) {
+        TintHelper.applyTint(this, Util.accentAsIcon(theme!!), theme.isDark)
+        setTextColor(theme.textColorPrimary)
+        setHintTextColor(theme.textColorPrimary)
     }
 }
