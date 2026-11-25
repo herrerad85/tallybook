@@ -475,6 +475,50 @@ public class TransactionItemFragmentTest {
         }
     }
 
+    @Test
+    public void eachLegOfATransferNamesTheWalletOnItsOtherSide() {
+        long bankId = insertWallet("Bank");
+        long transferId = insertTransfer(mWalletId, bankId);
+        long fromId = transferLegId(transferId, Contract.Transfer.TRANSACTION_FROM_ID);
+        long toId = transferLegId(transferId, Contract.Transfer.TRANSACTION_TO_ID);
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TransactionItemFragment from = showTransaction(activity, fromId);
+                awaitMoneyText(from);
+                assertEquals("Transfer to Bank", categoryText(from));
+                TransactionItemFragment to = showTransaction(activity, toId);
+                awaitMoneyText(to);
+                assertEquals("Transfer from Cash", categoryText(to));
+                TransactionItemFragment plain = showTransaction(activity, mTransactionId);
+                awaitMoneyText(plain);
+                assertEquals("Groceries", categoryText(plain));
+            });
+        }
+    }
+
+    @Test
+    public void aLegNamesItsSideInTheTransferAndNotTheDirectionItStores() {
+        long bankId = insertWallet("Bank");
+        long transferId = insertTransfer(mWalletId, bankId);
+        long fromId = transferLegId(transferId, Contract.Transfer.TRANSACTION_FROM_ID);
+        long toId = transferLegId(transferId, Contract.Transfer.TRANSACTION_TO_ID);
+        Context context = ApplicationProvider.getApplicationContext();
+        SplitLedger.database(context).execSQL("UPDATE transactions SET transaction_direction = " +
+                Contract.Direction.INCOME + " WHERE transaction_id = " + fromId);
+        SplitLedger.database(context).execSQL("UPDATE transactions SET transaction_direction = " +
+                Contract.Direction.EXPENSE + " WHERE transaction_id = " + toId);
+        try (ActivityScenario<BackupListActivity> scenario = ActivityScenario.launch(BackupListActivity.class)) {
+            scenario.onActivity(activity -> {
+                TransactionItemFragment from = showTransaction(activity, fromId);
+                awaitMoneyText(from);
+                assertEquals("Transfer to Bank", categoryText(from));
+                TransactionItemFragment to = showTransaction(activity, toId);
+                awaitMoneyText(to);
+                assertEquals("Transfer from Cash", categoryText(to));
+            });
+        }
+    }
+
     /** The parts and the row come back through two loaders, so this waits for the line to fill. */
     private String awaitSplitText(TransactionItemFragment fragment) {
         TextView split = fragment.requireView().findViewById(R.id.split_text_view);
@@ -559,6 +603,11 @@ public class TransactionItemFragmentTest {
         }
         assertFalse("the row never showed", TextUtils.isEmpty(money.getText()));
         return money.getText().toString();
+    }
+
+    private String categoryText(TransactionItemFragment fragment) {
+        TextView category = fragment.requireView().findViewById(R.id.category_text_view);
+        return category.getText().toString();
     }
 
     private String dateTimeText(TransactionItemFragment fragment) {
@@ -648,6 +697,17 @@ public class TransactionItemFragmentTest {
         assertTrue("the transfer row was not stored", cursor.moveToFirst());
         long transactionId = cursor.getLong(
                 cursor.getColumnIndex(Contract.Transfer.TRANSACTION_FROM_ID));
+        cursor.close();
+        return transactionId;
+    }
+
+    private long transferLegId(long transferId, String column) {
+        Cursor cursor = mResolver.query(
+                ContentUris.withAppendedId(DataContentProvider.CONTENT_TRANSFERS, transferId),
+                new String[] {column}, null, null, null);
+        assertNotNull(cursor);
+        assertTrue("the transfer row was not stored", cursor.moveToFirst());
+        long transactionId = cursor.getLong(0);
         cursor.close();
         return transactionId;
     }

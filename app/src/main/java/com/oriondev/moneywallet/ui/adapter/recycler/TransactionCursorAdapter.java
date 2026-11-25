@@ -29,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.helper.widget.Flow;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.text.BidiFormatter;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -92,6 +93,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private int mIndexTransactionMoney;
     private int mIndexCurrency;
     private int mIndexSplitCategories;
+    private int mIndexTransferWalletName;
+    private int mIndexTransferDirection;
     private int mIndexConfirmed;
 
     private MoneyFormatter mMoneyFormatter;
@@ -153,6 +156,8 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         mIndexTransactionMoney = cursor.getColumnIndex(Contract.Transaction.MONEY);
         mIndexCurrency = cursor.getColumnIndex(Contract.Transaction.WALLET_CURRENCY);
         mIndexSplitCategories = cursor.getColumnIndex(Contract.Transaction.SPLIT_CATEGORIES);
+        mIndexTransferWalletName = cursor.getColumnIndex(Contract.Transaction.TRANSFER_WALLET_NAME);
+        mIndexTransferDirection = cursor.getColumnIndex(Contract.Transaction.TRANSFER_DIRECTION);
         mIndexConfirmed = cursor.getColumnIndex(Contract.Transaction.CONFIRMED);
         // The superclass calls this from two places: when it takes a new cursor, after that
         // cursor is in place and before it tells the list anything changed, and from its own
@@ -382,7 +387,15 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
     private void onBindItemViewHolder(TransactionViewHolder holder, Cursor cursor) {
         Icon icon = IconLoader.parse(cursor.getString(mIndexCategoryIcon));
         IconLoader.loadInto(icon, holder.mAvatarImageView);
-        holder.mPrimaryTextView.setText(cursor.getString(mIndexCategoryName));
+        String transferWalletName = mIndexTransferWalletName != -1 ? cursor.getString(mIndexTransferWalletName) : null;
+        if (transferWalletName != null) {
+            holder.mPrimaryTextView.setText(holder.itemView.getResources().getString(
+                    cursor.getInt(mIndexTransferDirection) == Contract.Direction.EXPENSE
+                            ? R.string.adapter_transfer_to_wallet : R.string.adapter_transfer_from_wallet,
+                    BidiFormatter.getInstance().unicodeWrap(transferWalletName)));
+        } else {
+            holder.mPrimaryTextView.setText(cursor.getString(mIndexCategoryName));
+        }
         holder.mSecondaryTextView.setText(cursor.getString(mIndexTransactionDescription));
         int splitCategories = mIndexSplitCategories != -1 ? cursor.getInt(mIndexSplitCategories) : 0;
         if (splitCategories > 0) {
@@ -411,7 +424,11 @@ public class TransactionCursorAdapter extends AbstractCursorAdapter<RecyclerView
         }
         CurrencyUnit currency = CurrencyManager.getCurrency(cursor.getString(mIndexCurrency));
         long money = cursor.getLong(mIndexTransactionMoney);
-        if (cursor.getInt(mIndexTransactionDirection) == Contract.Direction.INCOME) {
+        if (transferWalletName != null) {
+            mMoneyFormatter.applyNeutral(holder.mMoneyTextView, currency, money,
+                    cursor.getInt(mIndexTransactionDirection) == Contract.Direction.INCOME
+                            ? MoneyFormatter.TintMode.INCOME : MoneyFormatter.TintMode.EXPENSE);
+        } else if (cursor.getInt(mIndexTransactionDirection) == Contract.Direction.INCOME) {
             mMoneyFormatter.applyTintedIncome(holder.mMoneyTextView, currency, money);
         } else {
             mMoneyFormatter.applyTintedExpense(holder.mMoneyTextView, currency, money);

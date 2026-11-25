@@ -1226,6 +1226,10 @@ import java.util.function.Supplier;
                 {"w." + Schema.Wallet.COUNT_IN_TOTAL, Contract.Transaction.WALLET_COUNT_IN_TOTAL},
                 {"w." + Schema.Wallet.ARCHIVED, Contract.Transaction.WALLET_ARCHIVED},
                 {"w." + Schema.Wallet.TAG, Contract.Transaction.WALLET_TAG},
+                {"ow." + Schema.Wallet.NAME, Contract.Transaction.TRANSFER_WALLET_NAME},
+                {"CASE WHEN tf1." + Schema.Transfer.ID + " IS NOT NULL THEN " + Schema.Direction.EXPENSE +
+                        " WHEN tf2." + Schema.Transfer.ID + " IS NOT NULL THEN " + Schema.Direction.INCOME + " END",
+                        Contract.Transaction.TRANSFER_DIRECTION},
                 {"t." + Schema.Transaction.PLACE, Contract.Transaction.PLACE_ID},
                 {"p." + Schema.Place.NAME, Contract.Transaction.PLACE_NAME},
                 {"p." + Schema.Place.ICON, Contract.Transaction.PLACE_ICON},
@@ -1247,7 +1251,7 @@ import java.util.function.Supplier;
                 {"t." + Schema.Transaction.CONFIRMED, Contract.Transaction.CONFIRMED},
                 {"t." + Schema.Transaction.COUNT_IN_TOTAL, Contract.Transaction.COUNT_IN_TOTAL},
                 {"t." + Schema.Transaction.TAG, Contract.Transaction.TAG},
-                {"GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>')", Contract.Transaction.PEOPLE_IDS},
+                {"GROUP_CONCAT(DISTINCT '<' || pe." + Schema.Person.ID + " || '>')", Contract.Transaction.PEOPLE_IDS},
                 {"IFNULL(vp._parts_categories + CASE WHEN t." + Schema.Transaction.MONEY +
                         " > vp._parts_money AND vp._parts_in_main = 0 THEN 1 ELSE 0 END, 0)",
                         Contract.Transaction.SPLIT_CATEGORIES}
@@ -1283,7 +1287,18 @@ import java.util.function.Supplier;
                 Schema.Category.PARENT + " = pc." + Schema.Category.ID + " AND pc." +
                 Schema.Category.DELETED + " = 0 JOIN " + Schema.Wallet.TABLE + " AS w ON t." +
                 Schema.Transaction.WALLET + " = w." + Schema.Wallet.ID + " AND w." +
-                Schema.Wallet.DELETED + " = 0 LEFT JOIN " + Schema.TransactionPeople.TABLE + " AS tp ON t." +
+                Schema.Wallet.DELETED + " = 0 LEFT JOIN " + Schema.Transfer.TABLE + " AS tf1 ON t." +
+                Schema.Transaction.ID + " = tf1." + Schema.Transfer.TRANSACTION_FROM + " AND tf1." +
+                Schema.Transfer.DELETED + (deleted ? " = t." + Schema.Transaction.DELETED : " = 0") +
+                " LEFT JOIN " + Schema.Transfer.TABLE + " AS tf2 ON t." + Schema.Transaction.ID + " = tf2." +
+                Schema.Transfer.TRANSACTION_TO + " AND tf2." + Schema.Transfer.DELETED +
+                (deleted ? " = t." + Schema.Transaction.DELETED : " = 0") + " LEFT JOIN " +
+                Schema.Transaction.TABLE + " AS ot ON IFNULL(tf1." + Schema.Transfer.TRANSACTION_TO + ", tf2." +
+                Schema.Transfer.TRANSACTION_FROM + ") = ot." + Schema.Transaction.ID + " AND ot." +
+                Schema.Transaction.DELETED + (deleted ? " = t." + Schema.Transaction.DELETED : " = 0") +
+                " LEFT JOIN " + Schema.Wallet.TABLE + " AS ow ON ot." + Schema.Transaction.WALLET + " = ow." +
+                Schema.Wallet.ID + " AND ow." + Schema.Wallet.DELETED + " = 0 LEFT JOIN " +
+                Schema.TransactionPeople.TABLE + " AS tp ON t." +
                 Schema.Transaction.ID + " = tp." + Schema.TransactionPeople.TRANSACTION + " AND tp." +
                 Schema.TransactionPeople.DELETED + (deleted ? " = t." + Schema.Transaction.DELETED : " = 0") +
                 " LEFT JOIN " + Schema.Person.TABLE + " AS pe ON tp." +
@@ -4488,6 +4503,10 @@ import java.util.function.Supplier;
                 "w." + Schema.Wallet.COUNT_IN_TOTAL + " AS " + Contract.Transaction.WALLET_COUNT_IN_TOTAL + ", " +
                 "w." + Schema.Wallet.ARCHIVED + " AS " + Contract.Transaction.WALLET_ARCHIVED + ", " +
                 "w." + Schema.Wallet.TAG + " AS " + Contract.Transaction.WALLET_TAG + ", " +
+                "ow." + Schema.Wallet.NAME + " AS " + Contract.Transaction.TRANSFER_WALLET_NAME + ", " +
+                "CASE WHEN tf1." + Schema.Transfer.ID + " IS NOT NULL THEN " + Schema.Direction.EXPENSE + " WHEN tf2." +
+                Schema.Transfer.ID + " IS NOT NULL THEN " + Schema.Direction.INCOME + " END AS " +
+                Contract.Transaction.TRANSFER_DIRECTION + ", " +
                 "t." + Schema.Transaction.PLACE + " AS " + Contract.Transaction.PLACE_ID + ", " +
                 "p." + Schema.Place.NAME + " AS " + Contract.Transaction.PLACE_NAME + ", " +
                 "p." + Schema.Place.ICON + " AS " + Contract.Transaction.PLACE_ICON + ", " +
@@ -4508,7 +4527,7 @@ import java.util.function.Supplier;
                 "t." + Schema.Transaction.CONFIRMED + " AS " + Contract.Transaction.CONFIRMED + ", " +
                 "t." + Schema.Transaction.COUNT_IN_TOTAL + " AS " + Contract.Transaction.COUNT_IN_TOTAL + ", " +
                 "t." + Schema.Transaction.TAG + " AS " + Contract.Transaction.TAG + ", " +
-                "GROUP_CONCAT('<' || pe." + Schema.Person.ID + " || '>') AS " + Contract.Transaction.PEOPLE_IDS + " " +
+                "GROUP_CONCAT(DISTINCT '<' || pe." + Schema.Person.ID + " || '>') AS " + Contract.Transaction.PEOPLE_IDS + " " +
                 "FROM (" +
 
                 // case budget of type expense
@@ -4574,6 +4593,19 @@ import java.util.function.Supplier;
                 "JOIN " + Schema.Wallet.TABLE + " AS w " +
                 "ON t." + Schema.Transaction.WALLET + " = w." + Schema.Wallet.ID + " " +
                 "AND w." + Schema.Wallet.DELETED + " = 0 " +
+                "LEFT JOIN " + Schema.Transfer.TABLE + " AS tf1 " +
+                "ON t." + Schema.Transaction.ID + " = tf1." + Schema.Transfer.TRANSACTION_FROM + " " +
+                "AND tf1." + Schema.Transfer.DELETED + " = 0 " +
+                "LEFT JOIN " + Schema.Transfer.TABLE + " AS tf2 " +
+                "ON t." + Schema.Transaction.ID + " = tf2." + Schema.Transfer.TRANSACTION_TO + " " +
+                "AND tf2." + Schema.Transfer.DELETED + " = 0 " +
+                "LEFT JOIN " + Schema.Transaction.TABLE + " AS ot " +
+                "ON IFNULL(tf1." + Schema.Transfer.TRANSACTION_TO + ", tf2." + Schema.Transfer.TRANSACTION_FROM +
+                ") = ot." + Schema.Transaction.ID + " " +
+                "AND ot." + Schema.Transaction.DELETED + " = 0 " +
+                "LEFT JOIN " + Schema.Wallet.TABLE + " AS ow " +
+                "ON ot." + Schema.Transaction.WALLET + " = ow." + Schema.Wallet.ID + " " +
+                "AND ow." + Schema.Wallet.DELETED + " = 0 " +
                 "LEFT JOIN " + Schema.TransactionPeople.TABLE + " AS tp " +
                 "ON t." + Schema.Transaction.ID + " = tp." + Schema.TransactionPeople.TRANSACTION + " " +
                 "AND tp." + Schema.TransactionPeople.DELETED + " = 0 " +
