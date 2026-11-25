@@ -17,35 +17,28 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.text.MaterialTextView;
+import com.oriondev.moneywallet.ui.view.text.MaterialTextView
 
 /**
  * Created by andrea on 01/05/18.
  */
-public class ThemedMaterialTextView extends MaterialTextView implements ThemeEngine.ThemeConsumer {
+class ThemedMaterialTextView : MaterialTextView, ThemeEngine.ThemeConsumer {
 
-    public ThemedMaterialTextView(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedMaterialTextView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedMaterialTextView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        setLeftIconColor(theme.getIconColor());
-        setTextColor(theme.getTextColorPrimary());
-        setFloatingLabelColor(theme.getTextColorSecondary());
-        setBottomLineColor(theme.getTextColorSecondary());
+    override fun onApplyTheme(theme: ITheme?) {
+        setLeftIconColor(theme!!.iconColor)
+        setTextColor(theme.textColorPrimary)
+        setFloatingLabelColor(theme.textColorSecondary)
+        setBottomLineColor(theme.textColorSecondary)
     }
 }
