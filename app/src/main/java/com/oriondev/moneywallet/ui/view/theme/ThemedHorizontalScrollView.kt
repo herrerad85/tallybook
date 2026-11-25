@@ -17,35 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.HorizontalScrollView;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.HorizontalScrollView
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedHorizontalScrollView extends HorizontalScrollView implements ThemeEngine.ThemeConsumer {
+class ThemedHorizontalScrollView : HorizontalScrollView, ThemeEngine.ThemeConsumer {
 
-    public ThemedHorizontalScrollView(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedHorizontalScrollView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedHorizontalScrollView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    public ThemedHorizontalScrollView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        EdgeGlowUtil.setEdgeGlowColor(this, theme.getColorPrimary());
+    override fun onApplyTheme(theme: ITheme?) {
+        EdgeGlowUtil.setEdgeGlowColor(this, theme!!.colorPrimary)
     }
 }
