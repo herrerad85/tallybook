@@ -17,33 +17,26 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.content.Context
+import android.util.AttributeSet
 
-import com.oriondev.moneywallet.ui.view.CardButton;
+import com.oriondev.moneywallet.ui.view.CardButton
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedCardButton extends CardButton implements ThemeEngine.ThemeConsumer {
+class ThemedCardButton : CardButton, ThemeEngine.ThemeConsumer {
 
-    public ThemedCardButton(Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedCardButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedCardButton(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
-        int background = theme.getColorCardBackground();
-        setTextColor(Util.visibleOr(theme.getColorAccent(), background, theme.getBestTextColor(background)));
+    override fun onApplyTheme(theme: ITheme?) {
+        val background = theme!!.colorCardBackground
+        setTextColor(Util.visibleOr(theme.colorAccent, background, theme.getBestTextColor(background)))
     }
 }
