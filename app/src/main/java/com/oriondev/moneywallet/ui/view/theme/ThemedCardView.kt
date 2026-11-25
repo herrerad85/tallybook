@@ -17,37 +17,28 @@
  * along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.oriondev.moneywallet.ui.view.theme;
+package com.oriondev.moneywallet.ui.view.theme
 
-import android.content.Context;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
-import android.util.AttributeSet;
+import android.content.Context
+import androidx.cardview.widget.CardView
+import android.util.AttributeSet
 
 /**
  * Created by andrea on 20/08/18.
  */
-public class ThemedCardView extends CardView implements ThemeEngine.ThemeConsumer {
+class ThemedCardView : CardView, ThemeEngine.ThemeConsumer {
 
-    public ThemedCardView(@NonNull Context context) {
-        super(context);
-    }
+    constructor(context: Context) : super(context)
 
-    public ThemedCardView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    public ThemedCardView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    @Override
-    public void onApplyTheme(ITheme theme) {
+    override fun onApplyTheme(theme: ITheme?) {
         // setBackgroundColor would replace the RoundRectDrawable CardView installs, taking the
         // rounded corners with it and leaving CardView's own reference to that drawable dangling,
         // so setRadius and friends would silently stop working. The shadow survives, squared off:
         // elevation is a property of the View, not of the background
-        setCardBackgroundColor(theme.getColorCardBackground());
+        setCardBackgroundColor(theme!!.colorCardBackground)
     }
 }
