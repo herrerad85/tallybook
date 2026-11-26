@@ -52,6 +52,13 @@ open class PieChart : View {
         private const val DEFAULT_LINE_COLOR = Color.GRAY
         private const val DEFAULT_LINE_SIZE = 3f
         private const val PERCENTAGE_TEXT_SIZE_SP = 12f
+        private const val LABEL_MARGIN_DP = 2f
+
+        internal fun labelDistance(iconAngle: Float, textDistance: Float, iconDistance: Float, iconRadius: Float, margin: Float, halfAdvance: Float, halfInkHeight: Float): Float {
+            val cos = Math.abs(Math.cos(Math.toRadians(iconAngle.toDouble()))).toFloat()
+            val sin = Math.abs(Math.sin(Math.toRadians(iconAngle.toDouble()))).toFloat()
+            return Math.max(textDistance, iconDistance + iconRadius * (cos + sin) + margin + halfAdvance * cos + halfInkHeight * sin)
+        }
     }
 
     // current data
@@ -351,11 +358,14 @@ open class PieChart : View {
                 mLinePaint!!.getTextBounds(label, 0, label.length, mTextBounds)
                 // half the advance, which is what a centered alignment lays the string out around
                 val halfAdvance = mLinePaint!!.measureText(label) / 2
+                val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, LABEL_MARGIN_DP, resources.displayMetrics)
+                val distance = labelDistance(iconAngle, textDistance, iconDistance, iconRadius, margin,
+                        halfAdvance, mTextBounds.height() / 2f)
                 // calculate center text coordinates, putting the middle of the glyphs on the point.
                 // The old offset put the baseline half a text size below it, more than half the
                 // height of these glyphs, so the label sat low
-                var textX = ((Math.cos(Math.toRadians(iconAngle.toDouble())) * textDistance).toFloat()) + centerX
-                var textY = ((Math.sin(Math.toRadians(iconAngle.toDouble())) * textDistance).toFloat()) + centerY - ((mTextBounds.top + mTextBounds.bottom) / 2f)
+                var textX = ((Math.cos(Math.toRadians(iconAngle.toDouble())) * distance).toFloat()) + centerX
+                var textY = ((Math.sin(Math.toRadians(iconAngle.toDouble())) * distance).toFloat()) + centerY - ((mTextBounds.top + mTextBounds.bottom) / 2f)
                 // a percentage cut off by the edge of the view reads as a different number rather
                 // than as a clipped label, so one that would cross an edge is moved in instead, at
                 // the cost of sitting nearer its icon. A label wider than the view cannot be saved
