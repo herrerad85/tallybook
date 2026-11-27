@@ -73,6 +73,7 @@ class AdvancedRecyclerView : SwipeRefreshLayout {
         }
         if (insetBottom) {
             SystemBars.pad(mRecyclerView, false, insetSides, true)
+            SystemBars.pad(mEmptyTextView, false, insetSides, false)
         }
     }
 

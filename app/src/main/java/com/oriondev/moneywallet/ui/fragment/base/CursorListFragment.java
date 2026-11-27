@@ -73,6 +73,8 @@ public abstract class CursorListFragment extends Fragment implements SwipeRefres
         // without this the last row of the app's main lists cannot be scrolled clear of the bar.
         SystemBars.pad(mAdvancedRecyclerView.getRecyclerView(),
                 false, getResources().getBoolean(R.bool.panel_fills_window), true);
+        SystemBars.pad(mAdvancedRecyclerView.getTextView(),
+                false, getResources().getBoolean(R.bool.panel_fills_window), false);
         onPrepareRecyclerView(mAdvancedRecyclerView);
         mAbstractCursorAdapter = onCreateAdapter();
         mAdvancedRecyclerView.setAdapter(mAbstractCursorAdapter);
