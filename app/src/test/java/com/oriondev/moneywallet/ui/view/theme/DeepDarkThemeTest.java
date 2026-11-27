@@ -19,6 +19,7 @@
 
 package com.oriondev.moneywallet.ui.view.theme;
 
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -152,6 +153,8 @@ public class DeepDarkThemeTest {
                 assertEquals(0xFFFFFFFF, key.getCurrentTextColor());
                 assertFalse(bars(activity).isAppearanceLightStatusBars());
                 assertFalse(bars(activity).isAppearanceLightNavigationBars());
+                ActivityManager.TaskDescription description = ReflectionHelpers.getField(activity, "mTaskDescription");
+                assertEquals(0xFF000000, description.getPrimaryColor());
 
                 LayoutInflater inflater = activity.getLayoutInflater();
                 View tabs = inflater.inflate(R.layout.view_multi_panel_view_pager_app_bar, null);
@@ -161,6 +164,21 @@ public class DeepDarkThemeTest {
                         new FrameLayout(activity), true);
                 ThemeEngine.applyTheme(header, true);
                 assertEquals(0xFFFFFFFF, ((TextView) header.findViewById(R.id.name_text_view)).getCurrentTextColor());
+            });
+        } finally {
+            ThemeEngine.setColorPrimary(original);
+        }
+    }
+
+    @Test
+    public void lightKeepsThePrimaryInTheTaskDescription() {
+        int original = ThemeEngine.getSavedColorPrimary();
+        ThemeEngine.setColorPrimary(YELLOW);
+        ThemeEngine.setMode(ThemeEngine.Mode.LIGHT);
+        try (ActivityScenario<CalculatorActivity> scenario = ActivityScenario.launch(CalculatorActivity.class)) {
+            scenario.onActivity(activity -> {
+                ActivityManager.TaskDescription description = ReflectionHelpers.getField(activity, "mTaskDescription");
+                assertEquals(YELLOW, description.getPrimaryColor());
             });
         } finally {
             ThemeEngine.setColorPrimary(original);
