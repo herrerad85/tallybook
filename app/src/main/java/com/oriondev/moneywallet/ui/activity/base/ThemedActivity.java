@@ -413,7 +413,7 @@ public abstract class ThemedActivity extends AppCompatActivity implements ThemeE
     protected void onThemeTaskDescription(ITheme theme) {
         String name = getString(R.string.app_name);
         Bitmap icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-        setTaskDescription(new ActivityManager.TaskDescription(name, icon, theme.getColorPrimary()));
+        setTaskDescription(new ActivityManager.TaskDescription(name, icon, theme.getColorPrimaryBackground()));
     }
 
     protected void onThemeWindowBackground(ITheme theme) {
