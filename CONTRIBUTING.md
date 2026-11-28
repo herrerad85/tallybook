@@ -135,4 +135,6 @@ Write the body yourself, in plain words, for someone who has not seen the code.
 
 ## Translating
 
-Translating needs no tooling and no build. Copy `app/src/main/res/values/strings.xml` into a folder named for the language, such as `values-de`, translate the entries and open a pull request. Leave any entry you are unsure about in English, and check that longer translations do not clip the layout.
+Translations are done on [Hosted Weblate](https://hosted.weblate.org/projects/tallybook/). Pick a language there, or add a new one, and translate in the browser. Weblate sends the work here as its own pull request. Leave any entry you are unsure about untranslated and the app shows it in English, and check that longer translations do not clip the layout.
+
+A pull request that changes code edits English strings only, in `app/src/main/res/values/strings.xml`, and leaves the translated `strings.xml` files alone, because Weblate keeps its own copy of them and an edit made outside it can conflict with the next update. The one exception is a string you remove, which comes out of every translation in the same pull request.
