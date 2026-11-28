@@ -508,9 +508,11 @@ public class NewEditRecurrentTransferActivity extends NewEditItemActivity implem
         if (currencyUnit1 != null && currencyUnit2 != null && !currencyUnit1.equals(currencyUnit2)) {
             // we have two different currencies, its time to show the secondary currency line and do
             // a conversion on the fly with the provided conversion rate.
-            mExchangeRateTextView.setText(String.format(Locale.getDefault(), "%s -> %s: %.2f", currencyUnit1.getSymbolOrIso(), currencyUnit2.getSymbolOrIso(), conversionRate));
+            CurrencyUnit shown1 = currencyUnit1.withIsoSymbolIfSymbolsMatch(currencyUnit2);
+            CurrencyUnit shown2 = currencyUnit2.withIsoSymbolIfSymbolsMatch(currencyUnit1);
+            mExchangeRateTextView.setText(String.format(Locale.getDefault(), "%s -> %s: %.2f", shown1.getSymbolOrIso(), shown2.getSymbolOrIso(), conversionRate));
             long convertedAmount = mConverterPicker.convert(mMoneyPicker.getCurrentMoney());
-            mMoneyFormatter.applyNotTinted(mSecondaryMoneyTextView, currencyUnit2, convertedAmount);
+            mMoneyFormatter.applyNotTinted(mSecondaryMoneyTextView, shown2, convertedAmount);
             mExchangeRateTextView.setVisibility(View.VISIBLE);
             mSecondaryMoneyTextView.setVisibility(View.VISIBLE);
         } else {

@@ -187,6 +187,48 @@ public class NewEditTransferActivityTest {
     }
 
     @Test
+    public void twoCurrenciesWithTheSameSymbolShowTheirIsoCodes() {
+        assertEquals(CurrencyManager.getCurrency("USD").getSymbolOrIso(),
+                CurrencyManager.getCurrency("CAD").getSymbolOrIso());
+        long dollars = insertWallet("Dollars", "USD");
+        long loonies = insertWallet("Loonies", "CAD");
+        long transfer = insertTransfer(dollars, loonies, 10000L, 13600L, 0L);
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(editIntent(transfer))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                TextView converted = activity.findViewById(R.id.secondary_money_text_view);
+                assertEquals(View.VISIBLE, rate.getVisibility());
+                assertEquals(String.format(Locale.getDefault(), "%s -> %s: %.2f", "USD", "CAD", 1.36D),
+                        rate.getText().toString());
+                assertEquals(View.VISIBLE, converted.getVisibility());
+                assertTrue(converted.getText().toString(), converted.getText().toString().startsWith("CAD "));
+                assertFalse(converted.getText().toString(), converted.getText().toString().contains("$"));
+            });
+        }
+    }
+
+    @Test
+    public void twoCurrenciesWithTheSameSymbolKeepTheirOwnDecimals() {
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        assertEquals(CurrencyManager.getCurrency("CNY").getSymbolOrIso(), yen.getSymbolOrIso());
+        long yuan = insertWallet("Yuan", "CNY");
+        long tokyo = insertWallet("Tokyo", "JPY");
+        long transfer = insertTransfer(yuan, tokyo, 10000L, 2000L, 0L);
+        try (ActivityScenario<NewEditTransferActivity> scenario =
+                     ActivityScenario.launch(editIntent(transfer))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                TextView converted = activity.findViewById(R.id.secondary_money_text_view);
+                assertEquals(String.format(Locale.getDefault(), "%s -> %s: %.2f", "CNY", "JPY", 20D),
+                        rate.getText().toString());
+                assertEquals("JPY " + MoneyFormatter.getInstance().getNotTintedString(yen, 2000L,
+                        MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN), converted.getText().toString());
+            });
+        }
+    }
+
+    @Test
     public void anEditedCrossScaleTransferKeepsEveryStoredFieldWhenNothingIsTouched() {
         long place = insertPlace();
         long event = insertEvent();

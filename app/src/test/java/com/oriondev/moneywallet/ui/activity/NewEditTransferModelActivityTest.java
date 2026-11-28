@@ -28,6 +28,7 @@ import com.oriondev.moneywallet.storage.database.TestDatabases;
 import com.oriondev.moneywallet.storage.preference.PreferenceManager;
 import com.oriondev.moneywallet.ui.view.text.MaterialEditText;
 import com.oriondev.moneywallet.utils.CurrencyManager;
+import com.oriondev.moneywallet.utils.MoneyFormatter;
 import com.oriondev.moneywallet.utils.IconLoader;
 
 import org.junit.Before;
@@ -79,6 +80,10 @@ public class NewEditTransferModelActivityTest {
                 TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
                 assertEquals(View.VISIBLE, rate.getVisibility());
                 assertEquals(euroToYenRateLine(150D), rate.getText().toString());
+                CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+                TextView converted = activity.findViewById(R.id.secondary_money_text_view);
+                assertEquals(yen.getSymbol() + " " + MoneyFormatter.getInstance().getNotTintedString(yen,
+                        15000L, MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN), converted.getText().toString());
             });
         }
     }
@@ -111,6 +116,48 @@ public class NewEditTransferModelActivityTest {
                 assertEquals(View.VISIBLE, rate.getVisibility());
                 assertTrue(rate.getText().toString().startsWith("$ -> XAF: "));
                 assertFalse(rate.getText().toString().contains("null"));
+            });
+        }
+    }
+
+    @Test
+    public void twoCurrenciesWithTheSameSymbolShowTheirIsoCodes() {
+        assertEquals(CurrencyManager.getCurrency("USD").getSymbolOrIso(),
+                CurrencyManager.getCurrency("CAD").getSymbolOrIso());
+        long dollars = insertWallet("Dollars", "USD");
+        long loonies = insertWallet("Loonies", "CAD");
+        long model = insertModel(10000L, 13600L, dollars, loonies);
+        try (ActivityScenario<NewEditTransferModelActivity> scenario =
+                     ActivityScenario.launch(editIntent(model))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                TextView converted = activity.findViewById(R.id.secondary_money_text_view);
+                assertEquals(View.VISIBLE, rate.getVisibility());
+                assertEquals(String.format(Locale.getDefault(), "%s -> %s: %.2f", "USD", "CAD", 1.36D),
+                        rate.getText().toString());
+                assertEquals(View.VISIBLE, converted.getVisibility());
+                assertTrue(converted.getText().toString(), converted.getText().toString().startsWith("CAD "));
+                assertFalse(converted.getText().toString(), converted.getText().toString().contains("$"));
+            });
+        }
+    }
+
+    @Test
+    public void twoCurrenciesWithTheSameSymbolKeepTheirOwnDecimals() {
+        CurrencyUnit yen = CurrencyManager.getCurrency("JPY");
+        assertEquals(CurrencyManager.getCurrency("CNY").getSymbolOrIso(), yen.getSymbolOrIso());
+        long yuan = insertWallet("Yuan", "CNY");
+        long tokyo = insertWallet("Tokyo", "JPY");
+        long model = insertModel(10000L, 2000L, yuan, tokyo);
+        try (ActivityScenario<NewEditTransferModelActivity> scenario =
+                     ActivityScenario.launch(editIntent(model))) {
+            scenario.onActivity(activity -> {
+                TextView rate = activity.findViewById(R.id.exchange_rate_text_view);
+                TextView converted = activity.findViewById(R.id.secondary_money_text_view);
+                assertEquals(String.format(Locale.getDefault(), "%s -> %s: %.2f", "CNY", "JPY", 20D),
+                        rate.getText().toString());
+                assertEquals("JPY " + MoneyFormatter.getInstance().getNotTintedString(yen, 2000L,
+                        MoneyFormatter.CurrencyMode.ALWAYS_HIDDEN), converted.getText().toString());
             });
         }
     }
