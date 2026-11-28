@@ -45,8 +45,11 @@ import com.oriondev.moneywallet.utils.IconLoader;
 import com.oriondev.moneywallet.utils.MoneyFormatter;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowDialog;
@@ -88,6 +91,31 @@ public class NewEditBudgetActivityTest {
 
     private static final String APRIL_START = "2019-04-01";
     private static final String APRIL_END = "2019-04-30";
+
+    private static final long BEFORE_MIDNIGHT_MILLIS = 60_000L;
+    private static final long AFTER_MIDNIGHT_MILLIS = 10_000L;
+
+    @Rule
+    public final TestRule mClearOfMidnight = (base, description) -> new Statement() {
+        @Override
+        public void evaluate() throws Throwable {
+            long now = System.currentTimeMillis();
+            Calendar midnight = Calendar.getInstance();
+            midnight.setTimeInMillis(now);
+            midnight.set(Calendar.HOUR_OF_DAY, 0);
+            midnight.set(Calendar.MINUTE, 0);
+            midnight.set(Calendar.SECOND, 0);
+            midnight.set(Calendar.MILLISECOND, 0);
+            if (now - midnight.getTimeInMillis() >= AFTER_MIDNIGHT_MILLIS) {
+                midnight.add(Calendar.DAY_OF_MONTH, 1);
+            }
+            long clear = midnight.getTimeInMillis() + AFTER_MIDNIGHT_MILLIS;
+            if (clear - now < BEFORE_MIDNIGHT_MILLIS + AFTER_MIDNIGHT_MILLIS) {
+                Thread.sleep(clear - now);
+            }
+            base.evaluate();
+        }
+    };
 
     private Context mContext;
     private ContentResolver mResolver;
