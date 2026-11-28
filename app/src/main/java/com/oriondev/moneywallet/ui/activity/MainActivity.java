@@ -269,6 +269,12 @@ public class MainActivity extends BaseActivity implements DrawerController, Navi
         });
         mNavigationView = findViewById(R.id.navigation_view);
         SystemBars.padDrawerStart(mDrawerLayout, mNavigationView);
+        for (int i = 0; i < mNavigationView.getChildCount(); i++) {
+            View child = mNavigationView.getChildAt(i);
+            if (child instanceof RecyclerView) {
+                ((RecyclerView) child).setClipToPadding(true);
+            }
+        }
         mNavigationView.setNavigationItemSelectedListener(this);
         // the section icons are tinted one by one below, so the wallet icons keep their colors
         mNavigationView.setItemIconTintList(null);

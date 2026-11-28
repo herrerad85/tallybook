@@ -18,10 +18,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 
@@ -784,6 +788,23 @@ public class MainActivityTest {
                 Menu menu = drawer(activity).getMenu();
                 assertNotNull(menu.findItem(MainActivity.ID_SECTION_TRANSACTIONS));
                 assertNotNull(menu.findItem(MainActivity.ID_SECTION_SETTING));
+            });
+        }
+    }
+
+    @Test
+    public void theDrawerMenuDoesNotDrawRowsIntoItsBottomPadding() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                NavigationView drawer = drawer(activity);
+                RecyclerView menu = drawer.findViewById(com.google.android.material.R.id.design_navigation_view);
+                assertTrue(menu.getClipToPadding());
+                WindowInsetsCompat insets = new WindowInsetsCompat.Builder()
+                        .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.of(0, 63, 0, 126))
+                        .build();
+                ViewCompat.dispatchApplyWindowInsets(drawer, insets);
+                assertEquals(126, menu.getPaddingBottom());
+                assertTrue(menu.getClipToPadding());
             });
         }
     }
