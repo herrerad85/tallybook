@@ -1,9 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 ~ translated by haneefi
--->
-<resources>
+--><resources>
     <string name="app_name">Tallybook</string>
-
     <string name="menu_transaction">"ഇടപാടുകൾ"</string>
     <string name="menu_category">"വിഭാഗങ്ങൾ"</string>
     <string name="menu_overview">"അവലോകനം"</string>
@@ -19,36 +18,21 @@
     <string name="menu_calculator">"കാൽക്കുലേറ്റർ"</string>
     <string name="menu_setting">"ക്രമീകരണങ്ങൾ"</string>
     <string name="menu_about">"കുറിച്ച്"</string>
-
-    
     <string name="menu_transaction_tab_transactions">"ഇടപാടുകൾ"</string>
     <string name="menu_transaction_tab_transfers">"കൈമാറ്റങ്ങൾ"</string>
-
-    
     <string name="menu_category_tab_income">"വരുമാനം"</string>
     <string name="menu_category_tab_expense">"ചെലവുകൾ"</string>
     <string name="menu_category_tab_system">"സിസ്റ്റം"</string>
-
-    
     <string name="menu_debt_tab_debt">"കടം"</string>
     <string name="menu_debt_tab_credit">"ക്രെഡിറ്റ്"</string>
-
-    
     <string name="menu_budget_tab_running">"പ്രവർത്തിക്കുന്ന"</string>
     <string name="menu_budget_tab_expired">"കാലഹരണപ്പെട്ടു"</string>
-
-    
     <string name="menu_saving_tab_running">"പ്രവർത്തിക്കുന്ന"</string>
     <string name="menu_saving_tab_completed">"പൂർത്തിയായി"</string>
-
-    
     <string name="menu_event_tab_running">"പ്രവർത്തിക്കുന്ന"</string>
     <string name="menu_event_tab_completed">"പൂർത്തിയായി"</string>
-
-    
     <string name="menu_model_tab_transactions">"ഇടപാടുകൾ"</string>
     <string name="menu_model_tab_transfers">"കൈമാറ്റങ്ങൾ"</string>
-
     <string name="action_new_wallet">"പുതിയ വാലറ്റ്"</string>
     <string name="action_manage_wallets">"വാലറ്റുകൾ നിയന്ത്രിക്കുക"</string>
     <string name="action_pay_debt">"പണമടയ്ക്കുക"</string>
@@ -64,12 +48,9 @@
     <string name="action_open">"തുറക്കുക"</string>
     <string name="action_undo">"പഴയപടിയാക്കുക"</string>
     <string name="action_skip">"ഒഴിവാക്കുക"</string>
-
     <string name="msg_no_wallet_found">"വാലറ്റൊന്നും കണ്ടെത്തിയില്ല"</string>
     <string name="msg_add_one_wallet">"ദയവായി ഒരു വാലറ്റ് ചേർക്കുക"</string>
-
     <string name="hint_total_sum">"ആകെ"</string>
-
     <string name="hint_name">"പേര്"</string>
     <string name="hint_description">"വിവരണം"</string>
     <string name="hint_currency">"കറൻസി"</string>
@@ -132,7 +113,6 @@
     <string name="hint_iso_code">"ഐഎസ്ഒ കോഡ്"</string>
     <string name="hint_symbol">"ചിഹ്നം"</string>
     <string name="hint_decimals">"ദശാംശങ്ങളുടെ എണ്ണം"</string>
-
     <string name="hint_show_currency_symbol">"കറൻസി ചിഹ്നം കാണിക്കുക"</string>
     <string name="hint_group_digits">"ഗ്രൂപ്പ് അക്കങ്ങൾ"</string>
     <string name="hint_round_decimals">"റ dec ണ്ട് ദശാംശങ്ങൾ"</string>
@@ -142,9 +122,7 @@
     <string name="hint_auto_backup_only_if_data_changed">"ഡാറ്റ മാറ്റിയാൽ മാത്രം"</string>
     <string name="hint_auto_backup_every_n_hours">"ഓരോ %d മണിക്കൂറിലും"</string>
     <string name="hint_auto_backup_folder">"ഫോൾഡർ"</string>
-
     <string name="total_wallet_name">"ആകെ"</string>
-
     <string name="title_activity_new_currency">"പുതിയ കറൻസി"</string>
     <string name="title_activity_edit_currency">"കറൻസി എഡിറ്റുചെയ്യുക"</string>
     <string name="title_activity_new_wallet">"പുതിയ വാലറ്റ്"</string>
@@ -186,7 +164,6 @@
     <string name="title_activity_backend_folder_picker">"ഒരു ഫോൾഡർ തിരഞ്ഞെടുക്കുക"</string>
     <string name="title_activity_import_data">"ഡാറ്റ ഇമ്പോർട്ടുചെയ്യുക"</string>
     <string name="title_activity_export_data">"ഡാറ്റ എക്സ്പോർട്ടുചെയ്യുക"</string>
-
     <string name="title_fragment_item_wallet">"വാലറ്റ്"</string>
     <string name="title_fragment_item_transaction">"ഇടപാട്"</string>
     <string name="title_fragment_item_transfer">"കൈമാറ്റം"</string>
@@ -199,7 +176,6 @@
     <string name="title_fragment_item_model">"മോഡൽ"</string>
     <string name="title_fragment_item_place">"സ്ഥലം"</string>
     <string name="title_fragment_item_person">"വ്യക്തി"</string>
-
     <string name="menu_action_attach_file">"ഫയൽ അറ്റാച്ചുചെയ്യുക"</string>
     <string name="menu_action_save_changes">"മാറ്റങ്ങൾ സൂക്ഷിക്കുക"</string>
     <string name="menu_refresh_currency_rate">"കറൻസി നിരക്ക് പുതുക്കുക"</string>
@@ -218,10 +194,8 @@
     <string name="menu_action_select_folder">"ഫോൾഡർ തിരഞ്ഞെടുക്കുക"</string>
     <string name="menu_action_import_data">"ഡാറ്റ ഇമ്പോർട്ടുചെയ്യുക"</string>
     <string name="menu_action_export_data">"ഡാറ്റ എക്സ്പോർട്ടുചെയ്യുക"</string>
-
     <string name="bottom_sheet_icon_picker_action_remove_icon">"ഐക്കൺ നീക്കംചെയ്യുക"</string>
     <string name="bottom_sheet_icon_picker_action_change_bg_color">"പശ്ചാത്തല വർണ്ണം മാറ്റുക"</string>
-
     <string name="dialog_color_picker_title_icon_picker_background_color">"നിറം തിരഞ്ഞെടുക്കുക"</string>
     <string name="dialog_color_picker_title">"ഒരു നിറം തിരഞ്ഞെടുക്കുക"</string>
     <string name="dialog_wallet_picker_title">"വാലറ്റുകൾ"</string>
@@ -236,7 +210,6 @@
     <string name="dialog_auto_backup_title">"യാന്ത്രിക ബാക്കപ്പ്"</string>
     <string name="dialog_data_format_picker_title">"ഡാറ്റ ഫോർമാറ്റ്"</string>
     <string name="dialog_export_optional_columns_title">"ഓപ്ഷണൽ നിരകൾ"</string>
-
     <string name="error_input_name_not_valid">"സാധുവായ പേരല്ല"</string>
     <string name="error_input_iso_not_valid">"സാധുവായ ഒരു ഐഎസ്ഒ കോഡല്ല"</string>
     <string name="error_input_decimals_not_valid">"ഇത് 0 മുതൽ 8 വരെയുള്ള മൂല്യമായിരിക്കണം"</string>
@@ -255,7 +228,6 @@
     <string name="error_input_missing_format">"ഒരു ഫയൽ ഫോർമാറ്റ് തിരഞ്ഞെടുക്കുക"</string>
     <string name="error_input_missing_input_file">"ഒരു ഇൻപുട്ട് ഫയൽ തിരഞ്ഞെടുക്കുക"</string>
     <string name="error_input_missing_output_folder">"ഒരു output ട്ട്പുട്ട് ഫോൾഡർ തിരഞ്ഞെടുക്കുക"</string>
-
     <string name="system_category_transfer">കൈമാറ്റം</string>
     <string name="system_category_transfer_tax">ട്രാൻസ്ഫർ ടാക്സ്</string>
     <string name="system_category_debt">കടം</string>
@@ -265,7 +237,6 @@
     <string name="system_category_generic_tax">നികുതി</string>
     <string name="system_category_saving_in">നിക്ഷേപം</string>
     <string name="system_category_saving_out">പിൻവലിക്കുക</string>
-
     <string name="default_category_tip">"ടിപ്പ്"</string>
     <string name="default_category_prize">"സമ്മാനം"</string>
     <string name="default_category_salary">"ശമ്പളം"</string>
@@ -277,7 +248,6 @@
     <string name="default_category_technology">"സാങ്കേതികവിദ്യ"</string>
     <string name="default_category_food_drinks">"ഭക്ഷണവും പാനീയങ്ങളും"</string>
     <string name="default_category_hobby">"ഹോബി"</string>
-
     <string name="relative_string_ended_on">"അവസാനിച്ചത്: %s"</string>
     <string name="relative_string_will_end_on">"അവസാനിക്കും: %s"</string>
     <string name="relative_string_money_to_settle_debt">"ഈ കടം തീർക്കാൻ %s ശേഷിക്കുന്നു"</string>
@@ -285,17 +255,14 @@
     <string name="relative_string_expired_on">"കാലഹരണപ്പെട്ടു: %s"</string>
     <string name="relative_string_will_expire_on">"കാലഹരണപ്പെടും: %s"</string>
     <string name="relative_string_version_name">"പതിപ്പ് %s"</string>
-
     <string name="adapter_current_money">"നിലവിലുള്ളത്:"</string>
     <string name="adapter_needed_money">"ആവശ്യമുണ്ട്:"</string>
     <string name="adapter_used_money">"ഉപയോഗിച്ചു:"</string>
     <string name="adapter_available_money">"ലഭ്യമാണ്:"</string>
     <string name="adapter_tax_money">"നികുതി:"</string>
-
     <string name="header_debts_to_pay">"അടയ്ക്കാൻ:"</string>
     <string name="header_debts_to_receive">"സ്വീകരിക്കാന്:"</string>
     <string name="header_debts_archived">"ശേഖരിച്ചു"</string>
-
     <string name="message_no_currency_found">"കറൻസികളൊന്നും കണ്ടെത്തിയില്ല"</string>
     <string name="message_no_wallet_found">"വാലറ്റൊന്നും കണ്ടെത്തിയില്ല"</string>
     <string name="message_no_transaction_found">"ഇടപാടുകളൊന്നും കണ്ടെത്തിയില്ല"</string>
@@ -312,13 +279,10 @@
     <string name="message_no_icon_found">"ഐക്കണൊന്നും കണ്ടെത്തിയില്ല"</string>
     <string name="message_no_file_found">"ഫയലുകളൊന്നും കണ്ടെത്തിയില്ല"</string>
     <string name="message_error_backend_recoverable">"കണക്ഷൻ പ്രശ്നം. ദയവായി വീണ്ടും ശ്രമിക്കുക."</string>
-
     <string name="cover_message_backup_external_memory_title">"ഉപകരണത്തിന്റെ ബാഹ്യ സംഭരണത്തിൽ നിന്ന് നേരിട്ട് അപ്ലിക്കേഷന് ബാക്കപ്പുകൾ സൃഷ്ടിക്കാനും പുന restore സ്ഥാപിക്കാനും കഴിയും"</string>
     <string name="cover_message_backup_external_memory_button">"തുടരുക"</string>
-
     <string name="empty_message_secondary_panel">"വിശദാംശങ്ങൾ കാണുന്നതിന് ഇടത് പാനലിൽ നിന്ന് ഒരു ഘടകം തിരഞ്ഞെടുക്കുക"</string>
     <string name="empty_message_backup_cover">"നിങ്ങളുടെ സ്വകാര്യ ബാക്കപ്പുകൾ സംഭരിക്കുന്നതിനും വീണ്ടെടുക്കുന്നതിനും നിങ്ങൾ ഉപയോഗിക്കാൻ ആഗ്രഹിക്കുന്ന സേവനം തിരഞ്ഞെടുക്കുക"</string>
-
     <string name="title_warning">"മുന്നറിയിപ്പ്"</string>
     <string name="title_request_permission">"അനുമതി അഭ്യർത്ഥന"</string>
     <string name="title_backup_create">"ബാക്കപ്പ് സൃഷ്ടിക്കുക"</string>
@@ -391,14 +355,11 @@
     <string name="message_data_export_failed">"കയറ്റുമതി പ്രക്രിയയിൽ പരാജയം. സന്ദേശം: %s"</string>
     <string name="message_data_import_success">"ഡാറ്റ ശരിയായി ഇറക്കുമതി ചെയ്തു."</string>
     <string name="message_data_export_success">"ഡാറ്റ ശരിയായി എക്സ്പോർട്ടുചെയ്തു. സൃഷ്ടിച്ച ഫയൽ തുറക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>
-
     <string name="message_async_init">"സമാരംഭിക്കൽ…"</string>
-
     <string name="snackbar_message_model_transaction_added">"ഇടപാട് ചേർത്തു"</string>
     <string name="snackbar_message_model_transfer_added">"കൈമാറ്റം ചേർത്തു"</string>
     <string name="snackbar_message_model_transaction_removed">"ഇടപാട് നീക്കംചെയ്തു"</string>
     <string name="snackbar_message_model_transfer_removed">"കൈമാറ്റം നീക്കംചെയ്തു"</string>
-
     <string name="spinner_item_group_type_daily">"ദിവസേന ഗ്രൂപ്പ് ചെയ്യുക"</string>
     <string name="spinner_item_group_type_weekly">"ഗ്രൂപ്പ് പ്രതിവാര"</string>
     <string name="spinner_item_group_type_monthly">"ഗ്രൂപ്പ് പ്രതിമാസ"</string>
@@ -408,17 +369,13 @@
     <string name="spinner_item_cash_flow_incomes">"വരുമാനം മാത്രം"</string>
     <string name="spinner_item_cash_flow_expenses">"ചെലവുകൾ മാത്രം"</string>
     <string name="spinner_item_cash_flow_net_incomes">"അറ്റ വരുമാനം"</string>
-
     <string name="spinner_item_start_date">"അയച്ചയാൾ: %s"</string>
     <string name="spinner_item_end_date">"സ്വീകർത്താവ്: %s"</string>
-
     <string name="service_backup_external_memory">"ബാഹ്യ മെമ്മറി"</string>
-
     <string name="setting_title_user_interface">"ഉപയോക്തൃ ഇന്റർഫേസ്"</string>
     <string name="setting_title_utility">"യൂട്ടിലിറ്റികൾ"</string>
     <string name="setting_title_database">"ഡാറ്റാബേസ്"</string>
     <string name="setting_title_about">"കുറിച്ച്"</string>
-
     <string name="setting_category_ui_appearance">"രൂപം"</string>
     <string name="setting_category_ui_theme">"തീം"</string>
     <string name="setting_title_ui_income_color">"വരുമാന നിറം"</string>
@@ -431,7 +388,6 @@
     <string name="setting_title_ui_group_type">"ഗ്രൂപ്പിംഗ്"</string>
     <string name="setting_title_ui_theme_color_primary">"കളർ പ്രൈമറി"</string>
     <string name="setting_title_ui_theme_color_accent">"കളർ ആക്സന്റ്"</string>
-
     <string name="setting_category_utility_notification">"അറിയിപ്പ്"</string>
     <string name="setting_category_utility_security">"സുരക്ഷ"</string>
     <string name="setting_category_utility_exchange_rates">"വിനിമയ നിരക്ക്"</string>
@@ -467,7 +423,6 @@
     <string name="setting_item_utility_exchange_rates_custom_api_key_hint">"API കീ ചേർക്കുക"</string>
     <string name="setting_item_utility_exchange_rates_service_oer" translatable="false">"OpenExchangeRates.org"</string>
     <string name="setting_item_utility_exchange_rates_service_oer_custom_api_key_message">"പ്രവർത്തിക്കുന്നതിന് ഈ സേവനത്തിന് സാധുവായ ഒരു എപി-കീ ആവശ്യമാണ്. ഇതിനർത്ഥം സ്ഥിരസ്ഥിതി കീയില്ലാതെ ഈ ആപ്ലിക്കേഷൻ റിലീസ് സമാഹരിച്ചത്, ലൈസൻസിംഗ് പ്രശ്നങ്ങൾ കാരണമാകാം എന്നാണ്. ഈ ബാഹ്യ ദാതാവുമായി ആശയവിനിമയം നടത്താൻ നിങ്ങൾ https: // ലേക്ക് പോകണം. openexchangerates.org കൂടാതെ രജിസ്റ്റർ ചെയ്യുക: നിങ്ങൾക്ക് ഒരു സ key ജന്യ കീ ലഭിക്കും. "</string>
-
     <string name="setting_category_database_backup">"ബാക്കപ്പ്"</string>
     <string name="setting_title_database_backup_services">"ബാക്കപ്പ് സേവനങ്ങൾ"</string>
     <string name="setting_summary_database_backup_services">"ഡാറ്റാബേസ് സൃഷ്ടിച്ച് പുന restore സ്ഥാപിക്കുക"</string>
@@ -476,7 +431,6 @@
     <string name="setting_summary_import_data">"ഒരു ബാഹ്യ ഫയലിൽ നിന്ന് ഡാറ്റ വായിക്കുക"</string>
     <string name="setting_title_export_data">"ഡാറ്റ എക്സ്പോർട്ടുചെയ്യുക"</string>
     <string name="setting_summary_export_data">"ഒരു ബാഹ്യ ഫയലിൽ ഡാറ്റ എഴുതുക"</string>
-
     <string name="notification_title_daily_reminder_title">"ഇന്ന് എന്തെങ്കിലും ഇടപാട് ഉണ്ടോ?"</string>
     <string name="notification_title_daily_reminder_text">"ഇത് ഉടനടി ചേർക്കാൻ ഇവിടെ ടാപ്പുചെയ്യുക"</string>
     <string name="notification_title_download_exchange_rates">"വിനിമയ നിരക്കുകൾ അപ്ഡേറ്റുചെയ്യുക"</string>
@@ -499,7 +453,6 @@
     <string name="message_error_network_connection">"നെറ്റ്വർക്ക് കണക്ഷൻ"</string>
     <string name="message_error_invalid_response">"അസാധുവായ പ്രതികരണം"</string>
     <string name="message_error_missing_api_key">"നഷ്ടമായതോ അസാധുവായതോ ആയ API കീ, ഈ സേവനം ഉപയോഗിക്കുന്നതിന് ക്രമീകരണങ്ങളിൽ api കീ അപ്ഡേറ്റുചെയ്യുക"</string>
-
     <string name="about_hint_version">"ബിൽഡ് പതിപ്പ്"</string>
     <string name="about_hint_changelog">"ചേഞ്ച്ലോഗ്"</string>
     <string name="about_hint_rate_app">"ഈ അപ്ലിക്കേഷൻ റേറ്റുചെയ്യുക"</string>
@@ -516,19 +469,16 @@
     <string name="about_hint_md_icons">"മെറ്റീരിയൽ ഡിസൈൻ ഐക്കണുകൾ"</string>
     <string name="about_hint_icon_pack">"ഐക്കൺ പായ്ക്ക്"</string>
     <string name="about_hint_translators">"വിവർത്തകർ"</string>
-
     <string name="activity_launcher_legacy_edition_upgrade_title">"നവീകരിക്കുന്നു…"</string>
     <string name="activity_launcher_first_start_title">"Tallybookിലേക്ക് സ്വാഗതം"</string>
     <string name="activity_launcher_first_start_button_first_time">"ആദ്യതവണ"</string>
     <string name="activity_launcher_first_start_button_restore_backup">"ബാക്കപ്പ് പുന ore സ്ഥാപിക്കുക"</string>
-
     <string name="activity_intro_title_slide_1">"കൂടുതൽ മോശം ആശ്ചര്യങ്ങളൊന്നുമില്ല"</string>
     <string name="activity_intro_title_slide_2">"കണ്ടെത്തി ആസൂത്രണം ചെയ്യുക"</string>
     <string name="activity_intro_title_slide_3">"ഓപ്പൺ സോഴ്സ്"</string>
     <string name="activity_intro_title_slide_5">"നന്നായി"</string>
     <string name="activity_intro_description_slide_2">"നിങ്ങൾ എവിടെയാണ് ധാരാളം ചെലവഴിക്കുന്നതെന്ന് വിശകലനം ചെയ്യാനും കുറച്ച് ബജറ്റ് സജ്ജീകരിക്കാനും കഴിയും"</string>
     <string name="activity_intro_description_slide_5">"നിങ്ങളുടെ ആദ്യ വാലറ്റ് സൃഷ്ടിക്കുന്നതിന് നിങ്ങളെ ഇപ്പോൾ റീഡയറക്ട് ചെയ്യും"</string>
-
     <string name="help_create_new_pin_code">"ഒരു പുതിയ പിൻ കോഡ് സൃഷ്ടിക്കുക"</string>
     <string name="help_verify_created_pin_code">"പിൻ കോഡ് വീണ്ടും ചേർക്കുക"</string>
     <string name="help_verify_created_pin_code_failed">"കോഡ് പൊരുത്തക്കേട്, ഒരു പുതിയ പിൻ കോഡ് സൃഷ്ടിക്കുക"</string>
@@ -545,7 +495,6 @@
     <string name="help_insert_fingerprint">"അൺലോക്കുചെയ്യാൻ വിരലടയാളം ഉപയോഗിക്കുക"</string>
     <string name="help_insert_fingerprint_failed">"പരിശോധന പരാജയപ്പെട്ടു, വീണ്ടും ശ്രമിക്കുക"</string>
     <string name="help_fingerprint_not_initialized">"ഈ ഉപകരണത്തിൽ വിരലടയാളമൊന്നും രജിസ്റ്റർ ചെയ്തിട്ടില്ല"</string>
-
     <string name="icon_category_clothes">"വസ്ത്രങ്ങൾ"</string>
     <string name="icon_category_people">"ആളുകൾ"</string>
     <string name="icon_category_toys">"കളിപ്പാട്ടങ്ങൾ"</string>
@@ -561,7 +510,6 @@
     <string name="icon_category_beauty_and_wellness">"സൗന്ദര്യവും ആരോഗ്യവും"</string>
     <string name="icon_category_technology">"സാങ്കേതികവിദ്യ"</string>
     <string name="icon_category_finance">"ധനകാര്യം"</string>
-
     <string name="keyboard_9">9</string>
     <string name="keyboard_8">8</string>
     <string name="keyboard_7">7</string>
@@ -576,17 +524,13 @@
     <string name="keyboard_point">.</string>
     <string name="keyboard_clear">"സി"</string>
     <string name="keyboard_multiplication">"×"</string>
-    <string name="keyboard_division">""</string>
-    <string name="keyboard_addition">""</string>
     <string name="keyboard_subtraction">"-"</string>
     <string name="keyboard_equal">"="</string>
     <string name="keyboard_commit">"&gt;"</string>
-
     <string name="recurrence_type_daily">"ദിവസേന"</string>
     <string name="recurrence_type_weekly">"പ്രതിവാര"</string>
     <string name="recurrence_type_monthly">"പ്രതിമാസം"</string>
     <string name="recurrence_type_yearly">"വാർഷികം"</string>
-
     <string name="recurrence_hint_from">"നിന്ന്"</string>
     <string name="recurrence_hint_every">"എല്ലാം"</string>
     <string name="recurrence_hint_days">"ദിവസങ്ങളിൽ"</string>
@@ -594,7 +538,6 @@
     <string name="recurrence_hint_months">"മാസം"</string>
     <string name="recurrence_hint_years">"വർഷം"</string>
     <string name="recurrence_hint_times">"തവണ"</string>
-
     <string name="recurrence_type_weekly_sunday">"ഞായറാഴ്ച"</string>
     <string name="recurrence_type_weekly_monday">"തിങ്കളാഴ്ച"</string>
     <string name="recurrence_type_weekly_tuesday">"ചെവ്വാഴ്ച"</string>
@@ -603,11 +546,9 @@
     <string name="recurrence_type_weekly_friday">"വെള്ളിയാഴ്ച"</string>
     <string name="recurrence_type_weekly_saturday">"ശനിയാഴ്ച്ച"</string>
     <string name="recurrence_type_monthly_repeat_same_day">"എല്ലാ മാസവും ഒരേ ദിവസം"</string>
-
     <string name="recurrence_end_type_forever">"എന്നേക്കും"</string>
     <string name="recurrence_end_type_until">"വരുവോളം"</string>
     <string name="recurrence_end_type_for">"വേണ്ടി"</string>
-
     <string name="recurrence_hint_repeat_every_day">"എല്ലാ ദിവസവും ആവർത്തിക്കുക,"</string>
     <string name="recurrence_hint_repeat_every_n_days">"ഓരോ %d ദിവസവും ആവർത്തിക്കുക,"</string>
     <string name="recurrence_hint_repeat_every_week">"എല്ലാ ആഴ്ചയും ആവർത്തിക്കുക,"</string>
@@ -628,11 +569,8 @@
     <string name="recurrence_hint_repeat_until">" %s വരെ"</string>
     <string name="recurrence_hint_repeat_for_one_occurrence">"1 സംഭവത്തിന്"</string>
     <string name="recurrence_hint_repeat_for_n_occurrence">" %d സംഭവങ്ങൾക്ക്"</string>
-
     <string name="notification_channel_name_backup">"ബാക്കപ്പ്"</string>
     <string name="notification_channel_name_reminder">"ഓർമ്മപ്പെടുത്തൽ"</string>
     <string name="notification_channel_name_exchange_rate">"വിനിമയ നിരക്ക്"</string>
     <string name="notification_channel_name_error">"പിശക്"</string>
-
-
 </resources>
