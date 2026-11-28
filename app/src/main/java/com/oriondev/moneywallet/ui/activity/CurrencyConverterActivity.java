@@ -115,8 +115,9 @@ public class CurrencyConverterActivity extends SinglePanelActivity implements Vi
         // The bottom row of keys reaches the bottom of the window and cannot be scrolled out of the
         // way of the navigation bar. It carries the primary color, so the color keeps running under
         // the bar and only the keys move up.
-        SystemBars.pad(view.findViewById(R.id.keypad_last_row),
-                false, getResources().getBoolean(R.bool.panel_fills_window), true);
+        SystemBars.pad(view.findViewById(R.id.currency_converter_panel),
+                false, getResources().getBoolean(R.bool.panel_fills_window), false);
+        SystemBars.pad(view.findViewById(R.id.keypad_last_row), false, false, true);
         mImageCurrencyFrom = view.findViewById(R.id.image_currency_from);
         mImageCurrencyTo = view.findViewById(R.id.image_currency_to);
         mTextCurrencyFrom = view.findViewById(R.id.text_currency_from);

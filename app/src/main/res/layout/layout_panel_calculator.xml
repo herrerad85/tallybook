@@ -18,12 +18,14 @@
   ~ along with MoneyWallet.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<androidx.constraintlayout.widget.ConstraintLayout
+<com.oriondev.moneywallet.ui.view.theme.ThemedConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/calculator_panel"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    app:theme_backgroundColor="colorPrimary">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/vertical_guideline"
@@ -32,22 +34,29 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.40"/>
 
-    <com.oriondev.moneywallet.ui.view.theme.ThemedEditText
-        android:id="@+id/display_text_view"
+    <com.oriondev.moneywallet.ui.view.theme.ThemedFrameLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@null"
-        android:gravity="center_vertical|end"
-        android:hint="@string/hint_money"
-        android:importantForAutofill="no"
-        android:textSize="@dimen/activity_calculator_display_text_size"
-        android:padding="@dimen/activity_calculator_display_padding"
         app:layout_constraintBottom_toTopOf="@+id/vertical_guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:theme_backgroundColor="colorWindowForeground"
-        tools:text="568,89 * 3,56" />
+        app:theme_backgroundColor="colorWindowForeground">
+
+        <com.oriondev.moneywallet.ui.view.theme.ThemedEditText
+            android:id="@+id/display_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:gravity="center_vertical|end"
+            android:hint="@string/hint_money"
+            android:importantForAutofill="no"
+            android:textSize="@dimen/activity_calculator_display_text_size"
+            android:padding="@dimen/activity_calculator_display_padding"
+            app:theme_backgroundColor="colorWindowForeground"
+            tools:text="568,89 * 3,56" />
+
+    </com.oriondev.moneywallet.ui.view.theme.ThemedFrameLayout>
 
     <!--
       ~ The keys each paint the primary color and the container painted nothing, so once the keys
@@ -382,4 +391,4 @@
 
     </com.oriondev.moneywallet.ui.view.theme.ThemedConstraintLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</com.oriondev.moneywallet.ui.view.theme.ThemedConstraintLayout>

@@ -118,8 +118,9 @@ public class CalculatorActivity extends SinglePanelActivity implements View.OnCl
         View view = inflater.inflate(R.layout.layout_panel_calculator, parent, true);
         // The keypad fills the lower half of the window and nothing here scrolls, so the keys
         // would otherwise sit partly under the navigation bar.
-        SystemBars.pad(view.findViewById(R.id.keypad_container),
-                false, getResources().getBoolean(R.bool.panel_fills_window), true);
+        SystemBars.pad(view.findViewById(R.id.calculator_panel),
+                false, getResources().getBoolean(R.bool.panel_fills_window), false);
+        SystemBars.pad(view.findViewById(R.id.keypad_container), false, false, true);
         mDisplayEditText = view.findViewById(R.id.display_text_view);
         // The keypad is the only writer of the field, and the filter refuses every other change.
         // The field's own state restore would go through that filter and come back empty, so the
