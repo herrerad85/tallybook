@@ -9,6 +9,7 @@ An expense and budget tracker for Android that keeps your money on your own phon
 [![License: GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![F-Droid](https://img.shields.io/f-droid/v/io.github.herrerad85.tallybook.svg)](https://f-droid.org/packages/io.github.herrerad85.tallybook/)
 [![GitHub release](https://img.shields.io/github/v/release/herrerad85/tallybook)](https://github.com/herrerad85/tallybook/releases/latest)
+[![Translation status](https://hosted.weblate.org/widget/tallybook/svg-badge.svg)](https://hosted.weblate.org/projects/tallybook/)
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="70">](https://f-droid.org/packages/io.github.herrerad85.tallybook/)
 
@@ -73,7 +74,9 @@ Requirements: a recent Android SDK and JDK 17 or newer. Release builds use JDK 2
 
 Bug reports and pull requests are welcome in the [issue tracker](https://github.com/herrerad85/tallybook/issues). Current direction and open work live in the pinned [roadmap issue](https://github.com/herrerad85/tallybook/issues/15).
 
-[CONTRIBUTING.md](CONTRIBUTING.md) has the bar a pull request is held to, including an AI written one, and the steps for translating.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the bar a pull request is held to, including an AI written one.
+
+Translations are done on [Hosted Weblate](https://hosted.weblate.org/projects/tallybook/), in the browser, with no build needed.
 
 ## Credits and license
 
