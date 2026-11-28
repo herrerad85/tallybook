@@ -13,8 +13,8 @@
         android:pathData="M50,10 L150,10 Q190,10 190,50 L190,150 Q190,190 150,190 L50,190 Q10,190 10,150 L10,50 Q10,10 50,10 Z" />
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="13"
+        android:strokeWidth="10.45"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M66,66 L66,134 M89,66 L89,134 M112,66 L112,134 M135,66 L135,134 M57,140 L144,60" />
+        android:pathData="M65.8,61.8 L65.8,138 M88.6,61.8 L88.6,138 M111.4,61.8 L111.4,138 M134.2,61.8 L134.2,138 M52.2,130.5 L147.8,69.5" />
 </vector>
