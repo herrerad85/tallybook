@@ -1088,17 +1088,21 @@ class BackupHandlerIntentServiceTest {
 
     private fun handle(vararg intents: Intent) {
         val controller = Robolectric.buildService(BackupHandlerIntentService::class.java, intents.first()).create()
+        var worker: Thread? = null
         try {
             for ((index, intent) in intents.withIndex()) {
                 controller.withIntent(intent).startCommand(0, index + 1)
             }
             val workers = ShadowLooper.getAllLoopers().filter { it.thread.isAlive && it.thread.name == WORKER }
             assertEquals(1, workers.size)
+            worker = workers.single().thread
             shadowOf(workers.single()).idle()
             shadowOf(Looper.getMainLooper()).idle()
         } finally {
             controller.destroy()
+            worker?.join(5_000)
         }
+        assertFalse("the worker outlived its service", worker?.isAlive == true)
     }
 
     private fun finished(): Intent {
