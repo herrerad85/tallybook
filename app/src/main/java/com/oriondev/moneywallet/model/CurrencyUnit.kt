@@ -63,6 +63,10 @@ class CurrencyUnit : Parcelable {
         return decimals > 0
     }
 
+    fun withIsoSymbolIfSymbolsMatch(other: CurrencyUnit): CurrencyUnit {
+        return if (symbolOrIso == other.symbolOrIso) CurrencyUnit(iso, name, iso, decimals) else this
+    }
+
     override fun describeContents(): Int {
         return 0
     }

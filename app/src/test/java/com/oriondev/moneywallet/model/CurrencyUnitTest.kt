@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class CurrencyUnitTest {
@@ -66,5 +67,36 @@ class CurrencyUnitTest {
     fun aUnitBuiltWithANullSymbolKeepsANullSymbol() {
         val unit = CurrencyUnit("XAF", "CFA Franc BEAC", null, 0)
         assertNull(unit.symbol)
+    }
+
+    @Test
+    fun twoUnitsWithTheSameSymbolBothTakeTheirIsoAsTheSymbol() {
+        val cny = CurrencyUnit("CNY", "Chinese Yuan", "¥", 2)
+        val jpy = CurrencyUnit("JPY", "Japanese Yen", "¥", 0)
+        val shownCny = cny.withIsoSymbolIfSymbolsMatch(jpy)
+        val shownJpy = jpy.withIsoSymbolIfSymbolsMatch(cny)
+        assertEquals("CNY", shownCny.symbol)
+        assertEquals("Chinese Yuan", shownCny.name)
+        assertEquals(2, shownCny.decimals)
+        assertEquals("JPY", shownJpy.symbol)
+        assertEquals("Japanese Yen", shownJpy.name)
+        assertEquals(0, shownJpy.decimals)
+        assertEquals("¥", cny.symbol)
+    }
+
+    @Test
+    fun twoUnitsWithDifferentSymbolsAreReturnedUnchanged() {
+        val usd = CurrencyUnit("USD", "US Dollar", "$", 2)
+        val eur = CurrencyUnit("EUR", "Euro", "€", 2)
+        assertSame(usd, usd.withIsoSymbolIfSymbolsMatch(eur))
+        assertSame(eur, eur.withIsoSymbolIfSymbolsMatch(usd))
+    }
+
+    @Test
+    fun aUnitWithNoSymbolMatchesAUnitWhoseSymbolIsItsIso() {
+        val xaf = CurrencyUnit("XAF", "CFA Franc BEAC", null, 0)
+        val custom = CurrencyUnit("ZZZ", "Custom", "XAF", 2)
+        assertEquals("XAF", xaf.withIsoSymbolIfSymbolsMatch(custom).symbolOrIso)
+        assertEquals("ZZZ", custom.withIsoSymbolIfSymbolsMatch(xaf).symbolOrIso)
     }
 }

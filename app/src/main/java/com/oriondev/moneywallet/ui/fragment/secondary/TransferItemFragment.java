@@ -247,18 +247,20 @@ public class TransferItemFragment extends SecondaryPanelFragment implements Atta
                 String toIso = cursor.getString(cursor.getColumnIndexOrThrow(Contract.Transfer.TRANSACTION_TO_WALLET_CURRENCY));
                 if (!iso.equals(toIso)) {
                     CurrencyUnit toCurrency = CurrencyManager.getCurrency(toIso);
-                    if (currency != null && toCurrency != null && TextUtils.equals(currency.getSymbolOrIso(), toCurrency.getSymbolOrIso())) {
-                        currency = new CurrencyUnit(iso, currency.getName(), iso, currency.getDecimals());
-                        toCurrency = new CurrencyUnit(toIso, toCurrency.getName(), toIso, toCurrency.getDecimals());
+                    CurrencyUnit shownCurrency = currency;
+                    CurrencyUnit shownToCurrency = toCurrency;
+                    if (currency != null && toCurrency != null) {
+                        shownCurrency = currency.withIsoSymbolIfSymbolsMatch(toCurrency);
+                        shownToCurrency = toCurrency.withIsoSymbolIfSymbolsMatch(currency);
                     }
                     long toMoney = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Transfer.TRANSACTION_TO_MONEY));
-                    String received = mMoneyFormatter.getNotTintedString(toCurrency, toMoney, MoneyFormatter.CurrencyMode.ALWAYS_SHOWN);
+                    String received = mMoneyFormatter.getNotTintedString(shownToCurrency, toMoney, MoneyFormatter.CurrencyMode.ALWAYS_SHOWN);
                     mReceivedTextView.setText(toCurrency != null ? received : "? " + received);
                     mReceivedTextView.setVisibility(View.VISIBLE);
                     if (currency != null && toCurrency != null && money != 0L && toMoney != 0L) {
                         double rate = MoneyScale.deriveRate(money, toMoney, currency.getDecimals(), toCurrency.getDecimals());
                         mExchangeRateTextView.setText(getString(R.string.hint_exchange_rate_value,
-                                currency.getSymbolOrIso(), getRateString(rate), toCurrency.getSymbolOrIso()));
+                                shownCurrency.getSymbolOrIso(), getRateString(rate), shownToCurrency.getSymbolOrIso()));
                         mExchangeRateTextView.setVisibility(View.VISIBLE);
                     } else {
                         mExchangeRateTextView.setVisibility(View.GONE);
