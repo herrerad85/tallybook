@@ -5,8 +5,7 @@
   -->
 
 <!--
-  ~ The launcher icon's own foreground, drawn small. The viewport is the icon's 108 so the path
-  ~ is the same one ic_launcher_foreground carries, and only the size it is asked to fill differs.
+  ~ The launcher icon's own foreground, drawn small.
   ~ Copied instead of referenced because the launcher icon leaves the wide margin an adaptive icon
   ~ needs for masking, which would shrink the mark to nothing at header size.
   -->
@@ -17,8 +16,8 @@
     android:viewportHeight="60" >
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="7"
+        android:strokeWidth="5.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M14,12 L14,48 M25,12 L25,48 M36,12 L36,48 M47,12 L47,48 M7,51 L54,9" />
+        android:pathData="M12,10 L12,50 M24,10 L24,50 M36,10 L36,50 M48,10 L48,50 M4.84,46.06 L55.16,13.94" />
 </vector>
